@@ -1,0 +1,65 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'potnuse', description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    {description && <meta name="description" content={description} />}
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@300..800&display=swap"
+    />
+  </head>
+  <body>
+    <slot />
+
+    <style is:global>
+      :root {
+        --font-crimson: 'Crimson Pro', Georgia, 'Iowan Old Style', serif;
+        --font-jetbrains: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+        --bg: #1a1207;
+        --bg-card: #261d0f;
+        --bg-button: #332814;
+        --accent: #e8a838;
+        --accent-dim: #b87a1e;
+        --text: #f0e6d2;
+        --text-dim: #9e8e72;
+        --text-muted: #6b5d48;
+        --border: #3d2e1a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-crimson);
+        font-size: 18px;
+        line-height: 1.55;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      ::selection {
+        background: var(--accent);
+        color: var(--bg);
+      }
+    </style>
+  </body>
+</html>

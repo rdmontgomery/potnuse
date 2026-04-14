@@ -1,0 +1,97 @@
+---
+import { getBacklinks, getForwardLinks } from '@/lib/graph';
+import StateBadge from './StateBadge.astro';
+
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const [back, forward] = await Promise.all([
+  getBacklinks(slug),
+  getForwardLinks(slug),
+]);
+const hasAnything = back.length > 0 || forward.length > 0;
+---
+
+{
+  hasAnything && (
+    <nav class="pressure" aria-label="graph neighbors">
+      {forward.length > 0 && (
+        <section>
+          <h2>connects to</h2>
+          <ul>
+            {forward.map((n) => (
+              <li>
+                <a href={n.url}>{n.title}</a>
+                <StateBadge state={n.state} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {back.length > 0 && (
+        <section>
+          <h2>pointed to by</h2>
+          <ul>
+            {back.map((n) => (
+              <li>
+                <a href={n.url}>{n.title}</a>
+                <StateBadge state={n.state} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .pressure {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(240, 230, 210, 0.1);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  @media (max-width: 640px) {
+    .pressure {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+  h2 {
+    font-size: 0.7rem;
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    text-transform: lowercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted, #6b5d48);
+    margin: 0 0 0.9rem;
+    font-weight: 400;
+  }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  a {
+    color: var(--text, #f0e6d2);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(240, 230, 210, 0.25);
+    transition: border-color 0.15s ease;
+  }
+  a:hover {
+    border-bottom-color: var(--accent, #e8a838);
+  }
+</style>

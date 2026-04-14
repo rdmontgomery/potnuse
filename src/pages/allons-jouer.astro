@@ -1,0 +1,23 @@
+---
+import Base from '@/layouts/Base.astro';
+import App from '@/components/allons-jouer/App';
+import Backlinks from '@/components/Backlinks.astro';
+---
+
+<Base
+  title="allons jouer"
+  description="Cajun accordion teaching app — home / free play / lesson / reference / tuner."
+>
+  <App client:only="react" />
+  <section class="chrome">
+    <Backlinks slug="allons-jouer" />
+  </section>
+</Base>
+
+<style>
+  .chrome {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+</style>

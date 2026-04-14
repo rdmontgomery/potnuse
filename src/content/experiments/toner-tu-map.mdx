@@ -1,0 +1,28 @@
+---
+title: toner-tu as a map
+date: 2026-04-14
+state: seedling
+connects: [colophon, allons-jouer]
+tags: [meta, flocking, physics, roadmap]
+description: Plan for a live Toner-Tu simulation of the content graph, replacing the static sitemap idea with an active-matter one.
+---
+
+Round 2 of potnuse is a **map** at `/map`. Not a list; not even a force-directed static graph. A live Toner-Tu simulation where every node in the site is a particle.
+
+- **self-propulsion:** each page has a drift velocity set by some observable — recency of edit, incoming traffic, recent-session attention.
+- **alignment:** within some radius, particles align their drift with neighbors they're graph-connected to. Related work flocks.
+- **noise:** finite temperature. The map never settles; it breathes.
+- **density dependence:** crowded clusters slow down (jammed), sparse ones drift faster. The Malthusian side of the memory idea could land here too — low-activity pages fade, occasionally die, occasionally get reborn when something new connects to them.
+
+The point isn't a visualization *of* the research program — it's an instance *of* it. The site is the first lab.
+
+## preconditions
+
+- `/graph.json` endpoint exists and emits every node's `connects`, `state`, `date`, `tags`. Already done at commit zero.
+- Enough nodes that flocking is observable (≳20). Until then, the map page is mostly a single quiet drifter.
+
+## open questions
+
+- Order parameter: what's the thing we watch? Polarization of the whole flock toward "most-alive" content? Cluster count? Mean local alignment?
+- What do visitors *do* here beyond watch? Click a particle to land on the node, obviously. But does hovering perturb the field? Does scroll direction apply a force?
+- Does the map remember? If a visitor's path through the site leaves a trace, the field should carry it — that's when the map starts to be agentic memory, not just ornament.

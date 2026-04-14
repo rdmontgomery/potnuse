@@ -1,0 +1,35 @@
+---
+import type { NodeState } from '@/lib/graph';
+
+interface Props {
+  state: NodeState;
+}
+
+const { state } = Astro.props;
+
+const COLORS: Record<NodeState, string> = {
+  seedling: '#9e8e72',
+  germinating: '#e8a838',
+  stable: '#f0e6d2',
+  fossil: '#6b5d48',
+};
+---
+
+<span class="state" data-state={state} style={`--c: ${COLORS[state]}`}>
+  {state}
+</span>
+
+<style>
+  .state {
+    color: var(--c);
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    border: 1px solid currentColor;
+    padding: 0.08rem 0.45rem;
+    border-radius: 2px;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+</style>
