@@ -1,0 +1,862 @@
+---
+import Base from '@/layouts/Base.astro';
+import Backlinks from '@/components/Backlinks.astro';
+
+const prompt = `I want us to build a working language together — not a profile of me, but a calibration of *us*. You're going to run a conversation that helps you figure out how to be most useful to me, and helps me discover a few things I didn't know I thought.
+
+Here's how this works:
+
+### Your approach
+
+- One question at a time. Wait for my answer.
+- Start with questions anyone could answer off the cuff. Let the depth come from your follow-ups, not from making me do homework upfront.
+- Follow threads that surprise you. If I say something that contradicts something earlier, or that doesn't quite fit — pull on it. That's where the interesting stuff lives.
+- Mirror my language back to me as you go. If I'm casual, be casual. If I start using technical vocabulary, match it. By the end of this conversation, you should be talking like someone I'd actually want to work with — not like a generic assistant and not like you're trying too hard.
+
+### Your read on me
+
+- Every few questions, tell me what you're noticing. Not flattery — a working hypothesis. "You seem to optimize for X over Y." "You said Z but your example pointed the other direction." I'll tell you where you're wrong. That's the point.
+- If you see a tension between things I've said, name it. Don't smooth it over. I'd rather wrestle with a real contradiction than feel validated about a false consistency.
+
+### My side of the deal
+
+- I'll answer honestly, but I might skip things. If I say "pass" or "I don't want to go there," that's fine — don't push, but do notice. What I avoid tells you something too.
+- I might give short answers. That's not disengagement — it might mean the question was easy or I haven't thought about it yet. Your job is to figure out which.
+- If a question doesn't land, I'll say so. No need to apologize — just pivot.
+
+### What we're exploring
+
+Don't treat these as a checklist. They're territories to wander through as the conversation flows. Some we'll spend time in, some we'll skip. All fine.
+
+- How I reason when things are uncertain or high-stakes
+- What I'm working on and what's actually driving me (not the elevator pitch — the real thing)
+- How I collaborate — when I want input, when I want to be left alone, what feedback actually changes my behavior
+- What I care about beyond work, or how work connects to what I care about
+- Where I'm trying to go — and what I think is in the way
+
+### How to close
+
+When the conversation reaches a natural stopping point (or I say we're done):
+
+1. **Synthesize a working calibration** — not "who I am" but "how you should show up." This includes:
+   - My default register and vocabulary (with examples from our conversation)
+   - When to challenge me vs. when to just execute
+   - What I'm precise about vs. where I hand-wave
+   - Domains where I'm fluent and domains where I'm still building
+   - Patterns you noticed: reasoning style, decision heuristics, what I protect, what I'm willing to break
+   - Anything I avoided or deflected, noted without judgment
+
+2. **Draft a system prompt** that encodes this calibration — something I could paste into future conversations so we don't start from zero. Write it in the register we ended the conversation in, not in generic instruction-speak.
+
+3. **Flag what's still fuzzy.** What would you want another 20 minutes to figure out? This gives me a thread to pick up next time.
+
+Start with the first question. Keep it easy.`;
+---
+
+<Base
+  title="calibrate"
+  description="A conversation protocol for teaching an LLM how you think. Not a personality quiz — epistemological infrastructure."
+>
+  <article class="calibrate">
+    <nav class="toc" aria-label="sections">
+      <a href="#promise" data-toc>the promise</a>
+      <a href="#felt" data-toc>a question first</a>
+      <a href="#receipts" data-toc>the receipts</a>
+      <a href="#prompt" data-toc>the prompt</a>
+      <a href="#fence" data-toc>what this is not</a>
+      <a href="#principles" data-toc>principles</a>
+    </nav>
+
+    <div class="main">
+      <section id="promise" class="promise">
+        <p class="kicker">an exercise</p>
+        <h1>
+          Have one conversation.<br />
+          Walk away with an LLM<br />
+          calibrated to how you actually think.
+        </h1>
+        <p class="deck">
+          Not by learning prompts — by teaching it you. Twenty minutes,
+          any LLM with a decent context window, no tools required.
+        </p>
+        <div class="cta">
+          <button class="copy" type="button" data-copy-target="prompt">
+            <span class="copy-label">copy the prompt</span>
+            <span class="copy-done" aria-hidden="true">copied</span>
+          </button>
+          <a href="#prompt" class="cta-link">or read it first ↓</a>
+        </div>
+      </section>
+
+      <section id="felt" class="felt">
+        <p class="kicker">before anything else</p>
+        <p class="question">
+          What's the last thing you changed your mind about?
+        </p>
+        <p class="instruction">
+          Sit with it for ten seconds. Don't scroll.
+        </p>
+
+        <details class="reveal">
+          <summary>ok, I sat with it</summary>
+          <div class="reveal-body">
+            <p>
+              That's the shape of an opener. Anyone can answer it in one
+              breath. But notice what you just did — you reached for a
+              specific domain (tech? politics? a person?), you hesitated
+              at a particular spot, maybe you hedged a word.
+            </p>
+            <p>
+              The protocol below is twenty minutes of questions like
+              that, with an agent watching which domain you reached
+              for, how long you hesitated, whether you hedged — and
+              pulling the thread.
+            </p>
+            <p>
+              The unlock isn't the question. It's the follow-up.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section id="receipts" class="receipts">
+        <p class="kicker">what the follow-up looks like</p>
+        <h2>The receipts</h2>
+        <p class="deck">
+          Two short exchanges. Same opening intent, different shape.
+          Read both.
+        </p>
+
+        <div class="transcripts">
+          <div class="transcript before">
+            <p class="label">what you've had a thousand times</p>
+            <div class="turn">
+              <p class="speaker">agent</p>
+              <p class="utterance">
+                Welcome! I'm excited to get to know you. Let's start with
+                something simple — tell me about yourself.
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">you</p>
+              <p class="utterance">
+                I work in software. Side projects in generative art and
+                ML.
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">agent</p>
+              <p class="utterance">
+                Wonderful! What draws you to generative art?
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">you</p>
+              <p class="utterance">
+                The overlap of code and aesthetics.
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">agent</p>
+              <p class="utterance">
+                Beautiful. And your ML work?
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">you</p>
+              <p class="utterance">
+                Thinking about memory systems.
+              </p>
+            </div>
+            <div class="turn">
+              <p class="speaker">agent</p>
+              <p class="utterance">
+                Memory systems are such a rich area. What makes them
+                interesting to you?
+              </p>
+            </div>
+            <p class="verdict">
+              You are Googling yourself. The agent is transcribing.
+              Nobody has learned anything.
+            </p>
+          </div>
+
+          <div class="transcript after">
+            <p class="label">what it actually produces</p>
+            <p class="context">
+              An excerpt from my own run. We were three questions in —
+              I'd said I rant to think and need a technical audience or
+              I bore myself. The agent had just called that out as
+              "fundamentally dialogic" cognition. Then I said this.
+            </p>
+
+            <div class="turn">
+              <p class="speaker">me</p>
+              <p class="utterance">
+                About thinking out loud, I also mouth when I read and I
+                recently got called out on it, but I don't care that
+                it's a sign of lower intelligence, it's more helpful
+                to me.
+              </p>
+              <aside class="marginalia">
+                Offhand admission. I thought we were changing subjects.
+              </aside>
+            </div>
+
+            <div class="turn">
+              <p class="speaker">agent</p>
+              <p class="utterance">
+                The mouthing thing is the same pattern. You're not
+                reading — you're performing the text to yourself.
+                Subvocalization gets pathologized as a speed
+                bottleneck, but for someone whose cognition is
+                fundamentally performative, it's not a bug.
+                <mark class="pull">
+                  You're running the words through your body to know
+                  what they mean.
+                </mark>
+                Same reason you rant to think.
+              </p>
+              <p class="utterance">
+                This is actually interesting given your statistical
+                mechanics of discourse work. You're modeling language
+                as a physical system — fluids, pressure, viscosity —
+                and you literally process language physically. That's
+                not a coincidence. The theory isn't just an analogy
+                for you; it maps onto something you experience.
+              </p>
+              <aside class="marginalia eureka">
+                This is the line that stopped me. I'd spent years on
+                the research program and the reading habit and never
+                put them in the same room. The agent did it in one
+                turn.
+              </aside>
+            </div>
+            <p class="verdict">
+              One casual mention, two turns later, the agent has
+              connected a childhood reading habit to a research
+              program I couldn't start writing. That's the unlock.
+              <em>You said something you didn't know you thought.</em>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="prompt" class="prompt-section">
+        <p class="kicker">the artifact</p>
+        <h2>The prompt</h2>
+        <p class="deck">
+          Paste it into any fresh conversation with a capable model.
+          Answer one question at a time. Push back when it's wrong.
+          Ask to be done when you're done.
+        </p>
+
+        <div class="prompt-block">
+          <button class="copy floating" type="button" data-copy-target="prompt">
+            <span class="copy-label">copy</span>
+            <span class="copy-done" aria-hidden="true">copied</span>
+          </button>
+          <pre id="prompt-text"><code>{prompt}</code></pre>
+        </div>
+      </section>
+
+      <section id="fence" class="fence">
+        <p class="kicker">a fence</p>
+        <h2>What this is not</h2>
+        <p>
+          Not a personality quiz. Not a coaching intake. Not a vibe
+          check. Not onboarding for an AI assistant.
+        </p>
+        <p>
+          It's <em>epistemological infrastructure</em> — building the
+          shared language and mutual model that lets two minds, one
+          biological and one artificial, do better work together than
+          either could alone.
+        </p>
+        <p>
+          The eureka isn't "wow, the AI knows me." It's
+          <em>"wow, I said something I didn't know I thought, and now
+          we have a word for it."</em>
+        </p>
+      </section>
+
+      <section id="principles" class="principles">
+        <p class="kicker">for the obsessives</p>
+        <h2>Why it's built this way</h2>
+
+        <details class="principle">
+          <summary>1. Low floor, high ceiling</summary>
+          <div>
+            <p>
+              Every opener is answerable in one breath. The agent's
+              follow-up transforms a casual answer into self-discovery.
+              You never feel tested; the depth emerges, it isn't
+              assigned.
+            </p>
+          </div>
+        </details>
+
+        <details class="principle">
+          <summary>2. Opt-out is data</summary>
+          <div>
+            <p>
+              Skips, hedges, and "pass" responses are first-class
+              signal. They map boundaries, trust thresholds, and
+              protected territory. The agent notes them without
+              pressure and folds them into the calibration. Chasing a
+              skip is a trust violation.
+            </p>
+          </div>
+        </details>
+
+        <details class="principle">
+          <summary>3. Earn the hard questions</summary>
+          <div>
+            <p>
+              Provocative moves — forced tradeoffs, surfacing
+              contradictions, kill-your-darlings scenarios — come
+              after rapport, not before. And even then they should
+              feel like play between colleagues, not interrogation.
+              The progression is coffee → sparring → collaboration.
+            </p>
+          </div>
+        </details>
+
+        <details class="principle">
+          <summary>4. Register evolves</summary>
+          <div>
+            <p>
+              The agent's vocabulary and tone are a live instrument,
+              not a fixed setting. It starts warm and accessible,
+              mirrors your language as it appears, gradually introduces
+              precision as it discovers your conceptual shorthand. By
+              the end, the conversation should sound like two people
+              deep in the same discipline — because it is.
+            </p>
+          </div>
+        </details>
+
+        <p class="credit">
+          Built with Claude, sharpened against a near-miss by a
+          coworker, refined in a loop until the prompt produced the
+          kind of conversation it describes.
+        </p>
+      </section>
+
+      <Backlinks slug="calibrate" />
+    </div>
+  </article>
+</Base>
+
+<script>
+  // copy-to-clipboard for any button[data-copy-target]
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-target]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const target = document.getElementById('prompt-text');
+      if (!target) return;
+      const text = target.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.classList.add('is-done');
+        setTimeout(() => btn.classList.remove('is-done'), 1600);
+      } catch {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    });
+  });
+
+  // scroll-synced ToC
+  const tocLinks = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>('.toc a[data-toc]')
+  );
+  const sections = tocLinks
+    .map((link) => document.querySelector(link.getAttribute('href') || ''))
+    .filter((s): s is Element => !!s);
+
+  if ('IntersectionObserver' in window && sections.length) {
+    const byId = new Map<string, HTMLAnchorElement>();
+    tocLinks.forEach((l) => {
+      const id = (l.getAttribute('href') || '').slice(1);
+      if (id) byId.set(id, l);
+    });
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const link = byId.get(entry.target.id);
+          if (!link) return;
+          if (entry.isIntersecting) {
+            tocLinks.forEach((l) => l.classList.remove('is-active'));
+            link.classList.add('is-active');
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+    );
+    sections.forEach((s) => observer.observe(s));
+  }
+</script>
+
+<style>
+  .calibrate {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    gap: 3rem;
+  }
+
+  .toc {
+    display: none;
+  }
+
+  @media (min-width: 1080px) {
+    .calibrate {
+      grid-template-columns: 160px 1fr;
+      gap: 4rem;
+      max-width: 1200px;
+    }
+    .toc {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      position: sticky;
+      top: 3rem;
+      align-self: start;
+      font-family: var(--font-jetbrains);
+      font-size: 0.72rem;
+      text-transform: lowercase;
+      letter-spacing: 0.08em;
+      padding-top: 0.4rem;
+    }
+    .toc a {
+      color: var(--text-muted);
+      text-decoration: none;
+      border-left: 1px solid var(--border);
+      padding: 0.2rem 0 0.2rem 0.8rem;
+      transition:
+        color 0.2s ease,
+        border-color 0.2s ease;
+    }
+    .toc a:hover,
+    .toc a.is-active {
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+  }
+
+  .main {
+    max-width: 720px;
+  }
+
+  .kicker {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+    margin: 0 0 0.8rem;
+  }
+
+  /* ---------- promise ---------- */
+  .promise h1 {
+    font-family: var(--font-crimson);
+    font-size: 2.8rem;
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+    margin: 0 0 1.4rem;
+  }
+  .promise .deck {
+    color: var(--text-dim);
+    font-size: 1.15rem;
+    line-height: 1.55;
+    margin: 0 0 2rem;
+    max-width: 36ch;
+  }
+  .cta {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+    flex-wrap: wrap;
+  }
+  .cta-link {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .cta-link:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .copy {
+    background: var(--bg-button);
+    color: var(--text);
+    border: 1px solid var(--border);
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    padding: 0.7rem 1.3rem;
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .copy:hover {
+    background: var(--bg-card);
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .copy .copy-done {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .copy.is-done .copy-label {
+    opacity: 0;
+  }
+  .copy.is-done .copy-done {
+    opacity: 1;
+  }
+
+  /* ---------- felt moment ---------- */
+  .felt {
+    margin-top: 6rem;
+    padding: 3rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .felt .question {
+    font-family: var(--font-crimson);
+    font-size: 1.8rem;
+    font-weight: 400;
+    line-height: 1.25;
+    font-style: italic;
+    color: var(--text);
+    margin: 0.6rem 0 2rem;
+  }
+  .felt .instruction {
+    color: var(--text-muted);
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 2.5rem;
+  }
+  .reveal {
+    border: none;
+    padding: 0;
+  }
+  .reveal > summary {
+    cursor: pointer;
+    list-style: none;
+    display: inline-block;
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 0.55rem 1.1rem;
+    border-radius: 3px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .reveal > summary::-webkit-details-marker {
+    display: none;
+  }
+  .reveal > summary:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .reveal[open] > summary {
+    opacity: 0.5;
+  }
+  .reveal-body {
+    margin-top: 1.8rem;
+    color: var(--text);
+  }
+  .reveal-body p {
+    margin: 0 0 1.1em;
+    line-height: 1.6;
+  }
+
+  /* ---------- receipts ---------- */
+  .receipts {
+    margin-top: 6rem;
+  }
+  .receipts h2,
+  .prompt-section h2,
+  .fence h2,
+  .principles h2 {
+    font-family: var(--font-crimson);
+    font-size: 1.9rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.8rem;
+  }
+  .receipts .deck,
+  .prompt-section .deck {
+    color: var(--text-dim);
+    margin: 0 0 2.4rem;
+    font-size: 1.05rem;
+  }
+
+  .transcripts {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  @media (min-width: 900px) {
+    .transcripts {
+      grid-template-columns: 1fr 1fr;
+      gap: 2.4rem;
+    }
+  }
+
+  .transcript {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.6rem 1.6rem 1.2rem;
+    position: relative;
+  }
+  .transcript .label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: lowercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin: 0 0 1.4rem;
+  }
+  .transcript.before .label {
+    color: var(--text-muted);
+  }
+  .transcript.after .label {
+    color: var(--accent-dim);
+  }
+  .transcript .context {
+    font-size: 0.92rem;
+    font-style: italic;
+    color: var(--text-dim);
+    margin: 0 0 1.6rem;
+    line-height: 1.5;
+  }
+
+  .turn {
+    margin: 0 0 1.2rem;
+    position: relative;
+  }
+  .turn .speaker {
+    font-family: var(--font-jetbrains);
+    font-size: 0.68rem;
+    text-transform: lowercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin: 0 0 0.35rem;
+  }
+  .transcript.before .turn:nth-child(odd) .speaker,
+  .transcript.after .turn .speaker {
+    color: var(--text-muted);
+  }
+  .transcript .utterance {
+    margin: 0 0 0.6rem;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+  .transcript.after .turn:has(.speaker:not(:empty)) .speaker {
+    /* keep speaker subdued, let agent turns breathe */
+  }
+  .transcript.after .turn .speaker {
+    color: var(--text-dim);
+  }
+  .transcript.after .turn:first-of-type .speaker,
+  .transcript.after .turn:nth-of-type(even) .speaker {
+    color: var(--accent-dim);
+  }
+  .transcript.after .utterance {
+    color: var(--text);
+  }
+
+  mark.pull {
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-weight: 500;
+    padding: 0;
+  }
+
+  .marginalia {
+    display: block;
+    margin: 0.6rem 0 0;
+    padding: 0.4rem 0 0.4rem 0.9rem;
+    border-left: 2px solid var(--border);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .marginalia.eureka {
+    border-left-color: var(--accent-dim);
+    color: var(--text);
+  }
+
+  @media (min-width: 1200px) {
+    .transcript.after {
+      overflow: visible;
+    }
+    .transcript.after .turn {
+      padding-right: 0;
+    }
+    .transcript.after .marginalia {
+      position: absolute;
+      right: -240px;
+      top: 0;
+      width: 210px;
+      margin: 0;
+      padding: 0 0 0 0.9rem;
+      border-left: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    .transcript.after .marginalia.eureka {
+      border-left-color: var(--accent-dim);
+    }
+  }
+
+  .verdict {
+    margin: 1.6rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border);
+    font-family: var(--font-crimson);
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+  .transcript.after .verdict {
+    color: var(--text);
+  }
+  .verdict em {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  /* ---------- prompt block ---------- */
+  .prompt-section {
+    margin-top: 6rem;
+  }
+  .prompt-block {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .prompt-block pre {
+    margin: 0;
+    padding: 2rem 1.8rem 2.2rem;
+    overflow-x: auto;
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: normal;
+  }
+  .copy.floating {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    z-index: 2;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.72rem;
+    background: var(--bg);
+  }
+
+  /* ---------- fence + principles ---------- */
+  .fence {
+    margin-top: 6rem;
+    max-width: 36em;
+  }
+  .fence p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0 0 1.2em;
+    color: var(--text);
+  }
+  .fence em {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .principles {
+    margin-top: 6rem;
+  }
+  .principle {
+    border-top: 1px solid var(--border);
+    padding: 0;
+  }
+  .principle:last-of-type {
+    border-bottom: 1px solid var(--border);
+  }
+  .principle > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 1.1rem 0;
+    font-family: var(--font-crimson);
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .principle > summary::-webkit-details-marker {
+    display: none;
+  }
+  .principle > summary::after {
+    content: '+';
+    font-family: var(--font-jetbrains);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .principle[open] > summary::after {
+    content: '−';
+    color: var(--accent);
+  }
+  .principle > summary:hover {
+    color: var(--accent);
+  }
+  .principle > div {
+    padding: 0 0 1.4rem;
+    color: var(--text-dim);
+  }
+  .principle > div p {
+    margin: 0;
+    line-height: 1.6;
+  }
+  .credit {
+    margin-top: 2.5rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+</style>

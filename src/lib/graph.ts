@@ -33,6 +33,18 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
       'Cajun accordion teaching app — home / free play / lesson / reference / tuner.',
     url: '/allons-jouer',
   },
+  {
+    id: 'page/calibrate',
+    collection: 'page',
+    slug: 'calibrate',
+    title: 'calibrate',
+    state: 'germinating',
+    connects: [],
+    tags: ['llm', 'prompt', 'epistemology', 'exercise'],
+    description:
+      'A conversation protocol for teaching an LLM how you think. Not a personality quiz — epistemological infrastructure.',
+    url: '/calibrate',
+  },
 ];
 
 type AnyEntry = CollectionEntry<'essays'> | CollectionEntry<'experiments'>;
