@@ -3,7 +3,7 @@ import { SONGS } from '@/lib/allons-jouer/songs';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 
 export function HomeScreen() {
-  const { startLesson, goTo, completedSongs } = useAppStore();
+  const { selectSong, goTo, completedSongs } = useAppStore();
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px' }}>
@@ -50,7 +50,7 @@ export function HomeScreen() {
         {SONGS.map(song => {
           const done = completedSongs.includes(song.id);
           return (
-            <button key={song.id} onClick={() => startLesson(song.id)} style={{
+            <button key={song.id} onClick={() => selectSong(song.id)} style={{
               width: '100%', padding: '16px 20px', textAlign: 'left',
               background: done ? K.push + '15' : K.bgCard,
               border: `1px solid ${done ? K.push + '44' : K.border}`,

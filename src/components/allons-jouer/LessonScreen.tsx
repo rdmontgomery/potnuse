@@ -17,7 +17,7 @@ export function LessonScreen() {
   const {
     selectedSong, lessonStep, detectedNote, demoNote,
     inputMode, setInputMode, micError, streak, completedSongs,
-    isPlaying, lessonMode, trackPosition,
+    isPlaying, lessonMode, trackPosition, tempoRatio,
     goHome, restartLesson, setLessonMode, setTrackPosition,
   } = useAppStore();
 
@@ -35,7 +35,7 @@ export function LessonScreen() {
     setTrackPosition(ms);
   }, [setTrackPosition]);
 
-  useTrackScroll(isKeepUpActive, onTick);
+  useTrackScroll(isKeepUpActive, onTick, tempoRatio);
 
   if (!song) return null;
 

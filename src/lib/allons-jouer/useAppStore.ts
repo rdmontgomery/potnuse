@@ -19,12 +19,14 @@ interface AppState {
   demoNote: DetectedNote | null;
   lessonMode: LessonMode;
   trackPosition: number;
+  tempoRatio: number;       // 0.6 | 0.8 | 1.0 — only affects Keep Up mode
 }
 
 interface AppActions {
   goHome: () => void;
   goTo: (screen: Screen) => void;
-  startLesson: (songId: string) => void;
+  selectSong: (songId: string) => void;
+  startLesson: (songId: string, mode: LessonMode, tempoRatio: number) => void;
   advanceLesson: (hit?: boolean) => void;
   completeSong: (songId: string) => void;
   restartLesson: () => void;
@@ -40,6 +42,7 @@ interface AppActions {
   setDemoNote: (note: DetectedNote | null) => void;
   setLessonMode: (mode: LessonMode) => void;
   setTrackPosition: (ms: number) => void;
+  setTempoRatio: (ratio: number) => void;
 }
 
 export const INITIAL_STATE: AppState = {
@@ -59,6 +62,7 @@ export const INITIAL_STATE: AppState = {
   demoNote: null,
   lessonMode: 'ownPace',
   trackPosition: 0,
+  tempoRatio: 1,
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -69,7 +73,9 @@ export const useAppStore = create<AppState & AppActions>()(
       goHome: () => set({ ...INITIAL_STATE, completedSongs: get().completedSongs }),
       goTo: (screen) => set({ screen }),
 
-      startLesson: (songId) => set({
+      selectSong: (songId) => set({ screen: 'songDetail', selectedSong: songId }),
+
+      startLesson: (songId, mode, tempoRatio) => set({
         screen: 'lesson',
         selectedSong: songId,
         lessonStep: 0,
@@ -77,6 +83,8 @@ export const useAppStore = create<AppState & AppActions>()(
         timingResult: null,
         detectedNote: null,
         trackPosition: 0,
+        lessonMode: mode,
+        tempoRatio,
       }),
 
       advanceLesson: (hit = true) => set(s => ({ lessonStep: s.lessonStep + 1, streak: hit ? s.streak + 1 : 0 })),
@@ -102,6 +110,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setDemoNote: (note) => set({ demoNote: note }),
       setLessonMode: (mode) => set({ lessonMode: mode, lessonStep: 0, streak: 0, trackPosition: 0, timingResult: null }),
       setTrackPosition: (ms) => set({ trackPosition: ms }),
+      setTempoRatio: (ratio) => set({ tempoRatio: ratio }),
     }),
     {
       name: 'allons-jouer',
