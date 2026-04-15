@@ -1,6 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 
-export type NodeCollection = 'essays' | 'experiments' | 'page';
+export type NodeCollection = 'essays' | 'experiments' | 'exchanges' | 'page';
 export type NodeState = 'seedling' | 'germinating' | 'stable' | 'fossil';
 
 export interface Node {
@@ -47,10 +47,13 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
   },
 ];
 
-type AnyEntry = CollectionEntry<'essays'> | CollectionEntry<'experiments'>;
+type AnyEntry =
+  | CollectionEntry<'essays'>
+  | CollectionEntry<'experiments'>
+  | CollectionEntry<'exchanges'>;
 
 function fromEntry(
-  collection: 'essays' | 'experiments',
+  collection: 'essays' | 'experiments' | 'exchanges',
   entry: AnyEntry,
 ): Omit<Node, 'backlinks'> {
   const { data } = entry;
@@ -71,10 +74,12 @@ function fromEntry(
 export async function buildGraph(): Promise<Node[]> {
   const essays = await getCollection('essays');
   const experiments = await getCollection('experiments');
+  const exchanges = await getCollection('exchanges');
 
   const base: Omit<Node, 'backlinks'>[] = [
     ...essays.map((e) => fromEntry('essays', e)),
     ...experiments.map((e) => fromEntry('experiments', e)),
+    ...exchanges.map((e) => fromEntry('exchanges', e)),
     ...STATIC_NODES,
   ];
 

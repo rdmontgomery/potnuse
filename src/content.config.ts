@@ -12,6 +12,10 @@ const nodeSchema = z.object({
   description: z.string().optional(),
 });
 
+const exchangeSchema = nodeSchema.extend({
+  with: z.string().default('Claude'),
+});
+
 export const collections = {
   essays: defineCollection({
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/essays' }),
@@ -20,5 +24,9 @@ export const collections = {
   experiments: defineCollection({
     loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/experiments' }),
     schema: nodeSchema,
+  }),
+  exchanges: defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/exchanges' }),
+    schema: exchangeSchema,
   }),
 };
