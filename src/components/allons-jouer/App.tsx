@@ -1,5 +1,6 @@
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { HomeScreen } from '@/components/allons-jouer/HomeScreen';
+import { SongDetailScreen } from '@/components/allons-jouer/SongDetailScreen';
 import { FreePlayScreen } from '@/components/allons-jouer/FreePlayScreen';
 import { LessonScreen } from '@/components/allons-jouer/LessonScreen';
 import { ReferenceScreen } from '@/components/allons-jouer/ReferenceScreen';
@@ -23,8 +24,9 @@ export default function App() {
         @keyframes timingPop { 0%{transform:scale(0.8);opacity:0} 50%{transform:scale(1.1);opacity:1} 100%{transform:scale(1);opacity:0} }
       `}</style>
 
-      {screen === 'home'      && <HomeScreen />}
-      {screen === 'freeplay'  && <FreePlayScreen />}
+      {screen === 'home'       && <HomeScreen />}
+      {screen === 'songDetail' && <SongDetailScreen />}
+      {screen === 'freeplay'   && <FreePlayScreen />}
       {screen === 'lesson'    && <LessonScreen />}
       {screen === 'reference' && <ReferenceScreen />}
       {screen === 'tuner'     && <TunerScreen />}

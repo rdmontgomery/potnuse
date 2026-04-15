@@ -41,7 +41,7 @@ export interface Song {
   cultural?: CulturalCard;
 }
 
-export type Screen = 'home' | 'freeplay' | 'lesson' | 'reference' | 'tuner';
+export type Screen = 'home' | 'songDetail' | 'freeplay' | 'lesson' | 'reference' | 'tuner';
 export type InputMode = 'virtual' | 'mic';
 export type TimingResult = 'good' | 'ok' | 'off';
 export type LessonMode = 'ownPace' | 'keepUp';
