@@ -1,11 +1,9 @@
 {
 	"compatibility_date": "2026-04-14",
 	"compatibility_flags": ["global_fetch_strictly_public"],
-	"name": "rdmontgomry",
-	"main": "@astrojs/cloudflare/entrypoints/server",
+	"name": "potnuse",
 	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
+		"directory": "./dist"
 	},
 	"observability": {
 		"enabled": true
