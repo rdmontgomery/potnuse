@@ -67,7 +67,7 @@ export function useLesson() {
     const noteEnd = startTimes[lessonStep] + song.notes[lessonStep].duration;
     if (trackPosition >= noteEnd) {
       if (lessonStep < song.notes.length - 1) {
-        advanceLesson();
+        advanceLesson(hitRef.current);
       } else {
         completeSong(song.id);
       }

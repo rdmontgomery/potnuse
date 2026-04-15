@@ -25,7 +25,7 @@ interface AppActions {
   goHome: () => void;
   goTo: (screen: Screen) => void;
   startLesson: (songId: string) => void;
-  advanceLesson: () => void;
+  advanceLesson: (hit?: boolean) => void;
   completeSong: (songId: string) => void;
   restartLesson: () => void;
   toggleBellows: () => void;
@@ -79,7 +79,7 @@ export const useAppStore = create<AppState & AppActions>()(
         trackPosition: 0,
       }),
 
-      advanceLesson: () => set(s => ({ lessonStep: s.lessonStep + 1, streak: s.streak + 1 })),
+      advanceLesson: (hit = true) => set(s => ({ lessonStep: s.lessonStep + 1, streak: hit ? s.streak + 1 : 0 })),
 
       completeSong: (songId) => set(s => ({
         completedSongs: s.completedSongs.includes(songId)
