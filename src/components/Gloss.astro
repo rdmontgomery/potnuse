@@ -1,0 +1,88 @@
+---
+interface Props {
+  def: string;
+}
+const { def } = Astro.props;
+---
+
+<span class="gloss" tabindex="0">
+  <slot />
+  <span class="gloss-pop" role="tooltip">{def}</span>
+</span>
+
+<style>
+  .gloss {
+    position: relative;
+    border-bottom: 1px dotted var(--accent-dim);
+    cursor: help;
+    outline: none;
+  }
+  .gloss:focus {
+    outline: none;
+  }
+  .gloss-pop {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    bottom: calc(100% + 0.6rem);
+    min-width: 14rem;
+    max-width: 22rem;
+    width: max-content;
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'STIX Two Text', Georgia, serif;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--text);
+    font-style: normal;
+    font-weight: 400;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+    z-index: 20;
+    pointer-events: none;
+    white-space: normal;
+    text-align: left;
+    letter-spacing: 0;
+  }
+  .gloss-pop::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-top-color: var(--border);
+  }
+  .gloss-pop::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-1px);
+    width: 0;
+    height: 0;
+    border: 5px solid transparent;
+    border-top-color: var(--bg-card);
+    z-index: 1;
+  }
+  .gloss:hover .gloss-pop,
+  .gloss:focus .gloss-pop,
+  .gloss:focus-within .gloss-pop {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+  @media (max-width: 500px) {
+    .gloss-pop {
+      max-width: 80vw;
+    }
+  }
+</style>

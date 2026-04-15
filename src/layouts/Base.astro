@@ -2,9 +2,25 @@
 interface Props {
   title?: string;
   description?: string;
+  image?: string;
+  type?: 'website' | 'article';
 }
 
-const { title = 'potnuse', description } = Astro.props;
+const {
+  title = 'potnuse',
+  description,
+  image = '/og-default.png',
+  type,
+} = Astro.props;
+
+const SITE = 'https://rdmontgomery.com';
+const canonical = new URL(Astro.url.pathname, SITE).toString();
+const ogImage = new URL(image, SITE).toString();
+const ogType = type ?? (Astro.url.pathname === '/' ? 'website' : 'article');
+const ogDesc =
+  description ?? 'a garden with the workshop door left ajar';
+const displayTitle =
+  title === 'potnuse' ? 'rdmontgomery.com' : `${title} — rdmontgomery.com`;
 ---
 
 <!doctype html>
@@ -13,14 +29,29 @@ const { title = 'potnuse', description } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical} />
     <meta name="generator" content={Astro.generator} />
     {description && <meta name="description" content={description} />}
     <title>{title}</title>
+
+    <meta property="og:site_name" content="rdmontgomery.com" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={displayTitle} />
+    <meta property="og:description" content={ogDesc} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={displayTitle} />
+    <meta name="twitter:description" content={ogDesc} />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@300..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@300..800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&display=swap"
     />
   </head>
   <body>

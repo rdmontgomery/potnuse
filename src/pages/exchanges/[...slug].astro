@@ -1,0 +1,140 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import Backlinks from '@/components/Backlinks.astro';
+import StateBadge from '@/components/StateBadge.astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const exchanges = await getCollection('exchanges');
+  return exchanges.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+};
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Base title={entry.data.title} description={entry.data.description}>
+  <article class="exchange">
+    <header>
+      <h1>{entry.data.title}</h1>
+      <div class="meta">
+        <StateBadge state={entry.data.state} />
+        <span class="with">with {entry.data.with}</span>
+        {
+          entry.data.date && (
+            <time datetime={entry.data.date.toISOString()}>
+              {entry.data.date.toISOString().slice(0, 10)}
+            </time>
+          )
+        }
+      </div>
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+    <Backlinks slug={entry.id} />
+  </article>
+</Base>
+
+<style>
+  .exchange {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 6rem;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+  }
+  header h1 {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-weight: 500;
+    font-size: 2.6rem;
+    margin: 0 0 0.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .meta {
+    display: flex;
+    gap: 0.9rem;
+    align-items: center;
+    color: var(--text-dim);
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  .meta time {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+  }
+  .with {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+  }
+  .prose :global(p) {
+    margin: 1.2em 0;
+  }
+  .prose :global(a) {
+    color: var(--text);
+    border-bottom: 1px solid rgba(232, 168, 56, 0.5);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .prose :global(a:hover) {
+    color: var(--accent);
+  }
+  .prose :global(h2) {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.45rem;
+    margin: 2.5em 0 0.5em;
+    font-weight: 500;
+  }
+  .prose :global(em) {
+    font-style: italic;
+  }
+  .prose :global(strong) {
+    font-weight: 600;
+  }
+  /* Claude's pulled voice — STIX Two Text */
+  .prose :global(blockquote) {
+    font-family: 'STIX Two Text', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    font-style: normal;
+    color: var(--text-dim);
+    border-left: 2px solid var(--accent-dim);
+    margin: 1.8em 0;
+    padding: 0.3em 0 0.3em 1.3em;
+  }
+  .prose :global(blockquote p) {
+    margin: 0.7em 0;
+  }
+  .prose :global(blockquote p:first-child) {
+    margin-top: 0;
+  }
+  .prose :global(blockquote p:last-child) {
+    margin-bottom: 0;
+  }
+  .prose :global(blockquote em) {
+    font-style: italic;
+  }
+  .prose :global(hr) {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3em auto;
+    width: 30%;
+  }
+  .prose :global(abbr[title]) {
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-dim);
+    cursor: help;
+  }
+  .prose :global(blockquote abbr[title]) {
+    border-bottom-color: rgba(158, 142, 114, 0.6);
+  }
+</style>
