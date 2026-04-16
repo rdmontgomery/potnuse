@@ -7,11 +7,11 @@ import type { BellowsDir, Song } from './types';
 export function useAudio() {
   const stopToneRef = useRef<(() => void) | null>(null);
   const holdStartRef = useRef<number | null>(null);
-  const holdRafRef = useRef<number | null>(null);
   const demoTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const demoRafRef = useRef<number | null>(null);
+  const playDemoRef = useRef<((song: Song) => void) | null>(null);
 
-  const { setDetectedNote, setDemoNote, setHoldProgress, setLastHoldDuration, setTimingResult, setIsPlaying, setTrackPosition } = useAppStore.getState();
+  const { setDetectedNote, setDemoNote, setLastHoldDuration, setTimingResult, setIsPlaying, setTrackPosition } = useAppStore.getState();
 
   const handlePointerDown = useCallback((button: number, dir: BellowsDir) => {
     const btn = ACCORDION_NOTES.find(b => b.button === button);
@@ -26,27 +26,18 @@ export function useAudio() {
     useAppStore.getState().setBellows(dir);
 
     holdStartRef.current = performance.now();
-    setHoldProgress(0);
     setTimingResult(null);
-
-    const animate = () => {
-      if (!holdStartRef.current) return;
-      setHoldProgress(performance.now() - holdStartRef.current);
-      holdRafRef.current = requestAnimationFrame(animate);
-    };
-    holdRafRef.current = requestAnimationFrame(animate);
-  }, [setDetectedNote, setHoldProgress, setTimingResult]);
+  }, [setDetectedNote, setTimingResult]);
 
   const handlePointerUp = useCallback(() => {
     if (stopToneRef.current) { stopToneRef.current(); stopToneRef.current = null; }
-    if (holdRafRef.current) { cancelAnimationFrame(holdRafRef.current); holdRafRef.current = null; }
 
     const duration = holdStartRef.current ? performance.now() - holdStartRef.current : 0;
     holdStartRef.current = null;
     setLastHoldDuration(duration);
 
-    setTimeout(() => { setDetectedNote(null); setHoldProgress(0); }, 150);
-  }, [setDetectedNote, setHoldProgress, setLastHoldDuration]);
+    setTimeout(() => { setDetectedNote(null); }, 150);
+  }, [setDetectedNote, setLastHoldDuration]);
 
   const playDemo = useCallback((song: Song) => {
     if (useAppStore.getState().isPlaying) return;
@@ -94,12 +85,18 @@ export function useAudio() {
           setIsPlaying(false);
           setDemoNote(null);
           setTrackPosition(0);
+          // Natural end — if loop is on, restart the demo
+          if (useAppStore.getState().loopEnabled) {
+            const t4 = setTimeout(() => playDemoRef.current?.(song), 400);
+            demoTimeoutsRef.current.push(t4);
+          }
         }, 400);
         demoTimeoutsRef.current.push(t3);
       }
     };
     demoRafRef.current = requestAnimationFrame(tick);
   }, [setDemoNote, setIsPlaying, setTrackPosition]);
+  playDemoRef.current = playDemo;
 
   const stopDemo = useCallback(() => {
     demoTimeoutsRef.current.forEach(t => clearTimeout(t));

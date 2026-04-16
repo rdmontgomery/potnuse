@@ -1,8 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { K, FONTS } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { SONGS } from '@/lib/allons-jouer/songs';
-import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
 import { ButtonStrip } from '@/components/allons-jouer/ButtonStrip';
 import { NoteTrack } from '@/components/allons-jouer/NoteTrack';
 import { CulturalCard } from '@/components/allons-jouer/CulturalCard';
@@ -13,13 +12,33 @@ import { useTrackScroll } from '@/lib/allons-jouer/useTrackScroll';
 import { useMediaQuery } from '@/lib/allons-jouer/useMediaQuery';
 import type { LessonMode } from '@/lib/allons-jouer/types';
 
+const TEMPO_OPTIONS: { ratio: number; label: string }[] = [
+  { ratio: 0.6, label: '60%' },
+  { ratio: 0.8, label: '80%' },
+  { ratio: 1.0, label: '100%' },
+];
+
 export function LessonScreen() {
-  const {
-    selectedSong, lessonStep, detectedNote, demoNote,
-    inputMode, setInputMode, micError, streak, completedSongs,
-    isPlaying, lessonMode, trackPosition, tempoRatio,
-    goHome, restartLesson, setLessonMode, setTrackPosition,
-  } = useAppStore();
+  // Granular selectors so we don't re-render on every store mutation
+  const selectedSong  = useAppStore(s => s.selectedSong);
+  const lessonStep    = useAppStore(s => s.lessonStep);
+  const detectedNote  = useAppStore(s => s.detectedNote);
+  const demoNote      = useAppStore(s => s.demoNote);
+  const inputMode     = useAppStore(s => s.inputMode);
+  const micError      = useAppStore(s => s.micError);
+  const streak        = useAppStore(s => s.streak);
+  const isPlaying     = useAppStore(s => s.isPlaying);
+  const lessonMode    = useAppStore(s => s.lessonMode);
+  const trackPosition = useAppStore(s => s.trackPosition);
+  const tempoRatio    = useAppStore(s => s.tempoRatio);
+  const loopEnabled   = useAppStore(s => s.loopEnabled);
+  const setInputMode  = useAppStore(s => s.setInputMode);
+  const goHome        = useAppStore(s => s.goHome);
+  const restartLesson = useAppStore(s => s.restartLesson);
+  const setLessonMode = useAppStore(s => s.setLessonMode);
+  const setTrackPosition = useAppStore(s => s.setTrackPosition);
+  const setTempoRatio = useAppStore(s => s.setTempoRatio);
+  const setLoopEnabled = useAppStore(s => s.setLoopEnabled);
 
   const { handlePointerDown, handlePointerUp, playDemo, stopDemo } = useAudio();
   const { startListening, stopListening } = useMic();
@@ -37,13 +56,22 @@ export function LessonScreen() {
 
   useTrackScroll(isKeepUpActive, onTick, tempoRatio);
 
+  // Auto-restart when loop is enabled and lesson finishes
+  const loopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isComplete = !!song && lessonStep >= song.notes.length;
+
+  useEffect(() => {
+    if (!isComplete || !loopEnabled) return;
+    loopTimerRef.current = setTimeout(() => restartLesson(), 1500);
+    return () => {
+      if (loopTimerRef.current) clearTimeout(loopTimerRef.current);
+    };
+  }, [isComplete, loopEnabled, restartLesson]);
+
   if (!song) return null;
 
-  const isComplete = completedSongs.includes(song.id) && lessonStep >= song.notes.length - 1;
   const target = !isComplete && lessonStep < song.notes.length ? song.notes[lessonStep] : null;
-  const targetBtn = target ? ACCORDION_NOTES.find(b => b.button === target.button) : null;
-  const targetNoteName = targetBtn && target ? targetBtn[target.dir].note : '';
-  const progress = ((lessonStep + (isComplete ? 1 : 0)) / song.notes.length) * 100;
+  const progress = (lessonStep / song.notes.length) * 100;
 
   const toggleMode = () => {
     if (inputMode === 'virtual') { setInputMode('mic'); startListening(); }
@@ -80,8 +108,8 @@ export function LessonScreen() {
         <div style={{ width: `${progress}%`, height: '100%', borderRadius: 2, background: `linear-gradient(90deg, ${K.push}, ${K.accent})`, transition: 'width 0.4s ease-out' }} />
       </div>
 
-      {/* Mode picker */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+      {/* Mode picker + tempo (keepUp) + loop toggle */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         {(['ownPace', 'keepUp'] as const).map(mode => {
           const active = lessonMode === mode;
           const label = mode === 'ownPace' ? 'Own Pace' : 'Keep Up';
@@ -97,6 +125,35 @@ export function LessonScreen() {
             </button>
           );
         })}
+
+        {lessonMode === 'keepUp' && (
+          <div style={{ display: 'flex', gap: 4, marginLeft: 4 }}>
+            {TEMPO_OPTIONS.map(opt => {
+              const active = tempoRatio === opt.ratio;
+              return (
+                <button key={opt.ratio} onClick={() => setTempoRatio(opt.ratio)} style={{
+                  padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+                  background: active ? K.highlight + '22' : K.bgButton,
+                  border: `1px solid ${active ? K.highlight + '44' : K.border}`,
+                  color: active ? K.highlight : K.textDim,
+                  fontSize: 12, fontFamily: FONTS.mono, fontWeight: active ? 700 : 400,
+                }}>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <button onClick={() => setLoopEnabled(!loopEnabled)} title="Auto-restart on completion" style={{
+          padding: '5px 12px', borderRadius: 6, cursor: 'pointer', marginLeft: 'auto',
+          background: loopEnabled ? K.success + '22' : K.bgButton,
+          border: `1px solid ${loopEnabled ? K.success + '44' : K.border}`,
+          color: loopEnabled ? K.success : K.textDim,
+          fontSize: 12, fontFamily: FONTS.serif, fontWeight: loopEnabled ? 600 : 400,
+        }}>
+          ↻ Loop
+        </button>
       </div>
 
       {/* Mic error */}
@@ -117,8 +174,8 @@ export function LessonScreen() {
           isComplete={isComplete}
         />
 
-        {/* Completion overlay */}
-        {isComplete && (
+        {/* Completion overlay — hidden when looping so restart is silent */}
+        {isComplete && !loopEnabled && (
           <div style={{
             position: 'absolute', inset: 0, borderRadius: 8,
             background: K.bg + 'ee',
@@ -135,36 +192,6 @@ export function LessonScreen() {
           </div>
         )}
       </div>
-
-      {/* Current note hint (compact, below track) */}
-      {target && !isComplete && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-          padding: '8px 16px', marginBottom: 12,
-          background: K.bgCard, borderRadius: 8, border: `1px solid ${K.border}`,
-        }}>
-          <span style={{ fontSize: 11, color: K.textMuted, fontFamily: FONTS.serif }}>
-            Note {lessonStep + 1}/{song.notes.length}
-          </span>
-          <span style={{
-            fontSize: 16, fontWeight: 700, fontFamily: FONTS.mono,
-            color: target.dir === 'push' ? K.pushBright : K.pullBright,
-          }}>
-            {target.dir === 'push' ? '>' : '<'}
-            {targetNoteName}
-            {target.dir === 'push' ? '<' : '>'}
-          </span>
-          <span style={{
-            fontSize: 11, color: target.dir === 'push' ? K.push : K.pull,
-            textTransform: 'uppercase', fontFamily: FONTS.serif,
-          }}>
-            {target.dir} btn {target.button}
-          </span>
-          <span style={{ fontSize: 11, color: K.textMuted, fontFamily: FONTS.serif }}>
-            ~{(target.duration / 1000).toFixed(1)}s
-          </span>
-        </div>
-      )}
 
       {/* Button strip */}
       <ButtonStrip

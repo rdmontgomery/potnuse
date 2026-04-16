@@ -51,9 +51,8 @@ export function useLesson() {
         setTimeout(() => setTimingResult(null), 800);
       }
 
-      if (lessonStep < song.notes.length - 1) {
-        advanceLesson();
-      } else {
+      advanceLesson();
+      if (lessonStep >= song.notes.length - 1) {
         completeSong(song.id);
       }
     }, 400);
@@ -66,9 +65,8 @@ export function useLesson() {
 
     const noteEnd = startTimes[lessonStep] + song.notes[lessonStep].duration;
     if (trackPosition >= noteEnd) {
-      if (lessonStep < song.notes.length - 1) {
-        advanceLesson(hitRef.current);
-      } else {
+      advanceLesson(hitRef.current);
+      if (lessonStep >= song.notes.length - 1) {
         completeSong(song.id);
       }
     }

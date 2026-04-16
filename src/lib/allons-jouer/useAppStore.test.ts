@@ -10,23 +10,34 @@ describe('useAppStore', () => {
     expect(useAppStore.getState().screen).toBe('home');
   });
 
-  it('startLesson sets screen, song, resets step and streak', () => {
+  it('startLesson sets screen, song, resets step and streak with default mode/tempo', () => {
     useAppStore.getState().startLesson('jolie-blonde');
     const s = useAppStore.getState();
     expect(s.screen).toBe('lesson');
     expect(s.selectedSong).toBe('jolie-blonde');
     expect(s.lessonStep).toBe(0);
     expect(s.streak).toBe(0);
+    expect(s.lessonMode).toBe('ownPace');
+    expect(s.tempoRatio).toBe(1);
   });
 
-  it('goHome resets navigation state, keeps completedSongs', () => {
+  it('startLesson honors explicit mode and tempo', () => {
+    useAppStore.getState().startLesson('jolie-blonde', 'keepUp', 0.6);
+    const s = useAppStore.getState();
+    expect(s.lessonMode).toBe('keepUp');
+    expect(s.tempoRatio).toBe(0.6);
+  });
+
+  it('goHome resets navigation state, keeps completedSongs and loopEnabled', () => {
     useAppStore.getState().startLesson('jolie-blonde');
     useAppStore.getState().completeSong('jolie-blonde');
+    useAppStore.getState().setLoopEnabled(true);
     useAppStore.getState().goHome();
     const s = useAppStore.getState();
     expect(s.screen).toBe('home');
     expect(s.selectedSong).toBeNull();
     expect(s.completedSongs).toContain('jolie-blonde');
+    expect(s.loopEnabled).toBe(true);
   });
 
   it('advanceLesson increments step and streak', () => {
