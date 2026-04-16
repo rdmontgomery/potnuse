@@ -20,16 +20,17 @@ interface AppState {
   lessonMode: LessonMode;
   trackPosition: number;
   tempoRatio: number;       // 0.6 | 0.8 | 1.0 — only affects Keep Up mode
+  loopEnabled: boolean;
 }
 
 interface AppActions {
   goHome: () => void;
   goTo: (screen: Screen) => void;
-  selectSong: (songId: string) => void;
-  startLesson: (songId: string, mode: LessonMode, tempoRatio: number) => void;
+  startLesson: (songId: string, mode?: LessonMode, tempoRatio?: number) => void;
   advanceLesson: (hit?: boolean) => void;
   completeSong: (songId: string) => void;
   restartLesson: () => void;
+  setLoopEnabled: (enabled: boolean) => void;
   toggleBellows: () => void;
   setBellows: (dir: BellowsDir) => void;
   setDetectedNote: (note: DetectedNote | null) => void;
@@ -63,6 +64,7 @@ export const INITIAL_STATE: AppState = {
   lessonMode: 'ownPace',
   trackPosition: 0,
   tempoRatio: 1,
+  loopEnabled: false,
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -70,12 +72,10 @@ export const useAppStore = create<AppState & AppActions>()(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      goHome: () => set({ ...INITIAL_STATE, completedSongs: get().completedSongs }),
+      goHome: () => set({ ...INITIAL_STATE, completedSongs: get().completedSongs, loopEnabled: get().loopEnabled }),
       goTo: (screen) => set({ screen }),
 
-      selectSong: (songId) => set({ screen: 'songDetail', selectedSong: songId }),
-
-      startLesson: (songId, mode, tempoRatio) => set({
+      startLesson: (songId, mode = 'ownPace', tempoRatio = 1) => set({
         screen: 'lesson',
         selectedSong: songId,
         lessonStep: 0,
@@ -111,11 +111,12 @@ export const useAppStore = create<AppState & AppActions>()(
       setLessonMode: (mode) => set({ lessonMode: mode, lessonStep: 0, streak: 0, trackPosition: 0, timingResult: null }),
       setTrackPosition: (ms) => set({ trackPosition: ms }),
       setTempoRatio: (ratio) => set({ tempoRatio: ratio }),
+      setLoopEnabled: (enabled) => set({ loopEnabled: enabled }),
     }),
     {
       name: 'allons-jouer',
-      // Only persist progress — everything else resets on load
-      partialize: (state) => ({ completedSongs: state.completedSongs }),
+      // Persist progress and loop preference — everything else resets on load
+      partialize: (state) => ({ completedSongs: state.completedSongs, loopEnabled: state.loopEnabled }),
     }
   )
 );

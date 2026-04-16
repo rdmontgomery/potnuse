@@ -18,14 +18,35 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
   const numSize = compact ? 11 : 13;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 2 : 4 }}>
-      {/* Push arrow rail */}
+    <div style={{
+      border: `1px solid ${K.border}`,
+      borderRadius: 12,
+      padding: compact ? 6 : 10,
+      background: K.bgCard,
+      display: 'flex', flexDirection: 'column', gap: compact ? 2 : 4,
+      position: 'relative',
+    }}>
+      {/* Push + pull key — both up top */}
       <div style={{
-        fontSize: 10, fontFamily: FONTS.mono, color: K.push, opacity: 0.5,
-        textAlign: 'center', letterSpacing: 4, lineHeight: 1, paddingBottom: 2,
-        overflow: 'hidden', whiteSpace: 'nowrap',
+        display: 'flex', flexDirection: 'column', gap: 4,
+        paddingBottom: compact ? 6 : 8,
       }}>
-        {'► '.repeat(16)}PUSH{'► '.repeat(2)}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1, height: 2, borderRadius: 1, background: K.push, opacity: 0.7 }} />
+          <span style={{
+            fontSize: 9, fontFamily: FONTS.mono, color: K.push, opacity: 0.8,
+            textTransform: 'uppercase', letterSpacing: 2,
+          }}>push</span>
+          <div style={{ flex: 1, height: 2, borderRadius: 1, background: K.push, opacity: 0.7 }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1, height: 2, borderRadius: 1, background: K.pull, opacity: 0.7 }} />
+          <span style={{
+            fontSize: 9, fontFamily: FONTS.mono, color: K.pull, opacity: 0.8,
+            textTransform: 'uppercase', letterSpacing: 2,
+          }}>pull</span>
+          <div style={{ flex: 1, height: 2, borderRadius: 1, background: K.pull, opacity: 0.7 }} />
+        </div>
       </div>
 
       {buttons.map(btn => {
@@ -63,7 +84,7 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
                 fontSize: noteSize, fontWeight: 700, fontFamily: FONTS.mono,
                 color: isPushDetected ? '#fff' : isPushTarget ? K.pushBright : K.push,
               }}>
-                {'>'}{pushInfo.note}{'<'}
+                {'→ '}{pushInfo.note}{' ←'}
               </span>
               {isPushTarget && !isPushDetected && (
                 <span style={{ position: 'absolute', inset: 0, border: `2px solid ${K.pushBright}`, animation: 'targetPulse 1.2s ease-in-out infinite', pointerEvents: 'none' }} />
@@ -103,7 +124,7 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
                 fontSize: noteSize, fontWeight: 700, fontFamily: FONTS.mono,
                 color: isPullDetected ? '#fff' : isPullTarget ? K.pullBright : K.pull,
               }}>
-                {'<'}{pullInfo.note}{'>'}
+                {'← '}{pullInfo.note}{' →'}
               </span>
               {isPullTarget && !isPullDetected && (
                 <span style={{ position: 'absolute', inset: 0, border: `2px solid ${K.pullBright}`, animation: 'targetPulse 1.2s ease-in-out infinite', pointerEvents: 'none' }} />
@@ -116,14 +137,6 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
         );
       })}
 
-      {/* Pull arrow rail */}
-      <div style={{
-        fontSize: 10, fontFamily: FONTS.mono, color: K.pull, opacity: 0.5,
-        textAlign: 'center', letterSpacing: 4, lineHeight: 1, paddingTop: 2,
-        overflow: 'hidden', whiteSpace: 'nowrap',
-      }}>
-        {'◄ '.repeat(16)}PULL{'◄ '.repeat(2)}
-      </div>
     </div>
   );
 }
