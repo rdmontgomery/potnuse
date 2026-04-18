@@ -3,23 +3,33 @@ title: hobbies at the DSL boundary
 date: 2026-04-15
 state: seedling
 with: Claude
-connects: [calibrate]
+connects: [calibrate, mumford-magick]
 tags: [llm, dsl, hobbies, cross-pollination]
 description: A one-shot exchange. A friend asked how to prompt LLMs for introspection and hobby-rediscovery. Chalmers's DSL insight did most of the work.
 ---
 
 import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+<Marginal>[Adam Chalmers](https://zoo.dev) works at zoo.dev — parametric CAD driven by a text-based DSL. The DSL framing is his: any domain with a formal grammar is now an LLM superpower. The question is which domains.</Marginal>
 
 A friend is trying to figure out the coolest ways to prompt <Gloss def="Large Language Model — ChatGPT, Claude, and kin.">LLMs</Gloss> for new ideas around introspection and mental health, or maybe building up new hobbies. The angle that [Adam Chalmers](https://zoo.dev) pointed out was that any tech with a <Gloss def="Domain-Specific Language — a formal syntax compressed around one domain. Excel formulas for tables, SQL for databases, LilyPond for musical notation.">DSL</Gloss> is now superpowered because of LLMs. Excel for tables, zoo.dev for CAD, etc. Is there something in there that could help someone rediscover new ways to look at old hobbies?
 
 ---
 
 > The Chalmers insight is exactly right, and it generalizes further than most people take it. The key move: **a DSL isn't just a syntax — it's a compressed ontology of a domain.** LLMs don't just translate natural language into the DSL, they make the ontology navigable by non-experts. Excel's ontology is cells / ranges / functions. <Gloss def="zoo.dev — makes a CAD system driven by a text-based DSL, so LLMs can author 3D parts.">KittyCAD</Gloss>'s is solid geometry operations. The question becomes: what domains have rich formal structure that people already care about but can't access without years of skill-building?
->
+
+<Pull>a DSL isn't just a syntax — it's a compressed ontology of a domain</Pull>
+
 > **Music theory is the killer case.** ABC notation, MusicXML, <Gloss def="LilyPond — a text-based language for engraving sheet music. LaTeX, but for notation.">LilyPond</Gloss> — these are DSLs for music. Someone who played guitar in college and dropped it can now say "give me a chord progression that sounds like Radiohead meets bossa nova, in tab format" and get something playable. The LLM navigates the theory; the human brings taste and fingers. That's not replacing the hobby — it's removing the bottleneck that killed it (theory fluency) and leaving the part that was always fun (playing).
 >
 > Cooking has this structure too, though people don't think of it as a DSL. Flavor compound databases, technique taxonomies, ratio frameworks. "I used to love Thai cooking but got bored — what's a dish that uses the same aromatic profile but a French technique?" That's a query over a latent DSL.
->
+
+<Marginal>Nikki Segnit's *The Flavor Thesaurus* maps 99 ingredients as nodes in a flavor graph — that's the DSL made legible without LLMs. Now you can query it in natural language.</Marginal>
+
 > **The meta-move: the prompt isn't "give me ideas." The prompt is "here's what I used to love about X — what's the DSL-adjacent structure underneath that, and what other domains share it?"** Someone who loved darkroom photography might discover they were actually in love with *process control with aesthetic feedback* — which maps to sourdough, to generative art, to ceramics glazing.
->
-> **The reframe: hobbies don't die from lack of interest. They die from friction at the skill / knowledge boundary. Every domain with a DSL just had that boundary demolished.** The question isn't "what new hobby should I try" — it's "what was the latent structure I was always attracted to, and where else does it live?"
+
+<Pull>Hobbies don't die from lack of interest. They die from friction at the skill / knowledge boundary. Every domain with a DSL just had that boundary demolished.</Pull>
+
+> The question isn't "what new hobby should I try" — it's "what was the latent structure I was always attracted to, and where else does it live?"

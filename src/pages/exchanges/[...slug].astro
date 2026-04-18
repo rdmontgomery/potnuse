@@ -6,11 +6,16 @@ import Backlinks from '@/components/Backlinks.astro';
 import StateBadge from '@/components/StateBadge.astro';
 
 export const getStaticPaths: GetStaticPaths = async () => {
+  // Slugs that have their own bespoke page file under src/pages/exchanges/.
+  // Keep this list in sync; the dynamic route skips them to avoid collisions.
+  const bespoke = new Set<string>(['mumford-magick']);
   const exchanges = await getCollection('exchanges');
-  return exchanges.map((entry) => ({
-    params: { slug: entry.id },
-    props: { entry },
-  }));
+  return exchanges
+    .filter((entry) => !bespoke.has(entry.id))
+    .map((entry) => ({
+      params: { slug: entry.id },
+      props: { entry },
+    }));
 };
 
 const { entry } = Astro.props;

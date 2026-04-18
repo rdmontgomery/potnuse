@@ -1,0 +1,22 @@
+---
+// Pull: typographic pull quote, breaks out of prose flow as editorial emphasis
+---
+
+<aside class="pull">
+  <slot />
+</aside>
+
+<style>
+  .pull {
+    margin: 2.5em 0;
+    padding: 0.65em 0;
+    border-top: 1px solid var(--accent-dim);
+    border-bottom: 1px solid var(--accent-dim);
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1.45rem;
+    font-style: italic;
+    line-height: 1.35;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+</style>

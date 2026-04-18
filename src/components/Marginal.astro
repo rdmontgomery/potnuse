@@ -1,0 +1,39 @@
+---
+// Marginal: sidenote that floats into the right gutter on wide screens,
+// collapses to an inline aside below 1100px
+---
+
+<span class="marginal">
+  <slot />
+</span>
+
+<style>
+  .marginal {
+    float: right;
+    clear: right;
+    width: 200px;
+    margin-left: 1.5rem;
+    margin-right: -240px;
+    margin-bottom: 0.75rem;
+    font-family: 'STIX Two Text', Georgia, serif;
+    font-size: 0.77rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    border-left: 1px solid var(--border);
+    padding-left: 0.7rem;
+  }
+
+  @media (max-width: 1100px) {
+    .marginal {
+      float: none;
+      display: block;
+      width: auto;
+      margin: 0.75em 0 0.75em 0;
+      margin-right: 0;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      border-left: 2px solid var(--border);
+      padding: 0.4em 0 0.4em 0.75rem;
+    }
+  }
+</style>
