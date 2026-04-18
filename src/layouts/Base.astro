@@ -57,6 +57,37 @@ const displayTitle =
   <body>
     <slot />
 
+    <script>
+      // Up Up Down Down Left Right Left Right — opens /rhizome from anywhere.
+      const SEQUENCE = [
+        'ArrowUp',
+        'ArrowUp',
+        'ArrowDown',
+        'ArrowDown',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowLeft',
+        'ArrowRight',
+      ];
+      let pos = 0;
+      window.addEventListener('keydown', (ev) => {
+        const target = ev.target;
+        if (
+          target instanceof HTMLElement &&
+          (target.isContentEditable ||
+            target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA')
+        ) {
+          return;
+        }
+        pos = ev.key === SEQUENCE[pos] ? pos + 1 : ev.key === SEQUENCE[0] ? 1 : 0;
+        if (pos === SEQUENCE.length) {
+          pos = 0;
+          window.location.href = '/rhizome';
+        }
+      });
+    </script>
+
     <style is:global>
       :root {
         --font-crimson: 'Crimson Pro', Georgia, 'Iowan Old Style', serif;
