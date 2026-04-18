@@ -38,6 +38,24 @@ import Marginal from '@/components/Marginal.astro';
 
 **Reference existing exchanges for tone and pacing:** `src/content/exchanges/dsl-hobbies.mdx` (short one-shot), `src/content/exchanges/mumford-magick.mdx` (long multi-turn).
 
+## Collection template vs. bespoke page
+
+Two rendering paths exist for exchanges. Use the one that fits the piece — don't force the generic template when the content wants a custom form.
+
+**Default (collection template):** the MDX file in `src/content/exchanges/` is rendered by `src/pages/exchanges/[...slug].astro`. Good for ordinary exchanges — inherits typography, Backlinks, meta. Zero per-piece setup.
+
+**Bespoke (custom page):** for long or experimentally-structured exchanges (sticky ToC, custom diagrams, split-column layouts, anything ambitious). Create `src/pages/exchanges/<slug>.astro` that imports the MDX content via `getEntry('exchanges', '<slug>')` + `render()`, and add the slug to `BESPOKE_SLUGS` in `[...slug].astro` so the dynamic route skips it (avoids static-path collision).
+
+The MDX file still lives in the collection either way — the graph, frontmatter, and Backlinks keep working.
+
+Current bespoke pages: `src/pages/exchanges/mumford-magick.astro` (sticky sidebar ToC).
+
+When a bespoke page uses inline anchor markers in the MDX (`<span id="x" data-toc-target />`), style them in the bespoke page's CSS — not in the shared template — so they don't bleed into other exchanges.
+
+### Drift is a feature, not a bug
+
+Bespoke pages will drift from the template over time. That's fine — Rick and I review the site together periodically and reconcile where it matters. Don't try to pre-emptively abstract a shared layout the moment two bespoke pages have a common element. Wait until three do, and the abstraction is obvious.
+
 ## What to avoid
 
 - **Caveman mode.** Don't compress Claude's voice into terse bullet fragments ("Instinct right. Efficiency optimization applied before effectiveness asked."). The discursive texture *is* the product of these pieces — that's the entire thesis of the mumford-magick exchange. Preserve articles, connectives, and the conversational "you."
