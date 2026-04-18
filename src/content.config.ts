@@ -14,6 +14,14 @@ const nodeSchema = z.object({
 
 const exchangeSchema = nodeSchema.extend({
   with: z.string().default('Claude'),
+  toc: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 export const collections = {
