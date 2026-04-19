@@ -6,6 +6,9 @@ import Backlinks from '@/components/Backlinks.astro';
 import StateBadge from '@/components/StateBadge.astro';
 
 export const getStaticPaths: GetStaticPaths = async () => {
+  // Experiment slugs that have their own bespoke page file under src/pages/experiments/.
+  // Keep this list in sync; the dynamic route skips them to avoid collisions.
+  const bespokeExperiments = new Set<string>(['necromantic-circle']);
   const essays = await getCollection('essays');
   const experiments = await getCollection('experiments');
   return [
@@ -13,10 +16,12 @@ export const getStaticPaths: GetStaticPaths = async () => {
       params: { collection: 'essays', slug: entry.id },
       props: { entry },
     })),
-    ...experiments.map((entry) => ({
-      params: { collection: 'experiments', slug: entry.id },
-      props: { entry },
-    })),
+    ...experiments
+      .filter((entry) => !bespokeExperiments.has(entry.id))
+      .map((entry) => ({
+        params: { collection: 'experiments', slug: entry.id },
+        props: { entry },
+      })),
   ];
 };
 
