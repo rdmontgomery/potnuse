@@ -59,17 +59,24 @@ const displayTitle =
 
     <script>
       // Up Up Down Down Left Right Left Right — opens /rhizome from anywhere.
-      const SEQUENCE = [
-        'ArrowUp',
-        'ArrowUp',
-        'ArrowDown',
-        'ArrowDown',
-        'ArrowLeft',
-        'ArrowRight',
-        'ArrowLeft',
-        'ArrowRight',
-      ];
-      let pos = 0;
+      // Two input paths: keyboard (desktop) and a single continuous finger
+      // drag (mobile) that traces the same directions.
+
+      /** @type {Array<'U'|'D'|'L'|'R'>} */
+      const SEQUENCE = ['U', 'U', 'D', 'D', 'L', 'R', 'L', 'R'];
+      const KEY_TO_DIR = {
+        ArrowUp: 'U',
+        ArrowDown: 'D',
+        ArrowLeft: 'L',
+        ArrowRight: 'R',
+      };
+
+      function enter() {
+        window.location.href = '/rhizome';
+      }
+
+      // --- keyboard ---
+      let keyPos = 0;
       window.addEventListener('keydown', (ev) => {
         const target = ev.target;
         if (
@@ -80,11 +87,117 @@ const displayTitle =
         ) {
           return;
         }
-        pos = ev.key === SEQUENCE[pos] ? pos + 1 : ev.key === SEQUENCE[0] ? 1 : 0;
-        if (pos === SEQUENCE.length) {
-          pos = 0;
-          window.location.href = '/rhizome';
+        const dir = KEY_TO_DIR[ev.key];
+        if (!dir) {
+          keyPos = 0;
+          return;
         }
+        keyPos =
+          dir === SEQUENCE[keyPos]
+            ? keyPos + 1
+            : dir === SEQUENCE[0]
+              ? 1
+              : 0;
+        if (keyPos === SEQUENCE.length) {
+          keyPos = 0;
+          enter();
+        }
+      });
+
+      // --- touch: one continuous drag tracing the sequence ---
+      // Segment the path whenever direction changes past a minimum leg.
+      // MIN_LEG filters jitter; only past the 2nd matching leg do we
+      // preventDefault so ordinary scroll gestures still work.
+      const MIN_LEG = 28; // px in the dominant axis before we count a leg
+      /** @type {Array<'U'|'D'|'L'|'R'>} */
+      let legs = [];
+      let lastX = 0;
+      let lastY = 0;
+      let anchorX = 0;
+      let anchorY = 0;
+      let tracking = false;
+      let currentDir = null;
+
+      function matchesSoFar() {
+        if (legs.length > SEQUENCE.length) return false;
+        for (let i = 0; i < legs.length; i++) {
+          if (legs[i] !== SEQUENCE[i]) return false;
+        }
+        return true;
+      }
+
+      window.addEventListener(
+        'touchstart',
+        (ev) => {
+          if (ev.touches.length !== 1) {
+            tracking = false;
+            legs = [];
+            return;
+          }
+          const t = ev.touches[0];
+          tracking = true;
+          legs = [];
+          currentDir = null;
+          lastX = anchorX = t.clientX;
+          lastY = anchorY = t.clientY;
+        },
+        { passive: true },
+      );
+
+      window.addEventListener(
+        'touchmove',
+        (ev) => {
+          if (!tracking || ev.touches.length !== 1) return;
+          const t = ev.touches[0];
+          lastX = t.clientX;
+          lastY = t.clientY;
+          const dx = lastX - anchorX;
+          const dy = lastY - anchorY;
+          const adx = Math.abs(dx);
+          const ady = Math.abs(dy);
+          const dominant = adx > ady ? adx : ady;
+          if (dominant < MIN_LEG) return;
+
+          const dir =
+            adx > ady ? (dx > 0 ? 'R' : 'L') : dy > 0 ? 'D' : 'U';
+
+          if (dir !== currentDir) {
+            legs.push(dir);
+            currentDir = dir;
+            if (!matchesSoFar()) {
+              // failed — stop tracking this gesture, let the page scroll.
+              tracking = false;
+              legs = [];
+              return;
+            }
+          }
+          // reset anchor so the next leg is measured from the pivot point
+          anchorX = lastX;
+          anchorY = lastY;
+
+          // once we're clearly in the combo, suppress scroll so the
+          // remaining legs can be traced without the page moving.
+          if (legs.length >= 2 && ev.cancelable) {
+            ev.preventDefault();
+          }
+        },
+        { passive: false },
+      );
+
+      window.addEventListener('touchend', () => {
+        if (tracking && legs.length === SEQUENCE.length && matchesSoFar()) {
+          legs = [];
+          tracking = false;
+          enter();
+          return;
+        }
+        tracking = false;
+        legs = [];
+      });
+
+      window.addEventListener('touchcancel', () => {
+        tracking = false;
+        legs = [];
       });
     </script>
 
