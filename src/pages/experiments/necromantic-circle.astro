@@ -1,0 +1,23 @@
+---
+import Base from '@/layouts/Base.astro';
+import Graph from '@/components/necromantic-circle/Graph';
+import Backlinks from '@/components/Backlinks.astro';
+---
+
+<Base
+  title="the necromantic circle"
+  description="An intellectual graph of the thinkers who've stuck, colored by domain and linked by kind of influence."
+>
+  <Graph client:only="react" />
+  <section class="chrome">
+    <Backlinks slug="necromantic-circle" />
+  </section>
+</Base>
+
+<style>
+  .chrome {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+</style>
