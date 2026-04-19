@@ -58,12 +58,12 @@ const displayTitle =
     <slot />
 
     <script>
-      // Up Up Down Down Left Right Left Right — opens /rhizome from anywhere.
-      // Two input paths: keyboard (desktop) and a single continuous finger
-      // drag (mobile) that traces the same directions.
+      // Up Down Left Right Left Right — opens /rhizome from anywhere.
+      // No repeated directions, so the mobile gesture is just six clean
+      // direction changes in one continuous drag.
 
       /** @type {Array<'U'|'D'|'L'|'R'>} */
-      const SEQUENCE = ['U', 'U', 'D', 'D', 'L', 'R', 'L', 'R'];
+      const SEQUENCE = ['U', 'D', 'L', 'R', 'L', 'R'];
       const DEBUG =
         new URLSearchParams(window.location.search).get('konami') === 'debug';
       const log = (...args) => {
@@ -110,15 +110,10 @@ const displayTitle =
         }
       });
 
-      // --- touch: one continuous drag tracing the sequence ---
-      // Segment the path whenever direction changes past a minimum leg.
-      // MIN_LEG filters jitter; only past the 2nd matching leg do we
-      // preventDefault so ordinary scroll gestures still work.
-      const MIN_LEG = 28; // px in the dominant axis before we count a leg
+      // --- touch: one continuous drag with six direction changes ---
+      const MIN_LEG = 28; // px in the dominant axis before a leg counts
       /** @type {Array<'U'|'D'|'L'|'R'>} */
       let legs = [];
-      let lastX = 0;
-      let lastY = 0;
       let anchorX = 0;
       let anchorY = 0;
       let tracking = false;
@@ -138,15 +133,14 @@ const displayTitle =
           if (ev.touches.length !== 1) {
             tracking = false;
             legs = [];
-            log('touchstart: multi-touch, aborting');
             return;
           }
           const t = ev.touches[0];
           tracking = true;
           legs = [];
           currentDir = null;
-          lastX = anchorX = t.clientX;
-          lastY = anchorY = t.clientY;
+          anchorX = t.clientX;
+          anchorY = t.clientY;
           log('touchstart', { x: t.clientX, y: t.clientY });
         },
         { passive: true },
@@ -157,10 +151,8 @@ const displayTitle =
         (ev) => {
           if (!tracking || ev.touches.length !== 1) return;
           const t = ev.touches[0];
-          lastX = t.clientX;
-          lastY = t.clientY;
-          const dx = lastX - anchorX;
-          const dy = lastY - anchorY;
+          const dx = t.clientX - anchorX;
+          const dy = t.clientY - anchorY;
           const adx = Math.abs(dx);
           const ady = Math.abs(dy);
           const dominant = adx > ady ? adx : ady;
@@ -177,19 +169,15 @@ const displayTitle =
               ok: matchesSoFar(),
             });
             if (!matchesSoFar()) {
-              // failed — stop tracking this gesture, let the page scroll.
               tracking = false;
               legs = [];
               log('mismatch, abort');
               return;
             }
           }
-          // reset anchor so the next leg is measured from the pivot point
-          anchorX = lastX;
-          anchorY = lastY;
+          anchorX = t.clientX;
+          anchorY = t.clientY;
 
-          // once we're clearly in the combo, suppress scroll so the
-          // remaining legs can be traced without the page moving.
           if (legs.length >= 2 && ev.cancelable) {
             ev.preventDefault();
           }
