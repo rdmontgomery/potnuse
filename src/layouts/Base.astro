@@ -64,6 +64,12 @@ const displayTitle =
 
       /** @type {Array<'U'|'D'|'L'|'R'>} */
       const SEQUENCE = ['U', 'U', 'D', 'D', 'L', 'R', 'L', 'R'];
+      const DEBUG =
+        new URLSearchParams(window.location.search).get('konami') === 'debug';
+      const log = (...args) => {
+        if (DEBUG) console.log('[konami]', ...args);
+      };
+      if (DEBUG) log('debug on; sequence', SEQUENCE.join(''));
       const KEY_TO_DIR = {
         ArrowUp: 'U',
         ArrowDown: 'D',
@@ -132,6 +138,7 @@ const displayTitle =
           if (ev.touches.length !== 1) {
             tracking = false;
             legs = [];
+            log('touchstart: multi-touch, aborting');
             return;
           }
           const t = ev.touches[0];
@@ -140,6 +147,7 @@ const displayTitle =
           currentDir = null;
           lastX = anchorX = t.clientX;
           lastY = anchorY = t.clientY;
+          log('touchstart', { x: t.clientX, y: t.clientY });
         },
         { passive: true },
       );
@@ -164,10 +172,15 @@ const displayTitle =
           if (dir !== currentDir) {
             legs.push(dir);
             currentDir = dir;
+            log('leg', legs.length, dir, 'path:', legs.join(''), {
+              expected: SEQUENCE[legs.length - 1],
+              ok: matchesSoFar(),
+            });
             if (!matchesSoFar()) {
               // failed — stop tracking this gesture, let the page scroll.
               tracking = false;
               legs = [];
+              log('mismatch, abort');
               return;
             }
           }
@@ -185,9 +198,11 @@ const displayTitle =
       );
 
       window.addEventListener('touchend', () => {
+        log('touchend', { legs: legs.join(''), tracking });
         if (tracking && legs.length === SEQUENCE.length && matchesSoFar()) {
           legs = [];
           tracking = false;
+          log('MATCH, navigating');
           enter();
           return;
         }
