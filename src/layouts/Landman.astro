@@ -1,0 +1,204 @@
+---
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{title} — landman</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@300..600&display=swap"
+    />
+  </head>
+  <body>
+    <div class="landman-root">
+      <header class="top">
+        <a href="/landman" class="brand">
+          landman<span class="brand-sub">&nbsp;/ title pipeline</span>
+        </a>
+        <span class="who" id="who"></span>
+      </header>
+
+      <main>
+        <slot />
+      </main>
+
+      <footer>
+        <span>internal pitch · not a real engagement</span>
+        <a href="/cdn-cgi/access/logout">sign out</a>
+      </footer>
+    </div>
+
+    <script>
+      fetch('/cdn-cgi/access/get-identity')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((id) => {
+          const el = document.getElementById('who');
+          if (el && id?.email) el.textContent = id.email;
+        })
+        .catch(() => {});
+    </script>
+
+    <style is:global>
+      :root {
+        --lm-bg: #0f0f0e;
+        --lm-bg-2: #161615;
+        --lm-card: #1b1b19;
+        --lm-text: #f3f0e8;
+        --lm-dim: #b8b4a8;
+        --lm-muted: #807c72;
+        --lm-border: #2a2a27;
+        --lm-border-soft: #222220;
+        --lm-accent: #d49a4a;
+        --lm-accent-soft: #8a5a2a;
+        --lm-ok: #7fb085;
+        --lm-warn: #d4a94a;
+        --lm-err: #c96b5a;
+        --lm-serif: 'Crimson Pro', Georgia, serif;
+        --lm-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--lm-bg);
+        color: var(--lm-text);
+        font-family: var(--lm-serif);
+        font-size: 18px;
+        line-height: 1.6;
+        color-scheme: dark;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      .landman-root {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        min-height: 100vh;
+      }
+
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 1.4rem;
+        padding: 1rem 1.8rem;
+        background: var(--lm-bg);
+        border-bottom: 1px solid var(--lm-border);
+        font-family: var(--lm-mono);
+        font-size: 0.8rem;
+      }
+      .top .brand {
+        color: var(--lm-text);
+        text-decoration: none;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+      }
+      .top .brand-sub {
+        color: var(--lm-muted);
+        font-weight: 400;
+      }
+      .top .who {
+        margin-left: auto;
+        color: var(--lm-muted);
+        font-size: 0.72rem;
+      }
+
+      main {
+        width: 100%;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 3rem 1.8rem 5rem;
+      }
+
+      h1 {
+        font-family: var(--lm-serif);
+        font-weight: 500;
+        font-size: clamp(2.4rem, 4.2vw, 3.6rem);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.8rem;
+      }
+      h2 {
+        font-family: var(--lm-serif);
+        font-weight: 500;
+        font-size: 1.7rem;
+        margin: 3rem 0 0.8rem;
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-family: var(--lm-serif);
+        font-weight: 500;
+        font-size: 1.2rem;
+        margin: 1.6rem 0 0.4rem;
+      }
+      .kicker {
+        font-family: var(--lm-mono);
+        text-transform: lowercase;
+        letter-spacing: 0.12em;
+        font-size: 0.72rem;
+        color: var(--lm-accent);
+        margin: 0 0 0.8rem;
+      }
+      .deck {
+        color: var(--lm-dim);
+        font-size: 1.22rem;
+        max-width: 54ch;
+        margin: 0 0 2rem;
+        line-height: 1.5;
+      }
+      p {
+        margin: 0 0 1em;
+      }
+      strong {
+        font-weight: 600;
+      }
+      em {
+        font-style: italic;
+      }
+      code {
+        font-family: var(--lm-mono);
+        font-size: 0.86em;
+        background: var(--lm-bg-2);
+        padding: 0.08em 0.35em;
+        border-radius: 3px;
+        color: var(--lm-dim);
+      }
+      a {
+        color: var(--lm-accent);
+      }
+
+      footer {
+        border-top: 1px solid var(--lm-border);
+        padding: 1rem 1.8rem;
+        font-family: var(--lm-mono);
+        font-size: 0.72rem;
+        color: var(--lm-muted);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      footer a {
+        color: var(--lm-muted);
+        text-decoration: underline;
+      }
+      footer a:hover {
+        color: var(--lm-accent);
+      }
+    </style>
+  </body>
+</html>
