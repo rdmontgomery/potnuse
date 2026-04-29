@@ -1,51 +1,24 @@
-# potnuse
+# rdmontgomry
 
-Personal site at **rdmontgomery.com**. A rhizome, not a tree — no index, only a door that opens to a random node.
+Monorepo for projects under the **potnuse** umbrella.
 
-Built with [Astro](https://astro.build) (static output), [React](https://react.dev) islands, and MDX content. Deployed to [Cloudflare Workers](https://workers.cloudflare.com) via static asset serving.
+## Workspace layout
 
-## Structure
+    apps/
+      site/                  # rdmontgomery.com — Astro static site, see apps/site/README.md
+    packages/
+      (empty for now — canvas-runtime, widget-protocol, widgets-browser land here)
 
-```
-src/
-├── components/          # Astro + React island components
-│   └── allons-jouer/    # Cajun accordion app UI
-├── content/
-│   ├── essays/          # Long-form writing
-│   └── experiments/     # Exploratory projects
-├── layouts/
-├── lib/
-│   ├── allons-jouer/    # Accordion app logic, audio, pitch detection
-│   └── graph.ts         # Content graph for random navigation
-└── pages/
-    ├── index.astro      # The door (random node entry point)
-    ├── allons-jouer.astro
-    ├── graph.json.ts    # Graph data endpoint (baked at build time)
-    └── [collection]/[...slug].astro
-```
+## Commands (run from repo root)
 
-## Commands
+| Command            | Action                                          |
+| ------------------ | ----------------------------------------------- |
+| `pnpm install`     | Install all workspace deps                      |
+| `pnpm dev`         | Start the site dev server (proxies to apps/site)|
+| `pnpm build`       | Build the site                                  |
+| `pnpm preview`     | Preview the built site                          |
+| `pnpm deploy`      | Build + deploy site to Cloudflare Workers       |
 
-| Command              | Action                                   |
-| :------------------- | :--------------------------------------- |
-| `pnpm install`       | Install dependencies                     |
-| `pnpm dev`           | Start local dev server at localhost:4321 |
-| `pnpm build`         | Build static site to `./dist/`           |
-| `pnpm preview`       | Preview the build locally                |
-| `pnpm generate-types`| Regenerate Cloudflare Worker types       |
+## Future work
 
-## Deploy
-
-```sh
-pnpm build
-npx wrangler deploy
-```
-
-Static files in `dist/` are served directly by Cloudflare Workers assets — no server Worker script is needed. The `wrangler.jsonc` at the root configures the assets binding.
-
-## Content model
-
-Each piece of content carries:
-- `state` — `seedling` | `germinating` | `stable` | `fossil`
-- `connects` — list of slugs this node links to (used for graph edges)
-- `tags`, `date`, `description`
+The canvas-substrate design lives at `docs/plans/2026-04-29-canvas-substrate-design.md`. Implementation lands in `packages/` over subsequent PRs.
