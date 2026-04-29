@@ -30,18 +30,17 @@ src/
 | :------------------- | :--------------------------------------- |
 | `pnpm install`       | Install dependencies                     |
 | `pnpm dev`           | Start local dev server at localhost:4321 |
-| `pnpm build`         | Build static site to `./dist/`           |
+| `pnpm build`         | Build static site to `./dist/` (within this directory; `apps/site/dist/` from repo root) |
 | `pnpm preview`       | Preview the build locally                |
 | `pnpm generate-types`| Regenerate Cloudflare Worker types       |
 
 ## Deploy
 
 ```sh
-pnpm build
-npx wrangler deploy
+pnpm deploy   # equivalent to: astro build && wrangler deploy
 ```
 
-Static files in `dist/` are served directly by Cloudflare Workers assets — no server Worker script is needed. The `wrangler.jsonc` at the root configures the assets binding.
+Static files in `dist/` (i.e. `apps/site/dist/` from the repo root) are served directly by Cloudflare Workers assets — no server Worker script is needed. The `wrangler.jsonc` in this directory configures the assets binding.
 
 ## Content model
 

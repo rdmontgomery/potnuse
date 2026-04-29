@@ -70,7 +70,7 @@ Bespoke pages will drift from the template over time. That's fine — Rick and I
 - `pnpm build` — static build to `./dist/`
 - `pnpm preview` — preview the build locally
 
-Deploy is `pnpm build && npx wrangler deploy`. Confirm with Rick before deploying.
+Deploy is `pnpm deploy` (combines `astro build` and `wrangler deploy`). Confirm with Rick before deploying.
 
 ## Frontmatter checklist for new exchanges
 
