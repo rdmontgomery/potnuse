@@ -3,7 +3,7 @@
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "potnuse",
 	"assets": {
-		"directory": "./dist"
+		"directory": "./apps/site/dist"
 	},
 	"observability": {
 		"enabled": true

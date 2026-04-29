@@ -36,11 +36,13 @@ src/
 
 ## Deploy
 
+From the repo root:
+
 ```sh
-pnpm deploy   # equivalent to: astro build && wrangler deploy
+pnpm deploy   # builds the site and runs wrangler deploy against the root wrangler.jsonc
 ```
 
-Static files in `dist/` (i.e. `apps/site/dist/` from the repo root) are served directly by Cloudflare Workers assets — no server Worker script is needed. The `wrangler.jsonc` in this directory configures the assets binding.
+Static files in `apps/site/dist/` are served directly by Cloudflare Workers assets — no server Worker script is needed. The `wrangler.jsonc` at the repo root configures the assets binding (`assets.directory: "./apps/site/dist"`); it lives at root rather than alongside the site because Cloudflare's CI invokes wrangler from the workspace root.
 
 ## Content model
 

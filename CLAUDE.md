@@ -14,7 +14,7 @@ Run pnpm commands from the repo root. Root-level scripts (`dev`, `build`, `previ
 
 ## Deploy
 
-Confirm with Rick before deploying. `pnpm deploy` builds the site and runs `wrangler deploy` against `apps/site/wrangler.jsonc`.
+Confirm with Rick before deploying. `pnpm deploy` builds the site and runs `wrangler deploy` against the root `wrangler.jsonc`. The wrangler config lives at the repo root (not inside `apps/site/`) because Cloudflare's CI invokes `npx wrangler versions upload` from the workspace root and looks for the config there. Its `assets.directory` points at `./apps/site/dist`.
 
 ## Design docs
 

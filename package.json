@@ -10,7 +10,7 @@
     "dev": "pnpm --filter potnuse dev",
     "build": "pnpm --filter potnuse build",
     "preview": "pnpm --filter potnuse preview",
-    "deploy": "pnpm --filter potnuse deploy",
+    "deploy": "pnpm --filter potnuse build && pnpm --filter potnuse exec wrangler --cwd ../.. deploy",
     "generate-types": "pnpm --filter potnuse generate-types"
   },
   "pnpm": {
