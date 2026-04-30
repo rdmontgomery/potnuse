@@ -11,7 +11,8 @@
     "build": "pnpm --filter potnuse build",
     "preview": "pnpm --filter potnuse preview",
     "deploy": "pnpm --filter potnuse build && pnpm --filter potnuse exec wrangler --cwd ../.. deploy",
-    "generate-types": "pnpm --filter potnuse generate-types"
+    "generate-types": "pnpm --filter potnuse generate-types",
+    "test": "vitest run"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -22,5 +23,8 @@
     "overrides": {
       "vite": "^7"
     }
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
   }
 }
