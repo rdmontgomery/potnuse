@@ -1,2 +1,4 @@
-// @rdm/widget-protocol — public surface re-exports land here as modules ship.
-export {};
+export * from './manifest.js';
+export * from './envelopes.js';
+export * from './capabilities.js';
+export * from './lifecycle.js';

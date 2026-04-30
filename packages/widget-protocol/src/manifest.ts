@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CapabilitySchema } from './capabilities';
+import { CapabilitySchema } from './capabilities.js';
 
 const WidgetIdSchema = z.string().regex(
   /^[a-z][a-z0-9]*(\.[a-z][a-z0-9-]*)+$/,
