@@ -39,9 +39,8 @@
     <textarea id="src" placeholder="# Hello&#10;&#10;Type some markdown..."></textarea>
     <div class="preview" id="preview"></div>
   </div>
-  <script type="module">
-    import { marked } from 'https://esm.sh/marked@13';
-
+  <script src="https://cdn.jsdelivr.net/npm/marked@13/marked.min.js"></script>
+  <script>
     const src = document.getElementById('src');
     const preview = document.getElementById('preview');
     const status = document.getElementById('status');
@@ -50,7 +49,11 @@
       if (msg) setTimeout(() => { if (status.textContent === msg) status.textContent = ''; }, 1500);
     };
 
-    const render = () => { preview.innerHTML = marked.parse(src.value); };
+    const render = () => {
+      preview.innerHTML = (typeof marked !== 'undefined')
+        ? marked.parse(src.value)
+        : '<em style="color:#999">marked.js failed to load</em>';
+    };
     render();
 
     let port = null;
