@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pomodoro Widget</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+    body {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 12px; box-sizing: border-box;
+    }
+    .display { font-size: 48px; font-variant-numeric: tabular-nums; font-weight: 200; }
+    .controls { display: flex; gap: 8px; }
+    button { padding: 6px 14px; cursor: pointer; }
+    label { font-size: 12px; color: #555; }
+    input[type=number] { width: 60px; padding: 2px 4px; }
+    .status { font-size: 11px; color: #666; min-height: 14px; }
+    .caveat { font-size: 10px; color: #b45309; }
+  </style>
+</head>
+<body>
+  <div>
+    <label>Minutes:
+      <input id="duration" type="number" min="1" max="120" value="25">
+    </label>
+  </div>
+  <div class="display" id="display">25:00</div>
+  <div class="controls">
+    <button id="start">Start</button>
+    <button id="pause">Pause</button>
+    <button id="reset">Reset</button>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="caveat">v1: state resets on reload</div>
+  <script>
+    const display = document.getElementById('display');
+    const status = document.getElementById('status');
+    const durationInput = document.getElementById('duration');
+
+    let port = null;
+    let nextReqId = 1;
+    const pending = new Map();
+
+    function rpc(method, params) {
+      return new Promise((resolve, reject) => {
+        if (!port) return reject(new Error('not connected'));
+        const id = String(nextReqId++);
+        pending.set(id, { resolve, reject });
+        port.postMessage({ type: 'req', id, method, params });
+      });
+    }
+
+    function handleMessage(event) {
+      const msg = event.data;
+      if (msg && msg.type === 'res' && pending.has(msg.id)) {
+        const { resolve, reject } = pending.get(msg.id);
+        pending.delete(msg.id);
+        if (msg.outcome === 'ok') resolve(msg.result);
+        else reject(new Error(msg.error?.message ?? 'rpc error'));
+      }
+    }
+
+    let state = {
+      targetSec: 25 * 60,
+      remainingSec: 25 * 60,
+      running: false,
+    };
+    let tickHandle = null;
+
+    function fmt(s) {
+      const mm = Math.floor(s / 60);
+      const ss = s % 60;
+      return `${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    }
+
+    function render() {
+      display.textContent = fmt(Math.max(0, state.remainingSec));
+    }
+
+    function postState() {
+      if (!port) return;
+      port.postMessage({
+        type: 'event',
+        name: 'widget.stateChanged',
+        payload: { state: { ...state } },
+      });
+    }
+
+    async function complete() {
+      state.running = false;
+      stopTick();
+      render();
+      postState();
+      status.textContent = 'done';
+      try {
+        await rpc('notifications.notify', {
+          title: 'Pomodoro done',
+          body: `${Math.floor(state.targetSec / 60)} minutes elapsed`,
+        });
+      } catch (e) {
+        status.textContent = 'notify failed: ' + e.message;
+      }
+    }
+
+    function tick() {
+      state.remainingSec -= 1;
+      render();
+      if (state.remainingSec <= 0) complete();
+    }
+
+    function startTick() {
+      stopTick();
+      tickHandle = setInterval(tick, 1000);
+    }
+
+    function stopTick() {
+      if (tickHandle !== null) {
+        clearInterval(tickHandle);
+        tickHandle = null;
+      }
+    }
+
+    durationInput.addEventListener('change', () => {
+      const mins = Math.max(1, Math.min(120, Number(durationInput.value) || 25));
+      durationInput.value = String(mins);
+      state.targetSec = mins * 60;
+      if (!state.running) state.remainingSec = state.targetSec;
+      render();
+      postState();
+    });
+
+    document.getElementById('start').addEventListener('click', () => {
+      if (state.running) return;
+      if (state.remainingSec <= 0) state.remainingSec = state.targetSec;
+      state.running = true;
+      startTick();
+      postState();
+      status.textContent = 'running';
+    });
+
+    document.getElementById('pause').addEventListener('click', () => {
+      if (!state.running) return;
+      state.running = false;
+      stopTick();
+      postState();
+      status.textContent = 'paused';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.running = false;
+      stopTick();
+      state.remainingSec = state.targetSec;
+      render();
+      postState();
+      status.textContent = '';
+    });
+
+    function init() {
+      window.addEventListener('message', function onInit(event) {
+        if (!event.data || event.data.rdm !== 'init') return;
+        window.removeEventListener('message', onInit);
+        port = event.ports[0];
+        port.start();
+        port.addEventListener('message', handleMessage);
+        port.postMessage({ type: 'event', name: 'lifecycle.ready' });
+        render();
+      });
+    }
+    init();
+  </script>
+</body>
+</html>
