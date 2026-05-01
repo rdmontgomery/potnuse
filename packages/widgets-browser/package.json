@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc && node scripts/copy-widgets.mjs",
     "typecheck": "tsc --noEmit",
-    "dev": "vite example"
+    "dev": "vite"
   },
   "dependencies": {
     "@rdm/canvas-runtime": "workspace:*",

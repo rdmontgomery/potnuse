@@ -1,2 +1,2 @@
-// @rdm/widgets-browser — public surface re-exports land here as modules ship.
-export {};
+export * from './manifests';
+export * from './providers';
