@@ -1,14 +1,18 @@
 // packages/canvas-runtime/src/react/Canvas.tsx
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useStore } from 'zustand';
 import type { WidgetManifest } from '@rdm/widget-protocol';
+import { ProtocolMessageSchema } from '@rdm/widget-protocol';
 import {
   createCanvasStore,
   snapshotForPersistence,
   type CanvasStore,
   type PersistedSnapshot,
 } from '../store/canvasStore';
-import type { Provider } from '../core/dispatch';
+// import { isFullyOffscreen } from '../core/layout';   // TODO: suspend/resume — deferred follow-up
+import { dispatch, type Provider } from '../core/dispatch';
+import { runHandshake } from '../core/handshake';
+import { zoomAround } from '../core/viewport';
 import { createDebouncer, type PersistenceAdapter } from '../core/persistence';
 import { CanvasProvider } from './hooks';
 import { WidgetWindow } from './WidgetWindow';
@@ -37,11 +41,15 @@ export function Canvas(props: CanvasProps) {
 function CanvasInner({
   canvasId,
   adapter,
+  providers,
+  defaultTimeoutMs = 30_000,
   initialWidgets,
   onError,
   store,
 }: CanvasProps & { store: CanvasStore }) {
   const document = useStore(store, (s) => s.document);
+  // TODO: suspend/resume on offscreen via isFullyOffscreen is deferred to a follow-up.
+  const ports = useRef(new Map<string, MessagePort>());
 
   // Hydrate from adapter, then apply initialWidgets if no persisted state.
   useEffect(() => {
@@ -84,9 +92,37 @@ function CanvasInner({
     };
   }, [canvasId, adapter, onError, store]);
 
+  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    if (!e.ctrlKey && !e.metaKey) return; // pinch-zoom on trackpad sets ctrlKey
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cursor = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const v = store.getState().document.viewport;
+    const factor = Math.exp(-e.deltaY * 0.002);
+    store.getState().setViewport(zoomAround(v, cursor, v.zoom * factor));
+  }, [store]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 1 && !(e.button === 0 && e.shiftKey)) return; // middle-click or shift+left
+    e.preventDefault();
+    let last = { x: e.clientX, y: e.clientY };
+    const handleMove = (ev: PointerEvent) => {
+      store.getState().panBy({ dx: ev.clientX - last.x, dy: ev.clientY - last.y });
+      last = { x: ev.clientX, y: ev.clientY };
+    };
+    const handleUp = () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+  }, [store]);
+
   return (
     <div
       data-testid="rdm-canvas"
+      onWheel={onWheel}
+      onPointerDown={onPointerDown}
       style={{
         position: 'relative',
         width: '100%',
@@ -104,8 +140,53 @@ function CanvasInner({
           transformOrigin: '0 0',
         }}
       >
-        {document.widgets.map((w) => (
-          <WidgetWindow key={w.instanceId} instanceId={w.instanceId} />
+        {document.widgets.map((widget) => (
+          <WidgetWindow
+            key={widget.instanceId}
+            instanceId={widget.instanceId}
+            onIframeLoad={async (iframe) => {
+              if (ports.current.has(widget.instanceId)) return; // already handshaken
+              try {
+                const { canvasPort } = await runHandshake({
+                  iframe,
+                  manifest: widget.manifest,
+                  instanceId: widget.instanceId,
+                });
+                ports.current.set(widget.instanceId, canvasPort);
+                canvasPort.start();
+                canvasPort.addEventListener('message', async (event) => {
+                  const parsed = ProtocolMessageSchema.safeParse(event.data);
+                  if (!parsed.success) return;
+                  const msg = parsed.data;
+                  if (msg.type === 'event' && msg.name === 'lifecycle.ready') {
+                    try { store.getState().setLifecycle(widget.instanceId, 'ready'); }
+                    catch (e: unknown) { onError?.(e instanceof Error ? e : new Error(String(e))); }
+                    try { store.getState().setLifecycle(widget.instanceId, 'active'); }
+                    catch { /* already-unloaded; ignore */ }
+                    return;
+                  }
+                  if (msg.type !== 'req') return;
+                  const result = await dispatch(
+                    msg,
+                    widget.manifest,
+                    new Map(Object.entries(providers)),
+                    defaultTimeoutMs,
+                    {
+                      instanceId: widget.instanceId,
+                      manifestId: widget.manifest.id,
+                      signal: new AbortController().signal,
+                      log: () => {},
+                    },
+                  );
+                  canvasPort.postMessage(result.ok
+                    ? { type: 'res', id: msg.id, outcome: 'ok', result: result.result }
+                    : { type: 'res', id: msg.id, outcome: 'err', error: result.error });
+                });
+              } catch (e: unknown) {
+                onError?.(e instanceof Error ? e : new Error(String(e)));
+              }
+            }}
+          />
         ))}
       </div>
     </div>

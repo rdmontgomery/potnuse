@@ -4,13 +4,15 @@ import { useCanvas, useWidget } from './hooks';
 
 export type WidgetWindowProps = {
   instanceId: string;
+  onIframeLoad?: (iframe: HTMLIFrameElement) => void;
 };
 
-export function WidgetWindow({ instanceId }: WidgetWindowProps) {
+export function WidgetWindow({ instanceId, onIframeLoad }: WidgetWindowProps) {
   const { moveWidget, resizeWidget, removeWidget } = useCanvas();
   const widget = useWidget(instanceId);
   const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
   const resizeOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const onTitleBarPointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
@@ -110,9 +112,15 @@ export function WidgetWindow({ instanceId }: WidgetWindowProps) {
         </button>
       </div>
       <iframe
+        ref={iframeRef}
         title={title}
         src={widget.manifest.entry}
         sandbox="allow-scripts"
+        onLoad={() => {
+          if (iframeRef.current && onIframeLoad) {
+            onIframeLoad(iframeRef.current);
+          }
+        }}
         style={{ flex: 1, border: 0 }}
       />
       <div
