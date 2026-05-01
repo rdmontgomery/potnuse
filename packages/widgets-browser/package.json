@@ -1,0 +1,45 @@
+{
+  "name": "@rdm/widgets-browser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./manifests": {
+      "types": "./dist/manifests/index.d.ts",
+      "import": "./dist/manifests/index.js"
+    },
+    "./providers": {
+      "types": "./dist/providers/index.d.ts",
+      "import": "./dist/providers/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc && node scripts/copy-widgets.mjs",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite example"
+  },
+  "peerDependencies": {
+    "@rdm/canvas-runtime": "workspace:*",
+    "@rdm/widget-protocol": "workspace:*"
+  },
+  "dependencies": {
+    "@rdm/canvas-runtime": "workspace:*",
+    "@rdm/widget-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5.6.0",
+    "vite": "^7"
+  }
+}
