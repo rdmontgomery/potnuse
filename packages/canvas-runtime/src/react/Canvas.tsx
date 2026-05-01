@@ -1,5 +1,5 @@
 // packages/canvas-runtime/src/react/Canvas.tsx
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import type { WidgetManifest } from '@rdm/widget-protocol';
 import { ProtocolMessageSchema } from '@rdm/widget-protocol';
@@ -27,6 +27,12 @@ export type CanvasProps = {
     placement: { x: number; y: number; w?: number; h?: number };
   }>;
   onError?: (e: Error) => void;
+  /**
+   * Optional overlay content rendered inside the CanvasProvider context, on
+   * top of the canvas surface. Use this to layer in toolbars, palettes, or
+   * "add widget" UIs that consume `useCanvas()` to drive the store.
+   */
+  children?: ReactNode;
 };
 
 export function Canvas(props: CanvasProps) {
@@ -45,6 +51,7 @@ function CanvasInner({
   defaultTimeoutMs = 30_000,
   initialWidgets,
   onError,
+  children,
   store,
 }: CanvasProps & { store: CanvasStore }) {
   const document = useStore(store, (s) => s.document);
@@ -189,6 +196,7 @@ function CanvasInner({
           />
         ))}
       </div>
+      {children}
     </div>
   );
 }

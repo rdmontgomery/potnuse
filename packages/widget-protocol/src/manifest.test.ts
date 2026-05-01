@@ -133,6 +133,32 @@ describe('WidgetManifestSchema', () => {
     expect(m.name).toBe('Markdown Editor');
     expect(m.description).toBe('A widget for editing markdown.');
   });
+
+  test('parses optional sandbox flags', () => {
+    const m = WidgetManifestSchema.parse({
+      ...VALID_IFRAME_MANIFEST,
+      sandbox: ['allow-same-origin', 'allow-popups'],
+    });
+    expect(m.sandbox).toEqual(['allow-same-origin', 'allow-popups']);
+  });
+
+  test('rejects malformed sandbox flag', () => {
+    expect(() =>
+      WidgetManifestSchema.parse({
+        ...VALID_IFRAME_MANIFEST,
+        sandbox: ['NotAFlag'],
+      })
+    ).toThrow();
+  });
+
+  test('rejects sandbox flag not starting with allow-', () => {
+    expect(() =>
+      WidgetManifestSchema.parse({
+        ...VALID_IFRAME_MANIFEST,
+        sandbox: ['deny-scripts'],
+      })
+    ).toThrow();
+  });
 });
 
 describe('WidgetManifest type (compile-time)', () => {

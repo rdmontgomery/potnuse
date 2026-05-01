@@ -113,6 +113,37 @@ importers:
         specifier: ^3 || ^4
         version: 4.3.6
 
+  packages/widgets-browser:
+    dependencies:
+      '@rdm/canvas-runtime':
+        specifier: workspace:*
+        version: link:../canvas-runtime
+      '@rdm/widget-protocol':
+        specifier: workspace:*
+        version: link:../widget-protocol
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: ^5.0.0
+        version: 5.2.0(vite@7.3.2)
+      react:
+        specifier: ^19
+        version: 19.2.5
+      react-dom:
+        specifier: ^19
+        version: 19.2.5(react@19.2.5)
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vite:
+        specifier: ^7
+        version: 7.3.2
+
 packages:
 
   '@adobe/css-tools@4.4.4':

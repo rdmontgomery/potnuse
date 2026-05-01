@@ -33,7 +33,8 @@ describe('runHandshake', () => {
     });
 
     expect(captured.length).toBe(1);
-    expect(captured[0]!.origin).toBe('https://x.example');
+    // '*' so the message reaches sandboxed (null-origin) iframes too.
+    expect(captured[0]!.origin).toBe('*');
     expect(captured[0]!.payload).toMatchObject({
       rdm: 'init',
       protocolVersion: 1,

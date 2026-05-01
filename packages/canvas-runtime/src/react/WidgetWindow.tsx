@@ -54,6 +54,10 @@ export function WidgetWindow({ instanceId, onIframeLoad }: WidgetWindowProps) {
   if (!widget) return null;
 
   const title = widget.manifest.name ?? widget.manifest.id;
+  // allow-scripts is implicit (a non-scripting iframe widget can't do anything).
+  // Manifests opt into additional flags via the optional `sandbox` array.
+  const sandboxFlags = ['allow-scripts', ...(widget.manifest.sandbox ?? [])];
+  const sandbox = Array.from(new Set(sandboxFlags)).join(' ');
 
   return (
     <div
@@ -115,7 +119,7 @@ export function WidgetWindow({ instanceId, onIframeLoad }: WidgetWindowProps) {
         ref={iframeRef}
         title={title}
         src={widget.manifest.entry}
-        sandbox="allow-scripts"
+        sandbox={sandbox}
         onLoad={() => {
           if (iframeRef.current && onIframeLoad) {
             onIframeLoad(iframeRef.current);

@@ -72,4 +72,14 @@ describe('<Canvas>', () => {
     expect(saveSpy).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
+
+  test('renders children as overlay inside the CanvasProvider context', () => {
+    render(
+      <Canvas canvasId="t" adapter={memoryAdapter()} providers={{}}>
+        <div data-testid="overlay">overlay content</div>
+      </Canvas>
+    );
+    expect(screen.getByTestId('overlay')).toBeInTheDocument();
+    expect(screen.getByTestId('overlay').textContent).toBe('overlay content');
+  });
 });
