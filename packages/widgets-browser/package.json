@@ -25,10 +25,6 @@
     "typecheck": "tsc --noEmit",
     "dev": "vite example"
   },
-  "peerDependencies": {
-    "@rdm/canvas-runtime": "workspace:*",
-    "@rdm/widget-protocol": "workspace:*"
-  },
   "dependencies": {
     "@rdm/canvas-runtime": "workspace:*",
     "@rdm/widget-protocol": "workspace:*"
