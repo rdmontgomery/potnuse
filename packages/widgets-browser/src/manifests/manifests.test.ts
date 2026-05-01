@@ -43,6 +43,11 @@ describe('excalidrawManifest', () => {
     const m = excalidrawManifest({ entry: HTTP });
     expect(m.id).toBe('rdm.widget.excalidraw');
   });
+
+  test('declares allow-same-origin sandbox so excalidraw.com IndexedDB works', () => {
+    const m = excalidrawManifest({ entry: HTTP });
+    expect(m.sandbox).toContain('allow-same-origin');
+  });
 });
 
 describe('pomodoroManifest', () => {

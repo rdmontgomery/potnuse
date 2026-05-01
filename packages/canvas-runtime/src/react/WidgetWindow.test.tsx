@@ -68,4 +68,38 @@ describe('<WidgetWindow>', () => {
     expect(w.x).toBe(130);
     expect(w.y).toBe(140);
   });
+
+  test('appends manifest sandbox flags to the implicit allow-scripts', () => {
+    const store = createCanvasStore();
+    store.getState().addWidget(
+      { ...MANIFEST, sandbox: ['allow-same-origin', 'allow-popups'] },
+      { x: 0, y: 0, w: 100, h: 100 },
+    );
+    render(
+      <CanvasProvider store={store}>
+        <WidgetWindow instanceId={store.getState().document.widgets[0]!.instanceId} />
+      </CanvasProvider>
+    );
+    const iframe = screen.getByTitle('Test Widget') as HTMLIFrameElement;
+    const flags = (iframe.getAttribute('sandbox') ?? '').split(/\s+/);
+    expect(flags).toContain('allow-scripts');
+    expect(flags).toContain('allow-same-origin');
+    expect(flags).toContain('allow-popups');
+  });
+
+  test('deduplicates redundant allow-scripts in manifest sandbox', () => {
+    const store = createCanvasStore();
+    store.getState().addWidget(
+      { ...MANIFEST, sandbox: ['allow-scripts', 'allow-same-origin'] },
+      { x: 0, y: 0, w: 100, h: 100 },
+    );
+    render(
+      <CanvasProvider store={store}>
+        <WidgetWindow instanceId={store.getState().document.widgets[0]!.instanceId} />
+      </CanvasProvider>
+    );
+    const iframe = screen.getByTitle('Test Widget') as HTMLIFrameElement;
+    const flags = (iframe.getAttribute('sandbox') ?? '').split(/\s+/);
+    expect(flags.filter((f) => f === 'allow-scripts')).toHaveLength(1);
+  });
 });

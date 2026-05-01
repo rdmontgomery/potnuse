@@ -11,12 +11,18 @@ const SemverSchema = z.string().regex(
   'must be semver'
 );
 
+const SandboxFlagSchema = z.string().regex(
+  /^allow-[a-z][a-z-]*$/,
+  'sandbox flag must be a "allow-*" token'
+);
+
 export const WidgetManifestSchema = z.object({
   id: WidgetIdSchema,
   version: SemverSchema,
   kind: z.enum(['iframe', 'native']),
   entry: z.string(),
   capabilities: z.array(CapabilitySchema).default([]),
+  sandbox: z.array(SandboxFlagSchema).optional(),
   defaultSize: z.object({
     w: z.number().int().positive(),
     h: z.number().int().positive(),
