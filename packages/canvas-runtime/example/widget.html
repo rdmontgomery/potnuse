@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>RDM Test Widget</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    button { padding: 8px 12px; }
+    #log { font-family: ui-monospace, monospace; font-size: 12px; margin-top: 12px; color: #555; }
+  </style>
+</head>
+<body>
+  <h2 id="title">RDM Test Widget</h2>
+  <button id="poke">Poke canvas</button>
+  <pre id="log"></pre>
+  <script>
+    const log = document.getElementById('log');
+    const append = (s) => { log.textContent += s + '\n'; };
+
+    function init() {
+      window.addEventListener('message', function onInit(event) {
+        if (!event.data || event.data.rdm !== 'init') return;
+        window.removeEventListener('message', onInit);
+        const port = event.ports[0];
+        port.start();
+        port.postMessage({ type: 'event', name: 'lifecycle.ready' });
+        document.getElementById('title').textContent =
+          'Widget ' + event.data.instanceId.slice(0, 8);
+        append('init received: ' + event.data.instanceId);
+        document.getElementById('poke').addEventListener('click', () => {
+          port.postMessage({ type: 'event', name: 'widget.clicked', payload: { at: Date.now() } });
+          append('sent widget.clicked');
+        });
+      });
+    }
+    init();
+  </script>
+</body>
+</html>
