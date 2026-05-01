@@ -14,7 +14,12 @@ export type HandshakeResult = {
 export async function runHandshake(args: HandshakeArgs): Promise<HandshakeResult> {
   const { iframe, manifest, instanceId } = args;
   const channel = new MessageChannel();
-  const targetOrigin = new URL(manifest.entry).origin;
+  // targetOrigin is '*' rather than new URL(manifest.entry).origin because
+  // sandboxed iframes (without allow-same-origin) run at a null/opaque origin
+  // that doesn't match the entry URL's origin — strict targetOrigin causes
+  // the message to be silently dropped. This is safe: we hold the iframe
+  // contentWindow reference and post synchronously after onLoad, so no other
+  // window can intercept the transferred MessagePort.
   iframe.contentWindow!.postMessage(
     {
       rdm: 'init',
@@ -22,7 +27,7 @@ export async function runHandshake(args: HandshakeArgs): Promise<HandshakeResult
       instanceId,
       manifestId: manifest.id,
     },
-    targetOrigin,
+    '*',
     [channel.port2],
   );
   return { canvasPort: channel.port1 };
