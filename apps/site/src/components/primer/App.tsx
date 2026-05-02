@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-type Mode = 'letters' | 'words';
+type Mode = 'letters' | 'words' | 'pictures';
 
 interface LetterCard {
   kind: 'letter';
@@ -8,7 +8,6 @@ interface LetterCard {
   letter: string;
   exemplar: string;
   emoji: string;
-  sound: string; // approximate phoneme spelling for TTS
 }
 
 interface WordCard {
@@ -21,36 +20,34 @@ interface WordCard {
 type Card = LetterCard | WordCard;
 
 // Each letter shown alongside one exemplar word + emoji whose name starts with
-// that letter's most-common short sound. The `sound` string is a TTS-friendly
-// spelling of the phoneme — TTS engines say letter names for single letters,
-// so we feed them an approximation of the sound instead.
+// that letter's most-common short sound.
 const LETTERS: LetterCard[] = [
-  { kind: 'letter', id: 'A', letter: 'A', exemplar: 'apple',    emoji: '\u{1F34E}', sound: 'ah' },
-  { kind: 'letter', id: 'B', letter: 'B', exemplar: 'ball',     emoji: '⚽',     sound: 'buh' },
-  { kind: 'letter', id: 'C', letter: 'C', exemplar: 'cat',      emoji: '\u{1F431}', sound: 'kuh' },
-  { kind: 'letter', id: 'D', letter: 'D', exemplar: 'dog',      emoji: '\u{1F436}', sound: 'duh' },
-  { kind: 'letter', id: 'E', letter: 'E', exemplar: 'egg',      emoji: '\u{1F95A}', sound: 'eh' },
-  { kind: 'letter', id: 'F', letter: 'F', exemplar: 'fish',     emoji: '\u{1F41F}', sound: 'fff' },
-  { kind: 'letter', id: 'G', letter: 'G', exemplar: 'goat',     emoji: '\u{1F410}', sound: 'guh' },
-  { kind: 'letter', id: 'H', letter: 'H', exemplar: 'hat',      emoji: '\u{1F3A9}', sound: 'huh' },
-  { kind: 'letter', id: 'I', letter: 'I', exemplar: 'insect',   emoji: '\u{1F41B}', sound: 'ih' },
-  { kind: 'letter', id: 'J', letter: 'J', exemplar: 'juice',    emoji: '\u{1F9C3}', sound: 'juh' },
-  { kind: 'letter', id: 'K', letter: 'K', exemplar: 'key',      emoji: '\u{1F511}', sound: 'kuh' },
-  { kind: 'letter', id: 'L', letter: 'L', exemplar: 'lion',     emoji: '\u{1F981}', sound: 'lll' },
-  { kind: 'letter', id: 'M', letter: 'M', exemplar: 'moon',     emoji: '\u{1F319}', sound: 'mmm' },
-  { kind: 'letter', id: 'N', letter: 'N', exemplar: 'nose',     emoji: '\u{1F443}', sound: 'nnn' },
-  { kind: 'letter', id: 'O', letter: 'O', exemplar: 'octopus',  emoji: '\u{1F419}', sound: 'aah' },
-  { kind: 'letter', id: 'P', letter: 'P', exemplar: 'pig',      emoji: '\u{1F437}', sound: 'puh' },
-  { kind: 'letter', id: 'Q', letter: 'Q', exemplar: 'queen',    emoji: '\u{1F478}', sound: 'kwuh' },
-  { kind: 'letter', id: 'R', letter: 'R', exemplar: 'rainbow',  emoji: '\u{1F308}', sound: 'rrr' },
-  { kind: 'letter', id: 'S', letter: 'S', exemplar: 'sun',      emoji: '☀️', sound: 'sss' },
-  { kind: 'letter', id: 'T', letter: 'T', exemplar: 'tree',     emoji: '\u{1F333}', sound: 'tuh' },
-  { kind: 'letter', id: 'U', letter: 'U', exemplar: 'umbrella', emoji: '☂️', sound: 'uh' },
-  { kind: 'letter', id: 'V', letter: 'V', exemplar: 'violin',   emoji: '\u{1F3BB}', sound: 'vvv' },
-  { kind: 'letter', id: 'W', letter: 'W', exemplar: 'whale',    emoji: '\u{1F433}', sound: 'wuh' },
-  { kind: 'letter', id: 'X', letter: 'X', exemplar: 'fox',      emoji: '\u{1F98A}', sound: 'ks' },
-  { kind: 'letter', id: 'Y', letter: 'Y', exemplar: 'yarn',     emoji: '\u{1F9F6}', sound: 'yuh' },
-  { kind: 'letter', id: 'Z', letter: 'Z', exemplar: 'zebra',    emoji: '\u{1F993}', sound: 'zzz' },
+  { kind: 'letter', id: 'A', letter: 'A', exemplar: 'apple',    emoji: '\u{1F34E}' },
+  { kind: 'letter', id: 'B', letter: 'B', exemplar: 'ball',     emoji: '⚽' },
+  { kind: 'letter', id: 'C', letter: 'C', exemplar: 'cat',      emoji: '\u{1F431}' },
+  { kind: 'letter', id: 'D', letter: 'D', exemplar: 'dog',      emoji: '\u{1F436}' },
+  { kind: 'letter', id: 'E', letter: 'E', exemplar: 'egg',      emoji: '\u{1F95A}' },
+  { kind: 'letter', id: 'F', letter: 'F', exemplar: 'fish',     emoji: '\u{1F41F}' },
+  { kind: 'letter', id: 'G', letter: 'G', exemplar: 'goat',     emoji: '\u{1F410}' },
+  { kind: 'letter', id: 'H', letter: 'H', exemplar: 'hat',      emoji: '\u{1F3A9}' },
+  { kind: 'letter', id: 'I', letter: 'I', exemplar: 'insect',   emoji: '\u{1F41B}' },
+  { kind: 'letter', id: 'J', letter: 'J', exemplar: 'juice',    emoji: '\u{1F9C3}' },
+  { kind: 'letter', id: 'K', letter: 'K', exemplar: 'key',      emoji: '\u{1F511}' },
+  { kind: 'letter', id: 'L', letter: 'L', exemplar: 'lion',     emoji: '\u{1F981}' },
+  { kind: 'letter', id: 'M', letter: 'M', exemplar: 'moon',     emoji: '\u{1F319}' },
+  { kind: 'letter', id: 'N', letter: 'N', exemplar: 'nose',     emoji: '\u{1F443}' },
+  { kind: 'letter', id: 'O', letter: 'O', exemplar: 'octopus',  emoji: '\u{1F419}' },
+  { kind: 'letter', id: 'P', letter: 'P', exemplar: 'pig',      emoji: '\u{1F437}' },
+  { kind: 'letter', id: 'Q', letter: 'Q', exemplar: 'queen',    emoji: '\u{1F478}' },
+  { kind: 'letter', id: 'R', letter: 'R', exemplar: 'rainbow',  emoji: '\u{1F308}' },
+  { kind: 'letter', id: 'S', letter: 'S', exemplar: 'sun',      emoji: '☀️' },
+  { kind: 'letter', id: 'T', letter: 'T', exemplar: 'tree',     emoji: '\u{1F333}' },
+  { kind: 'letter', id: 'U', letter: 'U', exemplar: 'umbrella', emoji: '☂️' },
+  { kind: 'letter', id: 'V', letter: 'V', exemplar: 'violin',   emoji: '\u{1F3BB}' },
+  { kind: 'letter', id: 'W', letter: 'W', exemplar: 'whale',    emoji: '\u{1F433}' },
+  { kind: 'letter', id: 'X', letter: 'X', exemplar: 'fox',      emoji: '\u{1F98A}' },
+  { kind: 'letter', id: 'Y', letter: 'Y', exemplar: 'yarn',     emoji: '\u{1F9F6}' },
+  { kind: 'letter', id: 'Z', letter: 'Z', exemplar: 'zebra',    emoji: '\u{1F993}' },
 ];
 
 // CVC and near-CVC short words. Kept short so phonics blending works cleanly.
@@ -183,10 +180,12 @@ export default function Primer() {
   const [allStates, setAllStates] = useState<Record<Mode, CardStates>>(() => ({
     letters: initialStates(LETTERS),
     words: initialStates(WORDS),
+    pictures: initialStates(WORDS),
   }));
   const [allStats, setAllStats] = useState<Record<Mode, { correct: number; total: number; bestStreak: number }>>(() => ({
     letters: { correct: 0, total: 0, bestStreak: 0 },
     words: { correct: 0, total: 0, bestStreak: 0 },
+    pictures: { correct: 0, total: 0, bestStreak: 0 },
   }));
   const [streak, setStreak] = useState(0);
   const [step, setStep] = useState(0);
@@ -208,19 +207,7 @@ export default function Primer() {
     return () => window.speechSynthesis.removeEventListener('voiceschanged', update);
   }, []);
 
-  // Speech helpers (need access to current voice).
-  const speak = useCallback((text: string, opts: { rate?: number; pitch?: number } = {}) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = opts.rate ?? 0.9;
-      u.pitch = opts.pitch ?? 1.15;
-      if (voice) u.voice = voice;
-      window.speechSynthesis.speak(u);
-    } catch { /* no-op */ }
-  }, [voice]);
-
+  // Speech helper (needs access to current voice).
   const speakSequence = useCallback((parts: { text: string; rate?: number; pitch?: number }[]) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
@@ -235,26 +222,17 @@ export default function Primer() {
     } catch { /* no-op */ }
   }, [voice]);
 
-  // Look up the letter sound for a single character (defaults to letter name).
-  const soundFor = useCallback((ch: string): string => {
-    const upper = ch.toUpperCase();
-    const entry = LETTERS.find(l => l.letter === upper);
-    return entry ? entry.sound : ch;
-  }, []);
-
+  // Slow speech naturally stretches the phonemes; the engine handles what our
+  // ASCII phoneme-spellings could not. We say the word once stretched, then
+  // again at normal speed for fluency. For letters we use the exemplar word
+  // ("hat" slow → "hat" normal), which stretches the initial /h/ on screen.
   const speakPrompt = useCallback((card: Card) => {
-    if (card.kind === 'letter') {
-      speakSequence([
-        { text: card.sound, rate: 0.7 },
-        { text: card.letter.toLowerCase() + ' is for ' + card.exemplar, rate: 0.9 },
-      ]);
-    } else {
-      // Sound out: each letter's phoneme, then the whole word.
-      const parts = card.word.split('').map(ch => ({ text: soundFor(ch), rate: 0.65 }));
-      parts.push({ text: card.word, rate: 0.85 });
-      speakSequence(parts);
-    }
-  }, [speakSequence, soundFor]);
+    const text = card.kind === 'letter' ? card.exemplar : card.word;
+    speakSequence([
+      { text, rate: 0.55 },
+      { text, rate: 0.95 },
+    ]);
+  }, [speakSequence]);
 
   // Load persisted state once.
   useEffect(() => {
@@ -321,14 +299,8 @@ export default function Primer() {
     setAllStates(prev => ({ ...prev, [mode]: newStates }));
     setStep(newStep);
 
-    if (correct) {
-      // Reinforce: say the letter sound + exemplar, or the word.
-      speakPrompt(current);
-    } else {
-      // Gentle correction: say what it actually was.
-      if (current.kind === 'letter') speak(current.letter.toLowerCase() + ' is for ' + current.exemplar, { rate: 0.85 });
-      else speak(current.word, { rate: 0.8 });
-    }
+    // Reinforce either way: stretched-then-fluent reading of the target.
+    speakPrompt(current);
 
     const delay = correct ? 1200 : 1700;
     setTimeout(() => {
@@ -340,7 +312,7 @@ export default function Primer() {
       setPickedId(null);
       setLocked(false);
     }, delay);
-  }, [locked, current, step, streak, allStats, allStates, mode, deck, isMatch, speak, speakPrompt]);
+  }, [locked, current, step, streak, allStats, allStates, mode, deck, isMatch, speakPrompt]);
 
   const stats = allStats[mode];
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
@@ -410,6 +382,36 @@ export default function Primer() {
         </div>
       );
     }
+    if (mode === 'pictures') {
+      return (
+        <div
+          key={current.id + '-' + step}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            animation: 'primerAppear 0.25s ease',
+          }}
+        >
+          <button
+            onClick={() => speakPrompt(current)}
+            aria-label={`hear ${current.word}`}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: 'clamp(5rem, 22vw, 9rem)',
+              lineHeight: 1,
+              cursor: 'pointer',
+              padding: '0.1em 0.2em',
+              fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+              filter: feedback === 'incorrect' ? 'grayscale(0.3)' : 'none',
+              transition: 'filter 0.25s ease',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {current.emoji}
+          </button>
+        </div>
+      );
+    }
     return (
       <div
         key={current.id + '-' + step}
@@ -443,11 +445,12 @@ export default function Primer() {
   };
 
   const renderOptions = () => {
+    const wordButtons = mode === 'pictures';
     return (
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '8px',
+        gridTemplateColumns: wordButtons ? '1fr' : 'repeat(3, 1fr)',
+        gap: 8,
         width: '100%',
         maxWidth: 560,
       }}>
@@ -458,40 +461,55 @@ export default function Primer() {
           const showWrong = feedback === 'incorrect' && isPicked;
 
           let bg = PAL.bgButton;
+          let fg = PAL.text;
           let border = PAL.border;
           let shadow = '0 2px 0 rgba(0,0,0,0.25), inset 0 -2px 0 rgba(0,0,0,0.25)';
           let scale = 1;
           if (showCorrect) {
-            bg = PAL.good; border = PAL.good;
+            bg = PAL.good; border = PAL.good; fg = PAL.bg;
             shadow = '0 0 26px rgba(122,171,90,0.5), inset 0 -2px 0 rgba(0,0,0,0.25)';
             scale = 1.04;
           } else if (showWrong) {
-            bg = PAL.bad; border = PAL.bad;
+            bg = PAL.bad; border = PAL.bad; fg = PAL.bg;
             shadow = '0 0 26px rgba(199,122,90,0.45), inset 0 -2px 0 rgba(0,0,0,0.25)';
           }
+
+          const label = opt.kind === 'letter' ? opt.exemplar : opt.word;
 
           return (
             <button
               key={opt.id}
               onClick={() => handleAnswer(opt)}
               disabled={locked}
-              aria-label={opt.kind === 'letter' ? opt.exemplar : opt.word}
+              aria-label={label}
               style={{
                 background: bg,
+                color: fg,
                 border: `1px solid ${border}`,
                 borderRadius: 6,
                 boxShadow: shadow,
                 transform: `scale(${scale})`,
                 cursor: locked ? 'default' : 'pointer',
-                aspectRatio: '1 / 1',
-                fontSize: 'clamp(2.6rem, 11vw, 4.4rem)',
-                lineHeight: 1,
-                fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
-                transition: 'transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease',
+                ...(wordButtons
+                  ? {
+                      padding: '1.1rem 0.6rem',
+                      fontSize: 'clamp(2rem, 8vw, 3rem)',
+                      fontFamily: PAL.serif,
+                      fontWeight: 500,
+                      letterSpacing: '0.04em',
+                      lineHeight: 1,
+                    }
+                  : {
+                      aspectRatio: '1 / 1',
+                      fontSize: 'clamp(2.6rem, 11vw, 4.4rem)',
+                      lineHeight: 1,
+                      fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+                    }),
+                transition: 'transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease',
                 WebkitTapHighlightColor: 'transparent',
               }}
             >
-              {opt.emoji}
+              {wordButtons ? (opt.kind === 'word' ? opt.word : opt.id) : opt.emoji}
             </button>
           );
         })}
@@ -508,9 +526,9 @@ export default function Primer() {
       if (current.kind === 'letter') return `${current.letter.toLowerCase()} is for ${current.exemplar}`;
       return current.word;
     }
-    return mode === 'letters'
-      ? 'tap the picture that starts with this letter'
-      : 'tap the picture that matches this word';
+    if (mode === 'letters') return 'tap the picture that starts with this letter';
+    if (mode === 'words') return 'tap the picture that matches this word';
+    return 'tap the word that matches this picture';
   })();
 
   const promptColor =
@@ -557,6 +575,7 @@ export default function Primer() {
       <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: '1rem' }}>
         {modeButton('letters', 'letters')}
         {modeButton('words', 'words')}
+        {modeButton('pictures', 'pictures')}
         <button
           onClick={() => speakPrompt(current)}
           title="Hear it again"
