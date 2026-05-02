@@ -534,7 +534,14 @@ export default function Primer() {
     setTimeout(() => {
       const next = pickNext(deck, newStates, current.id);
       setCurrent(next);
-      if (mode !== 'spell') {
+      if (mode === 'spell') {
+        // Clear in the same batch as setCurrent so the spell-completion
+        // effect early-returns on empty slots before the spell-setup effect
+        // repopulates — otherwise the old word's filled slots are scored
+        // against the new word and immediately marked wrong.
+        setSlots([]);
+        setPool([]);
+      } else {
         const distractors = pickDistractors(deck, next, 2);
         setOptions(shuffle([next, ...distractors]));
       }
