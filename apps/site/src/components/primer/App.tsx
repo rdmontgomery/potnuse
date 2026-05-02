@@ -419,7 +419,7 @@ export default function Primer() {
   const [slots, setSlots] = useState<(Tile | null)[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const dragOriginRef = useRef<{ x: number; y: number; offX: number; offY: number } | null>(null);
+  const dragOriginRef = useRef<{ x: number; y: number; offX: number; offY: number; startX: number; startY: number } | null>(null);
   const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
   const poolRef = useRef<HTMLDivElement | null>(null);
 
@@ -628,6 +628,8 @@ export default function Primer() {
       y: rect.top,
       offX: e.clientX - rect.left,
       offY: e.clientY - rect.top,
+      startX: e.clientX,
+      startY: e.clientY,
     };
     try { target.setPointerCapture(e.pointerId); } catch { /* */ }
     setDraggingId(tile.id);
@@ -642,21 +644,38 @@ export default function Primer() {
   const handleTilePointerUp = (e: React.PointerEvent<HTMLDivElement>, tile: Tile) => {
     if (draggingId === null) return;
     const x = e.clientX, y = e.clientY;
-    let target: number | 'pool' | null = null;
-    for (let i = 0; i < slotRefs.current.length; i++) {
-      const el = slotRefs.current[i];
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-        target = i;
-        break;
+    const startX = dragOriginRef.current?.startX ?? x;
+    const startY = dragOriginRef.current?.startY ?? y;
+    const isTap = Math.hypot(x - startX, y - startY) < 8;
+
+    if (isTap) {
+      // Tap-to-place: pool tile → next empty slot; slot tile → back to pool.
+      const inSlot = slots.findIndex(s => s !== null && s.id === tile.id);
+      if (inSlot !== -1) {
+        moveTile(tile, 'pool');
+      } else {
+        const firstEmpty = slots.findIndex(s => s === null);
+        if (firstEmpty !== -1) moveTile(tile, firstEmpty);
       }
+    } else {
+      // Drag-and-drop: hit-test against slot/pool refs.
+      let target: number | 'pool' | null = null;
+      for (let i = 0; i < slotRefs.current.length; i++) {
+        const el = slotRefs.current[i];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          target = i;
+          break;
+        }
+      }
+      if (target === null && poolRef.current) {
+        const r = poolRef.current.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) target = 'pool';
+      }
+      if (target !== null) moveTile(tile, target);
     }
-    if (target === null && poolRef.current) {
-      const r = poolRef.current.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) target = 'pool';
-    }
-    if (target !== null) moveTile(tile, target);
+
     setDraggingId(null);
     setDragPos(null);
     dragOriginRef.current = null;
