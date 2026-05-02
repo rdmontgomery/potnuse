@@ -2,6 +2,7 @@ import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { HomeScreen } from '@/components/allons-jouer/HomeScreen';
 import { FreePlayScreen } from '@/components/allons-jouer/FreePlayScreen';
 import { LessonScreen } from '@/components/allons-jouer/LessonScreen';
+import { PhraseScreen } from '@/components/allons-jouer/PhraseScreen';
 import { ReferenceScreen } from '@/components/allons-jouer/ReferenceScreen';
 import { TunerScreen } from '@/components/allons-jouer/TunerScreen';
 import { K, FONTS } from '@/lib/allons-jouer/tokens';
@@ -25,9 +26,10 @@ export default function App() {
 
       {screen === 'home'       && <HomeScreen />}
       {screen === 'freeplay'   && <FreePlayScreen />}
-      {screen === 'lesson'    && <LessonScreen />}
-      {screen === 'reference' && <ReferenceScreen />}
-      {screen === 'tuner'     && <TunerScreen />}
+      {screen === 'lesson'     && <LessonScreen />}
+      {screen === 'phrases'    && <PhraseScreen />}
+      {screen === 'reference'  && <ReferenceScreen />}
+      {screen === 'tuner'      && <TunerScreen />}
     </div>
   );
 }

@@ -25,6 +25,21 @@ export interface SongNote {
   duration: number; // ms
 }
 
+export interface PhraseRange {
+  label?: string;  // human-readable, e.g. 'main lick' or '"Allons à Lafayette"'
+  start: number;   // index into Song.notes (inclusive)
+  end: number;     // exclusive
+}
+
+export interface Phrase {
+  id: string;       // `${songId}:${index}`
+  songId: string;
+  songTitle: string;
+  index: number;
+  label?: string;
+  notes: SongNote[];
+}
+
 export interface CulturalCard {
   context: string;        // one paragraph
   recordingLabel: string; // e.g. "Amédé Ardoin, 1929"
@@ -38,10 +53,11 @@ export interface Song {
   description: string;
   difficulty: 1 | 2 | 3;
   notes: SongNote[];
+  phrases?: PhraseRange[];
   cultural?: CulturalCard;
 }
 
-export type Screen = 'home' | 'freeplay' | 'lesson' | 'reference' | 'tuner';
+export type Screen = 'home' | 'freeplay' | 'lesson' | 'reference' | 'tuner' | 'phrases';
 export type InputMode = 'virtual' | 'mic';
 export type TimingResult = 'good' | 'ok' | 'off';
 export type LessonMode = 'ownPace' | 'keepUp';

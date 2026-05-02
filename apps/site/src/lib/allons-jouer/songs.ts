@@ -60,6 +60,10 @@ export const SONGS: Song[] = [
       { button: 2, dir: 'pull', duration: 500 },
       { button: 2, dir: 'push', duration: 1500 },
     ],
+    phrases: [
+      { label: 'main lick', start: 0, end: 5 },
+      { label: 'resolve', start: 5, end: 9 },
+    ],
     cultural: {
       context: "Jolie Blonde is the unofficial anthem of Cajun Louisiana — the one song every player knows, the one the crowd sings along to at every fais do-do and family gathering. It's a lament about a pretty blonde who left for another man. Playing it even roughly will get a room of Cajuns to smile.",
       recordingLabel: 'Leo Soileau & Mayeus LaFleur, 1929',
@@ -85,6 +89,10 @@ export const SONGS: Song[] = [
       { button: 3, dir: 'push', duration: 400 },
       { button: 2, dir: 'push', duration: 1200 },
     ],
+    phrases: [
+      { label: 'climb', start: 0, end: 5 },
+      { label: 'turnaround', start: 5, end: 11 },
+    ],
     cultural: {
       context: "The Cajun two-step is what fills the dance floor on a Saturday night at a bal de maison. It's fast, bouncy, and built around that characteristic push-pull alternation. The short-short-long rhythm — un-deux-trois — is the heartbeat of the music.",
       recordingLabel: 'Nathan Abshire, "Pine Grove Blues", 1949',
@@ -108,6 +116,11 @@ export const SONGS: Song[] = [
       { button: 2, dir: 'pull', duration: 450 },
       { button: 3, dir: 'push', duration: 450 },
       { button: 4, dir: 'push', duration: 1800 },
+    ],
+    phrases: [
+      { label: 'first line', start: 0, end: 4 },
+      { label: 'second line', start: 4, end: 7 },
+      { label: 'resolve', start: 7, end: 10 },
     ],
     cultural: {
       context: "The Cajun waltz is the slower, sweeter half of the traditional repertoire. Where the two-step gets the floor moving, the waltz brings couples close. It's 3/4 time — one-two-three — and the phrasing is more legato, more breath. Amédé Ardoin and Dennis McGee defined what it could sound like.",
@@ -141,6 +154,10 @@ export const SONGS: Song[] = [
       { button: 1, dir: 'push', duration: 400 },  // E4
       { button: 2, dir: 'pull', duration: 800 },  // D4
       { button: 2, dir: 'push', duration: 1600 }, // C4 (resolve)
+    ],
+    phrases: [
+      { label: 'rising pickup', start: 0, end: 10 },
+      { label: 'descending answer', start: 10, end: 17 },
     ],
     cultural: {
       context: "J'ai Été au Bal is the song that put Cajun music on the map outside Louisiana. Iry LeJeune's 1948 recording brought the raw, high-lonesome accordion sound back after years of string-band dominance. The title means \"I went to the dance last night\" — and the song is about heartbreak on the dance floor, which is about as Cajun as it gets.",
@@ -177,6 +194,11 @@ export const SONGS: Song[] = [
       { button: 3, dir: 'pull', duration: 600 },  // A4
       { button: 3, dir: 'push', duration: 1200 }, // G4 (resolve)
     ],
+    phrases: [
+      { label: '"se rassemblent"', start: 0, end: 7 },
+      { label: '"une fois par an"', start: 7, end: 10 },
+      { label: '"la charité"', start: 10, end: 18 },
+    ],
     cultural: {
       context: "This is the song of the Courir de Mardi Gras — the Cajun Mardi Gras run. Masked riders on horseback go farm to farm begging for ingredients to make a communal gumbo. At each stop they sing this song, chasing chickens and making a joyful mess. It's not New Orleans Mardi Gras — it's older, rural, and deeply communal. The melody is a march because that's what it is: a procession through the prairie.",
       recordingLabel: 'Balfa Brothers, 1965',
@@ -212,6 +234,11 @@ export const SONGS: Song[] = [
       { button: 1, dir: 'push', duration: 400 },  // E4
       { button: 2, dir: 'push', duration: 1400 }, // C4 (resolve)
     ],
+    phrases: [
+      { label: '"Allons à Lafayette"', start: 0, end: 7 },
+      { label: '"changer ton nom"', start: 7, end: 11 },
+      { label: 'answer', start: 11, end: 18 },
+    ],
     cultural: {
       context: "This is where recorded Cajun music begins. Joe Falcon and Cleoma Breaux walked into a makeshift studio in 1928 and cut this song — an accordion and a guitar, raw and real. The lyrics are about going to Lafayette to get married. It sold so well it proved that Cajun music had a commercial audience, opening the door for everything that followed.",
       recordingLabel: 'Joe Falcon & Cleoma Breaux, 1928',
@@ -243,6 +270,11 @@ export const SONGS: Song[] = [
       { button: 1, dir: 'push', duration: 400 },  // E4
       { button: 2, dir: 'pull', duration: 400 },  // D4
       { button: 2, dir: 'push', duration: 1600 }, // C4 (long resolve)
+    ],
+    phrases: [
+      { label: 'haunting opening', start: 0, end: 7 },
+      { label: 'rising answer', start: 7, end: 12 },
+      { label: 'resolve', start: 12, end: 15 },
     ],
     cultural: {
       context: "Colinda lives in the borderland between Cajun and Creole music — both traditions claim it, and both are right. The song may trace back to an Afro-Caribbean calinda dance. In Louisiana it became a love song with a melody that sticks in your head for days. It's slower than most two-steps, almost hypnotic, and the lower register gives it a gravity that the upbeat tunes don't have.",
@@ -287,6 +319,12 @@ export const SONGS: Song[] = [
       { button: 3, dir: 'push', duration: 300 },  // G4
       { button: 2, dir: 'push', duration: 900 },  // C4 (resolve)
     ],
+    phrases: [
+      { label: 'driving opening', start: 0, end: 6 },
+      { label: 'climb back up', start: 6, end: 14 },
+      { label: 'fast turnaround', start: 14, end: 20 },
+      { label: 'resolve with punch', start: 20, end: 25 },
+    ],
     cultural: {
       context: "Lacassine Special is a pure instrumental — no words, just fingers and bellows. It's named after Lacassine, a tiny town in Jeff Davis Parish. This is the tune that accordion players use to show what they can do. The tempo is brisk, the bellows changes come fast, and the melody covers more of the keyboard than most Cajun songs. If you can play this clean, you can sit in at a jam.",
       recordingLabel: 'Iry LeJeune, 1950s',
@@ -317,6 +355,10 @@ export const SONGS: Song[] = [
       { button: 3, dir: 'push', duration: 400 },  // G4
       { button: 1, dir: 'push', duration: 400 },  // E4
       { button: 2, dir: 'push', duration: 1200 }, // C4 (resolve)
+    ],
+    phrases: [
+      { label: 'bouncy opening', start: 0, end: 8 },
+      { label: 'turnaround', start: 8, end: 15 },
     ],
     cultural: {
       context: "Mamou is a small town in Evangeline Parish that punches way above its weight in Cajun music. Fred's Lounge in Mamou has hosted a live radio broadcast every Saturday morning since the 1960s — accordion, fiddle, and cold beer before noon. This two-step captures that Saturday energy. The Hackberry Ramblers made it a standard, but every band in southwest Louisiana has their own version.",

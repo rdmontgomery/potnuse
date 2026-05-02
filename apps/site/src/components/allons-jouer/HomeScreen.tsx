@@ -3,7 +3,7 @@ import { SONGS } from '@/lib/allons-jouer/songs';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 
 export function HomeScreen() {
-  const { startLesson, goTo, completedSongs } = useAppStore();
+  const { startLesson, goTo, startPhraseTrainer, completedSongs } = useAppStore();
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '40px 20px' }}>
@@ -26,6 +26,18 @@ export function HomeScreen() {
         color: K.bg, fontSize: 18, fontWeight: 700, fontFamily: FONTS.serif,
         boxShadow: `0 4px 20px ${K.accent}33`,
       }}>Free Play</button>
+
+      <button onClick={() => startPhraseTrainer()} style={{
+        width: '100%', padding: '14px 20px', marginBottom: 10,
+        background: K.bgCard, border: `1px solid ${K.highlight}66`,
+        borderRadius: 12, cursor: 'pointer',
+        color: K.text, fontSize: 16, fontWeight: 600, fontFamily: FONTS.serif,
+        textAlign: 'left',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <span>Phrase Trainer</span>
+        <span style={{ fontSize: 11, color: K.highlight, fontFamily: FONTS.mono, letterSpacing: 1.5, textTransform: 'uppercase' }}>SRS</span>
+      </button>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
         <button onClick={() => goTo('reference')} style={{
@@ -76,7 +88,7 @@ export function HomeScreen() {
       <div style={{ marginTop: 40, padding: 20, borderRadius: 10, background: K.bgCard, border: `1px solid ${K.border}` }}>
         <h3 style={{ fontSize: 14, fontWeight: 600, color: K.accent, margin: '0 0 8px 0', fontFamily: FONTS.serif }}>How it works</h3>
         <p style={{ fontSize: 13, color: K.textDim, margin: 0, lineHeight: 1.6, fontFamily: FONTS.serif }}>
-          Set the bellows direction, then press and hold a button to play. In lessons, the sequence bar shows what's coming. Tap Demo to hear it first. Switch to mic mode when you have your accordion.
+          Free play to noodle, lessons to learn a whole song, phrase trainer to drill the licks the songs are built from — phrases you stumble on come back sooner. Tap Demo to hear anything first. Switch to mic mode when you have your accordion.
         </p>
       </div>
     </div>
