@@ -229,7 +229,7 @@ export default function Primer() {
   const speakPrompt = useCallback((card: Card) => {
     const text = card.kind === 'letter' ? card.exemplar : card.word;
     speakSequence([
-      { text, rate: 0.55 },
+      { text, rate: 0.2 },
       { text, rate: 0.95 },
     ]);
   }, [speakSequence]);
@@ -336,14 +336,15 @@ export default function Primer() {
     <button
       onClick={() => setMode(m)}
       style={{
+        flex: 1,
         background: mode === m ? PAL.accent : PAL.bgCard,
         color: mode === m ? PAL.bg : PAL.textDim,
         border: `1px solid ${mode === m ? PAL.accent : PAL.border}`,
         borderRadius: 3,
-        padding: '6px 14px',
+        padding: '6px 8px',
         fontFamily: PAL.mono,
         fontSize: '0.72rem',
-        letterSpacing: '0.08em',
+        letterSpacing: '0.06em',
         textTransform: 'uppercase',
         cursor: 'pointer',
         fontWeight: mode === m ? 700 : 500,
@@ -572,15 +573,18 @@ export default function Primer() {
       </div>
 
       {/* Mode selector */}
-      <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: '1rem' }}>
+      <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: 6 }}>
         {modeButton('letters', 'letters')}
         {modeButton('words', 'words')}
         {modeButton('pictures', 'pictures')}
+      </div>
+
+      {/* Action row */}
+      <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: '1rem' }}>
         <button
           onClick={() => speakPrompt(current)}
           title="Hear it again"
           style={{
-            marginLeft: 'auto',
             background: PAL.bgCard,
             color: PAL.accent,
             border: `1px solid ${PAL.border}`,
@@ -599,6 +603,7 @@ export default function Primer() {
           onClick={resetCurrent}
           title="Reset progress for this mode"
           style={{
+            marginLeft: 'auto',
             background: PAL.bgCard,
             color: PAL.textMuted,
             border: `1px solid ${PAL.border}`,
@@ -668,16 +673,6 @@ export default function Primer() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{
-        marginTop: '1.5rem', textAlign: 'center', maxWidth: 460,
-        fontSize: '0.85rem', color: PAL.textMuted, fontStyle: 'italic',
-        lineHeight: 1.55,
-      }}>
-        Tap a picture. Cards you miss return sooner; cards you land drift further out.
-        In <span style={{ color: PAL.textDim }}>words</span> mode, tap the word to hear it sounded out.
-        Progress saves on this device.
-      </div>
     </div>
   );
 }
