@@ -1,0 +1,23 @@
+---
+import Base from '@/layouts/Base.astro';
+import Primer from '@/components/primer/App';
+import Backlinks from '@/components/Backlinks.astro';
+---
+
+<Base
+  title="primer"
+  description="Spaced repetition for first reads — letter sounds and short words. Cards you miss return sooner; cards you land drift further out."
+>
+  <Primer client:only="react" />
+  <section class="chrome">
+    <Backlinks slug="primer" />
+  </section>
+</Base>
+
+<style>
+  .chrome {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+  }
+</style>
