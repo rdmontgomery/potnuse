@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
-type Mode = 'letters' | 'words' | 'pictures';
+type Mode = 'letters' | 'words' | 'pictures' | 'spell';
+
+interface Tile { id: string; letter: string; }
 
 interface LetterCard {
   kind: 'letter';
@@ -138,6 +140,7 @@ interface PersistShape {
   mode: Mode;
   states: Record<Mode, CardStates>;
   stats: Record<Mode, { correct: number; total: number; bestStreak: number }>;
+  spellHard?: boolean;
 }
 function loadPersisted(): PersistShape | null {
   try {
@@ -181,11 +184,13 @@ export default function Primer() {
     letters: initialStates(LETTERS),
     words: initialStates(WORDS),
     pictures: initialStates(WORDS),
+    spell: initialStates(WORDS),
   }));
   const [allStats, setAllStats] = useState<Record<Mode, { correct: number; total: number; bestStreak: number }>>(() => ({
     letters: { correct: 0, total: 0, bestStreak: 0 },
     words: { correct: 0, total: 0, bestStreak: 0 },
     pictures: { correct: 0, total: 0, bestStreak: 0 },
+    spell: { correct: 0, total: 0, bestStreak: 0 },
   }));
   const [streak, setStreak] = useState(0);
   const [step, setStep] = useState(0);
@@ -197,6 +202,16 @@ export default function Primer() {
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
   const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
+
+  // Spell-mode state.
+  const [spellHard, setSpellHard] = useState(false);
+  const [pool, setPool] = useState<Tile[]>([]);
+  const [slots, setSlots] = useState<(Tile | null)[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const dragOriginRef = useRef<{ x: number; y: number; offX: number; offY: number } | null>(null);
+  const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const poolRef = useRef<HTMLDivElement | null>(null);
 
   // Voices load asynchronously on most browsers.
   useEffect(() => {
@@ -241,6 +256,7 @@ export default function Primer() {
       if (p.mode) setMode(p.mode);
       if (p.states) setAllStates(prev => ({ ...prev, ...p.states }));
       if (p.stats) setAllStats(prev => ({ ...prev, ...p.stats }));
+      if (typeof p.spellHard === 'boolean') setSpellHard(p.spellHard);
     }
     setLoaded(true);
   }, []);
@@ -249,9 +265,15 @@ export default function Primer() {
   useEffect(() => {
     const states = allStates[mode];
     const next = pickNext(deck, states, null);
-    const distractors = pickDistractors(deck, next, 2);
     setCurrent(next);
-    setOptions(shuffle([next, ...distractors]));
+    if (mode === 'spell') {
+      // Spell-setup effect populates pool/slots from the new current.
+      setSlots([]);
+      setPool([]);
+    } else {
+      const distractors = pickDistractors(deck, next, 2);
+      setOptions(shuffle([next, ...distractors]));
+    }
     setStep(0);
     setStreak(0);
     setFeedback(null);
@@ -264,10 +286,10 @@ export default function Primer() {
   useEffect(() => {
     if (!loaded) return;
     try {
-      const payload: PersistShape = { mode, states: allStates, stats: allStats };
+      const payload: PersistShape = { mode, states: allStates, stats: allStats, spellHard };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch { /* ignore */ }
-  }, [mode, allStates, allStats, loaded]);
+  }, [mode, allStates, allStats, spellHard, loaded]);
 
   const isMatch = useCallback((option: Card, target: Card): boolean => {
     if (option.kind !== target.kind) return false;
@@ -276,12 +298,8 @@ export default function Primer() {
     return false;
   }, []);
 
-  const handleAnswer = useCallback((option: Card) => {
-    if (locked) return;
+  const recordResult = useCallback((correct: boolean) => {
     setLocked(true);
-    setPickedId(option.id);
-
-    const correct = isMatch(option, current);
     const newStep = step + 1;
     const newStreak = correct ? streak + 1 : 0;
     const prevStats = allStats[mode];
@@ -290,7 +308,6 @@ export default function Primer() {
       total: prevStats.total + 1,
       bestStreak: Math.max(prevStats.bestStreak, newStreak),
     };
-
     setFeedback(correct ? 'correct' : 'incorrect');
     setStreak(newStreak);
     setAllStats(prev => ({ ...prev, [mode]: newStats }));
@@ -305,14 +322,173 @@ export default function Primer() {
     const delay = correct ? 1200 : 1700;
     setTimeout(() => {
       const next = pickNext(deck, newStates, current.id);
-      const distractors = pickDistractors(deck, next, 2);
       setCurrent(next);
-      setOptions(shuffle([next, ...distractors]));
+      if (mode !== 'spell') {
+        const distractors = pickDistractors(deck, next, 2);
+        setOptions(shuffle([next, ...distractors]));
+      }
       setFeedback(null);
       setPickedId(null);
       setLocked(false);
     }, delay);
-  }, [locked, current, step, streak, allStats, allStates, mode, deck, isMatch, speakPrompt]);
+  }, [step, streak, allStats, allStates, mode, current, deck, speakPrompt]);
+
+  const handleAnswer = useCallback((option: Card) => {
+    if (locked) return;
+    setPickedId(option.id);
+    recordResult(isMatch(option, current));
+  }, [locked, current, isMatch, recordResult]);
+
+  // ---------- Spell mode ----------
+
+  // Build a fresh tile pool for the current word when entering spell mode,
+  // when the word advances, or when the difficulty toggles.
+  useEffect(() => {
+    if (mode !== 'spell' || current.kind !== 'word') return;
+    const word = current.word;
+    const baseTiles: Tile[] = word.split('').map((ch, i) => ({ id: `t${i}`, letter: ch }));
+    let tiles = baseTiles;
+    if (spellHard) {
+      const used = new Set(word.split(''));
+      const remaining = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(ch => !used.has(ch));
+      shuffle(remaining);
+      const distCount = Math.min(2 + Math.floor(Math.random() * 2), remaining.length);
+      const distractors: Tile[] = remaining.slice(0, distCount).map((ch, i) => ({ id: `d${i}`, letter: ch }));
+      tiles = [...baseTiles, ...distractors];
+    }
+    // Re-shuffle if we accidentally land on the correct order (3-letter words can hit this often).
+    let attempts = 0;
+    do {
+      shuffle(tiles);
+      attempts++;
+    } while (attempts < 6 && tiles.length === word.length && tiles.map(t => t.letter).join('') === word);
+    setPool(tiles);
+    setSlots(new Array(word.length).fill(null));
+    setDraggingId(null);
+    if (loaded) speakPrompt(current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, mode, spellHard, loaded]);
+
+  // When all slots are filled, score the attempt.
+  useEffect(() => {
+    if (mode !== 'spell' || current.kind !== 'word' || locked) return;
+    if (slots.length === 0 || !slots.every(s => s !== null)) return;
+    const spelled = (slots as Tile[]).map(s => s.letter).join('');
+    recordResult(spelled === current.word);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots, mode, current, locked]);
+
+  const moveTile = useCallback((tile: Tile, dest: number | 'pool') => {
+    let sourceSlot = -1;
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i] && slots[i]!.id === tile.id) { sourceSlot = i; break; }
+    }
+    const fromPool = sourceSlot === -1;
+
+    if (dest === 'pool') {
+      if (fromPool) return;
+      setSlots(s => { const ns = [...s]; ns[sourceSlot] = null; return ns; });
+      setPool(p => p.some(t => t.id === tile.id) ? p : [...p, tile]);
+      return;
+    }
+    if (!fromPool && sourceSlot === dest) return;
+    const displaced = slots[dest];
+    setSlots(s => {
+      const ns = [...s];
+      if (!fromPool) ns[sourceSlot] = null;
+      ns[dest] = tile;
+      return ns;
+    });
+    if (fromPool) {
+      setPool(p => p.filter(t => t.id !== tile.id));
+    }
+    if (displaced) {
+      setPool(p => p.some(t => t.id === displaced.id) ? p : [...p, displaced]);
+    }
+  }, [slots]);
+
+  const handleTilePointerDown = (e: React.PointerEvent<HTMLDivElement>, tile: Tile) => {
+    if (locked) return;
+    e.preventDefault();
+    const target = e.currentTarget;
+    const rect = target.getBoundingClientRect();
+    dragOriginRef.current = {
+      x: rect.left,
+      y: rect.top,
+      offX: e.clientX - rect.left,
+      offY: e.clientY - rect.top,
+    };
+    try { target.setPointerCapture(e.pointerId); } catch { /* */ }
+    setDraggingId(tile.id);
+    setDragPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleTilePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (draggingId === null) return;
+    setDragPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleTilePointerUp = (e: React.PointerEvent<HTMLDivElement>, tile: Tile) => {
+    if (draggingId === null) return;
+    const x = e.clientX, y = e.clientY;
+    let target: number | 'pool' | null = null;
+    for (let i = 0; i < slotRefs.current.length; i++) {
+      const el = slotRefs.current[i];
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        target = i;
+        break;
+      }
+    }
+    if (target === null && poolRef.current) {
+      const r = poolRef.current.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) target = 'pool';
+    }
+    if (target !== null) moveTile(tile, target);
+    setDraggingId(null);
+    setDragPos(null);
+    dragOriginRef.current = null;
+  };
+
+  const renderTile = (tile: Tile) => {
+    const isDragging = draggingId === tile.id;
+    const transform = isDragging && dragPos && dragOriginRef.current
+      ? `translate(${dragPos.x - dragOriginRef.current.offX - dragOriginRef.current.x}px, ${dragPos.y - dragOriginRef.current.offY - dragOriginRef.current.y}px) scale(1.05)`
+      : undefined;
+    return (
+      <div
+        key={tile.id}
+        onPointerDown={(e) => handleTilePointerDown(e, tile)}
+        onPointerMove={handleTilePointerMove}
+        onPointerUp={(e) => handleTilePointerUp(e, tile)}
+        onPointerCancel={(e) => handleTilePointerUp(e, tile)}
+        style={{
+          width: 56, height: 66,
+          background: PAL.accent,
+          color: PAL.bg,
+          borderRadius: 6,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: PAL.serif,
+          fontWeight: 600,
+          fontSize: '2.4rem',
+          lineHeight: 1,
+          cursor: locked ? 'default' : 'grab',
+          userSelect: 'none',
+          touchAction: 'none',
+          transform,
+          zIndex: isDragging ? 100 : 1,
+          position: 'relative',
+          boxShadow: '0 2px 0 rgba(0,0,0,0.3), inset 0 -2px 0 rgba(0,0,0,0.15)',
+          transition: isDragging ? 'none' : 'transform 0.15s ease, opacity 0.15s ease',
+          opacity: isDragging ? 0.92 : 1,
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {tile.letter}
+      </div>
+    );
+  };
 
   const stats = allStats[mode];
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
@@ -325,7 +501,12 @@ export default function Primer() {
     setStep(0);
     const next = pickNext(deck, fresh, null);
     setCurrent(next);
-    setOptions(shuffle([next, ...pickDistractors(deck, next, 2)]));
+    if (mode === 'spell') {
+      setSlots([]);
+      setPool([]);
+    } else {
+      setOptions(shuffle([next, ...pickDistractors(deck, next, 2)]));
+    }
     setFeedback(null);
     setPickedId(null);
     setLocked(false);
@@ -380,6 +561,35 @@ export default function Primer() {
             <span style={{ fontSize: 'clamp(5rem, 22vw, 10rem)' }}>{current.letter}</span>
             <span style={{ fontSize: 'clamp(3.5rem, 15vw, 7rem)', opacity: 0.85 }}>{current.letter.toLowerCase()}</span>
           </div>
+        </div>
+      );
+    }
+    if (mode === 'spell') {
+      return (
+        <div
+          key={current.id + '-' + step}
+          style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            animation: 'primerAppear 0.25s ease',
+          }}
+        >
+          <button
+            onClick={() => current.kind === 'word' && speakPrompt(current)}
+            aria-label="hear the word again"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: 'clamp(4.5rem, 18vw, 7.5rem)',
+              lineHeight: 1,
+              cursor: 'pointer',
+              padding: '0.1em 0.2em',
+              fontFamily: '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+              animation: feedback === null ? 'primerPulse 1.6s ease-in-out infinite' : undefined,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {'\u{1F50A}'}
+          </button>
         </div>
       );
     }
@@ -518,6 +728,62 @@ export default function Primer() {
     );
   };
 
+  const renderSpell = () => {
+    const targetWord = current.kind === 'word' ? current.word : '';
+    return (
+      <div
+        key={current.id + '-' + step}
+        style={{
+          width: '100%', display: 'flex', flexDirection: 'column', gap: 14,
+          alignItems: 'center', animation: 'primerAppear 0.25s ease',
+        }}
+      >
+        {/* Slots */}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {slots.map((tile, i) => {
+            const correctLetter = targetWord[i] ?? '';
+            const isRight = feedback !== null && tile && tile.letter === correctLetter;
+            const isWrong = feedback === 'incorrect' && tile && tile.letter !== correctLetter;
+            let border = PAL.border;
+            let bg: string = PAL.bg;
+            if (isRight) { border = PAL.good; bg = 'rgba(122,171,90,0.18)'; }
+            else if (isWrong) { border = PAL.bad; bg = 'rgba(199,122,90,0.18)'; }
+            return (
+              <div
+                key={i}
+                ref={(el) => { slotRefs.current[i] = el; }}
+                style={{
+                  width: 64, height: 76,
+                  border: `2px dashed ${border}`,
+                  background: bg,
+                  borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 0.2s ease, border-color 0.2s ease',
+                }}
+              >
+                {tile && renderTile(tile)}
+              </div>
+            );
+          })}
+        </div>
+        {/* Pool */}
+        <div
+          ref={poolRef}
+          style={{
+            width: '100%', minHeight: 90,
+            display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap',
+            padding: 10,
+            background: PAL.bgCard,
+            border: `1px dashed ${PAL.border}`,
+            borderRadius: 8,
+          }}
+        >
+          {pool.map(tile => renderTile(tile))}
+        </div>
+      </div>
+    );
+  };
+
   const promptHint = (() => {
     if (feedback === 'correct') {
       if (current.kind === 'letter') return `${current.letter.toLowerCase()} is for ${current.exemplar}`;
@@ -529,7 +795,8 @@ export default function Primer() {
     }
     if (mode === 'letters') return 'tap the picture that starts with this letter';
     if (mode === 'words') return 'tap the picture that matches this word';
-    return 'tap the word that matches this picture';
+    if (mode === 'pictures') return 'tap the word that matches this picture';
+    return spellHard ? 'drag the right letters into place' : 'drag the letters into place';
   })();
 
   const promptColor =
@@ -549,6 +816,7 @@ export default function Primer() {
       <style>{`
         @keyframes primerAppear { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes primerShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-4px)} 40%{transform:translateX(3px)} 60%{transform:translateX(-3px)} 80%{transform:translateX(2px)} }
+        @keyframes primerPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         button:active:not(:disabled) { transform: scale(0.97) !important; }
       `}</style>
 
@@ -577,6 +845,7 @@ export default function Primer() {
         {modeButton('letters', 'letters')}
         {modeButton('words', 'words')}
         {modeButton('pictures', 'pictures')}
+        {modeButton('spell', 'spell')}
       </div>
 
       {/* Action row */}
@@ -599,6 +868,27 @@ export default function Primer() {
         >
           {'\u{1F50A}'} say it
         </button>
+        {mode === 'spell' && (
+          <button
+            onClick={() => setSpellHard(h => !h)}
+            title={spellHard ? 'Drop extra letters' : 'Add letters that don’t belong'}
+            style={{
+              background: spellHard ? PAL.accent : PAL.bgCard,
+              color: spellHard ? PAL.bg : PAL.textDim,
+              border: `1px solid ${spellHard ? PAL.accent : PAL.border}`,
+              borderRadius: 3,
+              padding: '6px 10px',
+              fontFamily: PAL.mono,
+              fontSize: '0.65rem',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              cursor: 'pointer',
+              fontWeight: spellHard ? 700 : 500,
+            }}
+          >
+            + extras
+          </button>
+        )}
         <button
           onClick={resetCurrent}
           title="Reset progress for this mode"
@@ -647,7 +937,7 @@ export default function Primer() {
 
       {/* Options */}
       <div style={{ width: '100%', maxWidth: 560, marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
-        {renderOptions()}
+        {mode === 'spell' ? renderSpell() : renderOptions()}
       </div>
 
       {/* Stats strip */}
