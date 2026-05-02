@@ -54,14 +54,19 @@ export function PhraseScreen() {
     };
   }, [phrase]);
 
-  // Reset step + clear any pending timers whenever the active phrase changes.
+  // Reset step + clear any pending timers whenever the active phrase changes,
+  // then auto-play the demo so the timing lands before the first attempt.
   useEffect(() => {
     setStep(0);
     setFeedback(null);
     lastFiredStepRef.current = -1;
     if (stepAdvanceRef.current) { clearTimeout(stepAdvanceRef.current); stepAdvanceRef.current = null; }
     if (srsAdvanceRef.current)  { clearTimeout(srsAdvanceRef.current);  srsAdvanceRef.current  = null; }
-  }, [phraseCurrentId]);
+    if (!phraseSong) return;
+    stopDemo();
+    const t = setTimeout(() => playDemo(phraseSong), 300);
+    return () => clearTimeout(t);
+  }, [phraseCurrentId, phraseSong, playDemo, stopDemo]);
 
   // Detection: when a target note is played, schedule a step advance. The timer
   // is held in a ref (not the effect's local scope) so it survives subsequent
@@ -223,7 +228,12 @@ export function PhraseScreen() {
       )}
 
       {/* Phrase tab strip — compact, mobile-friendly. Replaces NoteTrack. */}
-      <PhraseTab notes={phrase.notes} step={step} feedback={feedback} />
+      <PhraseTab
+        notes={phrase.notes}
+        step={step}
+        feedback={feedback}
+        detectedNote={detectedNote}
+      />
 
       {/* Button strip (compact) */}
       <ButtonStrip
@@ -261,11 +271,32 @@ export function PhraseScreen() {
   );
 }
 
-// Compact horizontal tab strip showing the phrase as a sequence of cells:
-// done cells get a check, the current cell pulses, upcoming cells stay dim.
-// Designed to sit just above the button strip so both stay visible without
-// scrolling on mobile.
-function PhraseTab({ notes, step, feedback }: { notes: SongNote[]; step: number; feedback: null | 'correct' | 'incorrect' }) {
+// Compact horizontal tab strip showing the phrase as a sequence of cells.
+// Done cells get a check, the current cell pulses, upcoming cells stay dim.
+// Cell widths are proportional to note duration so the rhythmic shape of the
+// phrase is visible at a glance, and the active cell sprouts a hold-fill bar
+// while the right note is being pressed so the kid can see how long to hold.
+const PHRASE_BASE_W = 36;     // px floor for short notes
+const PHRASE_MS_PER_PX = 18;  // duration scaling: 1px per 18ms above the floor
+
+function widthForDuration(ms: number): number {
+  return Math.round(PHRASE_BASE_W + ms / PHRASE_MS_PER_PX);
+}
+
+function PhraseTab({ notes, step, feedback, detectedNote }: {
+  notes: SongNote[];
+  step: number;
+  feedback: null | 'correct' | 'incorrect';
+  detectedNote: { button: number; dir: 'push' | 'pull' } | null;
+}) {
+  const target = step < notes.length ? notes[step] : null;
+  const isPressingTarget = !!(
+    target && detectedNote &&
+    detectedNote.button === target.button &&
+    detectedNote.dir === target.dir &&
+    feedback === null
+  );
+
   return (
     <div style={{
       display: 'flex',
@@ -277,7 +308,7 @@ function PhraseTab({ notes, step, feedback }: { notes: SongNote[]; step: number;
       borderRadius: 8,
       marginBottom: 10,
       justifyContent: 'center',
-      position: 'relative',
+      alignItems: 'flex-end',
     }}>
       {notes.map((n, i) => {
         const isDone = i < step || feedback === 'correct';
@@ -285,6 +316,7 @@ function PhraseTab({ notes, step, feedback }: { notes: SongNote[]; step: number;
         const isWrong  = feedback === 'incorrect' && i >= step;
         const dirSym = n.dir === 'push' ? '▶' : '◀';
         const dirColor = n.dir === 'push' ? K.pushBright : K.pullBright;
+        const cellWidth = widthForDuration(n.duration);
 
         let bg = K.bgButton;
         let fg = K.textMuted;
@@ -312,7 +344,8 @@ function PhraseTab({ notes, step, feedback }: { notes: SongNote[]; step: number;
 
         return (
           <div key={i} style={{
-            minWidth: 44, padding: '6px 8px',
+            width: cellWidth,
+            padding: '6px 4px',
             background: bg, color: fg,
             border: `2px solid ${border}`, borderRadius: 6,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
@@ -320,9 +353,22 @@ function PhraseTab({ notes, step, feedback }: { notes: SongNote[]; step: number;
             transform: `scale(${scale})`,
             transition: 'background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s',
             ...(pulse ? { animation: 'targetPulse 1.4s ease-in-out infinite' } : {}),
+            position: 'relative',
+            overflow: 'hidden',
           }}>
             <span style={{ fontSize: 11, opacity: 0.85 }}>{dirSym}</span>
             <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{n.button}</span>
+            {/* Hold-fill bar: while the kid presses the right note, this fills
+                from 0 → 100% over the note's target duration, giving live
+                visual feedback on how long to hold. */}
+            {isCurrent && isPressingTarget && (
+              <span style={{
+                position: 'absolute', bottom: 0, left: 0,
+                height: 3, width: 0,
+                background: dirColor,
+                animation: `phraseFill ${n.duration}ms linear forwards`,
+              }} />
+            )}
           </div>
         );
       })}

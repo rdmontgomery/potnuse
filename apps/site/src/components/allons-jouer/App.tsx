@@ -30,6 +30,7 @@ export default function App() {
         @keyframes targetPulse { 0%,100%{opacity:.4} 50%{opacity:1} }
         @keyframes noteHit { 0%{transform:scale(1.08);opacity:.6} 100%{transform:scale(1);opacity:0} }
         @keyframes timingPop { 0%{transform:scale(0.8);opacity:0} 50%{transform:scale(1.1);opacity:1} 100%{transform:scale(1);opacity:0} }
+        @keyframes phraseFill { from { width: 0%; } to { width: 100%; } }
       `}</style>
 
       {screen === 'home'       && <HomeScreen />}
