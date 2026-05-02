@@ -8,7 +8,7 @@ import StateBadge from '@/components/StateBadge.astro';
 export const getStaticPaths: GetStaticPaths = async () => {
   // Experiment slugs that have their own bespoke page file under src/pages/experiments/.
   // Keep this list in sync; the dynamic route skips them to avoid collisions.
-  const bespokeExperiments = new Set<string>(['necromantic-circle', 'ladder']);
+  const bespokeExperiments = new Set<string>(['necromantic-circle', 'ladder', 'primer']);
   const essays = await getCollection('essays');
   const experiments = await getCollection('experiments');
   return [

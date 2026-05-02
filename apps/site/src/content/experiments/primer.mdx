@@ -1,0 +1,31 @@
+---
+title: primer
+date: 2026-05-02
+state: seedling
+connects: [ladder]
+tags: [reading, srs, learning, phonics, zpd]
+description: A spaced-repetition primer for early readers — letter sounds first, then short words. Built for a kid who knows her alphabet but no full words yet.
+---
+
+Built for my daughter. She knows the alphabet — can name every letter cold — but the leap from naming to *reading* is its own ladder. So this is one: tap the picture that starts with this letter, or the picture that matches this word. Cards you miss return sooner; cards you land drift further out.
+
+[Open the primer →](/experiments/primer)
+
+## two rungs
+
+**letters** is letter-sound matching. A big *A a* sits on the card; three pictures sit underneath. The right answer is the one whose name begins with that sound. The card itself is silent until you ask — tap the speaker and a voice says the sound, then the exemplar word. The point isn't the alphabet song. The point is the sound the letter makes when it's working.
+
+**words** is short-word recognition. A three-letter word sits on the card; tap it and a voice sounds it out — *c... a... t... cat.* Then pick the picture. CVC words mostly: cat, dog, pig, sun, bug, hat, bus. The kind of words a child can decode the first day she figures out blending.
+
+## why two modes and not more
+
+Letter-naming and letter-sounding are the same skill in different clothes — she already names. Letter-sounding and word-reading are not. Sounding is a lookup; reading is a blend. The two modes are the two cliffs, not the whole climb.
+
+Sight words come next, probably, when she's ready for *the*, *and*, *is* — words that don't decode cleanly and have to be memorized as shapes. They want a third mode rather than a third deck inside an existing one, because the feedback shape is different: no picture, no decoding, just the word and your voice naming it back.
+
+## design notes
+
+- **Pictures, not text, for answers.** A non-reader can't pick from `cat / dog / pig` written out — they'd be reading the answers. Emoji as low-cost iconography: no asset pipeline, recognizable, varied.
+- **Audio is on demand, not automatic.** Auto-speech the moment a card appears trains the kid to wait for the voice instead of looking at the letter. The speak button is there for help; the card is the prompt.
+- **Reinforcement after answer.** Right or wrong, the voice says what the card was. Wrong gets a longer pause before the next card so the correction lands.
+- **Same SRS bones as [ladder](/experiments/ladder).** Leitner-style intervals, per-mode persistence to localStorage. Copy the bones; don't abstract them — the *shape* of a card here (prompt + three pictures) is different enough from naming a note that a shared engine would just be a thicker layer to pass everything through.
