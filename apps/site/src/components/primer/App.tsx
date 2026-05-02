@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
+type Lang = 'en' | 'fr';
 type Mode = 'letters' | 'words' | 'pictures' | 'spell';
+type Combo = `${Lang}-${Mode}`;
 
 interface Tile { id: string; letter: string; }
 
@@ -21,9 +23,9 @@ interface WordCard {
 
 type Card = LetterCard | WordCard;
 
-// Each letter shown alongside one exemplar word + emoji whose name starts with
-// that letter's most-common short sound.
-const LETTERS: LetterCard[] = [
+// English exemplars: each letter shown alongside one word + emoji whose name
+// starts with that letter's most-common short sound.
+const LETTERS_EN: LetterCard[] = [
   { kind: 'letter', id: 'A', letter: 'A', exemplar: 'apple',    emoji: '\u{1F34E}' },
   { kind: 'letter', id: 'B', letter: 'B', exemplar: 'ball',     emoji: '⚽' },
   { kind: 'letter', id: 'C', letter: 'C', exemplar: 'cat',      emoji: '\u{1F431}' },
@@ -52,8 +54,40 @@ const LETTERS: LetterCard[] = [
   { kind: 'letter', id: 'Z', letter: 'Z', exemplar: 'zebra',    emoji: '\u{1F993}' },
 ];
 
-// CVC and near-CVC short words. Kept short so phonics blending works cleanly.
-const WORDS: WordCard[] = [
+// French exemplars: same idea, but the exemplar starts with that letter's
+// French sound. Standard French phonics picks "carotte" for /k/ rather than
+// "chat" (which is /ʃ/, taught later under the ch digraph), and so on.
+const LETTERS_FR: LetterCard[] = [
+  { kind: 'letter', id: 'A', letter: 'A', exemplar: 'avion',     emoji: '✈️' },
+  { kind: 'letter', id: 'B', letter: 'B', exemplar: 'ballon',    emoji: '\u{1F388}' },
+  { kind: 'letter', id: 'C', letter: 'C', exemplar: 'carotte',   emoji: '\u{1F955}' },
+  { kind: 'letter', id: 'D', letter: 'D', exemplar: 'dauphin',   emoji: '\u{1F42C}' },
+  { kind: 'letter', id: 'E', letter: 'E', exemplar: 'éléphant',  emoji: '\u{1F418}' },
+  { kind: 'letter', id: 'F', letter: 'F', exemplar: 'fleur',     emoji: '\u{1F338}' },
+  { kind: 'letter', id: 'G', letter: 'G', exemplar: 'gâteau',    emoji: '\u{1F382}' },
+  { kind: 'letter', id: 'H', letter: 'H', exemplar: 'hibou',     emoji: '\u{1F989}' },
+  { kind: 'letter', id: 'I', letter: 'I', exemplar: 'insecte',   emoji: '\u{1F41B}' },
+  { kind: 'letter', id: 'J', letter: 'J', exemplar: 'jus',       emoji: '\u{1F9C3}' },
+  { kind: 'letter', id: 'K', letter: 'K', exemplar: 'koala',     emoji: '\u{1F428}' },
+  { kind: 'letter', id: 'L', letter: 'L', exemplar: 'lapin',     emoji: '\u{1F430}' },
+  { kind: 'letter', id: 'M', letter: 'M', exemplar: 'maison',    emoji: '\u{1F3E0}' },
+  { kind: 'letter', id: 'N', letter: 'N', exemplar: 'nuage',     emoji: '☁️' },
+  { kind: 'letter', id: 'O', letter: 'O', exemplar: 'orange',    emoji: '\u{1F34A}' },
+  { kind: 'letter', id: 'P', letter: 'P', exemplar: 'poisson',   emoji: '\u{1F41F}' },
+  { kind: 'letter', id: 'Q', letter: 'Q', exemplar: 'quatre',    emoji: '4️⃣' },
+  { kind: 'letter', id: 'R', letter: 'R', exemplar: 'renard',    emoji: '\u{1F98A}' },
+  { kind: 'letter', id: 'S', letter: 'S', exemplar: 'soleil',    emoji: '☀️' },
+  { kind: 'letter', id: 'T', letter: 'T', exemplar: 'tigre',     emoji: '\u{1F405}' },
+  { kind: 'letter', id: 'U', letter: 'U', exemplar: 'usine',     emoji: '\u{1F3ED}' },
+  { kind: 'letter', id: 'V', letter: 'V', exemplar: 'vache',     emoji: '\u{1F42E}' },
+  { kind: 'letter', id: 'W', letter: 'W', exemplar: 'wagon',     emoji: '\u{1F683}' },
+  { kind: 'letter', id: 'X', letter: 'X', exemplar: 'xylophone', emoji: '\u{1F3B6}' },
+  { kind: 'letter', id: 'Y', letter: 'Y', exemplar: 'yaourt',    emoji: '\u{1F963}' },
+  { kind: 'letter', id: 'Z', letter: 'Z', exemplar: 'zèbre',     emoji: '\u{1F993}' },
+];
+
+// CVC and near-CVC short English words. Kept short so phonics blending works.
+const WORDS_EN: WordCard[] = [
   { kind: 'word', id: 'cat', word: 'cat', emoji: '\u{1F431}' },
   { kind: 'word', id: 'dog', word: 'dog', emoji: '\u{1F436}' },
   { kind: 'word', id: 'pig', word: 'pig', emoji: '\u{1F437}' },
@@ -76,9 +110,49 @@ const WORDS: WordCard[] = [
   { kind: 'word', id: 'dad', word: 'dad', emoji: '\u{1F468}' },
 ];
 
+// French short words. French spelling is rarely as decoded-friendly as CVC
+// English (silent letters, digraphs everywhere), so the spell mode here also
+// teaches that "lit" needs that silent t and "nez" that silent z. The kid
+// hears the word, places every letter — including the quiet ones.
+const WORDS_FR: WordCard[] = [
+  { kind: 'word', id: 'chat',   word: 'chat',   emoji: '\u{1F431}' },
+  { kind: 'word', id: 'chien',  word: 'chien',  emoji: '\u{1F436}' },
+  { kind: 'word', id: 'sac',    word: 'sac',    emoji: '\u{1F45C}' },
+  { kind: 'word', id: 'bus',    word: 'bus',    emoji: '\u{1F68C}' },
+  { kind: 'word', id: 'jus',    word: 'jus',    emoji: '\u{1F9C3}' },
+  { kind: 'word', id: 'lit',    word: 'lit',    emoji: '\u{1F6CF}️' },
+  { kind: 'word', id: 'nez',    word: 'nez',    emoji: '\u{1F443}' },
+  { kind: 'word', id: 'rat',    word: 'rat',    emoji: '\u{1F400}' },
+  { kind: 'word', id: 'lac',    word: 'lac',    emoji: '\u{1F3DE}️' },
+  { kind: 'word', id: 'roi',    word: 'roi',    emoji: '\u{1F451}' },
+  { kind: 'word', id: 'feu',    word: 'feu',    emoji: '\u{1F525}' },
+  { kind: 'word', id: 'oeuf',   word: 'oeuf',   emoji: '\u{1F95A}' },
+  { kind: 'word', id: 'lune',   word: 'lune',   emoji: '\u{1F319}' },
+  { kind: 'word', id: 'main',   word: 'main',   emoji: '✋' },
+  { kind: 'word', id: 'pied',   word: 'pied',   emoji: '\u{1F9B6}' },
+  { kind: 'word', id: 'vache',  word: 'vache',  emoji: '\u{1F42E}' },
+  { kind: 'word', id: 'pomme',  word: 'pomme',  emoji: '\u{1F34E}' },
+  { kind: 'word', id: 'ours',   word: 'ours',   emoji: '\u{1F43B}' },
+  { kind: 'word', id: 'fleur',  word: 'fleur',  emoji: '\u{1F338}' },
+  { kind: 'word', id: 'soleil', word: 'soleil', emoji: '☀️' },
+];
+
+const LETTERS: Record<Lang, LetterCard[]> = { en: LETTERS_EN, fr: LETTERS_FR };
+const WORDS: Record<Lang, WordCard[]> = { en: WORDS_EN, fr: WORDS_FR };
+
+// Distractor letter pools for spell mode's "+ extras" — characters that
+// could plausibly belong but don't.
+const ALPHABET: Record<Lang, string[]> = {
+  en: 'abcdefghijklmnopqrstuvwxyz'.split(''),
+  fr: 'abcdefghijklmnopqrstuvwxyzéèêàç'.split(''),
+};
+
 // ---------- SRS ----------
 interface CardState { level: number; nextReview: number; seen: number; correct: number; }
 type CardStates = Record<string, CardState>;
+interface StatsBlock { correct: number; total: number; bestStreak: number; }
+type AllStates = Record<Combo, CardStates>;
+type AllStats = Record<Combo, StatsBlock>;
 
 const INTERVAL = (level: number) => 2 + Math.pow(2, level);
 
@@ -88,6 +162,31 @@ function initialStates(cards: { id: string }[]): CardStates {
     s[c.id] = { level: 0, nextReview: i, seen: 0, correct: 0 };
   });
   return s;
+}
+
+function freshAllStates(): AllStates {
+  return {
+    'en-letters':  initialStates(LETTERS_EN),
+    'en-words':    initialStates(WORDS_EN),
+    'en-pictures': initialStates(WORDS_EN),
+    'en-spell':    initialStates(WORDS_EN),
+    'fr-letters':  initialStates(LETTERS_FR),
+    'fr-words':    initialStates(WORDS_FR),
+    'fr-pictures': initialStates(WORDS_FR),
+    'fr-spell':    initialStates(WORDS_FR),
+  };
+}
+
+function freshAllStats(): AllStats {
+  const empty = (): StatsBlock => ({ correct: 0, total: 0, bestStreak: 0 });
+  return {
+    'en-letters': empty(), 'en-words': empty(), 'en-pictures': empty(), 'en-spell': empty(),
+    'fr-letters': empty(), 'fr-words': empty(), 'fr-pictures': empty(), 'fr-spell': empty(),
+  };
+}
+
+function deckFor(lang: Lang, mode: Mode): Card[] {
+  return (mode === 'letters' ? LETTERS[lang] : WORDS[lang]) as Card[];
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -136,29 +235,148 @@ function updateStates(states: CardStates, id: string, correct: boolean, step: nu
 
 // ---------- Persistence ----------
 const STORAGE_KEY = 'primer';
+
 interface PersistShape {
+  lang: Lang;
   mode: Mode;
-  states: Record<Mode, CardStates>;
-  stats: Record<Mode, { correct: number; total: number; bestStreak: number }>;
+  states: AllStates;
+  stats: AllStats;
   spellHard?: boolean;
 }
-function loadPersisted(): PersistShape | null {
+
+// What the previous monolingual version wrote. Kept just so we can lift it
+// into the new shape on first load instead of wiping a kid's progress.
+interface LegacyShape {
+  mode?: Mode;
+  states?: Record<Mode, CardStates>;
+  stats?: Record<Mode, StatsBlock>;
+  spellHard?: boolean;
+}
+
+function loadPersisted(): { lang?: Lang; mode?: Mode; states?: Partial<AllStates>; stats?: Partial<AllStats>; spellHard?: boolean } | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as PersistShape;
+    const parsed = JSON.parse(raw) as PersistShape | LegacyShape;
+    if ('lang' in parsed && parsed.lang) {
+      return parsed;
+    }
+    // Legacy: hoist English data into the new shape.
+    const legacy = parsed as LegacyShape;
+    const states: Partial<AllStates> = {};
+    const stats: Partial<AllStats> = {};
+    if (legacy.states) {
+      if (legacy.states.letters)  states['en-letters']  = legacy.states.letters;
+      if (legacy.states.words)    states['en-words']    = legacy.states.words;
+      if (legacy.states.pictures) states['en-pictures'] = legacy.states.pictures;
+      if (legacy.states.spell)    states['en-spell']    = legacy.states.spell;
+    }
+    if (legacy.stats) {
+      if (legacy.stats.letters)  stats['en-letters']  = legacy.stats.letters;
+      if (legacy.stats.words)    stats['en-words']    = legacy.stats.words;
+      if (legacy.stats.pictures) stats['en-pictures'] = legacy.stats.pictures;
+      if (legacy.stats.spell)    stats['en-spell']    = legacy.stats.spell;
+    }
+    return { lang: 'en', mode: legacy.mode, states, stats, spellHard: legacy.spellHard };
   } catch { return null; }
 }
 
 // ---------- Speech ----------
-function pickVoice(): SpeechSynthesisVoice | null {
+function pickVoice(lang: Lang): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
-  const en = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
-  const pref = en.find(v => /samantha|karen|google us english|microsoft zira|female/i.test(v.name));
-  return pref ?? en[0] ?? voices[0];
+  const langCode = lang === 'fr' ? 'fr' : 'en';
+  const matching = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(langCode));
+  const preferRe = lang === 'fr'
+    ? /amelie|amélie|virginie|audrey|thomas|google.*français|microsoft.*french/i
+    : /samantha|karen|google us english|microsoft zira|female/i;
+  const pref = matching.find(v => preferRe.test(v.name));
+  return pref ?? matching[0] ?? voices[0];
 }
+
+// ---------- i18n ----------
+interface Locale {
+  modes: Record<Mode, string>;
+  primerSubtitle: string;
+  sayIt: string;
+  reset: string;
+  extras: string;
+  extrasOnTitle: string;
+  extrasOffTitle: string;
+  resetTitle: string;
+  sayItTitle: string;
+  streak: string;
+  seen: string;
+  accuracy: string;
+  best: string;
+  hints: {
+    letters: string;
+    words: string;
+    pictures: string;
+    spellEasy: string;
+    spellHard: string;
+  };
+  letterAnswer: (letter: string, exemplar: string) => string;
+  ariaSoundOut: (word: string) => string;
+  ariaHearWord: (word: string) => string;
+  ariaHearAgain: string;
+}
+
+const LOCALES: Record<Lang, Locale> = {
+  en: {
+    modes: { letters: 'letters', words: 'words', pictures: 'pictures', spell: 'spell' },
+    primerSubtitle: 'first reads · spaced repetition',
+    sayIt: 'say it',
+    reset: 'reset',
+    extras: '+ extras',
+    extrasOnTitle: 'Drop extra letters',
+    extrasOffTitle: 'Add letters that don’t belong',
+    resetTitle: 'Reset progress for this mode',
+    sayItTitle: 'Hear it again',
+    streak: 'streak',
+    seen: 'seen',
+    accuracy: 'accuracy',
+    best: 'best',
+    hints: {
+      letters: 'tap the picture that starts with this letter',
+      words: 'tap the picture that matches this word',
+      pictures: 'tap the word that matches this picture',
+      spellEasy: 'drag the letters into place',
+      spellHard: 'drag the right letters into place',
+    },
+    letterAnswer: (letter, exemplar) => `${letter} is for ${exemplar}`,
+    ariaSoundOut: (w) => `sound out ${w}`,
+    ariaHearWord: (w) => `hear ${w}`,
+    ariaHearAgain: 'hear the word again',
+  },
+  fr: {
+    modes: { letters: 'lettres', words: 'mots', pictures: 'images', spell: 'épeler' },
+    primerSubtitle: 'premières lectures · répétition espacée',
+    sayIt: 'écouter',
+    reset: 'recommencer',
+    extras: '+ pièges',
+    extrasOnTitle: 'Enlever les pièges',
+    extrasOffTitle: 'Ajouter des lettres qui ne vont pas',
+    resetTitle: 'Recommencer ce mode',
+    sayItTitle: 'Réécouter',
+    streak: 'série',
+    seen: 'vus',
+    accuracy: 'précision',
+    best: 'record',
+    hints: {
+      letters: "touche l'image qui commence par cette lettre",
+      words: "touche l'image qui correspond à ce mot",
+      pictures: "touche le mot qui correspond à cette image",
+      spellEasy: 'glisse les lettres à leur place',
+      spellHard: 'glisse les bonnes lettres à leur place',
+    },
+    letterAnswer: (letter, exemplar) => `${letter} comme ${exemplar}`,
+    ariaSoundOut: (w) => `prononcer ${w}`,
+    ariaHearWord: (w) => `écouter ${w}`,
+    ariaHearAgain: 'écouter encore',
+  },
+};
 
 // ---------- Palette ----------
 const PAL = {
@@ -178,24 +396,16 @@ const PAL = {
 
 // ---------- Component ----------
 export default function Primer() {
+  const [lang, setLang] = useState<Lang>('en');
   const [mode, setMode] = useState<Mode>('letters');
   const [loaded, setLoaded] = useState(false);
-  const [allStates, setAllStates] = useState<Record<Mode, CardStates>>(() => ({
-    letters: initialStates(LETTERS),
-    words: initialStates(WORDS),
-    pictures: initialStates(WORDS),
-    spell: initialStates(WORDS),
-  }));
-  const [allStats, setAllStats] = useState<Record<Mode, { correct: number; total: number; bestStreak: number }>>(() => ({
-    letters: { correct: 0, total: 0, bestStreak: 0 },
-    words: { correct: 0, total: 0, bestStreak: 0 },
-    pictures: { correct: 0, total: 0, bestStreak: 0 },
-    spell: { correct: 0, total: 0, bestStreak: 0 },
-  }));
+  const [allStates, setAllStates] = useState<AllStates>(freshAllStates);
+  const [allStats, setAllStats] = useState<AllStats>(freshAllStats);
   const [streak, setStreak] = useState(0);
   const [step, setStep] = useState(0);
 
-  const deck = useMemo(() => (mode === 'letters' ? LETTERS : WORDS) as Card[], [mode]);
+  const combo: Combo = `${lang}-${mode}`;
+  const deck = useMemo(() => deckFor(lang, mode), [lang, mode]);
   const [current, setCurrent] = useState<Card>(() => deck[0]);
   const [options, setOptions] = useState<Card[]>(() => deck.slice(0, 3));
   const [feedback, setFeedback] = useState<null | 'correct' | 'incorrect'>(null);
@@ -209,20 +419,22 @@ export default function Primer() {
   const [slots, setSlots] = useState<(Tile | null)[]>([]);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const dragOriginRef = useRef<{ x: number; y: number; offX: number; offY: number } | null>(null);
+  const dragOriginRef = useRef<{ x: number; y: number; offX: number; offY: number; startX: number; startY: number } | null>(null);
   const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
   const poolRef = useRef<HTMLDivElement | null>(null);
 
-  // Voices load asynchronously on most browsers.
+  const L = LOCALES[lang];
+
+  // Voices load asynchronously on most browsers; re-pick when language changes.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    const update = () => setVoice(pickVoice());
+    const update = () => setVoice(pickVoice(lang));
     update();
     window.speechSynthesis.addEventListener('voiceschanged', update);
     return () => window.speechSynthesis.removeEventListener('voiceschanged', update);
-  }, []);
+  }, [lang]);
 
-  // Speech helper (needs access to current voice).
+  // Speech helper (needs access to current voice + lang).
   const speakSequence = useCallback((parts: { text: string; rate?: number; pitch?: number }[]) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     try {
@@ -231,16 +443,15 @@ export default function Primer() {
         const u = new SpeechSynthesisUtterance(p.text);
         u.rate = p.rate ?? 0.8;
         u.pitch = p.pitch ?? 1.15;
+        u.lang = lang === 'fr' ? 'fr-FR' : 'en-US';
         if (voice) u.voice = voice;
         window.speechSynthesis.speak(u);
       });
     } catch { /* no-op */ }
-  }, [voice]);
+  }, [voice, lang]);
 
   // Slow speech naturally stretches the phonemes; the engine handles what our
-  // ASCII phoneme-spellings could not. We say the word once stretched, then
-  // again at normal speed for fluency. For letters we use the exemplar word
-  // ("hat" slow → "hat" normal), which stretches the initial /h/ on screen.
+  // ASCII phoneme-spellings could not. Stretched once, then fluent.
   const speakPrompt = useCallback((card: Card) => {
     const text = card.kind === 'letter' ? card.exemplar : card.word;
     speakSequence([
@@ -249,10 +460,12 @@ export default function Primer() {
     ]);
   }, [speakSequence]);
 
-  // Load persisted state once.
+  // Load persisted state once. Migrates the legacy monolingual shape into the
+  // new lang-keyed one so existing English progress survives.
   useEffect(() => {
     const p = loadPersisted();
     if (p) {
+      if (p.lang) setLang(p.lang);
       if (p.mode) setMode(p.mode);
       if (p.states) setAllStates(prev => ({ ...prev, ...p.states }));
       if (p.stats) setAllStats(prev => ({ ...prev, ...p.stats }));
@@ -261,13 +474,12 @@ export default function Primer() {
     setLoaded(true);
   }, []);
 
-  // Build a fresh round whenever mode changes (or after load).
+  // Build a fresh round whenever lang or mode changes.
   useEffect(() => {
-    const states = allStates[mode];
+    const states = allStates[combo];
     const next = pickNext(deck, states, null);
     setCurrent(next);
     if (mode === 'spell') {
-      // Spell-setup effect populates pool/slots from the new current.
       setSlots([]);
       setPool([]);
     } else {
@@ -280,16 +492,16 @@ export default function Primer() {
     setPickedId(null);
     setLocked(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+  }, [lang, mode]);
 
   // Persist whenever state changes.
   useEffect(() => {
     if (!loaded) return;
     try {
-      const payload: PersistShape = { mode, states: allStates, stats: allStats, spellHard };
+      const payload: PersistShape = { lang, mode, states: allStates, stats: allStats, spellHard };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     } catch { /* ignore */ }
-  }, [mode, allStates, allStats, spellHard, loaded]);
+  }, [lang, mode, allStates, allStats, spellHard, loaded]);
 
   const isMatch = useCallback((option: Card, target: Card): boolean => {
     if (option.kind !== target.kind) return false;
@@ -302,28 +514,34 @@ export default function Primer() {
     setLocked(true);
     const newStep = step + 1;
     const newStreak = correct ? streak + 1 : 0;
-    const prevStats = allStats[mode];
-    const newStats = {
+    const prevStats = allStats[combo];
+    const newStats: StatsBlock = {
       correct: prevStats.correct + (correct ? 1 : 0),
       total: prevStats.total + 1,
       bestStreak: Math.max(prevStats.bestStreak, newStreak),
     };
     setFeedback(correct ? 'correct' : 'incorrect');
     setStreak(newStreak);
-    setAllStats(prev => ({ ...prev, [mode]: newStats }));
+    setAllStats(prev => ({ ...prev, [combo]: newStats }));
 
-    const newStates = updateStates(allStates[mode], current.id, correct, newStep);
-    setAllStates(prev => ({ ...prev, [mode]: newStates }));
+    const newStates = updateStates(allStates[combo], current.id, correct, newStep);
+    setAllStates(prev => ({ ...prev, [combo]: newStates }));
     setStep(newStep);
 
-    // Reinforce either way: stretched-then-fluent reading of the target.
     speakPrompt(current);
 
     const delay = correct ? 1200 : 1700;
     setTimeout(() => {
       const next = pickNext(deck, newStates, current.id);
       setCurrent(next);
-      if (mode !== 'spell') {
+      if (mode === 'spell') {
+        // Clear in the same batch as setCurrent so the spell-completion
+        // effect early-returns on empty slots before the spell-setup effect
+        // repopulates — otherwise the old word's filled slots are scored
+        // against the new word and immediately marked wrong.
+        setSlots([]);
+        setPool([]);
+      } else {
         const distractors = pickDistractors(deck, next, 2);
         setOptions(shuffle([next, ...distractors]));
       }
@@ -331,7 +549,7 @@ export default function Primer() {
       setPickedId(null);
       setLocked(false);
     }, delay);
-  }, [step, streak, allStats, allStates, mode, current, deck, speakPrompt]);
+  }, [step, streak, allStats, allStates, combo, mode, current, deck, speakPrompt]);
 
   const handleAnswer = useCallback((option: Card) => {
     if (locked) return;
@@ -350,13 +568,13 @@ export default function Primer() {
     let tiles = baseTiles;
     if (spellHard) {
       const used = new Set(word.split(''));
-      const remaining = 'abcdefghijklmnopqrstuvwxyz'.split('').filter(ch => !used.has(ch));
+      const remaining = ALPHABET[lang].filter(ch => !used.has(ch));
       shuffle(remaining);
       const distCount = Math.min(2 + Math.floor(Math.random() * 2), remaining.length);
       const distractors: Tile[] = remaining.slice(0, distCount).map((ch, i) => ({ id: `d${i}`, letter: ch }));
       tiles = [...baseTiles, ...distractors];
     }
-    // Re-shuffle if we accidentally land on the correct order (3-letter words can hit this often).
+    // Re-shuffle if the random landed on the correct order.
     let attempts = 0;
     do {
       shuffle(tiles);
@@ -367,7 +585,7 @@ export default function Primer() {
     setDraggingId(null);
     if (loaded) speakPrompt(current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, mode, spellHard, loaded]);
+  }, [current, mode, spellHard, lang, loaded]);
 
   // When all slots are filled, score the attempt.
   useEffect(() => {
@@ -417,6 +635,8 @@ export default function Primer() {
       y: rect.top,
       offX: e.clientX - rect.left,
       offY: e.clientY - rect.top,
+      startX: e.clientX,
+      startY: e.clientY,
     };
     try { target.setPointerCapture(e.pointerId); } catch { /* */ }
     setDraggingId(tile.id);
@@ -431,21 +651,38 @@ export default function Primer() {
   const handleTilePointerUp = (e: React.PointerEvent<HTMLDivElement>, tile: Tile) => {
     if (draggingId === null) return;
     const x = e.clientX, y = e.clientY;
-    let target: number | 'pool' | null = null;
-    for (let i = 0; i < slotRefs.current.length; i++) {
-      const el = slotRefs.current[i];
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-        target = i;
-        break;
+    const startX = dragOriginRef.current?.startX ?? x;
+    const startY = dragOriginRef.current?.startY ?? y;
+    const isTap = Math.hypot(x - startX, y - startY) < 8;
+
+    if (isTap) {
+      // Tap-to-place: pool tile → next empty slot; slot tile → back to pool.
+      const inSlot = slots.findIndex(s => s !== null && s.id === tile.id);
+      if (inSlot !== -1) {
+        moveTile(tile, 'pool');
+      } else {
+        const firstEmpty = slots.findIndex(s => s === null);
+        if (firstEmpty !== -1) moveTile(tile, firstEmpty);
       }
+    } else {
+      // Drag-and-drop: hit-test against slot/pool refs.
+      let target: number | 'pool' | null = null;
+      for (let i = 0; i < slotRefs.current.length; i++) {
+        const el = slotRefs.current[i];
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          target = i;
+          break;
+        }
+      }
+      if (target === null && poolRef.current) {
+        const r = poolRef.current.getBoundingClientRect();
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) target = 'pool';
+      }
+      if (target !== null) moveTile(tile, target);
     }
-    if (target === null && poolRef.current) {
-      const r = poolRef.current.getBoundingClientRect();
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) target = 'pool';
-    }
-    if (target !== null) moveTile(tile, target);
+
     setDraggingId(null);
     setDragPos(null);
     dragOriginRef.current = null;
@@ -490,13 +727,13 @@ export default function Primer() {
     );
   };
 
-  const stats = allStats[mode];
+  const stats = allStats[combo];
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
 
   const resetCurrent = () => {
     const fresh = initialStates(deck);
-    setAllStates(prev => ({ ...prev, [mode]: fresh }));
-    setAllStats(prev => ({ ...prev, [mode]: { correct: 0, total: 0, bestStreak: 0 } }));
+    setAllStates(prev => ({ ...prev, [combo]: fresh }));
+    setAllStats(prev => ({ ...prev, [combo]: { correct: 0, total: 0, bestStreak: 0 } }));
     setStreak(0);
     setStep(0);
     const next = pickNext(deck, fresh, null);
@@ -513,7 +750,7 @@ export default function Primer() {
   };
 
   // ---------- Render bits ----------
-  const modeButton = (m: Mode, label: string) => (
+  const modeButton = (m: Mode) => (
     <button
       onClick={() => setMode(m)}
       style={{
@@ -529,6 +766,28 @@ export default function Primer() {
         textTransform: 'uppercase',
         cursor: 'pointer',
         fontWeight: mode === m ? 700 : 500,
+      }}
+    >
+      {L.modes[m]}
+    </button>
+  );
+
+  const langButton = (l: Lang, label: string) => (
+    <button
+      onClick={() => setLang(l)}
+      aria-pressed={lang === l}
+      style={{
+        background: lang === l ? PAL.accent : 'transparent',
+        color: lang === l ? PAL.bg : PAL.textDim,
+        border: `1px solid ${lang === l ? PAL.accent : PAL.border}`,
+        borderRadius: 3,
+        padding: '3px 8px',
+        fontFamily: PAL.mono,
+        fontSize: '0.62rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        cursor: 'pointer',
+        fontWeight: lang === l ? 700 : 500,
       }}
     >
       {label}
@@ -575,7 +834,7 @@ export default function Primer() {
         >
           <button
             onClick={() => current.kind === 'word' && speakPrompt(current)}
-            aria-label="hear the word again"
+            aria-label={L.ariaHearAgain}
             style={{
               background: 'transparent',
               border: 'none',
@@ -604,7 +863,7 @@ export default function Primer() {
         >
           <button
             onClick={() => speakPrompt(current)}
-            aria-label={`hear ${current.word}`}
+            aria-label={L.ariaHearWord(current.word)}
             style={{
               background: 'transparent',
               border: 'none',
@@ -633,7 +892,7 @@ export default function Primer() {
       >
         <button
           onClick={() => speakPrompt(current)}
-          aria-label={`sound out ${current.word}`}
+          aria-label={L.ariaSoundOut(current.word)}
           style={{
             background: 'transparent',
             border: 'none',
@@ -785,18 +1044,14 @@ export default function Primer() {
   };
 
   const promptHint = (() => {
-    if (feedback === 'correct') {
-      if (current.kind === 'letter') return `${current.letter.toLowerCase()} is for ${current.exemplar}`;
+    if (feedback !== null) {
+      if (current.kind === 'letter') return L.letterAnswer(current.letter.toLowerCase(), current.exemplar);
       return current.word;
     }
-    if (feedback === 'incorrect') {
-      if (current.kind === 'letter') return `${current.letter.toLowerCase()} is for ${current.exemplar}`;
-      return current.word;
-    }
-    if (mode === 'letters') return 'tap the picture that starts with this letter';
-    if (mode === 'words') return 'tap the picture that matches this word';
-    if (mode === 'pictures') return 'tap the word that matches this picture';
-    return spellHard ? 'drag the right letters into place' : 'drag the letters into place';
+    if (mode === 'letters')  return L.hints.letters;
+    if (mode === 'words')    return L.hints.words;
+    if (mode === 'pictures') return L.hints.pictures;
+    return spellHard ? L.hints.spellHard : L.hints.spellEasy;
   })();
 
   const promptColor =
@@ -831,28 +1086,34 @@ export default function Primer() {
             primer
           </div>
           <div style={{ fontFamily: PAL.mono, fontSize: '0.65rem', color: PAL.textMuted, marginTop: 4, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            first reads · spaced repetition
+            {L.primerSubtitle}
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: PAL.mono, fontSize: '0.6rem', color: PAL.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>streak</div>
-          <div style={{ fontFamily: PAL.serif, fontSize: '1.8rem', fontWeight: 500, lineHeight: 1, color: PAL.accent }}>{streak}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {langButton('en', 'EN')}
+            {langButton('fr', 'FR')}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontFamily: PAL.mono, fontSize: '0.6rem', color: PAL.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{L.streak}</div>
+            <div style={{ fontFamily: PAL.serif, fontSize: '1.6rem', fontWeight: 500, lineHeight: 1, color: PAL.accent }}>{streak}</div>
+          </div>
         </div>
       </div>
 
       {/* Mode selector */}
       <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: 6 }}>
-        {modeButton('letters', 'letters')}
-        {modeButton('words', 'words')}
-        {modeButton('pictures', 'pictures')}
-        {modeButton('spell', 'spell')}
+        {modeButton('letters')}
+        {modeButton('words')}
+        {modeButton('pictures')}
+        {modeButton('spell')}
       </div>
 
       {/* Action row */}
       <div style={{ width: '100%', maxWidth: 560, display: 'flex', gap: 6, marginBottom: '1rem' }}>
         <button
           onClick={() => speakPrompt(current)}
-          title="Hear it again"
+          title={L.sayItTitle}
           style={{
             background: PAL.bgCard,
             color: PAL.accent,
@@ -866,12 +1127,12 @@ export default function Primer() {
             cursor: 'pointer',
           }}
         >
-          {'\u{1F50A}'} say it
+          {'\u{1F50A}'} {L.sayIt}
         </button>
         {mode === 'spell' && (
           <button
             onClick={() => setSpellHard(h => !h)}
-            title={spellHard ? 'Drop extra letters' : 'Add letters that don’t belong'}
+            title={spellHard ? L.extrasOnTitle : L.extrasOffTitle}
             style={{
               background: spellHard ? PAL.accent : PAL.bgCard,
               color: spellHard ? PAL.bg : PAL.textDim,
@@ -886,12 +1147,12 @@ export default function Primer() {
               fontWeight: spellHard ? 700 : 500,
             }}
           >
-            + extras
+            {L.extras}
           </button>
         )}
         <button
           onClick={resetCurrent}
-          title="Reset progress for this mode"
+          title={L.resetTitle}
           style={{
             marginLeft: 'auto',
             background: PAL.bgCard,
@@ -906,7 +1167,7 @@ export default function Primer() {
             cursor: 'pointer',
           }}
         >
-          reset
+          {L.reset}
         </button>
       </div>
 
@@ -947,17 +1208,17 @@ export default function Primer() {
         color: PAL.textDim, fontSize: '0.72rem', fontFamily: PAL.mono,
       }}>
         <div>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>seen</span>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{L.seen}</span>
           <span style={{ margin: '0 6px', opacity: 0.5 }}>·</span>
           <span style={{ color: PAL.text }}>{stats.total}</span>
         </div>
         <div>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>accuracy</span>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{L.accuracy}</span>
           <span style={{ margin: '0 6px', opacity: 0.5 }}>·</span>
           <span style={{ color: PAL.text }}>{accuracy}%</span>
         </div>
         <div>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>best</span>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{L.best}</span>
           <span style={{ margin: '0 6px', opacity: 0.5 }}>·</span>
           <span style={{ color: PAL.text }}>{stats.bestStreak}</span>
         </div>

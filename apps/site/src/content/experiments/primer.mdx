@@ -7,7 +7,7 @@ tags: [reading, srs, learning, phonics, zpd]
 description: A spaced-repetition primer for early readers — letter sounds first, then short words. Built for a kid who knows her alphabet but no full words yet.
 ---
 
-Built for my daughter. She knows the alphabet — can name every letter cold — but the leap from naming to *reading* is its own ladder. So this is one: tap the picture that starts with this letter, or the picture that matches this word. Cards you miss return sooner; cards you land drift further out.
+Built for my daughter, who happens to be growing up in two languages. She knows the alphabet — can name every letter cold — but the leap from naming to *reading* is its own ladder. So this is one: tap the picture that starts with this letter, or the picture that matches this word. Cards you miss return sooner; cards you land drift further out. An EN/FR toggle in the corner flips the deck, the voice, and the labels — same four modes, separate spaced-repetition state per language.
 
 [Open the primer →](/experiments/primer)
 
@@ -20,6 +20,12 @@ Built for my daughter. She knows the alphabet — can name every letter cold —
 **pictures** is the same game from the other end. An emoji sits on the card; the answers are written words. Tap the picture to hear what it is, then find the word that matches. Word-recognition rather than word-decoding — she's reading by shape, not by sounding out, which is the second way English actually gets read.
 
 **spell** is the production mode. The card shows nothing but a speaker; tap it and a voice reads the word. Underneath are three (or more) letter tiles, scrambled. Drag them into the empty slots to spell what you heard. A *+ extras* toggle salts the pool with letters that don't belong, so she has to know not just the order but which letters are even in play. The first three modes ask her to *recognize*; this one asks her to *produce*.
+
+## en / fr
+
+The French deck isn't a translation of the English one — it's a parallel curriculum. *carotte* exemplifies C, not *chat* (which a French phonics teacher would file under the *ch* digraph, taught later). The short-word list embraces silent letters and digraphs because that's the actual shape of beginner French: *lit* with its silent *t*, *nez* with its silent *z*, *chat* with its two-letter consonant. Spell mode lets her hear the word and assemble all of it, mute letters included — which is exactly what learning to write French is.
+
+The TTS picks a French voice (Amélie, Virginie, or whatever the system has) when *FR* is on, and falls back to defaults gracefully. SRS state is stored separately per language: she can be a fluent decoder in one and a beginner in the other without the schedule getting confused.
 
 ## why these modes
 
