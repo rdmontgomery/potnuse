@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { K, FONTS } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
-import { getAllPhrases } from '@/lib/allons-jouer/phrases';
+import { getAllPhrases, stageFor, allowedWrongs, type PhraseStage } from '@/lib/allons-jouer/phrases';
 import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
 import { ButtonStrip } from '@/components/allons-jouer/ButtonStrip';
 import { Keyboard } from '@/components/allons-jouer/Keyboard';
@@ -54,7 +54,9 @@ export function PhraseScreen() {
   // Local step counter — independent of the regular lesson screen's store step.
   const [step, setStep] = useState(0);
   const [feedback, setFeedback] = useState<null | 'correct' | 'incorrect'>(null);
+  const [wrongCount, setWrongCount] = useState(0);
   const lastFiredStepRef = useRef<number>(-1);
+  const lastSeenDetectionRef = useRef<DetectedNote | null>(null);
   const stepAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const srsAdvanceRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -76,39 +78,71 @@ export function PhraseScreen() {
     };
   }, [phrase]);
 
+  // Level + stage of the current phrase drive how much scaffolding is offered.
+  const currentLevel = phrase ? (phraseStates[phrase.id]?.level ?? 0) : 0;
+  const stage: PhraseStage = stageFor(currentLevel);
+  const wrongBudget = allowedWrongs(currentLevel);
+
   // Reset step + clear any pending timers whenever the active phrase changes,
-  // then auto-play the demo so the timing lands before the first attempt.
+  // then auto-play the demo (unless the phrase is already mastered, in which
+  // case the demo button stays manual to keep recall honest).
   useEffect(() => {
     setStep(0);
     setFeedback(null);
+    setWrongCount(0);
     lastFiredStepRef.current = -1;
+    lastSeenDetectionRef.current = null;
     if (stepAdvanceRef.current) { clearTimeout(stepAdvanceRef.current); stepAdvanceRef.current = null; }
     if (srsAdvanceRef.current)  { clearTimeout(srsAdvanceRef.current);  srsAdvanceRef.current  = null; }
     if (!phraseSong) return;
     stopDemo();
+    if (stage === 'mastered') return;
     const t = setTimeout(() => playDemo(phraseSong), 300);
     return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phraseCurrentId, phraseSong, playDemo, stopDemo]);
 
-  // Detection: when a target note is played, schedule a step advance. The timer
-  // is held in a ref (not the effect's local scope) so it survives subsequent
-  // re-renders — useAudio nulls detectedNote ~150ms after release, which used
-  // to cancel the advance timer via the cleanup function and lose the hit.
+  // Reset detection dedupe whenever step changes — same note may be wrong for
+  // step N and right for step N+1.
+  useEffect(() => {
+    lastSeenDetectionRef.current = null;
+  }, [step]);
+
+  // Detection: each press is processed once (deduped by reference equality
+  // against the detectedNote object — useAudio creates a fresh one per press).
+  // Correct presses schedule the step advance. Wrong presses count toward the
+  // miss budget; exceeding it auto-fails the phrase.
   useEffect(() => {
     if (!phrase || !detectedNote || isPlaying || feedback !== null) return;
     if (step >= phrase.notes.length) return;
+    if (lastSeenDetectionRef.current === detectedNote) return;
+    lastSeenDetectionRef.current = detectedNote;
 
     const target = phrase.notes[step];
-    if (!matchesTarget(target, detectedNote, phraseLayout)) return;
-    if (lastFiredStepRef.current === step) return;
-    lastFiredStepRef.current = step;
-
-    if (stepAdvanceRef.current) clearTimeout(stepAdvanceRef.current);
-    stepAdvanceRef.current = setTimeout(() => {
-      setStep(s => s + 1);
-      stepAdvanceRef.current = null;
-    }, STEP_DEBOUNCE);
+    if (matchesTarget(target, detectedNote, phraseLayout)) {
+      if (lastFiredStepRef.current === step) return;
+      lastFiredStepRef.current = step;
+      if (stepAdvanceRef.current) clearTimeout(stepAdvanceRef.current);
+      stepAdvanceRef.current = setTimeout(() => {
+        setStep(s => s + 1);
+        stepAdvanceRef.current = null;
+      }, STEP_DEBOUNCE);
+    } else {
+      setWrongCount(c => c + 1);
+    }
   }, [detectedNote, phrase, step, isPlaying, feedback, phraseLayout]);
+
+  // Auto-fail when the kid blows the miss budget for this stage.
+  useEffect(() => {
+    if (!phrase || feedback !== null) return;
+    if (wrongCount <= wrongBudget) return;
+    setFeedback('incorrect');
+    if (srsAdvanceRef.current) clearTimeout(srsAdvanceRef.current);
+    srsAdvanceRef.current = setTimeout(() => {
+      recordPhraseResult(false);
+      srsAdvanceRef.current = null;
+    }, COMPLETION_DELAY);
+  }, [wrongCount, wrongBudget, phrase, feedback, recordPhraseResult]);
 
   // Phrase complete → mark correct, schedule the SRS advance.
   useEffect(() => {
@@ -142,7 +176,9 @@ export function PhraseScreen() {
   const handleAgain = () => {
     setStep(0);
     setFeedback(null);
+    setWrongCount(0);
     lastFiredStepRef.current = -1;
+    lastSeenDetectionRef.current = null;
     if (stepAdvanceRef.current) { clearTimeout(stepAdvanceRef.current); stepAdvanceRef.current = null; }
     if (srsAdvanceRef.current)  { clearTimeout(srsAdvanceRef.current);  srsAdvanceRef.current  = null; }
   };
@@ -180,6 +216,24 @@ export function PhraseScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <button onClick={goHome} style={{ background: 'none', border: 'none', color: K.textDim, cursor: 'pointer', fontSize: 14, fontFamily: FONTS.serif, padding: 4 }}>← Back</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {wrongBudget > 0 && wrongCount > 0 && (
+            <span style={{
+              fontSize: 12, color: K.pullBright, fontFamily: FONTS.mono, fontWeight: 600,
+              padding: '2px 8px', borderRadius: 10,
+              background: K.pull + '22', border: `1px solid ${K.pull}44`,
+            }}>
+              ✕ {wrongCount}/{wrongBudget}
+            </span>
+          )}
+          {wrongBudget === 0 && (
+            <span title="Mastered: one wrong note fails the phrase" style={{
+              fontSize: 11, color: K.success, fontFamily: FONTS.mono, fontWeight: 600,
+              padding: '2px 8px', borderRadius: 10,
+              background: K.success + '22', border: `1px solid ${K.success}44`,
+            }}>
+              🎯 strict
+            </span>
+          )}
           {phraseStreak > 2 && <span style={{ fontSize: 13, color: K.highlight, fontWeight: 600 }}>🔥 {phraseStreak}</span>}
           <button
             onClick={() => setPhraseLayout(phraseLayout === 'accordion' ? 'keyboard' : 'accordion')}
@@ -224,14 +278,20 @@ export function PhraseScreen() {
 
       {/* Mastery + action row (combined to save vertical space) */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 3 }}>
-          {[0, 1, 2, 3, 4].map(i => (
-            <div key={i} style={{
-              width: 7, height: 7, borderRadius: '50%',
-              background: i < level ? K.success : K.bgButton,
-              border: `1px solid ${i < level ? K.success : K.border}`,
-            }} />
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 3 }}>
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} style={{
+                width: 7, height: 7, borderRadius: '50%',
+                background: i < level ? K.success : K.bgButton,
+                border: `1px solid ${i < level ? K.success : K.border}`,
+              }} />
+            ))}
+          </div>
+          <span style={{
+            fontSize: 10, color: K.textMuted, fontFamily: FONTS.mono,
+            textTransform: 'uppercase', letterSpacing: 1.5,
+          }}>{stage}</span>
         </div>
         <button onClick={handleAgain} disabled={feedback === 'correct'} style={{
           padding: '4px 12px', borderRadius: 6, cursor: feedback === 'correct' ? 'default' : 'pointer',
@@ -293,6 +353,7 @@ export function PhraseScreen() {
           <Keyboard
             detectedNote={detectedNote}
             demoNote={demoNote}
+            showDemoHighlights={stage === 'learning'}
             highlightNote={target ? noteNameFor(target) : undefined}
             onKeyDown={handleKeyDown}
             onKeyUp={handlePointerUp}

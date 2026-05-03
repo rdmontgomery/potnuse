@@ -18,6 +18,25 @@ export interface PhraseStats {
 
 export const PHRASE_INTERVAL = (level: number) => 2 + Math.pow(2, level);
 
+// Graduated curriculum: as a phrase climbs the Leitner ladder, the trainer
+// withdraws scaffolding. A miss resets level to 0, so the support comes back.
+export type PhraseStage = 'learning' | 'familiar' | 'mastered';
+
+export function stageFor(level: number): PhraseStage {
+  if (level <= 1) return 'learning';
+  if (level <= 3) return 'familiar';
+  return 'mastered';
+}
+
+// Wrong-note tolerance per stage. Every wrong press past this threshold
+// auto-fails the phrase, so the SRS reflects what the kid can actually play.
+export function allowedWrongs(level: number): number {
+  const stage = stageFor(level);
+  if (stage === 'learning') return 3;
+  if (stage === 'familiar') return 1;
+  return 0;
+}
+
 // Flatten every song's phrase ranges into a deck of practice cards. Songs
 // without phrases (the warm-up scales) are skipped.
 export function getAllPhrases(): Phrase[] {

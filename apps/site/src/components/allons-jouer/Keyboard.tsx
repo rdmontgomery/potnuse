@@ -30,11 +30,12 @@ interface Props {
   detectedNote: DetectedNote | null;
   demoNote?: DetectedNote | null;
   highlightNote?: string;
+  showDemoHighlights?: boolean;
   onKeyDown: (note: string, freq: number) => void;
   onKeyUp: () => void;
 }
 
-export function Keyboard({ detectedNote, demoNote, highlightNote, onKeyDown, onKeyUp }: Props) {
+export function Keyboard({ detectedNote, demoNote, highlightNote, showDemoHighlights = true, onKeyDown, onKeyUp }: Props) {
   return (
     <div style={{
       display: 'flex',
@@ -48,7 +49,7 @@ export function Keyboard({ detectedNote, demoNote, highlightNote, onKeyDown, onK
       {KEYS.map(k => {
         const isTarget = highlightNote === k.note;
         const isPressed = detectedNote?.note === k.note;
-        const isDemo = !isPressed && demoNote?.note === k.note;
+        const isDemo = showDemoHighlights && !isPressed && demoNote?.note === k.note;
 
         let bg: string = K.text;     // ivory white
         let fg: string = K.bg;       // dark text
