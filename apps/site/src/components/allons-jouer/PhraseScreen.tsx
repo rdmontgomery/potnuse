@@ -33,6 +33,7 @@ export function PhraseScreen() {
   const phraseStreak     = useAppStore(s => s.phraseStreak);
   const phraseLayout     = useAppStore(s => s.phraseLayout);
   const detectedNote     = useAppStore(s => s.detectedNote);
+  const demoNote         = useAppStore(s => s.demoNote);
   const isPlaying        = useAppStore(s => s.isPlaying);
   const inputMode        = useAppStore(s => s.inputMode);
   const micError         = useAppStore(s => s.micError);
@@ -45,6 +46,10 @@ export function PhraseScreen() {
   const { handlePointerDown, handlePointerUp, handleKeyDown, playDemo, stopDemo } = useAudio();
   const { startListening, stopListening } = useMic();
   const isWide = useMediaQuery('(min-width: 900px)');
+  // Phone-in-landscape: viewport is wider than the centered page container,
+  // so let the keyboard break out of the gutter and span edge-to-edge.
+  const isLandscape = useMediaQuery('(orientation: landscape)');
+  const breakoutKeyboard = phraseLayout === 'keyboard' && isLandscape && !isWide;
 
   // Local step counter — independent of the regular lesson screen's store step.
   const [step, setStep] = useState(0);
@@ -277,12 +282,22 @@ export function PhraseScreen() {
           onNoteUp={handlePointerUp}
         />
       ) : (
-        <Keyboard
-          detectedNote={detectedNote}
-          highlightNote={target ? noteNameFor(target) : undefined}
-          onKeyDown={handleKeyDown}
-          onKeyUp={handlePointerUp}
-        />
+        <div style={breakoutKeyboard ? {
+          width: '100vw',
+          marginLeft: 'calc(50% - 50vw)',
+          marginRight: 'calc(50% - 50vw)',
+          paddingLeft: 8,
+          paddingRight: 8,
+          boxSizing: 'border-box',
+        } : undefined}>
+          <Keyboard
+            detectedNote={detectedNote}
+            demoNote={demoNote}
+            highlightNote={target ? noteNameFor(target) : undefined}
+            onKeyDown={handleKeyDown}
+            onKeyUp={handlePointerUp}
+          />
+        </div>
       )}
 
       {/* Stats strip */}

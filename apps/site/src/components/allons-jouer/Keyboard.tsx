@@ -28,12 +28,13 @@ const KEYS: KeyboardKey[] = [
 
 interface Props {
   detectedNote: DetectedNote | null;
+  demoNote?: DetectedNote | null;
   highlightNote?: string;
   onKeyDown: (note: string, freq: number) => void;
   onKeyUp: () => void;
 }
 
-export function Keyboard({ detectedNote, highlightNote, onKeyDown, onKeyUp }: Props) {
+export function Keyboard({ detectedNote, demoNote, highlightNote, onKeyDown, onKeyUp }: Props) {
   return (
     <div style={{
       display: 'flex',
@@ -42,10 +43,12 @@ export function Keyboard({ detectedNote, highlightNote, onKeyDown, onKeyUp }: Pr
       border: `1px solid ${K.border}`,
       borderRadius: 8,
       padding: 6,
+      width: '100%',
     }}>
       {KEYS.map(k => {
         const isTarget = highlightNote === k.note;
         const isPressed = detectedNote?.note === k.note;
+        const isDemo = !isPressed && demoNote?.note === k.note;
 
         let bg: string = K.text;     // ivory white
         let fg: string = K.bg;       // dark text
@@ -54,6 +57,10 @@ export function Keyboard({ detectedNote, highlightNote, onKeyDown, onKeyUp }: Pr
           bg = K.accent;
           fg = K.bg;
           border = K.accent;
+        } else if (isDemo) {
+          bg = K.highlight;
+          fg = K.bg;
+          border = K.highlight;
         } else if (isTarget) {
           bg = K.accent + '33';
           fg = K.accent;
@@ -83,12 +90,13 @@ export function Keyboard({ detectedNote, highlightNote, onKeyDown, onKeyUp }: Pr
               fontFamily: FONTS.serif,
               transition: 'background 0.1s, border-color 0.1s, color 0.1s',
               position: 'relative',
-              ...(isTarget && !isPressed ? { boxShadow: `0 0 0 2px ${K.accent}66` } : {}),
+              ...(isDemo ? { boxShadow: `0 0 0 3px ${K.highlight}99` } : {}),
+              ...(isTarget && !isPressed && !isDemo ? { boxShadow: `0 0 0 2px ${K.accent}66` } : {}),
             }}
           >
             <span style={{ fontSize: 22, fontWeight: 600, lineHeight: 1 }}>{k.letter}</span>
             <span style={{ fontSize: 10, fontFamily: FONTS.mono, opacity: 0.6 }}>{k.octave}</span>
-            {isTarget && !isPressed && (
+            {isTarget && !isPressed && !isDemo && (
               <span style={{
                 position: 'absolute', inset: 0,
                 border: `2px solid ${K.accent}`,
