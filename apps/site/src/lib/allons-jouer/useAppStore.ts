@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Screen, BellowsDir, InputMode, DetectedNote, TimingResult, LessonMode } from './types';
+import { getAllPhrases, initialPhraseStates, pickNextPhrase, updatePhraseState, type PhraseStates, type PhraseStats } from './phrases';
+
+export type PhraseLayout = 'accordion' | 'keyboard';
 
 interface AppState {
   screen: Screen;
@@ -21,6 +24,14 @@ interface AppState {
   trackPosition: number;
   tempoRatio: number;       // 0.6 | 0.8 | 1.0 — only affects Keep Up mode
   loopEnabled: boolean;
+
+  // Phrase trainer (SRS)
+  phraseStates: PhraseStates;
+  phraseStats: PhraseStats;
+  phraseCurrentId: string | null;
+  phraseStep: number;       // SRS scheduling counter (across attempts)
+  phraseStreak: number;
+  phraseLayout: PhraseLayout;
 }
 
 interface AppActions {
@@ -44,6 +55,12 @@ interface AppActions {
   setLessonMode: (mode: LessonMode) => void;
   setTrackPosition: (ms: number) => void;
   setTempoRatio: (ratio: number) => void;
+
+  // Phrase trainer
+  startPhraseTrainer: (layout?: PhraseLayout) => void;
+  setPhraseLayout: (layout: PhraseLayout) => void;
+  recordPhraseResult: (correct: boolean) => void;
+  resetPhraseProgress: () => void;
 }
 
 export const INITIAL_STATE: AppState = {
@@ -65,6 +82,12 @@ export const INITIAL_STATE: AppState = {
   trackPosition: 0,
   tempoRatio: 1,
   loopEnabled: false,
+  phraseStates: initialPhraseStates(getAllPhrases()),
+  phraseStats: { correct: 0, total: 0, bestStreak: 0 },
+  phraseCurrentId: null,
+  phraseStep: 0,
+  phraseStreak: 0,
+  phraseLayout: 'accordion',
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -72,7 +95,14 @@ export const useAppStore = create<AppState & AppActions>()(
     (set, get) => ({
       ...INITIAL_STATE,
 
-      goHome: () => set({ ...INITIAL_STATE, completedSongs: get().completedSongs, loopEnabled: get().loopEnabled }),
+      goHome: () => set({
+        ...INITIAL_STATE,
+        completedSongs: get().completedSongs,
+        loopEnabled: get().loopEnabled,
+        phraseStates: get().phraseStates,
+        phraseStats: get().phraseStats,
+        phraseLayout: get().phraseLayout,
+      }),
       goTo: (screen) => set({ screen }),
 
       startLesson: (songId, mode = 'ownPace', tempoRatio = 1) => set({
@@ -112,11 +142,71 @@ export const useAppStore = create<AppState & AppActions>()(
       setTrackPosition: (ms) => set({ trackPosition: ms }),
       setTempoRatio: (ratio) => set({ tempoRatio: ratio }),
       setLoopEnabled: (enabled) => set({ loopEnabled: enabled }),
+
+      startPhraseTrainer: (layout) => {
+        const phrases = getAllPhrases();
+        const states = get().phraseStates;
+        // If we don't yet have state for some phrases (deck grew between loads), fill them in.
+        const merged: PhraseStates = { ...states };
+        phrases.forEach((p, i) => {
+          if (!merged[p.id]) merged[p.id] = { level: 0, nextReview: i, seen: 0, correct: 0 };
+        });
+        const next = pickNextPhrase(phrases, merged, null);
+        set({
+          screen: 'phrases',
+          phraseStates: merged,
+          phraseCurrentId: next?.id ?? null,
+          phraseStep: 0,
+          phraseStreak: 0,
+          ...(layout ? { phraseLayout: layout } : {}),
+        });
+      },
+
+      setPhraseLayout: (layout) => set({ phraseLayout: layout }),
+
+      recordPhraseResult: (correct) => {
+        const phrases = getAllPhrases();
+        const { phraseStates, phraseStats, phraseCurrentId, phraseStep, phraseStreak } = get();
+        if (!phraseCurrentId) return;
+        const newStep = phraseStep + 1;
+        const newStreak = correct ? phraseStreak + 1 : 0;
+        const nextStates = updatePhraseState(phraseStates, phraseCurrentId, correct, newStep);
+        const nextStats: PhraseStats = {
+          correct: phraseStats.correct + (correct ? 1 : 0),
+          total: phraseStats.total + 1,
+          bestStreak: Math.max(phraseStats.bestStreak, newStreak),
+        };
+        const next = pickNextPhrase(phrases, nextStates, phraseCurrentId);
+        set({
+          phraseStates: nextStates,
+          phraseStats: nextStats,
+          phraseStreak: newStreak,
+          phraseStep: newStep,
+          phraseCurrentId: next?.id ?? phraseCurrentId,
+        });
+      },
+
+      resetPhraseProgress: () => {
+        const phrases = getAllPhrases();
+        set({
+          phraseStates: initialPhraseStates(phrases),
+          phraseStats: { correct: 0, total: 0, bestStreak: 0 },
+          phraseCurrentId: phrases[0]?.id ?? null,
+          phraseStep: 0,
+          phraseStreak: 0,
+        });
+      },
     }),
     {
       name: 'allons-jouer',
       // Persist progress and loop preference — everything else resets on load
-      partialize: (state) => ({ completedSongs: state.completedSongs, loopEnabled: state.loopEnabled }),
+      partialize: (state) => ({
+        completedSongs: state.completedSongs,
+        loopEnabled: state.loopEnabled,
+        phraseStates: state.phraseStates,
+        phraseStats: state.phraseStats,
+        phraseLayout: state.phraseLayout,
+      }),
     }
   )
 );
