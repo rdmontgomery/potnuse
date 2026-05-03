@@ -27,7 +27,19 @@ export function HomeScreen() {
         boxShadow: `0 4px 20px ${K.accent}33`,
       }}>Free Play</button>
 
-      <button onClick={() => startPhraseTrainer()} style={{
+      <button onClick={() => startPhraseTrainer('accordion')} style={{
+        width: '100%', padding: '14px 20px', marginBottom: 8,
+        background: K.bgCard, border: `1px solid ${K.highlight}66`,
+        borderRadius: 12, cursor: 'pointer',
+        color: K.text, fontSize: 16, fontWeight: 600, fontFamily: FONTS.serif,
+        textAlign: 'left',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <span>🪗 Phrase Trainer</span>
+        <span style={{ fontSize: 11, color: K.highlight, fontFamily: FONTS.mono, letterSpacing: 1.5, textTransform: 'uppercase' }}>SRS</span>
+      </button>
+
+      <button onClick={() => startPhraseTrainer('keyboard')} style={{
         width: '100%', padding: '14px 20px', marginBottom: 10,
         background: K.bgCard, border: `1px solid ${K.highlight}66`,
         borderRadius: 12, cursor: 'pointer',
@@ -35,8 +47,8 @@ export function HomeScreen() {
         textAlign: 'left',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <span>Phrase Trainer</span>
-        <span style={{ fontSize: 11, color: K.highlight, fontFamily: FONTS.mono, letterSpacing: 1.5, textTransform: 'uppercase' }}>SRS</span>
+        <span>🎹 Phrase Trainer</span>
+        <span style={{ fontSize: 11, color: K.highlight, fontFamily: FONTS.mono, letterSpacing: 1.5, textTransform: 'uppercase' }}>SRS · keys</span>
       </button>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>

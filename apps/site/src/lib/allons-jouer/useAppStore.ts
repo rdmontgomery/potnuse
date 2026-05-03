@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware';
 import type { Screen, BellowsDir, InputMode, DetectedNote, TimingResult, LessonMode } from './types';
 import { getAllPhrases, initialPhraseStates, pickNextPhrase, updatePhraseState, type PhraseStates, type PhraseStats } from './phrases';
 
+export type PhraseLayout = 'accordion' | 'keyboard';
+
 interface AppState {
   screen: Screen;
   selectedSong: string | null;
@@ -29,6 +31,7 @@ interface AppState {
   phraseCurrentId: string | null;
   phraseStep: number;       // SRS scheduling counter (across attempts)
   phraseStreak: number;
+  phraseLayout: PhraseLayout;
 }
 
 interface AppActions {
@@ -54,7 +57,8 @@ interface AppActions {
   setTempoRatio: (ratio: number) => void;
 
   // Phrase trainer
-  startPhraseTrainer: () => void;
+  startPhraseTrainer: (layout?: PhraseLayout) => void;
+  setPhraseLayout: (layout: PhraseLayout) => void;
   recordPhraseResult: (correct: boolean) => void;
   resetPhraseProgress: () => void;
 }
@@ -83,6 +87,7 @@ export const INITIAL_STATE: AppState = {
   phraseCurrentId: null,
   phraseStep: 0,
   phraseStreak: 0,
+  phraseLayout: 'accordion',
 };
 
 export const useAppStore = create<AppState & AppActions>()(
@@ -96,6 +101,7 @@ export const useAppStore = create<AppState & AppActions>()(
         loopEnabled: get().loopEnabled,
         phraseStates: get().phraseStates,
         phraseStats: get().phraseStats,
+        phraseLayout: get().phraseLayout,
       }),
       goTo: (screen) => set({ screen }),
 
@@ -137,7 +143,7 @@ export const useAppStore = create<AppState & AppActions>()(
       setTempoRatio: (ratio) => set({ tempoRatio: ratio }),
       setLoopEnabled: (enabled) => set({ loopEnabled: enabled }),
 
-      startPhraseTrainer: () => {
+      startPhraseTrainer: (layout) => {
         const phrases = getAllPhrases();
         const states = get().phraseStates;
         // If we don't yet have state for some phrases (deck grew between loads), fill them in.
@@ -152,8 +158,11 @@ export const useAppStore = create<AppState & AppActions>()(
           phraseCurrentId: next?.id ?? null,
           phraseStep: 0,
           phraseStreak: 0,
+          ...(layout ? { phraseLayout: layout } : {}),
         });
       },
+
+      setPhraseLayout: (layout) => set({ phraseLayout: layout }),
 
       recordPhraseResult: (correct) => {
         const phrases = getAllPhrases();
@@ -196,6 +205,7 @@ export const useAppStore = create<AppState & AppActions>()(
         loopEnabled: state.loopEnabled,
         phraseStates: state.phraseStates,
         phraseStats: state.phraseStats,
+        phraseLayout: state.phraseLayout,
       }),
     }
   )

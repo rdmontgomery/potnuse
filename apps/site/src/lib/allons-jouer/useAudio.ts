@@ -39,6 +39,18 @@ export function useAudio() {
     setTimeout(() => { setDetectedNote(null); }, 150);
   }, [setDetectedNote, setLastHoldDuration]);
 
+  // Keyboard-mode press: caller passes the note name + freq directly (no
+  // accordion button/dir mapping). detectedNote keeps a synthetic button/dir;
+  // keyboard-mode detection compares by `note` instead.
+  const handleKeyDown = useCallback((note: string, freq: number) => {
+    const ctx = getAudioCtx();
+    if (stopToneRef.current) stopToneRef.current();
+    stopToneRef.current = startTone(freq, ctx);
+    setDetectedNote({ button: 0, dir: 'push', note, freq, dist: 0 });
+    holdStartRef.current = performance.now();
+    setTimingResult(null);
+  }, [setDetectedNote, setTimingResult]);
+
   const playDemo = useCallback((song: Song) => {
     if (useAppStore.getState().isPlaying) return;
     setIsPlaying(true);
@@ -107,5 +119,5 @@ export function useAudio() {
     setTrackPosition(0);
   }, [setDemoNote, setIsPlaying, setTrackPosition]);
 
-  return { handlePointerDown, handlePointerUp, playDemo, stopDemo };
+  return { handlePointerDown, handlePointerUp, handleKeyDown, playDemo, stopDemo };
 }

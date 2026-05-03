@@ -2,11 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { K, FONTS } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { getAllPhrases } from '@/lib/allons-jouer/phrases';
+import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
 import { ButtonStrip } from '@/components/allons-jouer/ButtonStrip';
+import { Keyboard } from '@/components/allons-jouer/Keyboard';
 import { useAudio } from '@/lib/allons-jouer/useAudio';
 import { useMic } from '@/lib/allons-jouer/useMic';
 import { useMediaQuery } from '@/lib/allons-jouer/useMediaQuery';
-import type { Song, SongNote } from '@/lib/allons-jouer/types';
+import type { Song, SongNote, DetectedNote } from '@/lib/allons-jouer/types';
+import type { PhraseLayout } from '@/lib/allons-jouer/useAppStore';
+
+// Map a phrase's accordion note (button + dir) to its concert pitch name
+// (e.g. 'C5'). Used in keyboard mode to detect by pitch instead of by button.
+function noteNameFor(n: SongNote): string {
+  const btn = ACCORDION_NOTES.find(b => b.button === n.button);
+  return btn ? btn[n.dir].note : '';
+}
+
+function matchesTarget(target: SongNote, detected: DetectedNote, layout: PhraseLayout): boolean {
+  if (layout === 'keyboard') return detected.note === noteNameFor(target);
+  return detected.button === target.button && detected.dir === target.dir;
+}
 
 const STEP_DEBOUNCE = 400;
 const COMPLETION_DELAY = 900;
@@ -16,16 +31,18 @@ export function PhraseScreen() {
   const phraseStates     = useAppStore(s => s.phraseStates);
   const phraseStats      = useAppStore(s => s.phraseStats);
   const phraseStreak     = useAppStore(s => s.phraseStreak);
+  const phraseLayout     = useAppStore(s => s.phraseLayout);
   const detectedNote     = useAppStore(s => s.detectedNote);
   const isPlaying        = useAppStore(s => s.isPlaying);
   const inputMode        = useAppStore(s => s.inputMode);
   const micError         = useAppStore(s => s.micError);
   const goHome           = useAppStore(s => s.goHome);
   const setInputMode     = useAppStore(s => s.setInputMode);
+  const setPhraseLayout  = useAppStore(s => s.setPhraseLayout);
   const recordPhraseResult = useAppStore(s => s.recordPhraseResult);
   const resetPhraseProgress = useAppStore(s => s.resetPhraseProgress);
 
-  const { handlePointerDown, handlePointerUp, playDemo, stopDemo } = useAudio();
+  const { handlePointerDown, handlePointerUp, handleKeyDown, playDemo, stopDemo } = useAudio();
   const { startListening, stopListening } = useMic();
   const isWide = useMediaQuery('(min-width: 900px)');
 
@@ -77,7 +94,7 @@ export function PhraseScreen() {
     if (step >= phrase.notes.length) return;
 
     const target = phrase.notes[step];
-    if (detectedNote.button !== target.button || detectedNote.dir !== target.dir) return;
+    if (!matchesTarget(target, detectedNote, phraseLayout)) return;
     if (lastFiredStepRef.current === step) return;
     lastFiredStepRef.current = step;
 
@@ -86,7 +103,7 @@ export function PhraseScreen() {
       setStep(s => s + 1);
       stepAdvanceRef.current = null;
     }, STEP_DEBOUNCE);
-  }, [detectedNote, phrase, step, isPlaying, feedback]);
+  }, [detectedNote, phrase, step, isPlaying, feedback, phraseLayout]);
 
   // Phrase complete → mark correct, schedule the SRS advance.
   useEffect(() => {
@@ -157,8 +174,21 @@ export function PhraseScreen() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <button onClick={goHome} style={{ background: 'none', border: 'none', color: K.textDim, cursor: 'pointer', fontSize: 14, fontFamily: FONTS.serif, padding: 4 }}>← Back</button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {phraseStreak > 2 && <span style={{ fontSize: 13, color: K.highlight, fontWeight: 600 }}>🔥 {phraseStreak}</span>}
+          <button
+            onClick={() => setPhraseLayout(phraseLayout === 'accordion' ? 'keyboard' : 'accordion')}
+            title={phraseLayout === 'accordion' ? 'Switch to keyboard layout' : 'Switch to accordion layout'}
+            style={{
+              padding: '5px 12px', borderRadius: 16, cursor: 'pointer',
+              background: K.bgButton,
+              border: `1px solid ${K.border}`,
+              color: K.textDim,
+              fontSize: 12, fontFamily: FONTS.serif,
+            }}
+          >
+            {phraseLayout === 'accordion' ? '🪗 Accordion' : '🎹 Keyboard'}
+          </button>
           <button onClick={toggleMode} style={{ padding: '5px 12px', borderRadius: 16, cursor: 'pointer', background: inputMode === 'mic' ? K.success + '18' : K.bgButton, border: `1px solid ${K.border}`, color: inputMode === 'mic' ? K.success : K.textDim, fontSize: 12, fontFamily: FONTS.serif }}>
             {inputMode === 'mic' ? '🎤 Mic' : '👆 Virtual'}
           </button>
@@ -233,17 +263,27 @@ export function PhraseScreen() {
         step={step}
         feedback={feedback}
         detectedNote={detectedNote}
+        layout={phraseLayout}
       />
 
-      {/* Button strip (compact) */}
-      <ButtonStrip
-        compact
-        detectedNote={detectedNote}
-        highlightButton={target?.button}
-        highlightDir={target?.dir}
-        onNoteDown={handlePointerDown}
-        onNoteUp={handlePointerUp}
-      />
+      {/* Input — accordion strip or piano keyboard depending on layout */}
+      {phraseLayout === 'accordion' ? (
+        <ButtonStrip
+          compact
+          detectedNote={detectedNote}
+          highlightButton={target?.button}
+          highlightDir={target?.dir}
+          onNoteDown={handlePointerDown}
+          onNoteUp={handlePointerUp}
+        />
+      ) : (
+        <Keyboard
+          detectedNote={detectedNote}
+          highlightNote={target ? noteNameFor(target) : undefined}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handlePointerUp}
+        />
+      )}
 
       {/* Stats strip */}
       <div style={{
@@ -283,18 +323,17 @@ function widthForDuration(ms: number): number {
   return Math.round(PHRASE_BASE_W + ms / PHRASE_MS_PER_PX);
 }
 
-function PhraseTab({ notes, step, feedback, detectedNote }: {
+function PhraseTab({ notes, step, feedback, detectedNote, layout }: {
   notes: SongNote[];
   step: number;
   feedback: null | 'correct' | 'incorrect';
-  detectedNote: { button: number; dir: 'push' | 'pull' } | null;
+  detectedNote: DetectedNote | null;
+  layout: PhraseLayout;
 }) {
   const target = step < notes.length ? notes[step] : null;
   const isPressingTarget = !!(
-    target && detectedNote &&
-    detectedNote.button === target.button &&
-    detectedNote.dir === target.dir &&
-    feedback === null
+    target && detectedNote && feedback === null &&
+    matchesTarget(target, detectedNote, layout)
   );
 
   return (
@@ -356,8 +395,17 @@ function PhraseTab({ notes, step, feedback, detectedNote }: {
             position: 'relative',
             overflow: 'hidden',
           }}>
-            <span style={{ fontSize: 11, opacity: 0.85 }}>{dirSym}</span>
-            <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{n.button}</span>
+            {layout === 'keyboard' ? (
+              <>
+                <span style={{ fontSize: 14, fontWeight: 700, lineHeight: 1 }}>{noteNameFor(n)}</span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>{dirSym}</span>
+              </>
+            ) : (
+              <>
+                <span style={{ fontSize: 11, opacity: 0.85 }}>{dirSym}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{n.button}</span>
+              </>
+            )}
             {/* Hold-fill bar: while the kid presses the right note, this fills
                 from 0 → 100% over the note's target duration, giving live
                 visual feedback on how long to hold. */}
