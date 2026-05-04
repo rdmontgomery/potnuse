@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Component, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
 
 type Lang = 'en' | 'fr';
 type Mode = 'letters' | 'words' | 'pictures' | 'spell';
@@ -395,7 +396,7 @@ const PAL = {
 };
 
 // ---------- Component ----------
-export default function Primer() {
+function PrimerInner() {
   const [lang, setLang] = useState<Lang>('en');
   const [mode, setMode] = useState<Mode>('letters');
   const [loaded, setLoaded] = useState(false);
@@ -484,7 +485,9 @@ export default function Primer() {
   // bug is identical, but any other interaction unsticks it via recordResult).
   useEffect(() => {
     if (!loaded) return;
-    const states = allStates[combo];
+    // Fall back to fresh states if the combo key got dropped by a bad merge —
+    // pickNext does states[id].nextReview and would crash on undefined.
+    const states = allStates[combo] ?? initialStates(deck);
     const next = pickNext(deck, states, null);
     setCurrent(next);
     if (mode === 'spell') {
@@ -522,7 +525,7 @@ export default function Primer() {
     setLocked(true);
     const newStep = step + 1;
     const newStreak = correct ? streak + 1 : 0;
-    const prevStats = allStats[combo];
+    const prevStats = allStats[combo] ?? { correct: 0, total: 0, bestStreak: 0 };
     const newStats: StatsBlock = {
       correct: prevStats.correct + (correct ? 1 : 0),
       total: prevStats.total + 1,
@@ -532,7 +535,8 @@ export default function Primer() {
     setStreak(newStreak);
     setAllStats(prev => ({ ...prev, [combo]: newStats }));
 
-    const newStates = updateStates(allStates[combo], current.id, correct, newStep);
+    const prevStates = allStates[combo] ?? initialStates(deck);
+    const newStates = updateStates(prevStates, current.id, correct, newStep);
     setAllStates(prev => ({ ...prev, [combo]: newStates }));
     setStep(newStep);
 
@@ -735,7 +739,10 @@ export default function Primer() {
     );
   };
 
-  const stats = allStats[combo];
+  // Defensive: a malformed persisted payload could leave allStats[combo]
+  // unset, which would crash render. Fall back to zero stats so the UI
+  // mounts and the next interaction overwrites the bad data.
+  const stats = allStats[combo] ?? { correct: 0, total: 0, bestStreak: 0 };
   const accuracy = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
 
   const resetCurrent = () => {
@@ -1233,5 +1240,78 @@ export default function Primer() {
       </div>
 
     </div>
+  );
+}
+
+// Error boundary so a render-time crash doesn't silently unmount the whole
+// island and leave the page looking blank above the Backlinks chrome. Logs
+// the error to the console and renders a visible fallback with a retry.
+interface BoundaryProps { children: ReactNode; }
+interface BoundaryState { error: Error | null; }
+
+class PrimerBoundary extends Component<BoundaryProps, BoundaryState> {
+  state: BoundaryState = { error: null };
+  static getDerivedStateFromError(error: Error): BoundaryState { return { error }; }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // eslint-disable-next-line no-console
+    console.error('[primer] render crashed', error, info);
+  }
+  reset = () => this.setState({ error: null });
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: PAL.bg,
+          color: PAL.text,
+          fontFamily: PAL.serif,
+          padding: '2rem 1.5rem',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem',
+        }}>
+          <div style={{ fontSize: '1.4rem', color: PAL.bad, fontWeight: 500 }}>primer hit a snag</div>
+          <pre style={{
+            maxWidth: 560, width: '100%',
+            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            fontFamily: PAL.mono, fontSize: '0.8rem',
+            color: PAL.textDim,
+            background: PAL.bgCard,
+            border: `1px solid ${PAL.border}`,
+            borderRadius: 6,
+            padding: '12px',
+          }}>{this.state.error.message}{this.state.error.stack ? `\n\n${this.state.error.stack}` : ''}</pre>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={this.reset} style={{
+              background: PAL.accent, color: PAL.bg, border: 'none',
+              borderRadius: 4, padding: '6px 14px',
+              fontFamily: PAL.mono, fontSize: '0.75rem', cursor: 'pointer',
+              textTransform: 'uppercase', letterSpacing: '0.08em',
+            }}>retry</button>
+            <button
+              onClick={() => {
+                try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+                this.reset();
+              }}
+              title="If a corrupt localStorage entry is to blame, this clears it and retries."
+              style={{
+                background: PAL.bgCard, color: PAL.textDim,
+                border: `1px solid ${PAL.border}`,
+                borderRadius: 4, padding: '6px 14px',
+                fontFamily: PAL.mono, fontSize: '0.75rem', cursor: 'pointer',
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}
+            >clear progress &amp; retry</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function Primer() {
+  return (
+    <PrimerBoundary>
+      <PrimerInner />
+    </PrimerBoundary>
   );
 }
