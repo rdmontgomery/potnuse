@@ -474,8 +474,16 @@ export default function Primer() {
     setLoaded(true);
   }, []);
 
-  // Build a fresh round whenever lang or mode changes.
+  // Build a fresh round whenever lang or mode changes — but only after the
+  // persistence load has finished. Otherwise this effect runs once on mount
+  // with `allStates` still set to the fresh defaults, picks deck[0] off the
+  // empty SRS state, and if the persisted lang/mode happen to match the
+  // defaults the deps never change so the effect never re-runs against the
+  // real persisted state. Result: the wrong first card on cold load (looks
+  // like the app didn't load right; refreshing doesn't fix it because the
+  // bug is identical, but any other interaction unsticks it via recordResult).
   useEffect(() => {
+    if (!loaded) return;
     const states = allStates[combo];
     const next = pickNext(deck, states, null);
     setCurrent(next);
@@ -492,7 +500,7 @@ export default function Primer() {
     setPickedId(null);
     setLocked(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, mode]);
+  }, [lang, mode, loaded]);
 
   // Persist whenever state changes.
   useEffect(() => {
