@@ -1,0 +1,467 @@
+---
+import Base from '@/layouts/Base.astro';
+import { buildGraph } from '@/lib/graph';
+
+const graph = await buildGraph();
+const nodes = graph.map((n) => ({ url: n.url, slug: n.slug }));
+---
+
+<Base title="lost">
+  <main class="lost">
+    <button class="sigil" type="button" aria-label="press for elsewhere">
+      <svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+        <circle
+          cx="60"
+          cy="60"
+          r="52"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-dasharray="2 9"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="34"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-dasharray="3 5"
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-dasharray="1 4"
+        />
+        <circle cx="60" cy="60" r="3" fill="currentColor" />
+      </svg>
+    </button>
+    <div class="caption" id="caption" aria-live="polite"></div>
+  </main>
+</Base>
+
+<script define:vars={{ nodes }}>
+  // ============ bestiary tripwires ============
+  // First match wins; broad patterns go last.
+  const BESTIARY = [
+    [/^\/(admin|wp-admin|administrator)\b/, "no admin. there's barely a self."],
+    [
+      /^\/(login|signin|sign-in|signup|register)\b/,
+      "this place doesn't keep accounts. you're already in.",
+    ],
+    [
+      /^\/(\.env|\.git|phpmyadmin|wp-login|xmlrpc|server-status)/,
+      'wrong door. wrong house. wrong century.',
+    ],
+    [/^\/(about|about-me|bio)\b/, 'no about page. read three nodes and infer.'],
+    [/^\/(blog|posts|articles|writing)\b/, 'not a blog. closer to a rhizome.'],
+    [
+      /^\/(contact|email)\b/,
+      'rick.montgomery@gmail.com — or open a node and write back.',
+    ],
+    [/^\/(cv|resume|portfolio|work)\b/, "this isn't that kind of site."],
+    [
+      /^\/(sitemap|index|home|main)\b/,
+      'no map. a door, and behind it: noise.',
+    ],
+    [
+      /^\/(secret|secrets|hidden|private)\b/,
+      "the secrets are the published ones nobody's clicked yet.",
+    ],
+    [
+      /^\/(easter-egg|easteregg|egg)\b/,
+      "you found one by typing this. that's it. that's the egg.",
+    ],
+    [
+      /^\/(sigil|spell|incantation|grimoire)\b/,
+      "you're already inside it.",
+    ],
+    [/^\/(rick|rdm|montgomery|robert)\b/, 'yes, hi.'],
+    [
+      /^\/(robots\.txt|humans\.txt)$/,
+      'no robots. some humans. one of each, mostly.',
+    ],
+  ];
+
+  // ============ low-confidence fallback pool ============
+  const FALLBACKS = [
+    'that branch of the garden has no fork. press the sigil for one that does.',
+    'the library has the path you wanted. shelved under a different cipher.',
+    "a footnote to a book that hasn't been written yet.",
+    'mirrors and 404s — both abominations, both multiplying.',
+    "between the city you typed and the city that exists, there's a third city. no public entrance.",
+    "every visitor draws the map differently. yours doesn't include this room.",
+    "the machine wanted that route to exist. the gardener didn't.",
+    'polytechnic miss. the megamachine has nothing for you here.',
+    'against the day, against the directory.',
+    "you weren't supposed to find this. fine — neither was anyone else.",
+    'the trystero post has no box at this address.',
+    'the connection you drew is real, but only in the sense everything is real that someone drew.',
+    'pattern noted. coincidence likely. press the sigil anyway.',
+    'you typed a path. the path typed back: no.',
+    'the medium ate the message. try a shorter one.',
+    'you tugged a line of flight that flew somewhere else.',
+    'a stem with no node. a node with no stem. you got the second.',
+    'the apparatus consulted its catalog. the catalog consulted itself. nothing.',
+    'solaris had no answer for this either.',
+    "this door was made only for you. it's also locked. and not a door.",
+    'the gatekeeper has stepped away. there are infinite gatekeepers.',
+    'you saw the shadow of the path on the wall. the path itself is elsewhere.',
+    'anamnesis works for forms, not URLs.',
+    "a difference that didn't make a difference.",
+    'a margin without a center. a footnote without a body.',
+    'not synchronicity. just a typo.',
+    'the path you spoke has no body here. press the sigil.',
+    'that route is a fossil that never germinated.',
+    'seedling: none. germinating: none. stable: none. fossil: definitely none.',
+    'unindexed. unrecorded. unreachable. press onward.',
+    'between known nodes. a clearing with nothing in it yet.',
+    'read the chapters in any order. this one is missing.',
+    "the axolotl looked at you. it didn't have your path either.",
+    'chapter 73 led nowhere. then chapter 1, again.',
+    'the magic theatre has a price of admission. you typed a typo instead.',
+    "the river says the same thing every time. it isn't saying your path.",
+    'castalia keeps no record of this route.',
+    'footnote 12a: this path does not exist. footnote 12a.i: nor does footnote 12a.',
+    'the entertainment was here. you were not.',
+    'this is water. that was not a path.',
+    'the visceral realists searched for the page. they found three more.',
+    'archimboldi was not seen at this address.',
+    'it was the year of the disappearances. the path went too.',
+    'the prologue ends here. the novel begins elsewhere.',
+    "every page is a preface to a path that doesn't exist yet.",
+    "the museum has a room for this. the room is empty. that's the exhibit.",
+    'four of him are at this address. none of them are home.',
+    "the book of disquiet has no page for this. that's why it has every page.",
+    'someone other than himself keeps the catalog. he forgot which path you meant.',
+    'the unbearable lightness of mistyping.',
+    'the book of laughter and forgetting forgot this one.',
+    "if eternal return were real, you'd have made this typo before.",
+  ];
+
+  // ============ matcher ============
+  function lev(a, b) {
+    const m = a.length;
+    const n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    let prev = new Array(n + 1);
+    let curr = new Array(n + 1);
+    for (let j = 0; j <= n; j++) prev[j] = j;
+    for (let i = 1; i <= m; i++) {
+      curr[0] = i;
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+      }
+      const tmp = prev;
+      prev = curr;
+      curr = tmp;
+    }
+    return prev[n];
+  }
+
+  function score(typed, node) {
+    const typedTrim = typed.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (!typedTrim) return 0;
+    const typedLeaf = typedTrim.split('/').pop() || '';
+    const urlTrim = node.url.replace(/^\/+|\/+$/g, '').toLowerCase();
+    const slug = node.slug.toLowerCase();
+    if (typedTrim === urlTrim) return 100;
+    if (typedLeaf === slug) return 96;
+    if (typedTrim.length >= 3 && urlTrim.includes(typedTrim)) return 88;
+    const leafD = lev(typedLeaf, slug);
+    const leafScore = leafD <= 3 ? 96 - leafD * 12 : 0;
+    const wholeD = lev(typedTrim, urlTrim);
+    const maxLen = Math.max(typedTrim.length, urlTrim.length) || 1;
+    const wholeScore = Math.max(0, 100 - (wholeD / maxLen) * 100 - 5);
+    return Math.max(leafScore, wholeScore);
+  }
+
+  function rankCandidates(typed) {
+    const scored = nodes.map((n) => ({ node: n, s: score(typed, n) }));
+    scored.sort((a, b) => b.s - a.s);
+    return scored;
+  }
+
+  // ============ animation: morph caption text ============
+  const POOL = 'abcdefghijklmnopqrstuvwxyz/-·.';
+  function rand() {
+    return POOL[Math.floor(Math.random() * POOL.length)];
+  }
+
+  function morph(el, from, to, duration) {
+    const D = duration || 1400;
+    return new Promise((resolve) => {
+      const len = Math.max(from.length, to.length);
+      const padFrom = from.padEnd(len, ' ');
+      const padTo = to.padEnd(len, ' ');
+      const resolveTimes = Array.from(
+        { length: len },
+        () => 0.2 + Math.random() * 0.7,
+      );
+      const start = performance.now();
+      function tick() {
+        const t = (performance.now() - start) / D;
+        const out = [];
+        for (let i = 0; i < len; i++) {
+          if (t >= resolveTimes[i]) {
+            out.push(padTo[i] === ' ' ? '' : padTo[i]);
+          } else if (t < 0.12) {
+            out.push(padFrom[i] === ' ' ? rand() : padFrom[i]);
+          } else {
+            out.push(padFrom[i] === ' ' && padTo[i] === ' ' ? '' : rand());
+          }
+        }
+        el.textContent = out.join('');
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          el.textContent = to;
+          resolve();
+        }
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  // ============ render ============
+  function pickFallback() {
+    return FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+  }
+
+  function linkifyEmail(s) {
+    return s.replace(
+      /([\w.+-]+@[\w-]+(?:\.[\w-]+)+)/g,
+      '<a href="mailto:$1">$1</a>',
+    );
+  }
+
+  function addStruck(captionEl, typed) {
+    const top = document.createElement('p');
+    top.className = 'spoke struck';
+    top.textContent = typed;
+    captionEl.appendChild(top);
+  }
+
+  function addHint(captionEl, text) {
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = text;
+    captionEl.appendChild(hint);
+  }
+
+  function renderTripwire(typed, line, captionEl) {
+    addStruck(captionEl, typed);
+    const p = document.createElement('p');
+    p.className = 'gnomic';
+    p.innerHTML = linkifyEmail(line);
+    captionEl.appendChild(p);
+    addHint(captionEl, 'press the sigil for elsewhere');
+  }
+
+  function renderHigh(typed, target, captionEl) {
+    const top = document.createElement('p');
+    top.className = 'spoke';
+    top.textContent = typed;
+    captionEl.appendChild(top);
+    const arrow = document.createElement('p');
+    arrow.className = 'arrow';
+    arrow.textContent = '↓';
+    captionEl.appendChild(arrow);
+    const link = document.createElement('a');
+    link.className = 'morph';
+    link.href = target.url;
+    captionEl.appendChild(link);
+    addHint(captionEl, 'or press the sigil for elsewhere');
+    morph(link, typed, target.url, 1200);
+  }
+
+  function renderMedium(typed, candidates, captionEl) {
+    addStruck(captionEl, typed);
+    const intro = document.createElement('p');
+    intro.className = 'spoke dim';
+    intro.textContent = 'the catalog has more than one — pick:';
+    captionEl.appendChild(intro);
+    const list = document.createElement('ul');
+    list.className = 'candidates';
+    candidates.forEach((c) => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = c.url;
+      a.textContent = c.url;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+    captionEl.appendChild(list);
+    addHint(captionEl, 'or press the sigil for elsewhere');
+  }
+
+  function renderLow(typed, captionEl) {
+    addStruck(captionEl, typed);
+    const p = document.createElement('p');
+    p.className = 'gnomic';
+    p.textContent = pickFallback();
+    captionEl.appendChild(p);
+    addHint(captionEl, 'press the sigil for elsewhere');
+  }
+
+  // ============ wire it up ============
+  const captionEl = document.getElementById('caption');
+  const sigil = document.querySelector('.sigil');
+
+  if (sigil && Array.isArray(nodes) && nodes.length > 0) {
+    sigil.addEventListener('click', () => {
+      const n = nodes[Math.floor(Math.random() * nodes.length)];
+      if (n && n.url) window.location.href = n.url;
+    });
+  }
+
+  const path = (window.location.pathname || '/').toLowerCase();
+  const tripwire = BESTIARY.find(([rx]) => rx.test(path));
+
+  if (tripwire) {
+    renderTripwire(path, tripwire[1], captionEl);
+  } else {
+    const ranked = rankCandidates(path);
+    const top = ranked[0];
+    const second = ranked[1];
+
+    if (top && top.s >= 85 && (!second || top.s - second.s >= 12)) {
+      renderHigh(path, top.node, captionEl);
+    } else if (top && top.s >= 60) {
+      const cluster = ranked
+        .filter((r) => r.s >= top.s - 15)
+        .slice(0, 4)
+        .map((r) => r.node);
+      if (cluster.length === 1) {
+        renderHigh(path, cluster[0], captionEl);
+      } else {
+        renderMedium(path, cluster, captionEl);
+      }
+    } else {
+      renderLow(path, captionEl);
+    }
+  }
+</script>
+
+<style>
+  .lost {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    gap: 1.6rem;
+    grid-template-rows: auto auto;
+  }
+  .sigil {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 1.5rem;
+    opacity: 0.55;
+    animation: drift 11s ease-in-out infinite;
+    transition:
+      color 0.6s ease,
+      opacity 0.8s ease,
+      transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .sigil:hover,
+  .sigil:focus-visible {
+    color: var(--accent);
+    opacity: 1;
+    outline: none;
+  }
+  .sigil:active {
+    transform: rotate(28deg) scale(0.96);
+    transition-duration: 0.2s;
+  }
+  @keyframes drift {
+    0%,
+    100% {
+      transform: rotate(-3deg);
+    }
+    50% {
+      transform: rotate(3deg);
+    }
+  }
+  .caption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    text-align: center;
+    max-width: 36rem;
+    line-height: 1.7;
+  }
+  .caption .spoke {
+    margin: 0 0 0.2rem;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+  .caption .spoke.struck {
+    text-decoration: line-through;
+    text-decoration-color: var(--text-muted);
+    text-decoration-thickness: 1px;
+    margin-bottom: 1rem;
+  }
+  .caption .spoke.dim {
+    font-style: italic;
+    margin-top: 0.6rem;
+  }
+  .caption .arrow {
+    margin: 0.1rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .caption .morph {
+    display: block;
+    margin: 0;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 1.05rem;
+    word-break: break-all;
+    min-height: 1.4em;
+  }
+  .caption .morph:hover {
+    text-decoration: underline;
+  }
+  .caption .gnomic {
+    color: var(--text);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    max-width: 30rem;
+    margin: 0 auto;
+  }
+  .caption .gnomic a {
+    color: var(--accent);
+  }
+  .caption .candidates {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+  }
+  .caption .candidates li {
+    margin: 0.3rem 0;
+  }
+  .caption .candidates a {
+    color: var(--accent);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .caption .candidates a:hover {
+    text-decoration: underline;
+  }
+  .caption .hint {
+    margin-top: 1.4rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+</style>
