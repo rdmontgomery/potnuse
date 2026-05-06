@@ -32,6 +32,9 @@ importers:
       '@astrojs/react':
         specifier: ^5.0.3
         version: 5.0.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@rdm/stego':
+        specifier: workspace:*
+        version: link:../../packages/stego
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
@@ -103,6 +106,12 @@ importers:
       zustand:
         specifier: ^5
         version: 5.0.12(@types/react@19.2.14)(react@19.2.5)
+
+  packages/stego:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
 
   packages/widget-protocol:
     devDependencies:

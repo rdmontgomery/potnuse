@@ -1,0 +1,26 @@
+---
+title: invisible ink
+date: 2026-05-06
+state: seedling
+connects: [colophon, necromantic-circle, mumford-magick]
+tags: [stego, cryptography, mcluhan, pynchon, unicode, paranoia]
+description: Pliny's ST3GG distilled to one method. A passage that reads normally, an inscription only a decoder finds, and the question Oedipa asks of every wall.
+---
+
+A small instrument for hiding text inside text. Type into it; paste from it. The carrier looks ordinary because it is — the payload rides along as a run of zero-width Unicode characters between two frame markers, the way a smuggler rides the wheel well of a perfectly legal car.
+
+Histiaeus of Miletus, stuck at Darius's court and wanting to start a revolt, shaved a slave's head, tattooed the message, waited for the hair to grow back, and sent the slave to Aristagoras with a single instruction at the end of the journey: *shave my head and read.* Herodotus, Book V. First documented covert channel; the security model is latency. The message *is* the body.
+
+McLuhan flips the same coin: the medium is the message. Once you read the carrier as carrier, the carrier is the content. The inscription up top is one sentence in two registers — Histiaeus's instruction in plain ink, McLuhan's reply written underneath in a kind of ink the page won't render.
+
+## what's actually happening
+
+Two zero-width characters do the work. `U+200B` (zero-width space) is bit `0`; `U+200C` (zero-width non-joiner) is bit `1`. A third, `U+2060` (word joiner), brackets the payload so the decoder can find it inside arbitrary surrounding prose. Eight bits per UTF-8 byte. The whole codec lives in [`packages/stego`](https://github.com/rdmontgomery/potnuse/tree/main/packages/stego) — a hundred lines, no dependencies.
+
+This is one method out of the hundred-plus that elder-plinius's [ST3GG](https://github.com/elder-plinius/ST3GG) implements across images, audio, packets, archives, and Unicode. ST3GG is AGPL-3.0; this is a fresh, much smaller implementation of just the zero-width Unicode flavor, so the site can stay where it is.
+
+## what it's for
+
+Pynchon. *The Crying of Lot 49* runs on Oedipa's question: is the network real or am I generating it? Every chi-square test is a paranoia test, and the muted post-horn scrawled on a bathroom wall is the same gesture as a run of `U+200B`s in a paragraph that decodes to a sentence. The "n invisible characters / frame detected" line above the decode panel is on purpose. Most of the web does not have a frame in it. Some pages do.
+
+Try the inscription. Then try pasting any passage on this site into the decoder. The fun half of *Lot 49* is the half where Oedipa keeps finding it.

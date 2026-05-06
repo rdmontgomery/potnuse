@@ -1,36 +1,12 @@
 ---
-import type { GetStaticPaths } from 'astro';
-import { getCollection, render } from 'astro:content';
+import { getEntry, render } from 'astro:content';
 import Base from '@/layouts/Base.astro';
 import Backlinks from '@/components/Backlinks.astro';
 import StateBadge from '@/components/StateBadge.astro';
+import InvisibleInk from '@/components/invisible-ink/App';
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  // Experiment slugs that have their own bespoke page file under src/pages/experiments/.
-  // Keep this list in sync; the dynamic route skips them to avoid collisions.
-  const bespokeExperiments = new Set<string>([
-    'necromantic-circle',
-    'ladder',
-    'primer',
-    'invisible-ink',
-  ]);
-  const essays = await getCollection('essays');
-  const experiments = await getCollection('experiments');
-  return [
-    ...essays.map((entry) => ({
-      params: { collection: 'essays', slug: entry.id },
-      props: { entry },
-    })),
-    ...experiments
-      .filter((entry) => !bespokeExperiments.has(entry.id))
-      .map((entry) => ({
-        params: { collection: 'experiments', slug: entry.id },
-        props: { entry },
-      })),
-  ];
-};
-
-const { entry } = Astro.props;
+const entry = await getEntry('experiments', 'invisible-ink');
+if (!entry) throw new Error('invisible-ink entry not found');
 const { Content } = await render(entry);
 ---
 
@@ -40,17 +16,23 @@ const { Content } = await render(entry);
       <h1>{entry.data.title}</h1>
       <div class="meta">
         <StateBadge state={entry.data.state} />
-        {entry.data.date && (
-          <time datetime={entry.data.date.toISOString()}>
-            {entry.data.date.toISOString().slice(0, 10)}
-          </time>
-        )}
+        {
+          entry.data.date && (
+            <time datetime={entry.data.date.toISOString()}>
+              {entry.data.date.toISOString().slice(0, 10)}
+            </time>
+          )
+        }
       </div>
     </header>
+
+    <InvisibleInk client:only="react" />
+
     <div class="prose">
       <Content />
     </div>
-    <Backlinks slug={entry.id} />
+
+    <Backlinks slug="invisible-ink" />
   </article>
 </Base>
 
@@ -75,7 +57,7 @@ const { Content } = await render(entry);
     color: var(--text-dim);
     font-family: var(--font-jetbrains);
     font-size: 0.75rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
     flex-wrap: wrap;
   }
   .prose :global(p) {
