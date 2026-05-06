@@ -23,6 +23,7 @@ const payload = {
     collection: n.collection,
     state: n.state,
     url: n.url,
+    description: n.description ?? '',
     degree: n.connects.length + n.backlinks.length,
   })),
   edges,
@@ -36,7 +37,7 @@ const payload = {
   <main class="rhizome">
     <header>
       <h1>rhizome</h1>
-      <p class="sub">every page, every edge. drag a node. click to enter.</p>
+      <p class="sub">tap to bloom. hold to summon. tap a bloomed center to enter.</p>
       <ul class="legend" aria-label="legend">
         <li><span class="dot essays"></span>essays</li>
         <li><span class="dot experiments"></span>experiments</li>
@@ -46,7 +47,15 @@ const payload = {
     </header>
     <div class="stage">
       <canvas id="graph" aria-label="rhizome graph"></canvas>
-      <div id="label" class="label" aria-hidden="true"></div>
+      <div id="overlay" class="overlay" aria-hidden="true">
+        <div id="hover-label" class="hover-label"></div>
+        <div id="bloom-labels" class="bloom-labels"></div>
+        <div id="summon-card" class="summon-card">
+          <div class="summon-title"></div>
+          <div class="summon-desc"></div>
+          <div class="summon-neighbors"></div>
+        </div>
+      </div>
     </div>
   </main>
 </Base>
@@ -60,16 +69,47 @@ const payload = {
   };
   const TEXT_DIM = '#9e8e72';
   const EDGE = 'rgba(158, 142, 114, 0.35)';
+  const EDGE_DIM = 'rgba(158, 142, 114, 0.08)';
+  const EDGE_BLOOM = 'rgba(232, 168, 56, 0.55)';
+  const HIGHLIGHT = '#f0e6d2';
+
+  const BREATH = {
+    seedling: { rate: 1.4 * 2 * Math.PI, amp: 0.08 },
+    germinating: { rate: 0.7 * 2 * Math.PI, amp: 0.12 },
+    stable: { rate: 0.3 * 2 * Math.PI, amp: 0.03 },
+    fossil: { rate: 0, amp: 0 },
+  };
+
+  const BLOOM_RADIUS = 140;
+  const BLOOM_MAX = 10;
+  const LONG_PRESS_MS = 250;
+  const MOVE_THRESHOLD = 6; // px before tap becomes drag/pan
+  const PARTICLE_SPEED = 42; // world units per second
+
+  const reducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  ).matches;
 
   const canvas = document.getElementById('graph');
-  const label = document.getElementById('label');
-  if (!(canvas instanceof HTMLCanvasElement) || !label) {
-    throw new Error('rhizome: canvas missing');
+  const overlay = document.getElementById('overlay');
+  const hoverLabel = document.getElementById('hover-label');
+  const bloomLabelsEl = document.getElementById('bloom-labels');
+  const summonCard = document.getElementById('summon-card');
+  if (
+    !(canvas instanceof HTMLCanvasElement) ||
+    !overlay ||
+    !hoverLabel ||
+    !bloomLabelsEl ||
+    !summonCard
+  ) {
+    throw new Error('rhizome: dom missing');
   }
+  const summonTitleEl = summonCard.querySelector('.summon-title');
+  const summonDescEl = summonCard.querySelector('.summon-desc');
+  const summonNeighborsEl = summonCard.querySelector('.summon-neighbors');
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('rhizome: 2d context unavailable');
 
-  /** @type {Array<{slug:string,title:string,collection:string,state:string,url:string,degree:number,x:number,y:number,vx:number,vy:number,r:number}>} */
   const nodes = payload.nodes.map((n) => ({
     ...n,
     x: Math.random() * 800 - 400,
@@ -77,14 +117,24 @@ const payload = {
     vx: 0,
     vy: 0,
     r: 4 + Math.sqrt(n.degree) * 2.2,
+    breathPhase: Math.random() * Math.PI * 2,
   }));
   const nodeBySlug = new Map(nodes.map((n) => [n.slug, n]));
   const edges = payload.edges
     .map((e) => ({
       source: nodeBySlug.get(e.source),
       target: nodeBySlug.get(e.target),
+      particleT: Math.random(),
     }))
     .filter((e) => e.source && e.target);
+
+  // adjacency, for bloom neighbor lookup
+  const adj = new Map();
+  for (const n of nodes) adj.set(n, new Set());
+  for (const e of edges) {
+    adj.get(e.source).add(e.target);
+    adj.get(e.target).add(e.source);
+  }
 
   let width = 0;
   let height = 0;
@@ -164,10 +214,13 @@ const payload = {
     }
   }
 
-  // --- pan/zoom in view coords ---
+  // --- camera (animated pan/zoom) ---
   let tx = 0;
   let ty = 0;
   let scale = 1;
+  let camTargetX = 0;
+  let camTargetY = 0;
+  const CAM_LERP = 0.18;
 
   function worldToScreen(x, y) {
     return { x: (x + tx) * scale + width / 2, y: (y + ty) * scale + height / 2 };
@@ -178,6 +231,411 @@ const payload = {
       y: (sy - height / 2) / scale - ty,
     };
   }
+  function panToWorld(x, y) {
+    camTargetX = -x;
+    camTargetY = -y;
+  }
+
+  // --- bloom state ---
+  let bloomCenter = null;
+  let bloomItems = []; // [{ node, angle }]
+  let bloomT = 0; // 0 collapsed -> 1 fully bloomed
+  let collapsing = false; // true while fading out
+  const BLOOM_LERP = 0.22;
+
+  function neighborsOf(node) {
+    const set = adj.get(node) || new Set();
+    return [...set].sort((a, b) => b.degree - a.degree).slice(0, BLOOM_MAX);
+  }
+
+  function startBloom(node) {
+    if (bloomCenter === node && !collapsing) return;
+    bloomCenter = node;
+    collapsing = false;
+    const ns = neighborsOf(node);
+    const count = Math.max(ns.length, 1);
+    bloomItems = ns.map((n, i) => ({
+      node: n,
+      angle: -Math.PI / 2 + (i * Math.PI * 2) / count,
+    }));
+    panToWorld(node.x, node.y);
+    renderBloomLabels();
+  }
+
+  function collapseBloom() {
+    if (!bloomCenter) return;
+    collapsing = true; // bloomT lerps to 0; finalized in advance()
+  }
+
+  // --- summon (press-and-hold card) ---
+  let summoned = null;
+
+  function showSummon(node) {
+    summoned = node;
+    summonTitleEl.textContent = node.title;
+    summonDescEl.textContent = node.description || ' ';
+    summonNeighborsEl.replaceChildren();
+    const ns = [...(adj.get(node) || [])].slice(0, 12);
+    for (const n of ns) {
+      const dot = document.createElement('span');
+      dot.className = 'summon-neighbor';
+      dot.style.background = COLORS[n.collection] || TEXT_DIM;
+      summonNeighborsEl.appendChild(dot);
+    }
+    summonCard.classList.add('is-visible');
+    positionSummon();
+  }
+
+  function hideSummon() {
+    summoned = null;
+    summonCard.classList.remove('is-visible');
+  }
+
+  function positionSummon() {
+    if (!summoned) return;
+    const screen = worldToScreen(summoned.x, summoned.y);
+    summonCard.style.left = `${screen.x}px`;
+    summonCard.style.top = `${screen.y - summoned.r * scale - 14}px`;
+  }
+
+  // --- bloom labels (DOM overlays) ---
+  function renderBloomLabels() {
+    bloomLabelsEl.replaceChildren();
+    if (!bloomCenter) return;
+    // center label
+    const centerEl = document.createElement('div');
+    centerEl.className = 'bloom-label is-center';
+    centerEl.textContent = bloomCenter.title;
+    centerEl.dataset.role = 'center';
+    bloomLabelsEl.appendChild(centerEl);
+    // neighbor labels
+    for (let i = 0; i < bloomItems.length; i++) {
+      const item = bloomItems[i];
+      const el = document.createElement('div');
+      el.className = 'bloom-label';
+      el.textContent = item.node.title;
+      el.dataset.role = 'neighbor';
+      el.dataset.index = String(i);
+      bloomLabelsEl.appendChild(el);
+    }
+  }
+
+  function positionBloomLabels() {
+    if (!bloomCenter) return;
+    const labels = bloomLabelsEl.children;
+    for (const el of labels) {
+      if (el.dataset.role === 'center') {
+        const s = worldToScreen(bloomCenter.x, bloomCenter.y);
+        el.style.left = `${s.x}px`;
+        el.style.top = `${s.y + bloomCenter.r * scale + 8}px`;
+        el.style.opacity = String(bloomT);
+      } else {
+        const idx = Number(el.dataset.index);
+        const item = bloomItems[idx];
+        if (!item) continue;
+        const ix = bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS * bloomT;
+        const iy = bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS * bloomT;
+        const s = worldToScreen(ix, iy);
+        // anchor label outward of the halo, on the dominant axis
+        const ax = Math.cos(item.angle);
+        const ay = Math.sin(item.angle);
+        const haloPad = item.node.r * scale + 10;
+        const outX = s.x + ax * haloPad;
+        const outY = s.y + ay * haloPad;
+        el.style.left = `${outX}px`;
+        el.style.top = `${outY}px`;
+        let tX, tY;
+        if (Math.abs(ax) > Math.abs(ay)) {
+          tX = ax > 0 ? '0%' : '-100%';
+          tY = '-50%';
+        } else {
+          tX = '-50%';
+          tY = ay > 0 ? '0%' : '-100%';
+        }
+        el.style.transform = `translate(${tX}, ${tY})`;
+        el.style.opacity = String(Math.max(0, bloomT * 1.4 - 0.4));
+      }
+    }
+  }
+
+  // --- hit testing ---
+  function nodeAt(sx, sy) {
+    const w = screenToWorld(sx, sy);
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i];
+      const dx = n.x - w.x;
+      const dy = n.y - w.y;
+      const r = n.r + 6 / scale;
+      if (dx * dx + dy * dy <= r * r) return n;
+    }
+    return null;
+  }
+
+  function bloomItemAt(sx, sy) {
+    if (!bloomCenter || bloomT < 0.5) return null;
+    const w = screenToWorld(sx, sy);
+    for (const item of bloomItems) {
+      const ix = bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS;
+      const iy = bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS;
+      const r = item.node.r + 8 / scale;
+      const dx = ix - w.x;
+      const dy = iy - w.y;
+      if (dx * dx + dy * dy <= r * r) return item;
+    }
+    return null;
+  }
+
+  // --- pointer / gesture handling ---
+  let dragging = null;
+  let dragMoved = false;
+  let panning = false;
+  let panStart = { x: 0, y: 0 };
+  let panOrigin = { x: 0, y: 0 };
+  let pointerDown = null; // { sx, sy, time, type, node }
+  let summonTimer = null;
+  let hoveredNode = null;
+
+  function localCoords(ev) {
+    const rect = canvas.getBoundingClientRect();
+    return { sx: ev.clientX - rect.left, sy: ev.clientY - rect.top };
+  }
+
+  function clearSummonTimer() {
+    if (summonTimer !== null) {
+      clearTimeout(summonTimer);
+      summonTimer = null;
+    }
+  }
+
+  function onPointerDown(ev) {
+    if (ev.button !== undefined && ev.button !== 0) return;
+    canvas.setPointerCapture(ev.pointerId);
+    const { sx, sy } = localCoords(ev);
+    const n = nodeAt(sx, sy);
+    pointerDown = {
+      sx,
+      sy,
+      time: performance.now(),
+      type: ev.pointerType,
+      node: n,
+    };
+    dragMoved = false;
+    if (n) {
+      // start long-press timer for summon
+      summonTimer = setTimeout(() => {
+        // only summon if the finger hasn't moved meaningfully and is still down
+        if (pointerDown && pointerDown.node === n && !dragMoved) {
+          showSummon(n);
+        }
+        summonTimer = null;
+      }, LONG_PRESS_MS);
+    } else {
+      panning = true;
+      panStart = { x: sx, y: sy };
+      panOrigin = { x: tx, y: ty };
+      canvas.style.cursor = 'grabbing';
+    }
+  }
+
+  function onPointerMove(ev) {
+    const { sx, sy } = localCoords(ev);
+
+    if (pointerDown && !dragMoved) {
+      const dx = sx - pointerDown.sx;
+      const dy = sy - pointerDown.sy;
+      if (dx * dx + dy * dy > MOVE_THRESHOLD * MOVE_THRESHOLD) {
+        dragMoved = true;
+        clearSummonTimer();
+        if (summoned) hideSummon();
+        if (pointerDown.node && !panning) {
+          dragging = pointerDown.node;
+          canvas.style.cursor = 'grabbing';
+        }
+      }
+    }
+
+    if (summoned) {
+      // keep the card pinned to the (possibly drifting) summoned node
+      positionSummon();
+      return;
+    }
+
+    if (dragging) {
+      const w = screenToWorld(sx, sy);
+      dragging.x = w.x;
+      dragging.y = w.y;
+      dragging.vx = 0;
+      dragging.vy = 0;
+      return;
+    }
+    if (panning) {
+      tx = panOrigin.x + (sx - panStart.x) / scale;
+      ty = panOrigin.y + (sy - panStart.y) / scale;
+      camTargetX = tx;
+      camTargetY = ty;
+      return;
+    }
+
+    // hover label only on mouse
+    if (ev.pointerType === 'mouse') {
+      const n = nodeAt(sx, sy);
+      hoveredNode = n;
+      canvas.style.cursor = n ? 'pointer' : 'grab';
+      if (n) {
+        const screen = worldToScreen(n.x, n.y);
+        hoverLabel.textContent = n.title;
+        hoverLabel.style.left = `${screen.x}px`;
+        hoverLabel.style.top = `${screen.y - n.r * scale - 10}px`;
+        hoverLabel.classList.add('is-visible');
+      } else {
+        hoverLabel.classList.remove('is-visible');
+      }
+    }
+  }
+
+  function onPointerUp(ev) {
+    clearSummonTimer();
+    const { sx, sy } = localCoords(ev);
+    const liftNode = nodeAt(sx, sy);
+    const wasSummoned = summoned;
+    const wasDragMoved = dragMoved;
+    const downNode = pointerDown ? pointerDown.node : null;
+
+    if (wasSummoned) {
+      // lift on the summoned node = enter; lift off = dismiss
+      if (liftNode === wasSummoned) {
+        window.location.href = wasSummoned.url;
+      }
+      hideSummon();
+    } else if (!wasDragMoved && !panning) {
+      // a clean tap (no drag, no pan) — interpret it
+      handleTap(sx, sy, downNode);
+    } else if (panning) {
+      panning = false;
+    }
+
+    dragging = null;
+    panning = false;
+    pointerDown = null;
+    canvas.style.cursor = hoveredNode ? 'pointer' : 'grab';
+  }
+
+  function handleTap(sx, sy, downNode) {
+    if (bloomCenter) {
+      // tap on the bloom center -> enter
+      const onCenter =
+        downNode === bloomCenter ||
+        (function () {
+          const w = screenToWorld(sx, sy);
+          const dx = bloomCenter.x - w.x;
+          const dy = bloomCenter.y - w.y;
+          const r = bloomCenter.r + 6 / scale;
+          return dx * dx + dy * dy <= r * r;
+        })();
+      if (onCenter) {
+        window.location.href = bloomCenter.url;
+        return;
+      }
+      // tap on a bloom-neighbor halo -> re-bloom around it
+      const item = bloomItemAt(sx, sy);
+      if (item) {
+        startBloom(item.node);
+        return;
+      }
+      // tap on any other actual node (background) -> bloom around it
+      const n = downNode || nodeAt(sx, sy);
+      if (n) {
+        startBloom(n);
+        return;
+      }
+      // tap on empty space -> collapse
+      collapseBloom();
+      return;
+    }
+    // not bloomed
+    const n = downNode || nodeAt(sx, sy);
+    if (n) startBloom(n);
+  }
+
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', () => {
+    clearSummonTimer();
+    if (summoned) hideSummon();
+    dragging = null;
+    panning = false;
+    pointerDown = null;
+  });
+
+  canvas.addEventListener(
+    'wheel',
+    (ev) => {
+      ev.preventDefault();
+      const { sx, sy } = localCoords(ev);
+      const before = screenToWorld(sx, sy);
+      const factor = Math.exp(-ev.deltaY * 0.001);
+      scale = Math.max(0.25, Math.min(3, scale * factor));
+      const after = screenToWorld(sx, sy);
+      tx += after.x - before.x;
+      ty += after.y - before.y;
+      camTargetX = tx;
+      camTargetY = ty;
+    },
+    { passive: false },
+  );
+
+  // keyboard: enter on focused canvas enters hovered node, escape collapses bloom
+  canvas.tabIndex = 0;
+  canvas.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' && hoveredNode) {
+      window.location.href = hoveredNode.url;
+    } else if (ev.key === 'Escape' && bloomCenter) {
+      collapseBloom();
+    }
+  });
+
+  // --- per-frame time-based motion ---
+  function advance(dt) {
+    // breathing
+    if (!reducedMotion) {
+      for (const n of nodes) {
+        const b = BREATH[n.state] || BREATH.stable;
+        n.breathPhase += b.rate * dt;
+      }
+    }
+    // edge particles
+    if (!reducedMotion) {
+      for (const e of edges) {
+        const dx = e.target.x - e.source.x;
+        const dy = e.target.y - e.source.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        e.particleT = (e.particleT + (PARTICLE_SPEED * dt) / dist) % 1;
+      }
+    }
+    // bloom lerp
+    const target = bloomCenter && !collapsing ? 1 : 0;
+    if (reducedMotion) {
+      bloomT = target;
+    } else {
+      bloomT += (target - bloomT) * BLOOM_LERP;
+      if (Math.abs(bloomT - target) < 0.001) bloomT = target;
+    }
+    if (collapsing && bloomT <= 0.005) {
+      bloomCenter = null;
+      bloomItems = [];
+      collapsing = false;
+      bloomLabelsEl.replaceChildren();
+    }
+    // camera lerp (only when something is animating it; manual pan sets target = current)
+    if (reducedMotion) {
+      tx = camTargetX;
+      ty = camTargetY;
+    } else {
+      tx += (camTargetX - tx) * CAM_LERP;
+      ty += (camTargetY - ty) * CAM_LERP;
+    }
+  }
 
   function draw() {
     ctx.clearRect(0, 0, width, height);
@@ -187,165 +645,135 @@ const payload = {
     ctx.scale(scale, scale);
     ctx.translate(tx, ty);
 
-    // edges (directed: source -> target)
-    ctx.strokeStyle = EDGE;
-    ctx.fillStyle = EDGE;
+    const dim = bloomT > 0;
+    const bloomNeighborSet = new Set(bloomItems.map((b) => b.node));
+
+    // edges
     ctx.lineWidth = 1 / scale;
-    const arrowLen = 8 / scale;
-    const arrowWidth = 4 / scale;
     for (const e of edges) {
-      const dx = e.target.x - e.source.x;
-      const dy = e.target.y - e.source.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const ux = dx / dist;
-      const uy = dy / dist;
-      // stop the line short of the target node so the arrowhead sits on the rim
-      const tipX = e.target.x - ux * e.target.r;
-      const tipY = e.target.y - uy * e.target.r;
-      const baseX = tipX - ux * arrowLen;
-      const baseY = tipY - uy * arrowLen;
+      const inBloom =
+        bloomCenter &&
+        ((e.source === bloomCenter && bloomNeighborSet.has(e.target)) ||
+          (e.target === bloomCenter && bloomNeighborSet.has(e.source)));
+      if (inBloom) {
+        ctx.strokeStyle = EDGE_BLOOM;
+      } else if (dim) {
+        // crossfade EDGE -> EDGE_DIM by bloomT
+        const a = 0.35 - 0.27 * bloomT;
+        ctx.strokeStyle = `rgba(158, 142, 114, ${a})`;
+      } else {
+        ctx.strokeStyle = EDGE;
+      }
       ctx.beginPath();
       ctx.moveTo(e.source.x, e.source.y);
-      ctx.lineTo(baseX, baseY);
+      ctx.lineTo(e.target.x, e.target.y);
       ctx.stroke();
-      // arrowhead
-      const px = -uy;
-      const py = ux;
-      ctx.beginPath();
-      ctx.moveTo(tipX, tipY);
-      ctx.lineTo(baseX + px * arrowWidth, baseY + py * arrowWidth);
-      ctx.lineTo(baseX - px * arrowWidth, baseY - py * arrowWidth);
-      ctx.closePath();
-      ctx.fill();
     }
 
-    // nodes
+    // edge particles
+    if (!reducedMotion) {
+      for (const e of edges) {
+        const px = e.source.x + (e.target.x - e.source.x) * e.particleT;
+        const py = e.source.y + (e.target.y - e.source.y) * e.particleT;
+        const inBloom =
+          bloomCenter &&
+          ((e.source === bloomCenter && bloomNeighborSet.has(e.target)) ||
+            (e.target === bloomCenter && bloomNeighborSet.has(e.source)));
+        const baseAlpha = inBloom ? 0.85 : dim ? 0.2 : 0.55;
+        ctx.globalAlpha = baseAlpha;
+        ctx.fillStyle = COLORS[e.source.collection] || TEXT_DIM;
+        ctx.beginPath();
+        ctx.arc(px, py, 1.6 / scale, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // nodes (background pass: dim non-bloom-related nodes when bloomed)
     for (const n of nodes) {
+      const isBloomCenter = n === bloomCenter;
+      const isBloomNeighbor = bloomNeighborSet.has(n);
+      let alpha = n.state === 'fossil' ? 0.55 : 1;
+      if (dim && !isBloomCenter && !isBloomNeighbor) {
+        alpha *= 1 - 0.7 * bloomT;
+      }
+      ctx.globalAlpha = alpha;
       ctx.fillStyle = COLORS[n.collection] || TEXT_DIM;
-      ctx.globalAlpha = n.state === 'fossil' ? 0.55 : 1;
+      const b = BREATH[n.state] || BREATH.stable;
+      const breath = reducedMotion ? 0 : b.amp * Math.sin(n.breathPhase);
+      let r = n.r * (1 + breath);
+      if (isBloomCenter) r *= 1 + 0.15 * bloomT;
       ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // highlight hovered
-    if (hovered) {
-      ctx.strokeStyle = '#f0e6d2';
+    // bloom-neighbor halos (drawn at the orbital position, not the node's own position)
+    if (bloomCenter && bloomT > 0.05) {
+      for (const item of bloomItems) {
+        const ix =
+          bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS * bloomT;
+        const iy =
+          bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS * bloomT;
+        ctx.globalAlpha = bloomT;
+        ctx.fillStyle = COLORS[item.node.collection] || TEXT_DIM;
+        ctx.beginPath();
+        ctx.arc(ix, iy, item.node.r + 1, 0, Math.PI * 2);
+        ctx.fill();
+        // tether line from center to halo
+        ctx.globalAlpha = 0.4 * bloomT;
+        ctx.strokeStyle = EDGE_BLOOM;
+        ctx.lineWidth = 1 / scale;
+        ctx.beginPath();
+        ctx.moveTo(bloomCenter.x, bloomCenter.y);
+        ctx.lineTo(ix, iy);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // hover ring (desktop)
+    if (hoveredNode && !bloomCenter) {
+      ctx.strokeStyle = HIGHLIGHT;
       ctx.lineWidth = 2 / scale;
       ctx.beginPath();
-      ctx.arc(hovered.x, hovered.y, hovered.r + 3 / scale, 0, Math.PI * 2);
+      ctx.arc(hoveredNode.x, hoveredNode.y, hoveredNode.r + 3 / scale, 0, Math.PI * 2);
       ctx.stroke();
     }
 
+    // bloom-center highlight
+    if (bloomCenter && bloomT > 0.1) {
+      ctx.strokeStyle = HIGHLIGHT;
+      ctx.lineWidth = 2 / scale;
+      ctx.globalAlpha = bloomT;
+      ctx.beginPath();
+      ctx.arc(
+        bloomCenter.x,
+        bloomCenter.y,
+        bloomCenter.r * (1 + 0.15 * bloomT) + 4 / scale,
+        0,
+        Math.PI * 2,
+      );
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
     ctx.restore();
+
+    positionBloomLabels();
+    if (summoned) positionSummon();
   }
-
-  let hovered = null;
-  let dragging = null;
-  let dragMoved = false;
-  let panning = false;
-  let panStart = { x: 0, y: 0 };
-  let panOrigin = { x: 0, y: 0 };
-
-  function nodeAt(sx, sy) {
-    const w = screenToWorld(sx, sy);
-    for (let i = nodes.length - 1; i >= 0; i--) {
-      const n = nodes[i];
-      const dx = n.x - w.x;
-      const dy = n.y - w.y;
-      const r = n.r + 4 / scale;
-      if (dx * dx + dy * dy <= r * r) return n;
-    }
-    return null;
-  }
-
-  canvas.addEventListener('mousemove', (ev) => {
-    const rect = canvas.getBoundingClientRect();
-    const sx = ev.clientX - rect.left;
-    const sy = ev.clientY - rect.top;
-
-    if (dragging) {
-      const w = screenToWorld(sx, sy);
-      dragging.x = w.x;
-      dragging.y = w.y;
-      dragging.vx = 0;
-      dragging.vy = 0;
-      dragMoved = true;
-      return;
-    }
-    if (panning) {
-      tx = panOrigin.x + (sx - panStart.x) / scale;
-      ty = panOrigin.y + (sy - panStart.y) / scale;
-      return;
-    }
-
-    const n = nodeAt(sx, sy);
-    hovered = n;
-    canvas.style.cursor = n ? 'pointer' : 'grab';
-    if (n) {
-      const screen = worldToScreen(n.x, n.y);
-      label.textContent = n.title;
-      label.style.left = `${screen.x}px`;
-      label.style.top = `${screen.y - n.r * scale - 10}px`;
-      label.classList.add('is-visible');
-    } else {
-      label.classList.remove('is-visible');
-    }
-  });
-
-  canvas.addEventListener('mousedown', (ev) => {
-    const rect = canvas.getBoundingClientRect();
-    const sx = ev.clientX - rect.left;
-    const sy = ev.clientY - rect.top;
-    const n = nodeAt(sx, sy);
-    if (n) {
-      dragging = n;
-      dragMoved = false;
-      canvas.style.cursor = 'grabbing';
-    } else {
-      panning = true;
-      panStart = { x: sx, y: sy };
-      panOrigin = { x: tx, y: ty };
-      canvas.style.cursor = 'grabbing';
-    }
-  });
-
-  window.addEventListener('mouseup', () => {
-    if (dragging && !dragMoved) {
-      window.location.href = dragging.url;
-    }
-    dragging = null;
-    panning = false;
-    canvas.style.cursor = hovered ? 'pointer' : 'grab';
-  });
-
-  canvas.addEventListener('wheel', (ev) => {
-    ev.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    const sx = ev.clientX - rect.left;
-    const sy = ev.clientY - rect.top;
-    const before = screenToWorld(sx, sy);
-    const factor = Math.exp(-ev.deltaY * 0.001);
-    scale = Math.max(0.25, Math.min(3, scale * factor));
-    const after = screenToWorld(sx, sy);
-    tx += after.x - before.x;
-    ty += after.y - before.y;
-  }, { passive: false });
-
-  // keyboard: enter key on focused canvas enters hovered node
-  canvas.tabIndex = 0;
-  canvas.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' && hovered) {
-      window.location.href = hovered.url;
-    }
-  });
 
   // settle for a few hundred frames without drawing so first paint isn't chaos
   for (let i = 0; i < 240; i++) step();
 
-  function tick() {
+  let lastTime = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
     step();
+    advance(dt);
     draw();
     requestAnimationFrame(tick);
   }
@@ -424,10 +852,14 @@ const payload = {
     height: 100%;
     cursor: grab;
   }
-  .label {
+  .overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .hover-label {
     position: absolute;
     transform: translate(-50%, -100%);
-    pointer-events: none;
     background: var(--bg-card);
     color: var(--text);
     border: 1px solid var(--border);
@@ -439,7 +871,87 @@ const payload = {
     opacity: 0;
     transition: opacity 0.12s ease;
   }
-  .label.is-visible {
+  .hover-label.is-visible {
     opacity: 1;
+  }
+  .bloom-labels {
+    position: absolute;
+    inset: 0;
+  }
+  .bloom-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    background: rgba(30, 22, 9, 0.92);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bloom-label.is-center {
+    transform: translate(-50%, 0);
+    background: rgba(30, 22, 9, 0.96);
+    border-color: #f0e6d2;
+    color: #f0e6d2;
+    font-style: italic;
+  }
+  .summon-card {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    background: rgba(30, 22, 9, 0.96);
+    color: var(--text);
+    border: 1px solid #e8a838;
+    border-radius: 2px;
+    padding: 0.55rem 0.75rem;
+    min-width: 180px;
+    max-width: 280px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  }
+  .summon-card.is-visible {
+    opacity: 1;
+  }
+  .summon-title {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.2;
+    color: #f0e6d2;
+    margin-bottom: 0.25rem;
+  }
+  .summon-desc {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: var(--text-dim);
+    margin-bottom: 0.45rem;
+  }
+  .summon-neighbors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .summon-neighbor {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hover-label,
+    .bloom-label,
+    .summon-card {
+      transition: none;
+    }
   }
 </style>
