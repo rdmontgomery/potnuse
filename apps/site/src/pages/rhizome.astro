@@ -783,11 +783,6 @@ const payload = {
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
   }
-  .stage * {
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-  }
   canvas {
     display: block;
     width: 100%;
@@ -820,7 +815,8 @@ const payload = {
     position: absolute;
     inset: 0;
   }
-  .focus-label {
+  /* dynamic-injected: must escape Astro's scope-attribute selectors */
+  :global(.focus-label) {
     position: absolute;
     transform: translate(-50%, -50%);
     background: rgba(30, 22, 9, 0.92);
@@ -837,7 +833,7 @@ const payload = {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .focus-label.is-center {
+  :global(.focus-label.is-center) {
     transform: translate(-50%, 0);
     background: rgba(30, 22, 9, 0.96);
     border-color: #f0e6d2;
@@ -882,7 +878,7 @@ const payload = {
     flex-wrap: wrap;
     gap: 0.3rem;
   }
-  .summon-neighbor {
+  :global(.summon-neighbor) {
     display: inline-block;
     width: 0.5rem;
     height: 0.5rem;
@@ -891,7 +887,7 @@ const payload = {
 
   @media (prefers-reduced-motion: reduce) {
     .hover-label,
-    .focus-label,
+    :global(.focus-label),
     .summon-card {
       transition: none;
     }
