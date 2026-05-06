@@ -283,17 +283,28 @@ function loadPersisted(): { lang?: Lang; mode?: Mode; states?: Partial<AllStates
 }
 
 // ---------- Speech ----------
+// Wrapped end-to-end in try/catch because some browser userscripts monkey-patch
+// `speechSynthesis.getVoices` and crash on their own undefined entries (seen in
+// the wild: `makeFakeVoiceFromVoice` calling Object.getPrototypeOf on undefined).
+// We don't want a third-party script to take down the Primer island, so we
+// degrade to "no voice" and let the browser pick a default for the utterance.
 function pickVoice(lang: Lang): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  const langCode = lang === 'fr' ? 'fr' : 'en';
-  const matching = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(langCode));
-  const preferRe = lang === 'fr'
-    ? /amelie|amélie|virginie|audrey|thomas|google.*français|microsoft.*french/i
-    : /samantha|karen|google us english|microsoft zira|female/i;
-  const pref = matching.find(v => preferRe.test(v.name));
-  return pref ?? matching[0] ?? voices[0];
+  try {
+    const raw = window.speechSynthesis.getVoices();
+    if (!raw || !raw.length) return null;
+    const voices = raw.filter((v): v is SpeechSynthesisVoice => v != null && typeof v.lang === 'string');
+    if (!voices.length) return null;
+    const langCode = lang === 'fr' ? 'fr' : 'en';
+    const matching = voices.filter(v => v.lang.toLowerCase().startsWith(langCode));
+    const preferRe = lang === 'fr'
+      ? /amelie|amélie|virginie|audrey|thomas|google.*français|microsoft.*french/i
+      : /samantha|karen|google us english|microsoft zira|female/i;
+    const pref = matching.find(v => v.name && preferRe.test(v.name));
+    return pref ?? matching[0] ?? voices[0];
+  } catch {
+    return null;
+  }
 }
 
 // ---------- i18n ----------
@@ -429,10 +440,16 @@ function PrimerInner() {
   // Voices load asynchronously on most browsers; re-pick when language changes.
   useEffect(() => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    const update = () => setVoice(pickVoice(lang));
+    const update = () => {
+      try { setVoice(pickVoice(lang)); } catch { setVoice(null); }
+    };
     update();
-    window.speechSynthesis.addEventListener('voiceschanged', update);
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', update);
+    try {
+      window.speechSynthesis.addEventListener('voiceschanged', update);
+    } catch { /* userscript-wrapped event target — ignore */ }
+    return () => {
+      try { window.speechSynthesis.removeEventListener('voiceschanged', update); } catch { /* */ }
+    };
   }, [lang]);
 
   // Speech helper (needs access to current voice + lang).
