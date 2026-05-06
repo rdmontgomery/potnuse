@@ -37,7 +37,7 @@ const payload = {
   <main class="rhizome">
     <header>
       <h1>rhizome</h1>
-      <p class="sub">tap to bloom. hold to summon. tap a bloomed center to enter.</p>
+      <p class="sub">tap a node to focus. tap the focused node to enter. hold to summon a card.</p>
       <ul class="legend" aria-label="legend">
         <li><span class="dot essays"></span>essays</li>
         <li><span class="dot experiments"></span>experiments</li>
@@ -49,7 +49,7 @@ const payload = {
       <canvas id="graph" aria-label="rhizome graph"></canvas>
       <div id="overlay" class="overlay" aria-hidden="true">
         <div id="hover-label" class="hover-label"></div>
-        <div id="bloom-labels" class="bloom-labels"></div>
+        <div id="focus-labels" class="focus-labels"></div>
         <div id="summon-card" class="summon-card">
           <div class="summon-title"></div>
           <div class="summon-desc"></div>
@@ -69,8 +69,7 @@ const payload = {
   };
   const TEXT_DIM = '#9e8e72';
   const EDGE = 'rgba(158, 142, 114, 0.35)';
-  const EDGE_DIM = 'rgba(158, 142, 114, 0.08)';
-  const EDGE_BLOOM = 'rgba(232, 168, 56, 0.55)';
+  const EDGE_FOCUS = 'rgba(232, 168, 56, 0.65)';
   const HIGHLIGHT = '#f0e6d2';
 
   const BREATH = {
@@ -80,8 +79,7 @@ const payload = {
     fossil: { rate: 0, amp: 0 },
   };
 
-  const BLOOM_RADIUS = 140;
-  const BLOOM_MAX = 10;
+  const NEIGHBOR_MAX = 12;
   const LONG_PRESS_MS = 250;
   const MOVE_THRESHOLD = 6; // px before tap becomes drag/pan
   const PARTICLE_SPEED = 42; // world units per second
@@ -93,13 +91,13 @@ const payload = {
   const canvas = document.getElementById('graph');
   const overlay = document.getElementById('overlay');
   const hoverLabel = document.getElementById('hover-label');
-  const bloomLabelsEl = document.getElementById('bloom-labels');
+  const focusLabelsEl = document.getElementById('focus-labels');
   const summonCard = document.getElementById('summon-card');
   if (
     !(canvas instanceof HTMLCanvasElement) ||
     !overlay ||
     !hoverLabel ||
-    !bloomLabelsEl ||
+    !focusLabelsEl ||
     !summonCard
   ) {
     throw new Error('rhizome: dom missing');
@@ -128,7 +126,7 @@ const payload = {
     }))
     .filter((e) => e.source && e.target);
 
-  // adjacency, for bloom neighbor lookup
+  // adjacency for neighbor lookup
   const adj = new Map();
   for (const n of nodes) adj.set(n, new Set());
   for (const e of edges) {
@@ -236,35 +234,32 @@ const payload = {
     camTargetY = -y;
   }
 
-  // --- bloom state ---
-  let bloomCenter = null;
-  let bloomItems = []; // [{ node, angle }]
-  let bloomT = 0; // 0 collapsed -> 1 fully bloomed
-  let collapsing = false; // true while fading out
-  const BLOOM_LERP = 0.22;
+  // --- focus state ---
+  let focused = null;
+  let focusedNeighbors = [];
+  let focusT = 0; // 0 unfocused -> 1 fully focused
+  let releasing = false;
+  const FOCUS_LERP = 0.22;
 
   function neighborsOf(node) {
     const set = adj.get(node) || new Set();
-    return [...set].sort((a, b) => b.degree - a.degree).slice(0, BLOOM_MAX);
+    return [...set]
+      .sort((a, b) => b.degree - a.degree)
+      .slice(0, NEIGHBOR_MAX);
   }
 
-  function startBloom(node) {
-    if (bloomCenter === node && !collapsing) return;
-    bloomCenter = node;
-    collapsing = false;
-    const ns = neighborsOf(node);
-    const count = Math.max(ns.length, 1);
-    bloomItems = ns.map((n, i) => ({
-      node: n,
-      angle: -Math.PI / 2 + (i * Math.PI * 2) / count,
-    }));
+  function startFocus(node) {
+    if (focused === node && !releasing) return;
+    focused = node;
+    releasing = false;
+    focusedNeighbors = neighborsOf(node);
     panToWorld(node.x, node.y);
-    renderBloomLabels();
+    renderFocusLabels();
   }
 
-  function collapseBloom() {
-    if (!bloomCenter) return;
-    collapsing = true; // bloomT lerps to 0; finalized in advance()
+  function releaseFocus() {
+    if (!focused) return;
+    releasing = true;
   }
 
   // --- summon (press-and-hold card) ---
@@ -273,7 +268,7 @@ const payload = {
   function showSummon(node) {
     summoned = node;
     summonTitleEl.textContent = node.title;
-    summonDescEl.textContent = node.description || ' ';
+    summonDescEl.textContent = node.description || ' ';
     summonNeighborsEl.replaceChildren();
     const ns = [...(adj.get(node) || [])].slice(0, 12);
     for (const n of ns) {
@@ -298,52 +293,48 @@ const payload = {
     summonCard.style.top = `${screen.y - summoned.r * scale - 14}px`;
   }
 
-  // --- bloom labels (DOM overlays) ---
-  function renderBloomLabels() {
-    bloomLabelsEl.replaceChildren();
-    if (!bloomCenter) return;
-    // center label
+  // --- focus labels (DOM overlays, anchored to actual node positions) ---
+  function renderFocusLabels() {
+    focusLabelsEl.replaceChildren();
+    if (!focused) return;
     const centerEl = document.createElement('div');
-    centerEl.className = 'bloom-label is-center';
-    centerEl.textContent = bloomCenter.title;
+    centerEl.className = 'focus-label is-center';
+    centerEl.textContent = focused.title;
     centerEl.dataset.role = 'center';
-    bloomLabelsEl.appendChild(centerEl);
-    // neighbor labels
-    for (let i = 0; i < bloomItems.length; i++) {
-      const item = bloomItems[i];
+    focusLabelsEl.appendChild(centerEl);
+    for (let i = 0; i < focusedNeighbors.length; i++) {
+      const n = focusedNeighbors[i];
       const el = document.createElement('div');
-      el.className = 'bloom-label';
-      el.textContent = item.node.title;
+      el.className = 'focus-label';
+      el.textContent = n.title;
       el.dataset.role = 'neighbor';
       el.dataset.index = String(i);
-      bloomLabelsEl.appendChild(el);
+      focusLabelsEl.appendChild(el);
     }
   }
 
-  function positionBloomLabels() {
-    if (!bloomCenter) return;
-    const labels = bloomLabelsEl.children;
-    for (const el of labels) {
+  function positionFocusLabels() {
+    if (!focused) return;
+    for (const el of focusLabelsEl.children) {
       if (el.dataset.role === 'center') {
-        const s = worldToScreen(bloomCenter.x, bloomCenter.y);
+        const s = worldToScreen(focused.x, focused.y);
         el.style.left = `${s.x}px`;
-        el.style.top = `${s.y + bloomCenter.r * scale + 8}px`;
-        el.style.opacity = String(bloomT);
+        el.style.top = `${s.y + focused.r * scale + 8}px`;
+        el.style.opacity = String(focusT);
       } else {
         const idx = Number(el.dataset.index);
-        const item = bloomItems[idx];
-        if (!item) continue;
-        const ix = bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS * bloomT;
-        const iy = bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS * bloomT;
-        const s = worldToScreen(ix, iy);
-        // anchor label outward of the halo, on the dominant axis
-        const ax = Math.cos(item.angle);
-        const ay = Math.sin(item.angle);
-        const haloPad = item.node.r * scale + 10;
-        const outX = s.x + ax * haloPad;
-        const outY = s.y + ay * haloPad;
-        el.style.left = `${outX}px`;
-        el.style.top = `${outY}px`;
+        const n = focusedNeighbors[idx];
+        if (!n) continue;
+        // direction from focused center outward to this neighbor
+        const dx = n.x - focused.x;
+        const dy = n.y - focused.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const ax = dx / dist;
+        const ay = dy / dist;
+        const s = worldToScreen(n.x, n.y);
+        const pad = n.r * scale + 10;
+        const outX = s.x + ax * pad;
+        const outY = s.y + ay * pad;
         let tX, tY;
         if (Math.abs(ax) > Math.abs(ay)) {
           tX = ax > 0 ? '0%' : '-100%';
@@ -352,8 +343,10 @@ const payload = {
           tX = '-50%';
           tY = ay > 0 ? '0%' : '-100%';
         }
+        el.style.left = `${outX}px`;
+        el.style.top = `${outY}px`;
         el.style.transform = `translate(${tX}, ${tY})`;
-        el.style.opacity = String(Math.max(0, bloomT * 1.4 - 0.4));
+        el.style.opacity = String(Math.max(0, focusT * 1.4 - 0.4));
       }
     }
   }
@@ -367,20 +360,6 @@ const payload = {
       const dy = n.y - w.y;
       const r = n.r + 6 / scale;
       if (dx * dx + dy * dy <= r * r) return n;
-    }
-    return null;
-  }
-
-  function bloomItemAt(sx, sy) {
-    if (!bloomCenter || bloomT < 0.5) return null;
-    const w = screenToWorld(sx, sy);
-    for (const item of bloomItems) {
-      const ix = bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS;
-      const iy = bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS;
-      const r = item.node.r + 8 / scale;
-      const dx = ix - w.x;
-      const dy = iy - w.y;
-      if (dx * dx + dy * dy <= r * r) return item;
     }
     return null;
   }
@@ -420,15 +399,10 @@ const payload = {
       node: n,
     };
     dragMoved = false;
-    // record pan origin in case movement turns this into a pan; don't start
-    // panning yet — a press-without-movement must remain tap-eligible so
-    // bloom-halo taps work even though halos aren't real nodes.
     panStart = { x: sx, y: sy };
     panOrigin = { x: tx, y: ty };
     if (n) {
-      // start long-press timer for summon
       summonTimer = setTimeout(() => {
-        // only summon if the finger hasn't moved meaningfully and is still down
         if (pointerDown && pointerDown.node === n && !dragMoved) {
           showSummon(n);
         }
@@ -451,7 +425,6 @@ const payload = {
           dragging = pointerDown.node;
           canvas.style.cursor = 'grabbing';
         } else {
-          // movement on empty space upgrades the press to a pan
           panning = true;
           canvas.style.cursor = 'grabbing';
         }
@@ -459,7 +432,6 @@ const payload = {
     }
 
     if (summoned) {
-      // keep the card pinned to the (possibly drifting) summoned node
       positionSummon();
       return;
     }
@@ -480,7 +452,6 @@ const payload = {
       return;
     }
 
-    // hover label only on mouse
     if (ev.pointerType === 'mouse') {
       const n = nodeAt(sx, sy);
       hoveredNode = n;
@@ -512,10 +483,7 @@ const payload = {
       }
       hideSummon();
     } else if (!wasDragMoved && !panning) {
-      // a clean tap (no drag, no pan) — interpret it
       handleTap(sx, sy, downNode);
-    } else if (panning) {
-      panning = false;
     }
 
     dragging = null;
@@ -525,40 +493,21 @@ const payload = {
   }
 
   function handleTap(sx, sy, downNode) {
-    if (bloomCenter) {
-      // tap on the bloom center -> enter
-      const onCenter =
-        downNode === bloomCenter ||
-        (function () {
-          const w = screenToWorld(sx, sy);
-          const dx = bloomCenter.x - w.x;
-          const dy = bloomCenter.y - w.y;
-          const r = bloomCenter.r + 6 / scale;
-          return dx * dx + dy * dy <= r * r;
-        })();
-      if (onCenter) {
-        window.location.href = bloomCenter.url;
-        return;
+    const tapped = downNode || nodeAt(sx, sy);
+    if (focused) {
+      if (tapped === focused) {
+        // tap the focused node to enter
+        window.location.href = focused.url;
+      } else if (tapped) {
+        // tap any other node (neighbor or background) to re-focus on it
+        startFocus(tapped);
+      } else {
+        // tap empty space to release focus
+        releaseFocus();
       }
-      // tap on a bloom-neighbor halo -> re-bloom around it
-      const item = bloomItemAt(sx, sy);
-      if (item) {
-        startBloom(item.node);
-        return;
-      }
-      // tap on any other actual node (background) -> bloom around it
-      const n = downNode || nodeAt(sx, sy);
-      if (n) {
-        startBloom(n);
-        return;
-      }
-      // tap on empty space -> collapse
-      collapseBloom();
       return;
     }
-    // not bloomed
-    const n = downNode || nodeAt(sx, sy);
-    if (n) startBloom(n);
+    if (tapped) startFocus(tapped);
   }
 
   canvas.addEventListener('pointerdown', onPointerDown);
@@ -589,27 +538,23 @@ const payload = {
     { passive: false },
   );
 
-  // keyboard: enter on focused canvas enters hovered node, escape collapses bloom
+  // keyboard: enter on focused canvas enters hovered node, escape releases focus
   canvas.tabIndex = 0;
   canvas.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter' && hoveredNode) {
       window.location.href = hoveredNode.url;
-    } else if (ev.key === 'Escape' && bloomCenter) {
-      collapseBloom();
+    } else if (ev.key === 'Escape' && focused) {
+      releaseFocus();
     }
   });
 
   // --- per-frame time-based motion ---
   function advance(dt) {
-    // breathing
     if (!reducedMotion) {
       for (const n of nodes) {
         const b = BREATH[n.state] || BREATH.stable;
         n.breathPhase += b.rate * dt;
       }
-    }
-    // edge particles
-    if (!reducedMotion) {
       for (const e of edges) {
         const dx = e.target.x - e.source.x;
         const dy = e.target.y - e.source.y;
@@ -617,21 +562,19 @@ const payload = {
         e.particleT = (e.particleT + (PARTICLE_SPEED * dt) / dist) % 1;
       }
     }
-    // bloom lerp
-    const target = bloomCenter && !collapsing ? 1 : 0;
+    const target = focused && !releasing ? 1 : 0;
     if (reducedMotion) {
-      bloomT = target;
+      focusT = target;
     } else {
-      bloomT += (target - bloomT) * BLOOM_LERP;
-      if (Math.abs(bloomT - target) < 0.001) bloomT = target;
+      focusT += (target - focusT) * FOCUS_LERP;
+      if (Math.abs(focusT - target) < 0.001) focusT = target;
     }
-    if (collapsing && bloomT <= 0.005) {
-      bloomCenter = null;
-      bloomItems = [];
-      collapsing = false;
-      bloomLabelsEl.replaceChildren();
+    if (releasing && focusT <= 0.005) {
+      focused = null;
+      focusedNeighbors = [];
+      releasing = false;
+      focusLabelsEl.replaceChildren();
     }
-    // camera lerp (only when something is animating it; manual pan sets target = current)
     if (reducedMotion) {
       tx = camTargetX;
       ty = camTargetY;
@@ -649,21 +592,20 @@ const payload = {
     ctx.scale(scale, scale);
     ctx.translate(tx, ty);
 
-    const dim = bloomT > 0;
-    const bloomNeighborSet = new Set(bloomItems.map((b) => b.node));
+    const dim = focusT > 0;
+    const neighborSet = new Set(focusedNeighbors);
 
     // edges
     ctx.lineWidth = 1 / scale;
     for (const e of edges) {
-      const inBloom =
-        bloomCenter &&
-        ((e.source === bloomCenter && bloomNeighborSet.has(e.target)) ||
-          (e.target === bloomCenter && bloomNeighborSet.has(e.source)));
-      if (inBloom) {
-        ctx.strokeStyle = EDGE_BLOOM;
+      const inFocus =
+        focused &&
+        ((e.source === focused && neighborSet.has(e.target)) ||
+          (e.target === focused && neighborSet.has(e.source)));
+      if (inFocus) {
+        ctx.strokeStyle = EDGE_FOCUS;
       } else if (dim) {
-        // crossfade EDGE -> EDGE_DIM by bloomT
-        const a = 0.35 - 0.27 * bloomT;
+        const a = 0.35 - 0.27 * focusT;
         ctx.strokeStyle = `rgba(158, 142, 114, ${a})`;
       } else {
         ctx.strokeStyle = EDGE;
@@ -679,11 +621,11 @@ const payload = {
       for (const e of edges) {
         const px = e.source.x + (e.target.x - e.source.x) * e.particleT;
         const py = e.source.y + (e.target.y - e.source.y) * e.particleT;
-        const inBloom =
-          bloomCenter &&
-          ((e.source === bloomCenter && bloomNeighborSet.has(e.target)) ||
-            (e.target === bloomCenter && bloomNeighborSet.has(e.source)));
-        const baseAlpha = inBloom ? 0.85 : dim ? 0.2 : 0.55;
+        const inFocus =
+          focused &&
+          ((e.source === focused && neighborSet.has(e.target)) ||
+            (e.target === focused && neighborSet.has(e.source)));
+        const baseAlpha = inFocus ? 0.9 : dim ? 0.2 : 0.55;
         ctx.globalAlpha = baseAlpha;
         ctx.fillStyle = COLORS[e.source.collection] || TEXT_DIM;
         ctx.beginPath();
@@ -693,52 +635,39 @@ const payload = {
       ctx.globalAlpha = 1;
     }
 
-    // nodes (background pass: dim non-bloom-related nodes when bloomed)
+    // nodes
     for (const n of nodes) {
-      const isBloomCenter = n === bloomCenter;
-      const isBloomNeighbor = bloomNeighborSet.has(n);
+      const isFocused = n === focused;
+      const isNeighbor = neighborSet.has(n);
       let alpha = n.state === 'fossil' ? 0.55 : 1;
-      if (dim && !isBloomCenter && !isBloomNeighbor) {
-        alpha *= 1 - 0.7 * bloomT;
+      if (dim && !isFocused && !isNeighbor) {
+        alpha *= 1 - 0.7 * focusT;
       }
       ctx.globalAlpha = alpha;
       ctx.fillStyle = COLORS[n.collection] || TEXT_DIM;
       const b = BREATH[n.state] || BREATH.stable;
       const breath = reducedMotion ? 0 : b.amp * Math.sin(n.breathPhase);
       let r = n.r * (1 + breath);
-      if (isBloomCenter) r *= 1 + 0.15 * bloomT;
+      if (isFocused) r *= 1 + 0.18 * focusT;
       ctx.beginPath();
       ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // bloom-neighbor halos (drawn at the orbital position, not the node's own position)
-    if (bloomCenter && bloomT > 0.05) {
-      for (const item of bloomItems) {
-        const ix =
-          bloomCenter.x + Math.cos(item.angle) * BLOOM_RADIUS * bloomT;
-        const iy =
-          bloomCenter.y + Math.sin(item.angle) * BLOOM_RADIUS * bloomT;
-        ctx.globalAlpha = bloomT;
-        ctx.fillStyle = COLORS[item.node.collection] || TEXT_DIM;
+    // neighbor rings (subtle outline so neighbors read as "in-focus" not just "bright")
+    if (focused && focusT > 0.1) {
+      ctx.strokeStyle = `rgba(240, 230, 210, ${0.5 * focusT})`;
+      ctx.lineWidth = 1 / scale;
+      for (const n of focusedNeighbors) {
         ctx.beginPath();
-        ctx.arc(ix, iy, item.node.r + 1, 0, Math.PI * 2);
-        ctx.fill();
-        // tether line from center to halo
-        ctx.globalAlpha = 0.4 * bloomT;
-        ctx.strokeStyle = EDGE_BLOOM;
-        ctx.lineWidth = 1 / scale;
-        ctx.beginPath();
-        ctx.moveTo(bloomCenter.x, bloomCenter.y);
-        ctx.lineTo(ix, iy);
+        ctx.arc(n.x, n.y, n.r + 2 / scale, 0, Math.PI * 2);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
     }
 
-    // hover ring (desktop)
-    if (hoveredNode && !bloomCenter) {
+    // hover ring (desktop only, not while focused)
+    if (hoveredNode && !focused) {
       ctx.strokeStyle = HIGHLIGHT;
       ctx.lineWidth = 2 / scale;
       ctx.beginPath();
@@ -746,16 +675,16 @@ const payload = {
       ctx.stroke();
     }
 
-    // bloom-center highlight
-    if (bloomCenter && bloomT > 0.1) {
+    // focused-center highlight ring
+    if (focused && focusT > 0.1) {
       ctx.strokeStyle = HIGHLIGHT;
       ctx.lineWidth = 2 / scale;
-      ctx.globalAlpha = bloomT;
+      ctx.globalAlpha = focusT;
       ctx.beginPath();
       ctx.arc(
-        bloomCenter.x,
-        bloomCenter.y,
-        bloomCenter.r * (1 + 0.15 * bloomT) + 4 / scale,
+        focused.x,
+        focused.y,
+        focused.r * (1 + 0.18 * focusT) + 4 / scale,
         0,
         Math.PI * 2,
       );
@@ -765,7 +694,7 @@ const payload = {
 
     ctx.restore();
 
-    positionBloomLabels();
+    positionFocusLabels();
     if (summoned) positionSummon();
   }
 
@@ -849,6 +778,15 @@ const payload = {
     border-radius: 4px;
     overflow: hidden;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stage * {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   canvas {
     display: block;
@@ -878,11 +816,11 @@ const payload = {
   .hover-label.is-visible {
     opacity: 1;
   }
-  .bloom-labels {
+  .focus-labels {
     position: absolute;
     inset: 0;
   }
-  .bloom-label {
+  .focus-label {
     position: absolute;
     transform: translate(-50%, -50%);
     background: rgba(30, 22, 9, 0.92);
@@ -899,7 +837,7 @@ const payload = {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .bloom-label.is-center {
+  .focus-label.is-center {
     transform: translate(-50%, 0);
     background: rgba(30, 22, 9, 0.96);
     border-color: #f0e6d2;
@@ -953,7 +891,7 @@ const payload = {
 
   @media (prefers-reduced-motion: reduce) {
     .hover-label,
-    .bloom-label,
+    .focus-label,
     .summon-card {
       transition: none;
     }
