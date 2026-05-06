@@ -27,7 +27,7 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     slug: 'allons-jouer',
     title: 'Allons jouer',
     state: 'stable',
-    connects: [],
+    connects: ['ladder'],
     tags: ['instrument', 'cajun', 'accordion'],
     description:
       'Cajun accordion teaching app — home / free play / lesson / reference / tuner.',
@@ -39,7 +39,7 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     slug: 'calibrate',
     title: 'calibrate',
     state: 'germinating',
-    connects: [],
+    connects: ['dsl-hobbies', 'mumford-magick'],
     tags: ['llm', 'prompt', 'epistemology', 'exercise'],
     description:
       'A conversation protocol for teaching an LLM how you think. Not a personality quiz — epistemological infrastructure.',
