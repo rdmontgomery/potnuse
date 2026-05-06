@@ -420,6 +420,11 @@ const payload = {
       node: n,
     };
     dragMoved = false;
+    // record pan origin in case movement turns this into a pan; don't start
+    // panning yet — a press-without-movement must remain tap-eligible so
+    // bloom-halo taps work even though halos aren't real nodes.
+    panStart = { x: sx, y: sy };
+    panOrigin = { x: tx, y: ty };
     if (n) {
       // start long-press timer for summon
       summonTimer = setTimeout(() => {
@@ -429,11 +434,6 @@ const payload = {
         }
         summonTimer = null;
       }, LONG_PRESS_MS);
-    } else {
-      panning = true;
-      panStart = { x: sx, y: sy };
-      panOrigin = { x: tx, y: ty };
-      canvas.style.cursor = 'grabbing';
     }
   }
 
@@ -447,8 +447,12 @@ const payload = {
         dragMoved = true;
         clearSummonTimer();
         if (summoned) hideSummon();
-        if (pointerDown.node && !panning) {
+        if (pointerDown.node) {
           dragging = pointerDown.node;
+          canvas.style.cursor = 'grabbing';
+        } else {
+          // movement on empty space upgrades the press to a pan
+          panning = true;
           canvas.style.cursor = 'grabbing';
         }
       }
