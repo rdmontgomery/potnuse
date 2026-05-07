@@ -32,14 +32,16 @@ export function CidIntro() {
   return (
     <div className="cfe-cid-intro">
       <DialogueBox label="CID" body={CID_INTRO} />
-      <button
-        type="button"
-        className="cfe-continue"
-        onClick={onContinue}
-        disabled={tapped}
-      >
-        {tapped ? '▶ continued' : '▶ press to continue'}
-      </button>
+      <div className="cfe-action-row">
+        <button
+          type="button"
+          className="cfe-bracket"
+          onClick={onContinue}
+          disabled={tapped}
+        >
+          {tapped ? '[ ▶ continued     ]' : '[ ▶ press to continue ]'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -63,14 +63,18 @@ export function Chocobo() {
 
   useEffect(() => () => clearHold(), []);
 
+  // Eight-cell bar inside the FEED bracket so the affordance stays in
+  // the same character grid as the prose.
+  const filled = Math.round(holdProgress * 8);
+  const fillBar = '▒'.repeat(filled) + ' '.repeat(8 - filled);
   const feedLabel = fed
-    ? '[ FED  ✓ ]'
+    ? '[ FED  ✓     ]'
     : holdProgress > 0
-    ? `[${'▒'.repeat(Math.round(holdProgress * 8))}${' '.repeat(8 - Math.round(holdProgress * 8))}]`
-    : '[ FEED ]';
+    ? `[ ${fillBar}     ]`
+    : '[ FEED        ]';
 
   const body = fed
-    ? '⌒(•ㅅ•)⌒    *she eats.*'
+    ? '⌒(•ㅅ•)⌒    *she eats from your hand.*'
     : skipped
     ? '⌒(•ㅅ•)⌒    *she watches you go.*'
     : '⌒(•ㅅ•)⌒    *kweh.*';
@@ -78,10 +82,10 @@ export function Chocobo() {
   return (
     <div className="cfe-chocobo">
       <DialogueBox body={body} maxCols={48} />
-      <div className="cfe-chocobo-actions">
+      <div className="cfe-action-row">
         <button
           type="button"
-          className={`cfe-feed${fed ? ' is-done' : ''}${holdProgress > 0 ? ' is-holding' : ''}`}
+          className={`cfe-bracket cfe-bracket-feed${holdProgress > 0 ? ' is-holding' : ''}${fed ? ' is-done' : ''}`}
           onPointerDown={onPressStart}
           onPointerUp={onPressEnd}
           onPointerCancel={onPressEnd}
@@ -89,23 +93,23 @@ export function Chocobo() {
           disabled={fed || skipped}
           aria-label={fed ? 'fed' : 'feed (hold)'}
         >
-          <span className="cfe-feed-label">{feedLabel}</span>
+          {feedLabel}
         </button>
         <button
           type="button"
-          className="cfe-skip"
+          className="cfe-bracket"
           onClick={onSkip}
           disabled={fed || skipped}
         >
-          {skipped ? '[ SCROLLED PAST ]' : '[ SCROLL PAST ]'}
+          {skipped ? '[ SCROLLED PAST ]' : '[ SCROLL PAST  ]'}
         </button>
       </div>
-      <p className="cfe-chocobo-hint" aria-live="polite">
+      <p className="cfe-action-hint" aria-live="polite">
         {fed
-          ? ''
+          ? '  ( the chocobo lifts her head. her color holds. )'
           : skipped
-          ? ''
-          : 'hold to feed. you may also scroll past.'}
+          ? '  ( the chocobo dims a little. she does not say why. )'
+          : '  ( hold to feed. you may also scroll past. )'}
       </p>
     </div>
   );

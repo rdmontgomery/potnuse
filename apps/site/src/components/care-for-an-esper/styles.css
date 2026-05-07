@@ -1,40 +1,38 @@
-/* care-for-an-esper — notepad register: cream bg, black ink, monospace.
-   Scoped under .cfe-root so the dark site chrome stays unaffected. */
+/* care-for-an-esper — gamefaqs register, 1998, mountain-dew-stained.
+   Cream paper, near-black ink, monospace from masthead to coda. */
 
 .cfe-root {
-  --cfe-bg: #f4ecd8;
-  --cfe-bg-deep: #ebe1c8;
-  --cfe-ink: #1a1207;
-  --cfe-ink-dim: #6b5d48;
-  --cfe-ink-muted: #9e8e72;
-  --cfe-rule: #c9b988;
-  --cfe-accent: #b87a1e;
-  --cfe-esper: #b87a1e;
-  --cfe-chocobo-warm: #e8a838;
+  --cfe-bg: #f4ecd2;
+  --cfe-bg-deep: #ebe1c0;
+  --cfe-ink: #15110a;
+  --cfe-ink-dim: #5a4f38;
+  --cfe-ink-muted: #8d7f63;
+  --cfe-rule: #b9a772;
+  --cfe-accent: #a3681b;
+  --cfe-chocobo-warm: #d99421;
 
   background: var(--cfe-bg);
   color: var(--cfe-ink);
   font-family: var(--font-jetbrains, ui-monospace, monospace);
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 15px;
+  line-height: 1.55;
   min-height: 100vh;
   padding: 0 0 6rem;
 
-  /* Faint paper grain — subtle, optional. */
   background-image:
-    radial-gradient(rgba(26, 18, 7, 0.025) 1px, transparent 1px);
+    radial-gradient(rgba(21, 17, 10, 0.04) 1px, transparent 1px);
   background-size: 3px 3px;
 }
 
+/* Sticky ATB rail. */
 .cfe-atb-rail {
   position: sticky;
   top: 0;
   z-index: 10;
   background: var(--cfe-bg);
   border-bottom: 1px solid var(--cfe-rule);
-  padding: 0.55rem 1rem;
+  padding: 0.5rem 1rem;
 }
-
 .cfe-atb {
   display: flex;
   gap: 0.6rem;
@@ -42,11 +40,11 @@
   font-size: 0.78rem;
   letter-spacing: 0.05em;
   color: var(--cfe-ink-dim);
-  max-width: 720px;
+  max-width: 78ch;
   margin: 0 auto;
 }
 .cfe-atb-label {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--cfe-ink);
 }
 .cfe-atb-bar {
@@ -55,96 +53,151 @@
   color: var(--cfe-accent);
   white-space: pre;
   overflow: hidden;
-  text-overflow: clip;
   flex: 1 1 auto;
   min-width: 0;
 }
 
+/* Page width — left-aligned column like a printed FAQ.
+   76 chars at body font feels right for prose; the masthead pre overflows
+   horizontally only on extreme-narrow viewports. */
 .cfe-article {
-  max-width: 680px;
+  max-width: 78ch;
   margin: 0 auto;
-  padding: 2.5rem 1.25rem 0;
+  padding: 1.6rem 1rem 0;
 }
-
 @media (min-width: 720px) {
-  .cfe-root {
-    font-size: 16px;
-  }
   .cfe-article {
-    padding: 4rem 1.5rem 0;
+    padding: 2.5rem 1.5rem 0;
   }
 }
 
-.cfe-header {
-  margin-bottom: 3rem;
-  border-bottom: 1px dashed var(--cfe-rule);
-  padding-bottom: 1.2rem;
+/* ─────────── Masthead ─────────── */
+
+.cfe-masthead {
+  margin: 0 0 2rem;
 }
-.cfe-header h1 {
+
+.cfe-banner {
   font-family: inherit;
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0 0 0.3rem;
-  letter-spacing: 0.02em;
-  text-transform: lowercase;
+  /* clamp scales the banner so the 73-col art always fits horizontally
+     down to ~360px and never grows past readable on desktop. */
+  font-size: clamp(0.42rem, 1.85vw, 0.78rem);
+  line-height: 1.15;
+  letter-spacing: 0;
+  margin: 0 0 1.5rem;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--cfe-ink);
+  text-align: left;
 }
-.cfe-subtitle {
-  margin: 0;
-  font-size: 0.85rem;
+
+.cfe-meta,
+.cfe-copyright,
+.cfe-epigraph-block {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 2.4vw, 0.85rem);
+  line-height: 1.55;
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+  color: var(--cfe-ink);
+}
+
+.cfe-meta {
+  color: var(--cfe-ink);
+}
+
+.cfe-copyright {
   color: var(--cfe-ink-dim);
-  letter-spacing: 0.06em;
-  text-transform: lowercase;
+  margin-top: 1.6rem;
+  font-size: clamp(0.65rem, 2.3vw, 0.78rem);
 }
 
-.cfe-section h2,
-.cfe-cold-open h2 {
+.cfe-epigraph-block {
+  margin-top: 2rem;
+  color: var(--cfe-ink);
+  font-style: normal;
+}
+
+/* ─────────── TOC ─────────── */
+
+.cfe-toc {
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: clamp(0.65rem, 2.3vw, 0.82rem);
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 2.5rem 0 3rem;
+  color: var(--cfe-ink);
+}
+
+/* ─────────── Section header ─────────── */
+
+.cfe-section-header {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 2.4vw, 0.88rem);
+  line-height: 1.4;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 3rem 0 1.5rem;
+  color: var(--cfe-ink);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  margin: 3.5rem 0 1.4rem;
-  text-transform: lowercase;
-  border-bottom: 1px solid var(--cfe-rule);
-  padding-bottom: 0.4rem;
 }
 
-.cfe-cold-open h2 {
-  margin-top: 0;
+.cfe-scene-break {
+  text-align: center;
+  letter-spacing: 0.4em;
+  color: var(--cfe-ink-muted);
+  margin: 3rem 0;
+  font-size: 0.85rem;
+  white-space: pre;
 }
 
-.cfe-article p {
-  margin: 1.05em 0;
-  font-size: 1rem;
-  line-height: 1.7;
+/* ─────────── Body prose ─────────── */
+
+.cfe-body {
+  padding-left: 1.5ch;
+}
+@media (min-width: 720px) {
+  .cfe-body {
+    padding-left: 2.5ch;
+  }
 }
 
-.cfe-article em {
+.cfe-body p {
+  margin: 0 0 1.4em;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
+  line-height: 1.65;
+  max-width: 72ch;
+}
+.cfe-body em {
   font-style: italic;
 }
 
 .cfe-epigraph {
-  border-left: 2px solid var(--cfe-rule);
-  margin: 1.4em 0;
-  padding: 0.4em 0 0.4em 1.2em;
+  margin: 0 0 1.4em;
+  padding-left: 0;
+  border: 0;
+  font-style: normal;
+}
+.cfe-epigraph p {
   color: var(--cfe-ink-dim);
 }
 
 .cfe-sentinel {
   height: 1px;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .cfe-gate-hint {
   margin: 1.5rem 0 0;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--cfe-ink-muted);
   letter-spacing: 0.4em;
   animation: cfe-bob 2.4s ease-in-out infinite;
 }
-
 @keyframes cfe-bob {
-  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
   50%      { transform: translateY(4px); opacity: 1; }
 }
 
@@ -157,114 +210,99 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Dialogue box — pre, monospace, the box-drawing characters carry the chrome. */
+/* ─────────── Dialogue boxes ─────────── */
+
 .cfe-dialogue {
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
   line-height: 1.4;
-  margin: 1.8em 0 0.6em;
+  margin: 1.6em 0 0.6em;
   white-space: pre;
   overflow-x: auto;
   color: var(--cfe-ink);
   letter-spacing: 0;
 }
 
-/* Cid intro — continue button. */
-.cfe-cid-intro {
-  margin: 1.5em 0 2em;
+/* ─────────── Bracketed inline actions ─────────── */
+/*
+   Designed to read as bracketed text in the prose, but the whole bracket
+   is the tap target. min-height/min-width hit the 44×44 minimum.
+*/
+.cfe-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin: 0.8em 0 0.4em;
 }
-.cfe-continue {
-  display: inline-block;
-  margin-top: 0.4em;
-  padding: 0.7em 1.1em;
-  min-height: 44px;
-  background: transparent;
-  border: 1px solid var(--cfe-ink);
-  color: var(--cfe-ink);
+
+.cfe-bracket {
   font: inherit;
-  font-size: 0.88rem;
-  letter-spacing: 0.04em;
+  font-size: clamp(0.82rem, 2.6vw, 0.92rem);
+  line-height: 1.3;
+  background: transparent;
+  border: 0;
+  padding: 0.55em 0.6em;
+  margin: 0;
+  color: var(--cfe-ink);
   cursor: pointer;
-  text-transform: lowercase;
-  transition: background 0.15s ease, color 0.15s ease;
+  white-space: pre;
+  letter-spacing: 0;
+  min-height: 44px;
+  min-width: 44px;
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  border-radius: 0;
+  transition: background 0.12s ease, color 0.12s ease;
 }
-.cfe-continue:hover:not(:disabled),
-.cfe-continue:focus-visible:not(:disabled) {
+.cfe-bracket:hover:not(:disabled),
+.cfe-bracket:focus-visible:not(:disabled) {
   background: var(--cfe-ink);
   color: var(--cfe-bg);
   outline: none;
 }
-.cfe-continue:disabled {
-  opacity: 0.5;
+.cfe-bracket:disabled {
   cursor: default;
-  border-style: dashed;
+  opacity: 0.55;
 }
 
-/* Chocobo block. */
-.cfe-chocobo {
-  margin: 1.8em 0 2em;
-}
-.cfe-chocobo-actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin: 0.6rem 0 0.4rem;
-}
-.cfe-feed,
-.cfe-skip {
-  font: inherit;
-  font-size: 0.95rem;
-  padding: 0.7em 1em;
-  min-height: 44px;
-  min-width: 44px;
-  background: transparent;
-  border: 1px solid var(--cfe-ink);
-  color: var(--cfe-ink);
-  cursor: pointer;
-  letter-spacing: 0.02em;
-  transition: background 0.15s ease, color 0.15s ease;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-}
-.cfe-feed.is-holding {
-  background: rgba(232, 168, 56, 0.18);
-  border-color: var(--cfe-chocobo-warm);
+.cfe-bracket-feed.is-holding {
+  background: rgba(217, 148, 33, 0.18);
   color: var(--cfe-accent);
 }
-.cfe-feed.is-done {
-  border-style: solid;
-  border-color: var(--cfe-chocobo-warm);
+.cfe-bracket-feed.is-done {
   color: var(--cfe-chocobo-warm);
-}
-.cfe-feed:hover:not(:disabled),
-.cfe-skip:hover:not(:disabled) {
-  background: var(--cfe-ink);
-  color: var(--cfe-bg);
-}
-.cfe-feed:disabled,
-.cfe-skip:disabled {
-  cursor: default;
-}
-.cfe-feed-label {
-  font-family: inherit;
-  white-space: pre;
-}
-.cfe-chocobo-hint {
-  font-size: 0.8rem;
-  color: var(--cfe-ink-muted);
-  margin: 0.2em 0 0;
-  letter-spacing: 0.02em;
-  min-height: 1.2em;
+  opacity: 1;
 }
 
+.cfe-action-hint {
+  font-size: clamp(0.72rem, 2.3vw, 0.82rem);
+  color: var(--cfe-ink-muted);
+  margin: 0.2em 0 0;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  min-height: 1.2em;
+  font-style: italic;
+}
+
+/* ─────────── Footer ─────────── */
+
 .cfe-footer {
-  margin-top: 4rem;
-  padding-top: 1.5rem;
-  border-top: 1px dashed var(--cfe-rule);
+  margin-top: 5rem;
+}
+.cfe-footer-rule {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 2.4vw, 0.85rem);
+  line-height: 1;
+  margin: 0 0 1rem;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--cfe-ink);
 }
 .cfe-demo-note {
-  font-size: 0.8rem;
+  font-size: clamp(0.72rem, 2.3vw, 0.85rem);
   color: var(--cfe-ink-muted);
-  text-align: center;
+  text-align: left;
+  margin: 0;
 }
