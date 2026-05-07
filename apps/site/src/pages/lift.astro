@@ -33,6 +33,7 @@ import Base from '@/layouts/Base.astro';
         <li><span class="rep">6</span> bicep curls</li>
         <li><span class="rep">12</span> single-leg RDL (6/side)</li>
         <li><span class="rep">12</span> bent-over rows (6/side)</li>
+        <li><span class="rep">8</span> pushups</li>
       </ol>
 
       <div class="round-counter">
@@ -407,11 +408,15 @@ import Base from '@/layouts/Base.astro';
               ? `<p class="log-notes">${escapeHtml(s.notes.trim())}</p>`
               : '';
           li.innerHTML = `
-            <div class="log-main">
+            <div class="log-head">
               <span class="log-date">${fmtDate(s.date)}</span>
-              <span class="log-body">${s.bell} lb · ${s.rounds}/${s.target} rounds</span>
-              ${tagHtml}
               <button type="button" class="log-del" data-del-idx="${realIdx}" aria-label="delete session">×</button>
+            </div>
+            <div class="log-body">
+              <span class="log-stat"><strong>${s.bell}</strong> lb</span>
+              <span class="log-sep" aria-hidden="true">·</span>
+              <span class="log-stat"><strong>${s.rounds}/${s.target}</strong> rounds</span>
+              ${tagHtml}
             </div>
             ${notes}
           `;
@@ -1109,32 +1114,51 @@ import Base from '@/layouts/Base.astro';
     padding: 0.6rem 0;
   }
   .log-row {
-    padding: 0.65rem 0;
+    padding: 0.8rem 0 0.9rem;
     border-top: 1px solid var(--border);
   }
   .log-row:last-child {
     border-bottom: 1px solid var(--border);
   }
-  .log-main {
-    display: grid;
-    grid-template-columns: 4em 1fr auto auto;
+  .log-head {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.7rem;
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
+    margin-bottom: 0.35rem;
   }
   .log-date {
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
     color: var(--text-muted);
   }
   .log-body {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.88rem;
     color: var(--text);
   }
-  .log-row.rough .log-body {
-    color: var(--text-dim);
+  .log-stat strong {
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    margin-right: 0.15rem;
+  }
+  .log-row.rough .log-stat strong {
+    color: var(--accent-dim);
+  }
+  .log-sep {
+    color: var(--text-muted);
   }
   .log-tags {
     display: inline-flex;
     gap: 0.3rem;
+    margin-left: auto;
   }
   .log-tag {
     font-family: var(--font-jetbrains);
@@ -1164,22 +1188,16 @@ import Base from '@/layouts/Base.astro';
     color: #c87060;
   }
   .log-notes {
-    margin: 0.4rem 0 0 4.7em;
-    padding: 0.4rem 0.7rem;
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0.75rem;
     background: var(--bg);
-    border-left: 2px solid var(--border);
+    border-left: 2px solid var(--accent-dim);
     font-family: var(--font-crimson);
     font-style: italic;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     color: var(--text-dim);
-    line-height: 1.45;
+    line-height: 1.5;
     white-space: pre-wrap;
-  }
-  @media (max-width: 480px) {
-    .log-notes {
-      margin-left: 0;
-      margin-top: 0.5rem;
-    }
   }
 
   .foot {
