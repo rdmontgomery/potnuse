@@ -18,6 +18,9 @@
   line-height: 1.55;
   min-height: 100vh;
   padding: 0 0 6rem;
+  /* Belt-and-suspenders: keep ASCII art that overruns by a fraction of a
+     pixel from triggering page-level horizontal scroll. */
+  overflow-x: clip;
 
   background-image:
     radial-gradient(rgba(21, 17, 10, 0.04) 1px, transparent 1px);
@@ -79,14 +82,13 @@
 
 .cfe-banner {
   font-family: inherit;
-  /* clamp scales the banner so the 73-col art always fits horizontally
-     down to ~360px and never grows past readable on desktop. */
-  font-size: clamp(0.42rem, 1.85vw, 0.78rem);
+  /* Initial size for the brief moment before useFit measures the parent
+     and writes a fitted font-size as inline style. */
+  font-size: 0.55rem;
   line-height: 1.15;
   letter-spacing: 0;
   margin: 0 0 1.5rem;
   white-space: pre;
-  overflow-x: auto;
   color: var(--cfe-ink);
   text-align: left;
 }
@@ -122,10 +124,10 @@
 
 .cfe-toc {
   font-family: inherit;
-  font-size: clamp(0.65rem, 2.3vw, 0.82rem);
+  /* useFit overwrites this on mount. */
+  font-size: 0.7rem;
   line-height: 1.55;
   white-space: pre;
-  overflow-x: auto;
   margin: 2.5rem 0 3rem;
   color: var(--cfe-ink);
 }
@@ -137,7 +139,6 @@
   font-size: clamp(0.7rem, 2.4vw, 0.88rem);
   line-height: 1.4;
   white-space: pre;
-  overflow-x: auto;
   margin: 3rem 0 1.5rem;
   color: var(--cfe-ink);
   font-weight: 700;
@@ -218,7 +219,6 @@
   line-height: 1.4;
   margin: 1.6em 0 0.6em;
   white-space: pre;
-  overflow-x: auto;
   color: var(--cfe-ink);
   letter-spacing: 0;
 }
@@ -290,15 +290,8 @@
 
 .cfe-footer {
   margin-top: 5rem;
-}
-.cfe-footer-rule {
-  font-family: inherit;
-  font-size: clamp(0.7rem, 2.4vw, 0.85rem);
-  line-height: 1;
-  margin: 0 0 1rem;
-  white-space: pre;
-  overflow-x: auto;
-  color: var(--cfe-ink);
+  border-top: 1px solid var(--cfe-rule);
+  padding-top: 1.2rem;
 }
 .cfe-demo-note {
   font-size: clamp(0.72rem, 2.3vw, 0.85rem);

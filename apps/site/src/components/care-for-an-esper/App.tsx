@@ -255,7 +255,6 @@ export default function App() {
         )}
 
         <footer className="cfe-footer">
-          <pre className="cfe-footer-rule">{`==========================================================================`}</pre>
           <p className="cfe-demo-note">
             <em>
               [ end of v1 demo. cold open through §2. seven sections to go. ]

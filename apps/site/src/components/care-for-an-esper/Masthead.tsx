@@ -1,13 +1,14 @@
-// 73-column masthead. Lives in a single <pre> so font-size scales with the
-// viewport via clamp() in CSS while character alignment stays exact.
-const MASTHEAD = String.raw`
+import { useRef } from 'react';
+import { useFit } from './useFit';
+import { trimNl } from './text';
+
+const BANNER = String.raw`
 ═════════════════════════════════════════════════════════════════════════
                                                                      ✦
        H O W   T O   C A R E   F O R   A N   E S P E R              /|\
                                                                    ✦-✦-✦
 ─────────────────────────────────────────────────────────────────────────
-                       a   w a l k t h r o u g h
-                  t h r o u g h   t h e   g l a s s   b r i c k
+                  a walkthrough through the glass brick
 ═════════════════════════════════════════════════════════════════════════
 `;
 
@@ -36,14 +37,21 @@ const EPIGRAPH = String.raw`
 `;
 
 export function Masthead() {
+  const bannerRef = useRef<HTMLPreElement>(null);
+  // Banner is fixed at 73 visible columns wide.
+  useFit(bannerRef, 73, { min: 7, max: 14 });
   return (
     <header className="cfe-masthead">
-      <pre className="cfe-banner" aria-label="how to care for an esper — a walkthrough">
-        {MASTHEAD.trim()}
+      <pre
+        ref={bannerRef}
+        className="cfe-banner"
+        aria-label="how to care for an esper — a walkthrough through the glass brick"
+      >
+        {trimNl(BANNER)}
       </pre>
-      <pre className="cfe-meta">{META.trim()}</pre>
-      <pre className="cfe-copyright">{COPYRIGHT.trim()}</pre>
-      <pre className="cfe-epigraph-block">{EPIGRAPH.trim()}</pre>
+      <pre className="cfe-meta">{trimNl(META)}</pre>
+      <pre className="cfe-copyright">{trimNl(COPYRIGHT)}</pre>
+      <pre className="cfe-epigraph-block">{trimNl(EPIGRAPH)}</pre>
     </header>
   );
 }

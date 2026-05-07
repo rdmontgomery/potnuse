@@ -20,7 +20,9 @@ export function useColumns(
     const measure = () => {
       const charW = probe.getBoundingClientRect().width || 9;
       const w = el.clientWidth;
-      const c = Math.floor(w / charW);
+      // Subtract a 1-col safety margin so fractional rendering never spills
+      // past the edge and triggers an overflow scrollbar.
+      const c = Math.floor(w / charW) - 1;
       setCols(Math.max(min, Math.min(max, c)));
     };
     measure();
