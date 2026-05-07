@@ -1,0 +1,270 @@
+/* care-for-an-esper — notepad register: cream bg, black ink, monospace.
+   Scoped under .cfe-root so the dark site chrome stays unaffected. */
+
+.cfe-root {
+  --cfe-bg: #f4ecd8;
+  --cfe-bg-deep: #ebe1c8;
+  --cfe-ink: #1a1207;
+  --cfe-ink-dim: #6b5d48;
+  --cfe-ink-muted: #9e8e72;
+  --cfe-rule: #c9b988;
+  --cfe-accent: #b87a1e;
+  --cfe-esper: #b87a1e;
+  --cfe-chocobo-warm: #e8a838;
+
+  background: var(--cfe-bg);
+  color: var(--cfe-ink);
+  font-family: var(--font-jetbrains, ui-monospace, monospace);
+  font-size: 16px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 0 0 6rem;
+
+  /* Faint paper grain — subtle, optional. */
+  background-image:
+    radial-gradient(rgba(26, 18, 7, 0.025) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+.cfe-atb-rail {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--cfe-bg);
+  border-bottom: 1px solid var(--cfe-rule);
+  padding: 0.55rem 1rem;
+}
+
+.cfe-atb {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: var(--cfe-ink-dim);
+  max-width: 720px;
+  margin: 0 auto;
+}
+.cfe-atb-label {
+  font-weight: 600;
+  color: var(--cfe-ink);
+}
+.cfe-atb-bar {
+  font-family: inherit;
+  letter-spacing: -0.02em;
+  color: var(--cfe-accent);
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: clip;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cfe-article {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 0;
+}
+
+@media (min-width: 720px) {
+  .cfe-root {
+    font-size: 16px;
+  }
+  .cfe-article {
+    padding: 4rem 1.5rem 0;
+  }
+}
+
+.cfe-header {
+  margin-bottom: 3rem;
+  border-bottom: 1px dashed var(--cfe-rule);
+  padding-bottom: 1.2rem;
+}
+.cfe-header h1 {
+  font-family: inherit;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+.cfe-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--cfe-ink-dim);
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
+.cfe-section h2,
+.cfe-cold-open h2 {
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 3.5rem 0 1.4rem;
+  text-transform: lowercase;
+  border-bottom: 1px solid var(--cfe-rule);
+  padding-bottom: 0.4rem;
+}
+
+.cfe-cold-open h2 {
+  margin-top: 0;
+}
+
+.cfe-article p {
+  margin: 1.05em 0;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.cfe-article em {
+  font-style: italic;
+}
+
+.cfe-epigraph {
+  border-left: 2px solid var(--cfe-rule);
+  margin: 1.4em 0;
+  padding: 0.4em 0 0.4em 1.2em;
+  color: var(--cfe-ink-dim);
+}
+
+.cfe-sentinel {
+  height: 1px;
+  margin-top: 2rem;
+}
+
+.cfe-gate-hint {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--cfe-ink-muted);
+  letter-spacing: 0.4em;
+  animation: cfe-bob 2.4s ease-in-out infinite;
+}
+
+@keyframes cfe-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50%      { transform: translateY(4px); opacity: 1; }
+}
+
+/* Section reveal — gentle fade. */
+.cfe-section {
+  animation: cfe-fade-in 0.6s ease-out;
+}
+@keyframes cfe-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dialogue box — pre, monospace, the box-drawing characters carry the chrome. */
+.cfe-dialogue {
+  font-family: inherit;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  margin: 1.8em 0 0.6em;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--cfe-ink);
+  letter-spacing: 0;
+}
+
+/* Cid intro — continue button. */
+.cfe-cid-intro {
+  margin: 1.5em 0 2em;
+}
+.cfe-continue {
+  display: inline-block;
+  margin-top: 0.4em;
+  padding: 0.7em 1.1em;
+  min-height: 44px;
+  background: transparent;
+  border: 1px solid var(--cfe-ink);
+  color: var(--cfe-ink);
+  font: inherit;
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-transform: lowercase;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.cfe-continue:hover:not(:disabled),
+.cfe-continue:focus-visible:not(:disabled) {
+  background: var(--cfe-ink);
+  color: var(--cfe-bg);
+  outline: none;
+}
+.cfe-continue:disabled {
+  opacity: 0.5;
+  cursor: default;
+  border-style: dashed;
+}
+
+/* Chocobo block. */
+.cfe-chocobo {
+  margin: 1.8em 0 2em;
+}
+.cfe-chocobo-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0 0.4rem;
+}
+.cfe-feed,
+.cfe-skip {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.7em 1em;
+  min-height: 44px;
+  min-width: 44px;
+  background: transparent;
+  border: 1px solid var(--cfe-ink);
+  color: var(--cfe-ink);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease, color 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.cfe-feed.is-holding {
+  background: rgba(232, 168, 56, 0.18);
+  border-color: var(--cfe-chocobo-warm);
+  color: var(--cfe-accent);
+}
+.cfe-feed.is-done {
+  border-style: solid;
+  border-color: var(--cfe-chocobo-warm);
+  color: var(--cfe-chocobo-warm);
+}
+.cfe-feed:hover:not(:disabled),
+.cfe-skip:hover:not(:disabled) {
+  background: var(--cfe-ink);
+  color: var(--cfe-bg);
+}
+.cfe-feed:disabled,
+.cfe-skip:disabled {
+  cursor: default;
+}
+.cfe-feed-label {
+  font-family: inherit;
+  white-space: pre;
+}
+.cfe-chocobo-hint {
+  font-size: 0.8rem;
+  color: var(--cfe-ink-muted);
+  margin: 0.2em 0 0;
+  letter-spacing: 0.02em;
+  min-height: 1.2em;
+}
+
+.cfe-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed var(--cfe-rule);
+}
+.cfe-demo-note {
+  font-size: 0.8rem;
+  color: var(--cfe-ink-muted);
+  text-align: center;
+}
