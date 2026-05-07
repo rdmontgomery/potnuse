@@ -35,7 +35,24 @@ import Base from '@/layouts/Base.astro';
         <li><span class="rep">12</span> bent-over rows (6/side)</li>
       </ol>
 
-      <div class="rounds" data-rounds aria-label="rounds completed"></div>
+      <div class="round-counter">
+        <div class="round-display">
+          <span class="round-num" data-rounds-num>0</span>
+          <span class="round-slash">/</span>
+          <span class="round-target" data-rounds-target>—</span>
+          <span class="round-word">rounds</span>
+        </div>
+        <div class="round-track" data-round-track aria-hidden="true"></div>
+        <p class="round-hint" data-round-hint></p>
+        <div class="round-actions">
+          <button type="button" class="btn primary round-add" data-round-add>
+            + finished a round
+          </button>
+          <button type="button" class="btn ghost round-undo" data-round-undo>
+            undo
+          </button>
+        </div>
+      </div>
 
       <details class="tgu">
         <summary>turkish get-ups (optional)</summary>
@@ -49,10 +66,13 @@ import Base from '@/layouts/Base.astro';
         </div>
       </details>
 
-      <label class="clean-row">
-        <input type="checkbox" data-clean checked />
-        <span>clean form throughout</span>
-      </label>
+      <div class="form-toggle" role="group" aria-label="form quality">
+        <span class="form-toggle-label">form</span>
+        <div class="form-pills">
+          <button type="button" class="pill" data-form="clean">clean</button>
+          <button type="button" class="pill" data-form="rough">rough</button>
+        </div>
+      </div>
 
       <textarea
         class="notes"
@@ -216,6 +236,15 @@ import Base from '@/layouts/Base.astro';
     });
   }
 
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function render() {
     const sessions = loadSessions();
     const state = loadState();
@@ -228,9 +257,13 @@ import Base from '@/layouts/Base.astro';
     const bellEl = $<HTMLElement>('[data-bell]');
     const targetEl = $<HTMLElement>('[data-target]');
     const phaseEl = $<HTMLElement>('[data-phase]');
-    const roundsEl = $<HTMLElement>('[data-rounds]');
+    const numEl = $<HTMLElement>('[data-rounds-num]');
+    const targetNumEl = $<HTMLElement>('[data-rounds-target]');
+    const trackEl = $<HTMLElement>('[data-round-track]');
+    const hintEl = $<HTMLElement>('[data-round-hint]');
+    const addBtn = $<HTMLButtonElement>('[data-round-add]');
+    const undoBtn = $<HTMLButtonElement>('[data-round-undo]');
     const tguEl = $<HTMLElement>('[data-tgu]');
-    const cleanEl = $<HTMLInputElement>('[data-clean]');
     const notesEl = $<HTMLTextAreaElement>('[data-notes]');
     const ladderEl = $<HTMLElement>('[data-ladder]');
     const logEl = $<HTMLElement>('[data-log]');
@@ -244,47 +277,93 @@ import Base from '@/layouts/Base.astro';
       phaseEl.textContent = `phase ${idx + 1} of ${totalPhases}`;
     }
 
-    // round dots — show target + 1 spare so you can record a bonus round
-    if (roundsEl) {
-      roundsEl.innerHTML = '';
-      const dots = phase.target + 1;
-      for (let i = 0; i < dots; i++) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'round-dot';
-        b.setAttribute('data-round-idx', String(i));
-        if (i < state.rounds) b.classList.add('done');
-        if (i === phase.target) b.classList.add('bonus');
-        b.innerHTML = `<span class="dot-num">${i + 1}</span>`;
-        b.setAttribute(
-          'aria-label',
-          `${i < state.rounds ? 'completed' : 'mark'} round ${i + 1}`
-        );
-        roundsEl.appendChild(b);
+    if (numEl) numEl.textContent = String(state.rounds);
+    if (targetNumEl) targetNumEl.textContent = String(phase.target);
+
+    const cap = phase.target + 1;
+    if (trackEl) {
+      trackEl.innerHTML = '';
+      for (let i = 0; i < cap; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'track-seg';
+        if (i < state.rounds) seg.classList.add('filled');
+        if (i === phase.target) seg.classList.add('bonus');
+        trackEl.appendChild(seg);
       }
     }
+    if (hintEl) {
+      if (state.rounds === 0) {
+        hintEl.textContent = `tap below each time you finish a round`;
+      } else if (state.rounds < phase.target) {
+        const left = phase.target - state.rounds;
+        hintEl.textContent = `${left} more to hit today's target`;
+      } else if (state.rounds === phase.target) {
+        hintEl.textContent = `target hit · one bonus round available`;
+      } else {
+        hintEl.textContent = `bonus round in the bag · log when done`;
+      }
+    }
+    if (addBtn) addBtn.disabled = state.rounds >= cap;
+    if (undoBtn) undoBtn.disabled = state.rounds === 0;
+
+    // form pills
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-form]')
+      .forEach((b) => {
+        const v = b.getAttribute('data-form');
+        const active =
+          (v === 'clean' && state.clean) || (v === 'rough' && !state.clean);
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
 
     if (tguEl) tguEl.textContent = String(state.tgu);
-    if (cleanEl) cleanEl.checked = state.clean;
     if (notesEl) notesEl.value = state.notes;
 
-    // ladder
+    // ladder — grouped by bell weight
     if (ladderEl) {
       ladderEl.innerHTML = '';
+      const groups: { bell: number; rungs: { phase: Phase; i: number }[] }[] = [];
       LADDER.forEach((p, i) => {
-        const li = document.createElement('li');
-        li.className = 'rung';
-        if (i < idx) li.classList.add('done');
-        if (i === idx) li.classList.add('current');
-        const matches = sessions.filter(
-          (s) => s.bell === p.bell && s.target === p.target
-        ).length;
-        li.innerHTML = `
-          <span class="rung-bell">${p.bell}lb</span>
-          <span class="rung-target">${p.target} rounds</span>
-          <span class="rung-count">${matches > 0 ? `${matches}×` : ''}</span>
+        const last = groups[groups.length - 1];
+        if (last && last.bell === p.bell) last.rungs.push({ phase: p, i });
+        else groups.push({ bell: p.bell, rungs: [{ phase: p, i }] });
+      });
+      groups.forEach((g) => {
+        const wrap = document.createElement('li');
+        wrap.className = 'group';
+        const hasCurrent = g.rungs.some((r) => r.i === idx);
+        const allDone = g.rungs.every((r) => r.i < idx);
+        if (hasCurrent) wrap.classList.add('current');
+        if (allDone) wrap.classList.add('done');
+
+        const head = document.createElement('div');
+        head.className = 'group-head';
+        head.innerHTML = `
+          <span class="group-bell">${g.bell} lb</span>
+          ${allDone ? '<span class="group-status">graduated</span>' : hasCurrent ? '<span class="group-status">current</span>' : '<span class="group-status">upcoming</span>'}
         `;
-        ladderEl.appendChild(li);
+        wrap.appendChild(head);
+
+        const chips = document.createElement('div');
+        chips.className = 'group-chips';
+        g.rungs.forEach((r) => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          if (r.i < idx) chip.classList.add('done');
+          if (r.i === idx) chip.classList.add('current');
+          const count = sessions.filter(
+            (s) => s.bell === r.phase.bell && s.target === r.phase.target
+          ).length;
+          chip.innerHTML = `
+            <span class="chip-target">${r.phase.target}</span>
+            <span class="chip-unit">rounds</span>
+            ${count > 0 ? `<span class="chip-count">${count} session${count === 1 ? '' : 's'}</span>` : ''}
+          `;
+          chips.appendChild(chip);
+        });
+        wrap.appendChild(chips);
+        ladderEl.appendChild(wrap);
       });
     }
 
@@ -315,13 +394,26 @@ import Base from '@/layouts/Base.astro';
         recent.forEach((s, i) => {
           const li = document.createElement('li');
           li.className = 'log-row';
-          if (!s.clean) li.classList.add('not-clean');
-          const tgu = s.tgu > 0 ? ` · ${s.tgu} TGU` : '';
-          const flag = s.clean ? '' : ' · ground';
+          if (!s.clean) li.classList.add('rough');
+          const realIdx = sessions.length - 1 - i;
+          const tags: string[] = [];
+          if (s.tgu > 0) tags.push(`${s.tgu} TGU`);
+          if (!s.clean) tags.push('rough');
+          const tagHtml = tags.length
+            ? `<span class="log-tags">${tags.map((t) => `<span class="log-tag">${escapeHtml(t)}</span>`).join('')}</span>`
+            : '';
+          const notes =
+            s.notes && s.notes.trim()
+              ? `<p class="log-notes">${escapeHtml(s.notes.trim())}</p>`
+              : '';
           li.innerHTML = `
-            <span class="log-date">${fmtDate(s.date)}</span>
-            <span class="log-body">${s.bell}lb · ${s.rounds}/${s.target}${tgu}${flag}</span>
-            <button type="button" class="log-del" data-del-idx="${sessions.length - 1 - i}" aria-label="delete session">×</button>
+            <div class="log-main">
+              <span class="log-date">${fmtDate(s.date)}</span>
+              <span class="log-body">${s.bell} lb · ${s.rounds}/${s.target} rounds</span>
+              ${tagHtml}
+              <button type="button" class="log-del" data-del-idx="${realIdx}" aria-label="delete session">×</button>
+            </div>
+            ${notes}
           `;
           logEl.appendChild(li);
         });
@@ -332,16 +424,6 @@ import Base from '@/layouts/Base.astro';
   function bind() {
     document.addEventListener('click', (ev) => {
       const t = ev.target as HTMLElement;
-      const dot = t.closest<HTMLElement>('.round-dot');
-      if (dot) {
-        const idx = Number(dot.getAttribute('data-round-idx'));
-        const state = loadState();
-        // tap a dot to set rounds = idx+1; tap the current last to undo
-        state.rounds = state.rounds === idx + 1 ? idx : idx + 1;
-        saveState(state);
-        render();
-        return;
-      }
 
       const tguBtn = t.closest<HTMLElement>('[data-tgu-step]');
       if (tguBtn) {
@@ -366,12 +448,37 @@ import Base from '@/layouts/Base.astro';
       }
     });
 
-    document
-      .querySelector<HTMLInputElement>('[data-clean]')
-      ?.addEventListener('change', (ev) => {
-        const state = loadState();
-        state.clean = (ev.target as HTMLInputElement).checked;
+    document.querySelector('[data-round-add]')?.addEventListener('click', () => {
+      const sessions = loadSessions();
+      const phase = LADDER[currentPhaseIndex(sessions)];
+      const cap = phase.target + 1;
+      const state = loadState();
+      if (state.rounds < cap) {
+        state.rounds++;
         saveState(state);
+        render();
+      }
+    });
+
+    document.querySelector('[data-round-undo]')?.addEventListener('click', () => {
+      const state = loadState();
+      if (state.rounds > 0) {
+        state.rounds--;
+        saveState(state);
+        render();
+      }
+    });
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-form]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const v = btn.getAttribute('data-form');
+          const state = loadState();
+          state.clean = v === 'clean';
+          saveState(state);
+          render();
+        });
       });
 
     document
@@ -576,45 +683,102 @@ import Base from '@/layouts/Base.astro';
     flex-shrink: 0;
   }
 
-  .rounds {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-    gap: 0.5rem;
+  .round-counter {
     margin: 0.4rem 0 1.4rem;
-  }
-  .round-dot {
+    padding: 1rem 1rem 1.1rem;
     background: var(--bg);
     border: 1px solid var(--border);
-    color: var(--text-dim);
-    font-family: var(--font-jetbrains);
-    font-size: 0.95rem;
     border-radius: 6px;
-    padding: 0.85rem 0;
-    cursor: pointer;
-    transition:
-      background 0.15s ease,
-      border-color 0.15s ease,
-      color 0.15s ease,
-      transform 0.1s ease;
-    -webkit-tap-highlight-color: transparent;
   }
-  .round-dot:active {
-    transform: scale(0.96);
+  .round-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0 0 0.7rem;
   }
-  .round-dot.bonus {
-    border-style: dashed;
+  .round-num {
+    font-family: var(--font-crimson);
+    font-size: 3rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    min-width: 1.2em;
+    transition: color 0.2s ease;
+  }
+  .round-slash {
+    font-family: var(--font-crimson);
+    font-size: 1.6rem;
     color: var(--text-muted);
   }
-  .round-dot.done {
+  .round-target {
+    font-family: var(--font-crimson);
+    font-size: 1.6rem;
+    color: var(--text-dim);
+  }
+  .round-word {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+    margin-left: 0.5rem;
+  }
+  .round-track {
+    display: flex;
+    gap: 0.35rem;
+    margin: 0 0 0.9rem;
+  }
+  .track-seg {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .track-seg.bonus {
+    border-style: dashed;
+  }
+  .track-seg.filled {
     background: var(--accent);
     border-color: var(--accent);
-    color: var(--bg);
   }
-  .round-dot.done.bonus {
+  .track-seg.filled.bonus {
     background: var(--accent-dim);
-    border-style: solid;
     border-color: var(--accent-dim);
-    color: var(--bg);
+    border-style: solid;
+  }
+  .round-hint {
+    font-family: var(--font-jetbrains);
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin: 0 0 1rem;
+    min-height: 1.1em;
+  }
+  .round-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .round-add {
+    flex: 1;
+    font-size: 0.95rem;
+    padding: 0.95rem 1rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .round-add:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .round-undo {
+    padding: 0.6rem 0.9rem;
+  }
+  .round-undo:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
   .tgu {
@@ -681,39 +845,51 @@ import Base from '@/layouts/Base.astro';
     text-align: center;
   }
 
-  .clean-row {
+  .form-toggle {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.8rem;
     margin: 0 0 1rem;
-    color: var(--text);
-    font-size: 0.95rem;
-    cursor: pointer;
-    user-select: none;
   }
-  .clean-row input {
-    appearance: none;
-    width: 1.1rem;
-    height: 1.1rem;
+  .form-toggle-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+  }
+  .form-pills {
+    display: inline-flex;
     border: 1px solid var(--border);
     background: var(--bg);
-    border-radius: 3px;
-    display: grid;
-    place-items: center;
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .pill {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
     cursor: pointer;
-    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
   }
-  .clean-row input:checked {
+  .pill:hover {
+    color: var(--text);
+  }
+  .pill.is-active {
     background: var(--accent);
-    border-color: var(--accent);
+    color: var(--bg);
   }
-  .clean-row input:checked::after {
-    content: '';
-    width: 0.55rem;
-    height: 0.3rem;
-    border-left: 2px solid var(--bg);
-    border-bottom: 2px solid var(--bg);
-    transform: rotate(-45deg) translate(1px, -1px);
+  .pill[data-form='rough'].is-active {
+    background: #6b3a30;
+    color: #f0d6cc;
   }
 
   .notes {
@@ -801,43 +977,106 @@ import Base from '@/layouts/Base.astro';
     margin: 0.6rem 0 1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
+    gap: 0.7rem;
   }
-  .rung {
-    display: grid;
-    grid-template-columns: 4em 1fr auto;
+  .group {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 0.9rem 0.95rem;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+  }
+  .group.done {
+    opacity: 0.55;
+  }
+  .group.current {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 1px var(--accent-dim) inset;
+  }
+  .group-head {
+    display: flex;
     align-items: baseline;
-    gap: 0.8rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 4px;
+    justify-content: space-between;
+    margin: 0 0 0.7rem;
+  }
+  .group-bell {
+    font-family: var(--font-crimson);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .group.current .group-bell {
+    color: var(--accent);
+  }
+  .group-status {
     font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
+    font-size: 0.66rem;
+    text-transform: lowercase;
+    letter-spacing: 0.1em;
     color: var(--text-muted);
   }
-  .rung.done {
-    color: var(--text-dim);
+  .group.current .group-status {
+    color: var(--accent-dim);
   }
-  .rung.done .rung-bell {
+  .group-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 0.4rem;
+  }
+  .chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.55rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    text-align: center;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .chip-target {
+    font-family: var(--font-crimson);
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+  }
+  .chip-unit {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  .chip-count {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    color: var(--accent-dim);
+    margin-top: 0.15rem;
+    letter-spacing: 0.04em;
+  }
+  .chip.done {
+    background: transparent;
+    color: var(--text-muted);
+    border-style: dashed;
+  }
+  .chip.done .chip-target {
     text-decoration: line-through;
     text-decoration-color: var(--accent-dim);
   }
-  .rung.current {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--accent-dim);
+  .chip.current {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
   }
-  .rung.current .rung-bell {
-    color: var(--accent);
-  }
-  .rung-bell {
-    font-weight: 500;
-  }
-  .rung-target {
-    color: inherit;
-  }
-  .rung-count {
-    color: var(--text-muted);
-    font-size: 0.75rem;
+  .chip.current .chip-target,
+  .chip.current .chip-unit,
+  .chip.current .chip-count {
+    color: var(--bg);
   }
   .rule {
     color: var(--text-dim);
@@ -870,17 +1109,19 @@ import Base from '@/layouts/Base.astro';
     padding: 0.6rem 0;
   }
   .log-row {
-    display: grid;
-    grid-template-columns: 4em 1fr auto;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.55rem 0;
+    padding: 0.65rem 0;
     border-top: 1px solid var(--border);
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
   }
   .log-row:last-child {
     border-bottom: 1px solid var(--border);
+  }
+  .log-main {
+    display: grid;
+    grid-template-columns: 4em 1fr auto auto;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
   }
   .log-date {
     color: var(--text-muted);
@@ -888,8 +1129,27 @@ import Base from '@/layouts/Base.astro';
   .log-body {
     color: var(--text);
   }
-  .log-row.not-clean .log-body {
+  .log-row.rough .log-body {
     color: var(--text-dim);
+  }
+  .log-tags {
+    display: inline-flex;
+    gap: 0.3rem;
+  }
+  .log-tag {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .log-row.rough .log-tag {
+    color: #c89a8e;
+    border-color: #6b3a30;
   }
   .log-del {
     background: none;
@@ -902,6 +1162,24 @@ import Base from '@/layouts/Base.astro';
   }
   .log-del:hover {
     color: #c87060;
+  }
+  .log-notes {
+    margin: 0.4rem 0 0 4.7em;
+    padding: 0.4rem 0.7rem;
+    background: var(--bg);
+    border-left: 2px solid var(--border);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.92rem;
+    color: var(--text-dim);
+    line-height: 1.45;
+    white-space: pre-wrap;
+  }
+  @media (max-width: 480px) {
+    .log-notes {
+      margin-left: 0;
+      margin-top: 0.5rem;
+    }
   }
 
   .foot {
