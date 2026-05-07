@@ -1,0 +1,1223 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base
+  title="lift"
+  description="Kettlebell circuit tracker with a stronglifts-style progression. Mobile-first, localStorage."
+>
+  <main class="lift">
+    <header class="head">
+      <p class="kicker">circuit · stronglifts-style</p>
+      <h1 class="title">lift</h1>
+      <p class="phase" data-phase></p>
+    </header>
+
+    <section class="card today" aria-label="today's session">
+      <p class="kicker today-label">today</p>
+      <div class="prescription">
+        <div class="rx">
+          <span class="rx-num" data-bell></span>
+          <span class="rx-unit">lb</span>
+        </div>
+        <div class="rx-sep">·</div>
+        <div class="rx">
+          <span class="rx-num" data-target></span>
+          <span class="rx-unit">rounds</span>
+        </div>
+      </div>
+
+      <ol class="exercises">
+        <li><span class="rep">6</span> curl-to-overhead + halo (CW/CCW)</li>
+        <li><span class="rep">12</span> reverse lunges (alt 6/side)</li>
+        <li><span class="rep">6</span> bicep curls</li>
+        <li><span class="rep">12</span> single-leg RDL (6/side)</li>
+        <li><span class="rep">12</span> bent-over rows (6/side)</li>
+        <li><span class="rep">8</span> pushups</li>
+      </ol>
+
+      <div class="round-counter">
+        <div class="round-display">
+          <span class="round-num" data-rounds-num>0</span>
+          <span class="round-slash">/</span>
+          <span class="round-target" data-rounds-target>—</span>
+          <span class="round-word">rounds</span>
+        </div>
+        <div class="round-track" data-round-track aria-hidden="true"></div>
+        <p class="round-hint" data-round-hint></p>
+        <div class="round-actions">
+          <button type="button" class="btn primary round-add" data-round-add>
+            + finished a round
+          </button>
+          <button type="button" class="btn ghost round-undo" data-round-undo>
+            undo
+          </button>
+        </div>
+      </div>
+
+      <details class="tgu">
+        <summary>turkish get-ups (optional)</summary>
+        <div class="tgu-body">
+          <p class="tgu-hint">3/side recommended at current bell.</p>
+          <div class="tgu-controls">
+            <button type="button" class="step" data-tgu-step="-1" aria-label="decrement">−</button>
+            <span class="tgu-count" data-tgu>0</span>
+            <button type="button" class="step" data-tgu-step="1" aria-label="increment">+</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="form-toggle" role="group" aria-label="form quality">
+        <span class="form-toggle-label">form</span>
+        <div class="form-pills">
+          <button type="button" class="pill" data-form="clean">clean</button>
+          <button type="button" class="pill" data-form="rough">rough</button>
+        </div>
+      </div>
+
+      <textarea
+        class="notes"
+        data-notes
+        rows="2"
+        placeholder="notes (optional) — how it felt, what broke down…"
+      ></textarea>
+
+      <div class="actions">
+        <button type="button" class="btn primary" data-save>log session</button>
+        <button type="button" class="btn" data-reset-rounds>reset</button>
+      </div>
+    </section>
+
+    <section class="card progress" aria-label="progression">
+      <p class="kicker">progression</p>
+      <ol class="ladder" data-ladder></ol>
+      <p class="rule">
+        Advance when you complete the round target with clean form on
+        two sessions in a row. Miss two in a row → drop one round.
+      </p>
+    </section>
+
+    <section class="card history" aria-label="history">
+      <p class="kicker">history</p>
+      <p class="streak" data-streak></p>
+      <ul class="log" data-log></ul>
+      <div class="actions secondary">
+        <button type="button" class="btn ghost" data-export>export json</button>
+        <label class="btn ghost file">
+          import
+          <input type="file" accept="application/json" data-import hidden />
+        </label>
+        <button type="button" class="btn ghost danger" data-clear>clear all</button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>
+        Stored locally on this device. Loads from your phone, your
+        phone keeps the log.
+      </p>
+    </footer>
+  </main>
+</Base>
+
+<script>
+  type Session = {
+    date: string;
+    bell: number;
+    target: number;
+    rounds: number;
+    clean: boolean;
+    tgu: number;
+    notes: string;
+  };
+
+  type Phase = { bell: number; target: number };
+
+  const LADDER: Phase[] = [
+    { bell: 25, target: 2 },
+    { bell: 25, target: 3 },
+    { bell: 25, target: 4 },
+    { bell: 35, target: 2 },
+    { bell: 35, target: 3 },
+    { bell: 35, target: 4 },
+    { bell: 35, target: 5 },
+  ];
+
+  const STORAGE_KEY = 'lift.sessions.v1';
+  const STATE_KEY = 'lift.state.v1';
+
+  type LiveState = { rounds: number; tgu: number; clean: boolean; notes: string };
+
+  function loadSessions(): Session[] {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveSessions(s: Session[]) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  }
+
+  function loadState(): LiveState {
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      if (!raw) return { rounds: 0, tgu: 0, clean: true, notes: '' };
+      return { rounds: 0, tgu: 0, clean: true, notes: '', ...JSON.parse(raw) };
+    } catch {
+      return { rounds: 0, tgu: 0, clean: true, notes: '' };
+    }
+  }
+
+  function saveState(s: LiveState) {
+    localStorage.setItem(STATE_KEY, JSON.stringify(s));
+  }
+
+  function clearState() {
+    localStorage.removeItem(STATE_KEY);
+  }
+
+  // Current phase = highest phase where the previous phase has been
+  // completed cleanly twice in a row, walking up from the bottom.
+  function currentPhaseIndex(sessions: Session[]): number {
+    let idx = 0;
+    for (let i = 0; i < LADDER.length - 1; i++) {
+      const phase = LADDER[i];
+      const matching = sessions.filter(
+        (s) => s.bell === phase.bell && s.target === phase.target
+      );
+      const last2 = matching.slice(-2);
+      const advanced =
+        last2.length === 2 &&
+        last2.every((s) => s.clean && s.rounds >= phase.target);
+      if (advanced) idx = i + 1;
+      else break;
+    }
+    // Demote if last 2 sessions at the current target both failed.
+    const cur = LADDER[idx];
+    const atCur = sessions.filter(
+      (s) => s.bell === cur.bell && s.target === cur.target
+    );
+    const last2 = atCur.slice(-2);
+    if (
+      idx > 0 &&
+      last2.length === 2 &&
+      last2.every((s) => !s.clean || s.rounds < cur.target)
+    ) {
+      return idx - 1;
+    }
+    return idx;
+  }
+
+  function streakAt(sessions: Session[], idx: number): {
+    clean: number;
+    needed: number;
+  } {
+    const phase = LADDER[idx];
+    let clean = 0;
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      const s = sessions[i];
+      if (s.bell !== phase.bell || s.target !== phase.target) break;
+      if (s.clean && s.rounds >= phase.target) clean++;
+      else break;
+    }
+    const isLast = idx === LADDER.length - 1;
+    return { clean, needed: isLast ? Infinity : 2 };
+  }
+
+  function fmtDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function render() {
+    const sessions = loadSessions();
+    const state = loadState();
+    const idx = currentPhaseIndex(sessions);
+    const phase = LADDER[idx];
+
+    const $ = <T extends Element>(sel: string) =>
+      document.querySelector(sel) as T | null;
+
+    const bellEl = $<HTMLElement>('[data-bell]');
+    const targetEl = $<HTMLElement>('[data-target]');
+    const phaseEl = $<HTMLElement>('[data-phase]');
+    const numEl = $<HTMLElement>('[data-rounds-num]');
+    const targetNumEl = $<HTMLElement>('[data-rounds-target]');
+    const trackEl = $<HTMLElement>('[data-round-track]');
+    const hintEl = $<HTMLElement>('[data-round-hint]');
+    const addBtn = $<HTMLButtonElement>('[data-round-add]');
+    const undoBtn = $<HTMLButtonElement>('[data-round-undo]');
+    const tguEl = $<HTMLElement>('[data-tgu]');
+    const notesEl = $<HTMLTextAreaElement>('[data-notes]');
+    const ladderEl = $<HTMLElement>('[data-ladder]');
+    const logEl = $<HTMLElement>('[data-log]');
+    const streakEl = $<HTMLElement>('[data-streak]');
+
+    if (bellEl) bellEl.textContent = String(phase.bell);
+    if (targetEl) targetEl.textContent = String(phase.target);
+
+    const totalPhases = LADDER.length;
+    if (phaseEl) {
+      phaseEl.textContent = `phase ${idx + 1} of ${totalPhases}`;
+    }
+
+    if (numEl) numEl.textContent = String(state.rounds);
+    if (targetNumEl) targetNumEl.textContent = String(phase.target);
+
+    const cap = phase.target + 1;
+    if (trackEl) {
+      trackEl.innerHTML = '';
+      for (let i = 0; i < cap; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'track-seg';
+        if (i < state.rounds) seg.classList.add('filled');
+        if (i === phase.target) seg.classList.add('bonus');
+        trackEl.appendChild(seg);
+      }
+    }
+    if (hintEl) {
+      if (state.rounds === 0) {
+        hintEl.textContent = `tap below each time you finish a round`;
+      } else if (state.rounds < phase.target) {
+        const left = phase.target - state.rounds;
+        hintEl.textContent = `${left} more to hit today's target`;
+      } else if (state.rounds === phase.target) {
+        hintEl.textContent = `target hit · one bonus round available`;
+      } else {
+        hintEl.textContent = `bonus round in the bag · log when done`;
+      }
+    }
+    if (addBtn) addBtn.disabled = state.rounds >= cap;
+    if (undoBtn) undoBtn.disabled = state.rounds === 0;
+
+    // form pills
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-form]')
+      .forEach((b) => {
+        const v = b.getAttribute('data-form');
+        const active =
+          (v === 'clean' && state.clean) || (v === 'rough' && !state.clean);
+        b.classList.toggle('is-active', active);
+        b.setAttribute('aria-pressed', String(active));
+      });
+
+    if (tguEl) tguEl.textContent = String(state.tgu);
+    if (notesEl) notesEl.value = state.notes;
+
+    // ladder — grouped by bell weight
+    if (ladderEl) {
+      ladderEl.innerHTML = '';
+      const groups: { bell: number; rungs: { phase: Phase; i: number }[] }[] = [];
+      LADDER.forEach((p, i) => {
+        const last = groups[groups.length - 1];
+        if (last && last.bell === p.bell) last.rungs.push({ phase: p, i });
+        else groups.push({ bell: p.bell, rungs: [{ phase: p, i }] });
+      });
+      groups.forEach((g) => {
+        const wrap = document.createElement('li');
+        wrap.className = 'group';
+        const hasCurrent = g.rungs.some((r) => r.i === idx);
+        const allDone = g.rungs.every((r) => r.i < idx);
+        if (hasCurrent) wrap.classList.add('current');
+        if (allDone) wrap.classList.add('done');
+
+        const head = document.createElement('div');
+        head.className = 'group-head';
+        head.innerHTML = `
+          <span class="group-bell">${g.bell} lb</span>
+          ${allDone ? '<span class="group-status">graduated</span>' : hasCurrent ? '<span class="group-status">current</span>' : '<span class="group-status">upcoming</span>'}
+        `;
+        wrap.appendChild(head);
+
+        const chips = document.createElement('div');
+        chips.className = 'group-chips';
+        g.rungs.forEach((r) => {
+          const chip = document.createElement('div');
+          chip.className = 'chip';
+          if (r.i < idx) chip.classList.add('done');
+          if (r.i === idx) chip.classList.add('current');
+          const count = sessions.filter(
+            (s) => s.bell === r.phase.bell && s.target === r.phase.target
+          ).length;
+          chip.innerHTML = `
+            <span class="chip-target">${r.phase.target}</span>
+            <span class="chip-unit">rounds</span>
+            ${count > 0 ? `<span class="chip-count">${count} session${count === 1 ? '' : 's'}</span>` : ''}
+          `;
+          chips.appendChild(chip);
+        });
+        wrap.appendChild(chips);
+        ladderEl.appendChild(wrap);
+      });
+    }
+
+    // streak
+    if (streakEl) {
+      const { clean, needed } = streakAt(sessions, idx);
+      if (sessions.length === 0) {
+        streakEl.textContent = 'no sessions yet — log your first';
+      } else if (idx === LADDER.length - 1) {
+        streakEl.textContent = `top of the ladder · time to find a heavier bell`;
+      } else if (clean === 0) {
+        streakEl.textContent = `${needed} clean sessions to advance`;
+      } else {
+        streakEl.textContent = `${clean}/${needed} toward the next rung`;
+      }
+    }
+
+    // log
+    if (logEl) {
+      logEl.innerHTML = '';
+      const recent = sessions.slice().reverse().slice(0, 20);
+      if (recent.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'log-empty';
+        li.textContent = 'nothing yet';
+        logEl.appendChild(li);
+      } else {
+        recent.forEach((s, i) => {
+          const li = document.createElement('li');
+          li.className = 'log-row';
+          if (!s.clean) li.classList.add('rough');
+          const realIdx = sessions.length - 1 - i;
+          const tags: string[] = [];
+          if (s.tgu > 0) tags.push(`${s.tgu} TGU`);
+          if (!s.clean) tags.push('rough');
+          const tagHtml = tags.length
+            ? `<span class="log-tags">${tags.map((t) => `<span class="log-tag">${escapeHtml(t)}</span>`).join('')}</span>`
+            : '';
+          const notes =
+            s.notes && s.notes.trim()
+              ? `<p class="log-notes">${escapeHtml(s.notes.trim())}</p>`
+              : '';
+          li.innerHTML = `
+            <div class="log-head">
+              <span class="log-date">${fmtDate(s.date)}</span>
+              <button type="button" class="log-del" data-del-idx="${realIdx}" aria-label="delete session">×</button>
+            </div>
+            <div class="log-body">
+              <span class="log-stat"><strong>${s.bell}</strong> lb</span>
+              <span class="log-sep" aria-hidden="true">·</span>
+              <span class="log-stat"><strong>${s.rounds}/${s.target}</strong> rounds</span>
+              ${tagHtml}
+            </div>
+            ${notes}
+          `;
+          logEl.appendChild(li);
+        });
+      }
+    }
+  }
+
+  function bind() {
+    document.addEventListener('click', (ev) => {
+      const t = ev.target as HTMLElement;
+
+      const tguBtn = t.closest<HTMLElement>('[data-tgu-step]');
+      if (tguBtn) {
+        const step = Number(tguBtn.getAttribute('data-tgu-step'));
+        const state = loadState();
+        state.tgu = Math.max(0, state.tgu + step);
+        saveState(state);
+        render();
+        return;
+      }
+
+      const del = t.closest<HTMLElement>('[data-del-idx]');
+      if (del) {
+        const idx = Number(del.getAttribute('data-del-idx'));
+        const sessions = loadSessions();
+        if (sessions[idx] && confirm('delete this session?')) {
+          sessions.splice(idx, 1);
+          saveSessions(sessions);
+          render();
+        }
+        return;
+      }
+    });
+
+    document.querySelector('[data-round-add]')?.addEventListener('click', () => {
+      const sessions = loadSessions();
+      const phase = LADDER[currentPhaseIndex(sessions)];
+      const cap = phase.target + 1;
+      const state = loadState();
+      if (state.rounds < cap) {
+        state.rounds++;
+        saveState(state);
+        render();
+      }
+    });
+
+    document.querySelector('[data-round-undo]')?.addEventListener('click', () => {
+      const state = loadState();
+      if (state.rounds > 0) {
+        state.rounds--;
+        saveState(state);
+        render();
+      }
+    });
+
+    document
+      .querySelectorAll<HTMLButtonElement>('[data-form]')
+      .forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const v = btn.getAttribute('data-form');
+          const state = loadState();
+          state.clean = v === 'clean';
+          saveState(state);
+          render();
+        });
+      });
+
+    document
+      .querySelector<HTMLTextAreaElement>('[data-notes]')
+      ?.addEventListener('input', (ev) => {
+        const state = loadState();
+        state.notes = (ev.target as HTMLTextAreaElement).value;
+        saveState(state);
+      });
+
+    document.querySelector('[data-save]')?.addEventListener('click', () => {
+      const state = loadState();
+      if (state.rounds === 0) {
+        if (!confirm('log a session with 0 rounds?')) return;
+      }
+      const sessions = loadSessions();
+      const idx = currentPhaseIndex(sessions);
+      const phase = LADDER[idx];
+      const session: Session = {
+        date: new Date().toISOString(),
+        bell: phase.bell,
+        target: phase.target,
+        rounds: state.rounds,
+        clean: state.clean,
+        tgu: state.tgu,
+        notes: state.notes,
+      };
+      sessions.push(session);
+      saveSessions(sessions);
+      clearState();
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document
+      .querySelector('[data-reset-rounds]')
+      ?.addEventListener('click', () => {
+        clearState();
+        render();
+      });
+
+    document.querySelector('[data-export]')?.addEventListener('click', () => {
+      const sessions = loadSessions();
+      const blob = new Blob([JSON.stringify(sessions, null, 2)], {
+        type: 'application/json',
+      });
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = `lift-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    document
+      .querySelector<HTMLInputElement>('[data-import]')
+      ?.addEventListener('change', async (ev) => {
+        const input = ev.target as HTMLInputElement;
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          if (!Array.isArray(data)) throw new Error('expected an array');
+          if (
+            confirm(
+              `import ${data.length} sessions? this replaces your current log.`
+            )
+          ) {
+            saveSessions(data);
+            render();
+          }
+        } catch {
+          alert('that file does not look like a lift export.');
+        } finally {
+          input.value = '';
+        }
+      });
+
+    document.querySelector('[data-clear]')?.addEventListener('click', () => {
+      if (
+        confirm(
+          'clear all sessions? this cannot be undone (export first if you want a backup).'
+        )
+      ) {
+        saveSessions([]);
+        clearState();
+        render();
+      }
+    });
+  }
+
+  render();
+  bind();
+</script>
+
+<style>
+  .lift {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 2rem 1.1rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+  }
+
+  .head {
+    text-align: left;
+    padding: 0.5rem 0.2rem 0;
+  }
+  .kicker {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+    margin: 0 0 0.6rem;
+  }
+  .title {
+    font-family: var(--font-crimson);
+    font-size: 2.6rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.6rem;
+  }
+  .phase {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin: 0;
+    text-transform: lowercase;
+    letter-spacing: 0.06em;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.4rem 1.2rem 1.5rem;
+  }
+
+  .today-label {
+    color: var(--accent-dim);
+  }
+
+  .prescription {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 0.2rem 0 1.4rem;
+  }
+  .rx {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+  }
+  .rx-num {
+    font-family: var(--font-crimson);
+    font-size: 2.4rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .rx-unit {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+  }
+  .rx-sep {
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+
+  .exercises {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.4rem;
+    display: grid;
+    gap: 0.45rem;
+  }
+  .exercises li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .exercises .rep {
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    color: var(--accent-dim);
+    min-width: 1.6em;
+    flex-shrink: 0;
+  }
+
+  .round-counter {
+    margin: 0.4rem 0 1.4rem;
+    padding: 1rem 1rem 1.1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .round-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0 0 0.7rem;
+  }
+  .round-num {
+    font-family: var(--font-crimson);
+    font-size: 3rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+    min-width: 1.2em;
+    transition: color 0.2s ease;
+  }
+  .round-slash {
+    font-family: var(--font-crimson);
+    font-size: 1.6rem;
+    color: var(--text-muted);
+  }
+  .round-target {
+    font-family: var(--font-crimson);
+    font-size: 1.6rem;
+    color: var(--text-dim);
+  }
+  .round-word {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+    margin-left: 0.5rem;
+  }
+  .round-track {
+    display: flex;
+    gap: 0.35rem;
+    margin: 0 0 0.9rem;
+  }
+  .track-seg {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .track-seg.bonus {
+    border-style: dashed;
+  }
+  .track-seg.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .track-seg.filled.bonus {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+    border-style: solid;
+  }
+  .round-hint {
+    font-family: var(--font-jetbrains);
+    font-size: 0.74rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    margin: 0 0 1rem;
+    min-height: 1.1em;
+  }
+  .round-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .round-add {
+    flex: 1;
+    font-size: 0.95rem;
+    padding: 0.95rem 1rem;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .round-add:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .round-undo {
+    padding: 0.6rem 0.9rem;
+  }
+  .round-undo:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .tgu {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  .tgu > summary {
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-transform: lowercase;
+    letter-spacing: 0.06em;
+  }
+  .tgu > summary::-webkit-details-marker {
+    display: none;
+  }
+  .tgu > summary::before {
+    content: '+ ';
+    color: var(--text-muted);
+  }
+  .tgu[open] > summary::before {
+    content: '− ';
+    color: var(--accent-dim);
+  }
+  .tgu-body {
+    margin-top: 0.9rem;
+  }
+  .tgu-hint {
+    font-size: 0.88rem;
+    color: var(--text-dim);
+    margin: 0 0 0.7rem;
+  }
+  .tgu-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+  }
+  .step {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.3rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .step:active {
+    background: var(--bg-button);
+  }
+  .tgu-count {
+    font-family: var(--font-jetbrains);
+    font-size: 1.1rem;
+    color: var(--accent);
+    min-width: 1.5em;
+    text-align: center;
+  }
+
+  .form-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 0 0 1rem;
+  }
+  .form-toggle-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+  }
+  .form-pills {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .pill {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .pill:hover {
+    color: var(--text);
+  }
+  .pill.is-active {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .pill[data-form='rough'].is-active {
+    background: #6b3a30;
+    color: #f0d6cc;
+  }
+
+  .notes {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-crimson);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    padding: 0.7rem 0.8rem;
+    border-radius: 4px;
+    resize: vertical;
+    margin-bottom: 1rem;
+  }
+  .notes:focus {
+    outline: none;
+    border-color: var(--accent-dim);
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .actions.secondary {
+    margin-top: 1rem;
+  }
+  .btn {
+    background: var(--bg-button);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    padding: 0.7rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+    flex: 1;
+    font-weight: 600;
+    padding: 0.85rem 1.1rem;
+  }
+  .btn.primary:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.74rem;
+    padding: 0.55rem 0.8rem;
+  }
+  .btn.ghost:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .btn.ghost.danger:hover {
+    color: #c87060;
+    border-color: #6b3a30;
+  }
+  .btn.file {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  /* progress */
+  .ladder {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .group {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 0.9rem 0.95rem;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+  }
+  .group.done {
+    opacity: 0.55;
+  }
+  .group.current {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 1px var(--accent-dim) inset;
+  }
+  .group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0 0 0.7rem;
+  }
+  .group-bell {
+    font-family: var(--font-crimson);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .group.current .group-bell {
+    color: var(--accent);
+  }
+  .group-status {
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    text-transform: lowercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+  .group.current .group-status {
+    color: var(--accent-dim);
+  }
+  .group-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 0.4rem;
+  }
+  .chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.55rem 0.4rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    text-align: center;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  .chip-target {
+    font-family: var(--font-crimson);
+    font-size: 1.2rem;
+    font-weight: 500;
+    line-height: 1;
+    color: inherit;
+  }
+  .chip-unit {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    text-transform: lowercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  .chip-count {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    color: var(--accent-dim);
+    margin-top: 0.15rem;
+    letter-spacing: 0.04em;
+  }
+  .chip.done {
+    background: transparent;
+    color: var(--text-muted);
+    border-style: dashed;
+  }
+  .chip.done .chip-target {
+    text-decoration: line-through;
+    text-decoration-color: var(--accent-dim);
+  }
+  .chip.current {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+  .chip.current .chip-target,
+  .chip.current .chip-unit,
+  .chip.current .chip-count {
+    color: var(--bg);
+  }
+  .rule {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 1rem 0 0;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* history */
+  .streak {
+    color: var(--accent-dim);
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    margin: 0.4rem 0 0.9rem;
+    text-transform: lowercase;
+  }
+  .log {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .log-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 0.6rem 0;
+  }
+  .log-row {
+    padding: 0.8rem 0 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+  .log-row:last-child {
+    border-bottom: 1px solid var(--border);
+  }
+  .log-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+  }
+  .log-date {
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-muted);
+  }
+  .log-body {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .log-stat strong {
+    font-weight: 600;
+    color: var(--accent);
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    margin-right: 0.15rem;
+  }
+  .log-row.rough .log-stat strong {
+    color: var(--accent-dim);
+  }
+  .log-sep {
+    color: var(--text-muted);
+  }
+  .log-tags {
+    display: inline-flex;
+    gap: 0.3rem;
+    margin-left: auto;
+  }
+  .log-tag {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .log-row.rough .log-tag {
+    color: #c89a8e;
+    border-color: #6b3a30;
+  }
+  .log-del {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    line-height: 1;
+  }
+  .log-del:hover {
+    color: #c87060;
+  }
+  .log-notes {
+    margin: 0.55rem 0 0;
+    padding: 0.45rem 0.75rem;
+    background: var(--bg);
+    border-left: 2px solid var(--accent-dim);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .foot {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    padding: 0.5rem 1rem;
+  }
+  .foot p {
+    margin: 0;
+  }
+
+  @media (min-width: 600px) {
+    .lift {
+      padding: 3rem 1.5rem 5rem;
+    }
+    .title {
+      font-size: 3rem;
+    }
+  }
+</style>
+</Base>
