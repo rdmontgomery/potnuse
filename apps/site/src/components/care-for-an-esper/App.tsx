@@ -56,8 +56,12 @@ export default function App() {
 
   // Cold-open scroll gate — §1 reveals after the user has scrolled past
   // the entire cold-open passage. The pusher below the cold-open
-  // guarantees the page is taller than the viewport so the gesture is
-  // possible even when the placeholder text is short.
+  // guarantees the page is taller than the viewport. The negative
+  // bottom rootMargin shrinks the observer root to a 1px line at the
+  // top of the viewport, so the pusher 'intersects' that line only when
+  // its top edge has reached viewport top — i.e., when the user has
+  // scrolled exactly past the cold-open. After the gate fires we
+  // smooth-scroll to §1's header so the reader lands at its start.
   useEffect(() => {
     if (stage !== 'cold-open') return;
     const el = pusherRef.current;
@@ -65,11 +69,10 @@ export default function App() {
     const obs = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.boundingClientRect.top < 0) {
+          if (entry.isIntersecting) {
             advance('section-1');
             bumpAtb(0.05);
             obs.disconnect();
-            // Land the reader at the start of §1 rather than mid-section.
             requestAnimationFrame(() => {
               section1Ref.current?.scrollIntoView({
                 behavior: 'smooth',
@@ -79,7 +82,7 @@ export default function App() {
           }
         }
       },
-      { threshold: 0 },
+      { threshold: 0, rootMargin: '0px 0px -100% 0px' },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -108,7 +111,7 @@ export default function App() {
   // Section advance via sentinel — each subsequent section's bottom
   // edge crossing upward bumps the gauge and moves the stage forward.
   useEffect(() => {
-    const targets: Array<{ ref: typeof sentinelRef; from: Stage; to: Stage; atb: number }> = [
+    const targets: Array<{ ref: typeof pusherRef; from: Stage; to: Stage; atb: number }> = [
       { ref: section3SentinelRef, from: 'section-3', to: 'section-4', atb: 0.06 },
       { ref: section4SentinelRef, from: 'section-4', to: 'section-5', atb: 0.06 },
       { ref: section5SentinelRef, from: 'section-5', to: 'section-5-resolved', atb: 0.06 },
