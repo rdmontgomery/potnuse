@@ -21,7 +21,7 @@ const TOC = String.raw`
               Section  9 . . . . . . . The Engineer's Position
               Section 10 . . . . . . . . . . . . . . . . . Coda
 
-                  ( v1 demo: cold open through §2 )
+                  ( v2 demo: cold open through §5 )
 `;
 
 export function Toc() {

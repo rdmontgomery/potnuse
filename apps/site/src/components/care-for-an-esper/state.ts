@@ -6,32 +6,44 @@ export type Stage =
   | 'section-1-cid-shown'
   | 'section-2'
   | 'section-2-fed-prompt'
-  | 'section-2-resolved';
+  | 'section-2-resolved'
+  | 'section-3'
+  | 'section-4'
+  | 'section-5'
+  | 'section-5-resolved';
 
 export type EngagementEvent =
   | 'cid-intro-tapped'
   | 'chocobo-fed'
-  | 'chocobo-skipped';
+  | 'chocobo-skipped'
+  | 'bugenhagen-dwelled';
 
 type State = {
   stage: Stage;
   esperVibrancy: number;
+  esperIntroduced: boolean;
   chocoboVibrancy: number;
   atbProgress: number;
   events: Set<EngagementEvent>;
   advance: (to: Stage) => void;
   recordEvent: (e: EngagementEvent) => void;
   bumpAtb: (delta: number) => void;
+  introduceEsper: () => void;
+  decayEsper: (delta: number) => void;
 };
 
 const VIBRANCY_BUMPS: Partial<Record<EngagementEvent, { who: 'esper' | 'chocobo'; delta: number }>> = {
   'cid-intro-tapped': { who: 'esper', delta: 0.05 },
   'chocobo-fed': { who: 'chocobo', delta: 0.15 },
+  'bugenhagen-dwelled': { who: 'esper', delta: 0.10 },
 };
+
+const ESPER_INITIAL_VIBRANCY = 0.85;
 
 export const useEsperStore = create<State>((set) => ({
   stage: 'cold-open',
-  esperVibrancy: 0.5,
+  esperVibrancy: 0,
+  esperIntroduced: false,
   chocoboVibrancy: 0.5,
   atbProgress: 0,
   events: new Set(),
@@ -51,4 +63,12 @@ export const useEsperStore = create<State>((set) => ({
     }),
   bumpAtb: (delta) =>
     set((s) => ({ atbProgress: Math.max(0, Math.min(1, s.atbProgress + delta)) })),
+  introduceEsper: () =>
+    set((s) =>
+      s.esperIntroduced
+        ? s
+        : { esperIntroduced: true, esperVibrancy: ESPER_INITIAL_VIBRANCY },
+    ),
+  decayEsper: (delta) =>
+    set((s) => ({ esperVibrancy: Math.max(0, s.esperVibrancy - delta) })),
 }));
