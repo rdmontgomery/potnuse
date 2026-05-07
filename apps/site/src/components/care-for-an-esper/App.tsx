@@ -48,23 +48,34 @@ export default function App() {
   const decayEsper = useEsperStore((s) => s.decayEsper);
   const esperIntroduced = useEsperStore((s) => s.esperIntroduced);
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const pusherRef = useRef<HTMLDivElement>(null);
+  const section1Ref = useRef<HTMLElement>(null);
   const section3SentinelRef = useRef<HTMLDivElement>(null);
   const section4SentinelRef = useRef<HTMLDivElement>(null);
   const section5SentinelRef = useRef<HTMLDivElement>(null);
 
-  // Cold-open scroll gate — Section 1 reveals after the passage scrolls past.
+  // Cold-open scroll gate — §1 reveals after the user has scrolled past
+  // the entire cold-open passage. The pusher below the cold-open
+  // guarantees the page is taller than the viewport so the gesture is
+  // possible even when the placeholder text is short.
   useEffect(() => {
     if (stage !== 'cold-open') return;
-    const el = sentinelRef.current;
+    const el = pusherRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+          if (entry.boundingClientRect.top < 0) {
             advance('section-1');
             bumpAtb(0.05);
             obs.disconnect();
+            // Land the reader at the start of §1 rather than mid-section.
+            requestAnimationFrame(() => {
+              section1Ref.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+              });
+            });
           }
         }
       },
@@ -160,36 +171,45 @@ export default function App() {
         <Masthead />
         <Toc />
 
-        <SectionHeader ordinal="Cold Open" title="The Borgmann horse" />
-        <div className="cfe-body">
-          <blockquote className="cfe-epigraph">
-            <p>
-              <em>
-                [ borgmann horse passage — Crossing the Postmodern Divide,
-                U. Chicago, 1992. The passage opens with the gentleness of
-                the well-bred horse, moves through the burdens of feeding
-                and worming and shoeing, and lands on the nicker, the
-                nuzzle, and the large and liquid eye that answers the
-                question of where you want to be and what you want to do. ]
-              </em>
-            </p>
-            <p>
-              <em>
-                Sit with the passage in full before continuing. The post's
-                argument depends on it.
-              </em>
-            </p>
-          </blockquote>
-          <div ref={sentinelRef} className="cfe-sentinel" aria-hidden="true" />
-          {!showSection1 && (
+        <section className="cfe-section cfe-cold-open-section">
+          <SectionHeader ordinal="Cold Open" title="The Borgmann horse" />
+          <div className="cfe-body cfe-cold-open-body">
+            <blockquote className="cfe-epigraph">
+              <p>
+                <em>
+                  [ borgmann horse passage — Crossing the Postmodern Divide,
+                  U. Chicago, 1992. The passage opens with the gentleness of
+                  the well-bred horse, moves through the burdens of feeding
+                  and worming and shoeing, and lands on the nicker, the
+                  nuzzle, and the large and liquid eye that answers the
+                  question of where you want to be and what you want to do. ]
+                </em>
+              </p>
+              <p>
+                <em>
+                  Sit with the passage in full before continuing. The post's
+                  argument depends on it.
+                </em>
+              </p>
+            </blockquote>
+          </div>
+        </section>
+
+        {!showSection1 && (
+          <>
+            <div
+              ref={pusherRef}
+              className="cfe-cold-open-pusher"
+              aria-hidden="true"
+            />
             <p className="cfe-gate-hint" aria-hidden="true">
               ↓ scroll
             </p>
-          )}
-        </div>
+          </>
+        )}
 
         {showSection1 && (
-          <section className="cfe-section">
+          <section ref={section1Ref} className="cfe-section">
             <SectionHeader ordinal="I" title="The Liquid Eye" />
             <div className="cfe-body">
               <p>

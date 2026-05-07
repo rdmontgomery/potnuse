@@ -189,13 +189,34 @@
   margin-top: 1.5rem;
 }
 
+/* Holds the page taller than the viewport so the gate gesture is always
+   possible — even when the cold-open placeholder is just a few lines.
+   Removed from the DOM when §1 reveals. */
+.cfe-cold-open-pusher {
+  min-height: 100vh;
+}
+
+/* Visual weight for the cold-open while we're still using a placeholder
+   for the Borgmann passage. The actual passage will have its own bulk. */
+.cfe-cold-open-body {
+  min-height: 30vh;
+}
+
+/* Fixed at the bottom of the viewport while the gate is closed so the
+   reader sees a clear affordance regardless of scroll position. */
 .cfe-gate-hint {
-  margin: 1.5rem 0 0;
+  position: fixed;
+  bottom: 1.2rem;
+  left: 0;
+  right: 0;
+  margin: 0;
   text-align: center;
   font-size: 0.75rem;
   color: var(--cfe-ink-muted);
   letter-spacing: 0.4em;
   animation: cfe-bob 2.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 8;
 }
 @keyframes cfe-bob {
   0%, 100% { transform: translateY(0); opacity: 0.55; }
