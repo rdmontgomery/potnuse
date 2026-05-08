@@ -247,3 +247,56 @@
   color: var(--cfe-ink);
   letter-spacing: 0;
 }
+
+/* ─────────── Bracketed inline actions ─────────── */
+/* Gestures that fit in the prose grid. The bracketed glyphs read as
+   ASCII-walkthrough notation; the whole bracket is the tap target.
+   min-height/min-width hit the 44×44 minimum. */
+
+.cfe-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin: 0.8em 0 0.4em;
+}
+
+.cfe-bracket {
+  font: inherit;
+  font-size: clamp(0.82rem, 2.6vw, 0.92rem);
+  line-height: 1.3;
+  background: transparent;
+  border: 0;
+  padding: 0.55em 0.6em;
+  margin: 0;
+  color: var(--cfe-ink);
+  cursor: pointer;
+  white-space: pre;
+  letter-spacing: 0;
+  min-height: 44px;
+  min-width: 44px;
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  border-radius: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.cfe-bracket:hover:not(:disabled),
+.cfe-bracket:focus-visible:not(:disabled) {
+  background: var(--cfe-ink);
+  color: var(--cfe-bg);
+  outline: none;
+}
+.cfe-bracket:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.cfe-bracket-feed.is-holding {
+  background: rgba(217, 148, 33, 0.18);
+  color: var(--cfe-accent);
+}
+.cfe-bracket-feed.is-done {
+  color: var(--cfe-chocobo-warm);
+  opacity: 1;
+}

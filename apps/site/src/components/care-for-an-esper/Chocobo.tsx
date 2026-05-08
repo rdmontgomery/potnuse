@@ -1,12 +1,95 @@
+import { useEffect, useRef, useState } from 'react';
+import { useEsperStore } from './state';
 import { DialogueBox } from './DialogueBox';
 
-// Ambient chocobo. She's just there — no feed gate, no skip button.
-// Prototype for the wandering-sprite layer that will replace the
-// removed click-through mechanics: presence, not interaction.
+const HOLD_MS = 700;
+
+function buzz(ms: number) {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    navigator.vibrate(ms);
+  }
+}
+
+// The chocobo accepts gysahl greens. The feed gesture is the post's
+// one focal practice that fits the lore — feeding chocobos is a forty-
+// year ritual in this franchise, the small act every player learns.
+// Optional. Not a gate. Reader who skips it is fine. Reader who feeds
+// gets a small offering registered: chocobo vibrancy +0.15, a 200ms
+// haptic gravitas at completion, and a slightly different coda.
 export function Chocobo() {
+  const fed = useEsperStore((s) => s.events.has('chocobo-fed'));
+  const recordEvent = useEsperStore((s) => s.recordEvent);
+
+  const [holdProgress, setHoldProgress] = useState(0);
+  const startRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+
+  function clearHold() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    startRef.current = null;
+    setHoldProgress(0);
+  }
+
+  function onPressStart(ev: React.PointerEvent<HTMLButtonElement>) {
+    if (fed) return;
+    ev.currentTarget.setPointerCapture(ev.pointerId);
+    startRef.current = performance.now();
+    const tick = () => {
+      if (startRef.current == null) return;
+      const elapsed = performance.now() - startRef.current;
+      const p = Math.min(1, elapsed / HOLD_MS);
+      setHoldProgress(p);
+      if (p >= 1) {
+        clearHold();
+        recordEvent('chocobo-fed');
+        // 200ms gravitas — sustained, weighted; reads as gravity at the
+        // moment of offering, not as a UI-confirmation tick.
+        buzz(200);
+        return;
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  }
+
+  function onPressEnd() {
+    clearHold();
+  }
+
+  useEffect(() => () => clearHold(), []);
+
+  // Eight-cell fill bar inside the GREENS bracket so the affordance
+  // stays on the same character grid as the prose.
+  const filled = Math.round(holdProgress * 8);
+  const fillBar = '▒'.repeat(filled) + ' '.repeat(8 - filled);
+  const feedLabel = fed
+    ? '[ FED ✓               ]'
+    : holdProgress > 0
+    ? `[ ${fillBar}              ]`
+    : '[ HOLD: gysahl greens ]';
+
+  const body = fed
+    ? '⌒(•ㅅ•)⌒    *she eats from your hand. she nickers softly.*'
+    : '⌒(•ㅅ•)⌒    *kweh.*';
+
   return (
     <div className="cfe-chocobo">
-      <DialogueBox body="⌒(•ㅅ•)⌒    *kweh.*" maxCols={48} />
+      <DialogueBox body={body} maxCols={56} />
+      <div className="cfe-action-row">
+        <button
+          type="button"
+          className={`cfe-bracket cfe-bracket-feed${holdProgress > 0 ? ' is-holding' : ''}${fed ? ' is-done' : ''}`}
+          onPointerDown={onPressStart}
+          onPointerUp={onPressEnd}
+          onPointerCancel={onPressEnd}
+          onPointerLeave={onPressEnd}
+          disabled={fed}
+          aria-label={fed ? 'fed' : 'feed (hold)'}
+        >
+          {feedLabel}
+        </button>
+      </div>
     </div>
   );
 }

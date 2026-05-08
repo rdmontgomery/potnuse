@@ -183,8 +183,10 @@ export default function App() {
                 cleanest version.
               </p>
               <p>
-                But before we go — there is a chocobo at the edge of the
-                screen. She is not asking anything of you. She is here.
+                Before we go — there is a chocobo at the edge of the
+                screen. The post is full of devices, and she is not one
+                of them. She has gysahl greens at her feet if you have a
+                hand free.
               </p>
               <Chocobo />
             </div>
