@@ -1,0 +1,402 @@
+/* ===================================================================
+   Sandbox · sprite interactions
+   Notepad register, like the essay. Each experiment lives in a card
+   with its own stage. Variables here are scoped to .sbs-root so the
+   site theme (which is dark) is overridden inside this page.
+   =================================================================== */
+
+.sbs-root {
+  --sbs-bg: #f4ecd8;
+  --sbs-card: #faf3df;
+  --sbs-ink: #2a2418;
+  --sbs-ink-muted: #6f624b;
+  --sbs-rule: rgba(60, 48, 28, 0.18);
+  --sbs-accent: #b87a1e;
+  --sbs-warm: #d99421;
+
+  --sbs-moogle: #5a4a2c;
+  --sbs-tonberry: #44503a;
+  --sbs-marlboro: #5d3a3a;
+  --sbs-cactuar: #3a5040;
+
+  font-family: 'Crimson Pro', Georgia, serif;
+  color: var(--sbs-ink);
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 5rem;
+}
+
+/* ─── Masthead ─── */
+
+.sbs-masthead {
+  margin-bottom: 2rem;
+}
+.sbs-eyebrow {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--sbs-ink-muted);
+  text-transform: lowercase;
+}
+.sbs-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  margin: 0.4rem 0 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.sbs-lede {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 60ch;
+  color: var(--sbs-ink);
+  margin: 0 0 1.5rem;
+}
+.sbs-lede em {
+  font-style: italic;
+}
+
+/* ─── ToC ─── */
+
+.sbs-toc {
+  border-top: 1px solid var(--sbs-rule);
+  border-bottom: 1px solid var(--sbs-rule);
+  padding: 0.6rem 0 0.6rem;
+  margin: 0;
+}
+.sbs-toc ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.2em 1.2rem;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+@media (min-width: 600px) {
+  .sbs-toc ol {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (min-width: 900px) {
+  .sbs-toc ol {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.sbs-toc a {
+  color: var(--sbs-ink-muted);
+  text-decoration: none;
+}
+.sbs-toc a:hover {
+  color: var(--sbs-accent);
+}
+.sbs-toc-num {
+  display: inline-block;
+  width: 3em;
+  color: rgba(60, 48, 28, 0.45);
+}
+
+/* ─── Card / stage ─── */
+
+.sbs-main {
+  display: grid;
+  gap: 2.4rem;
+  margin-top: 2rem;
+}
+
+.sbs-card-shell {
+  scroll-margin-top: 1rem;
+}
+
+.sbs-card {
+  background: var(--sbs-card);
+  border: 1px solid var(--sbs-rule);
+  border-radius: 4px;
+  padding: 1.2rem 1.2rem 1.4rem;
+  position: relative;
+}
+.sbs-card-loading {
+  min-height: 220px;
+  color: var(--sbs-ink-muted);
+}
+
+.sbs-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+.sbs-card-num {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: rgba(60, 48, 28, 0.45);
+}
+.sbs-card-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.sbs-card-stat {
+  margin-left: auto;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--sbs-ink-muted);
+}
+.sbs-reset {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--sbs-ink-muted);
+  background: transparent;
+  border: 1px solid var(--sbs-rule);
+  border-radius: 2px;
+  padding: 0.18em 0.55em;
+  cursor: pointer;
+}
+.sbs-reset:hover {
+  color: var(--sbs-accent);
+  border-color: var(--sbs-accent);
+}
+
+.sbs-card-blurb {
+  margin: 0 0 0.8rem;
+  font-size: 0.92rem;
+  color: var(--sbs-ink-muted);
+  line-height: 1.5;
+}
+.sbs-card-notes {
+  font-size: 0.85rem;
+  color: var(--sbs-ink-muted);
+  margin-bottom: 0.8rem;
+}
+
+.sbs-stage {
+  position: relative;
+  min-height: 240px;
+  border: 1px dashed var(--sbs-rule);
+  border-radius: 2px;
+  padding: 1rem 1.1rem 1.2rem;
+  overflow: hidden;
+  /* Some experiments overlay full-stage pointer overlays. Make
+     sure pointer events fall through unless inhibited. */
+}
+.sbs-stage-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(60, 48, 28, 0.4);
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+}
+
+/* ─── Prose stub ─── */
+
+.sbs-prose {
+  position: relative;
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: var(--sbs-ink);
+  max-width: 56ch;
+  margin: 0 auto;
+}
+.sbs-prose p {
+  margin: 0 0 0.7em;
+}
+.sbs-prose-pretext {
+  position: relative;
+  /* per-word absolutely positioned spans */
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 14px;
+  max-width: none;
+}
+.sbs-word {
+  position: absolute;
+  white-space: pre;
+  will-change: transform;
+}
+.sbs-letter {
+  white-space: pre;
+}
+.sbs-mb-row {
+  text-align: center;
+  margin: 0.6em 0;
+}
+.sbs-line.is-parted {
+  /* hint that the line is being parted; subtle */
+  letter-spacing: 0.01em;
+}
+.sbs-wake-half {
+  display: inline-block;
+  transition: transform 90ms linear;
+  white-space: pre;
+}
+
+/* ─── Mailbox ─── */
+
+.sbs-mailbox {
+  display: inline-block;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--sbs-ink-muted);
+  letter-spacing: 0.08em;
+  padding: 0.45em 0.9em;
+  border: 1px dashed transparent;
+  background: transparent;
+  cursor: default;
+  user-select: none;
+  transition: color 0.18s ease, border-color 0.18s ease,
+    background 0.18s ease;
+}
+.sbs-mailbox.is-target {
+  color: var(--sbs-accent);
+  border-color: var(--sbs-accent);
+  background: rgba(217, 148, 33, 0.08);
+}
+.sbs-mailbox.is-open {
+  color: var(--sbs-warm);
+  border: 1px solid var(--sbs-rule);
+}
+.sbs-mailbox:not(.is-open):hover {
+  color: var(--sbs-accent);
+  border-color: var(--sbs-rule);
+  cursor: pointer;
+}
+
+/* ─── Sprites ─── */
+
+.sbs-sprites {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.sbs-sprite,
+.sbs-sprite-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1;
+  white-space: pre;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  opacity: 0.86;
+  will-change: transform;
+}
+.sbs-sprite {
+  padding: 0.3em 0.4em;
+}
+.sbs-sprite-hit {
+  /* hitbox extends beyond the visible glyph; padding handled inline */
+  background: transparent;
+  display: inline-block;
+}
+.sbs-sprite-glyph {
+  display: inline-block;
+  pointer-events: none;
+}
+.sbs-sprite:hover,
+.sbs-sprite-hit:hover {
+  opacity: 1;
+}
+.sbs-sprite.is-held,
+.sbs-sprite-hit.is-held {
+  opacity: 1;
+  cursor: grabbing;
+  background: rgba(217, 148, 33, 0.18);
+  z-index: 6;
+}
+.sbs-sprite.is-armed {
+  opacity: 1;
+  background: rgba(217, 148, 33, 0.18);
+  outline: 1px solid var(--sbs-accent);
+}
+.sbs-sprite.is-paused {
+  /* held still by some experiment-specific logic */
+  background: rgba(217, 148, 33, 0.06);
+}
+.sbs-sprite.is-arming {
+  opacity: 1;
+}
+
+.sbs-arm-ring {
+  position: absolute;
+  inset: -8px;
+  border: 2px solid var(--sbs-accent);
+  border-radius: 999px;
+  animation-name: sbs-arm-ring-grow;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  pointer-events: none;
+}
+@keyframes sbs-arm-ring-grow {
+  from {
+    transform: scale(0.4);
+    opacity: 0.0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ─── Magnet pickup overlay ─── */
+
+.sbs-magnet-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  touch-action: none;
+}
+
+/* ─── Canvas / SVG stages ─── */
+
+.sbs-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  z-index: 5;
+}
+.sbs-svg-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Footer ─── */
+
+.sbs-foot {
+  font-family: ui-monospace, 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--sbs-ink-muted);
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sbs-rule);
+}
+
+/* ─── Reduced motion ─── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sbs-sprites,
+  .sbs-canvas,
+  .sbs-svg-stage {
+    /* still let them render, but flatten the spawn cadence is already
+       slow; let drag still work. The motion the user worries about is
+       transitions and animations. */
+  }
+  .sbs-arm-ring {
+    animation: none;
+    transform: scale(1);
+  }
+  .sbs-wake-half {
+    transition: none;
+  }
+}

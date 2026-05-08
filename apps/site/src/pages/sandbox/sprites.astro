@@ -1,0 +1,17 @@
+---
+import Base from '@/layouts/Base.astro';
+import App from '@/components/sandbox-sprites/App';
+---
+
+<Base
+  title="sprite sandbox"
+  description="A dozen ways to grab the moogle. Touch-target variants, magnet pickups, word physics, canvas/SVG renderings."
+>
+  <App client:only="react" />
+</Base>
+
+<style is:global>
+  body:has(.sbs-root) {
+    background: #f4ecd8;
+  }
+</style>
