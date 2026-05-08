@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useEsperStore } from './state';
 import { DialogueBox } from './DialogueBox';
 import { Chocobo } from './Chocobo';
 import { EsperCameo } from './EsperCameo';
@@ -23,6 +25,11 @@ import {
 import './styles.css';
 
 export default function App() {
+  const hydrate = useEsperStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
   return (
     <div className="cfe-root">
       <article className="cfe-article">

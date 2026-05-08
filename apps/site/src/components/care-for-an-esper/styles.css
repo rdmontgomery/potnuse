@@ -300,3 +300,108 @@
   color: var(--cfe-chocobo-warm);
   opacity: 1;
 }
+
+/* ─────────── Letters ─────────── */
+/* A letter is a folded scrap of paper that slides out when a
+   wandering sprite is dragged onto a mailbox (or, for the kweh
+   letter, when the chocobo is fed her gysahl greens).
+   Top + bottom rules carry the from / sign-off in muted ink. The
+   body uses normal HTML flow so blockquotes + italics read as
+   prose. The whole aside slides in on first mount. */
+
+.cfe-letter {
+  margin: 1.6em auto;
+  max-width: 56ch;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.018);
+  border: 0;
+  position: relative;
+}
+.cfe-letter::before,
+.cfe-letter::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--cfe-rule) 0 6px,
+    transparent 6px 10px
+  );
+}
+
+.cfe-letter-top,
+.cfe-letter-bottom {
+  font-size: clamp(0.72rem, 2.2vw, 0.82rem);
+  color: var(--cfe-ink-muted);
+  letter-spacing: 0.04em;
+  padding: 0.55em 1.2em;
+  font-style: italic;
+}
+.cfe-letter-bottom {
+  text-align: right;
+}
+.cfe-letter-meta-label {
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85em;
+  color: var(--cfe-ink-dim);
+  margin-right: 0.35em;
+}
+.cfe-letter-from {
+  color: var(--cfe-ink);
+}
+
+.cfe-letter-body {
+  padding: 0.6em 1.2em 1.2em;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
+  line-height: 1.55;
+  color: var(--cfe-ink);
+}
+.cfe-letter-body p {
+  margin: 0 0 0.9em;
+}
+.cfe-letter-body p:last-child {
+  margin-bottom: 0;
+}
+.cfe-letter-re {
+  color: var(--cfe-ink-dim);
+  font-size: 0.92em;
+  margin-bottom: 1.1em !important;
+}
+.cfe-letter-body blockquote {
+  margin: 0.9em 0;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 2px solid var(--cfe-rule);
+  font-style: italic;
+  color: var(--cfe-ink-dim);
+}
+.cfe-letter-body blockquote p {
+  margin: 0;
+}
+.cfe-letter-pre {
+  font-family: inherit;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: var(--cfe-ink-dim);
+  margin: 0.9em 0;
+  padding: 0.4em 0 0.4em 1em;
+  border-left: 2px solid var(--cfe-rule);
+  white-space: pre;
+  letter-spacing: 0;
+}
+
+.cfe-letter-enter {
+  animation: cfe-letter-slide 0.7s ease-out both;
+}
+@keyframes cfe-letter-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.96);
+    transform-origin: top center;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}

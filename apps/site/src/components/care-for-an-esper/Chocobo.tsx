@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEsperStore } from './state';
 import { DialogueBox } from './DialogueBox';
+import { LetterBox } from './Letter';
+import { LETTERS_BY_ID } from './letters';
 
 const HOLD_MS = 700;
 
@@ -18,6 +20,7 @@ function buzz(ms: number) {
 // haptic gravitas at completion, and a slightly different coda.
 export function Chocobo() {
   const fed = useEsperStore((s) => s.events.has('chocobo-fed'));
+  const kwehOpened = useEsperStore((s) => s.events.has('letter:kweh'));
   const recordEvent = useEsperStore((s) => s.recordEvent);
 
   const [holdProgress, setHoldProgress] = useState(0);
@@ -43,6 +46,10 @@ export function Chocobo() {
       if (p >= 1) {
         clearHold();
         recordEvent('chocobo-fed');
+        // The chocobo is the tutorial mailbox: feeding her also opens
+        // her own letter. Reader who scrolls past the §2 chocobo
+        // entirely never sees the kweh letter.
+        recordEvent('letter:kweh');
         // 200ms gravitas — sustained, weighted; reads as gravity at the
         // moment of offering, not as a UI-confirmation tick.
         buzz(200);
@@ -90,6 +97,7 @@ export function Chocobo() {
           {feedLabel}
         </button>
       </div>
+      {kwehOpened && <LetterBox letter={LETTERS_BY_ID['kweh']} />}
     </div>
   );
 }
