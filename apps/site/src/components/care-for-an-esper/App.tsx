@@ -4,7 +4,9 @@ import { DialogueBox } from './DialogueBox';
 import { Chocobo } from './Chocobo';
 import { EsperCameo } from './EsperCameo';
 import { CodaChocobo, CodaEsper } from './CodaCameo';
+import { Mailbox } from './Mailbox';
 import { Masthead } from './Masthead';
+import { SpriteManager } from './SpriteManager';
 import { Toc } from './Toc';
 import { SectionHeader, SceneBreak } from './SectionHeader';
 import {
@@ -33,6 +35,7 @@ export default function App() {
   return (
     <div className="cfe-root">
       <article className="cfe-article">
+        <SpriteManager />
         <Masthead />
         <Toc />
 
@@ -110,6 +113,7 @@ export default function App() {
                 thesis since before the Whole Earth Catalog went out of
                 print. The games knew.
               </p>
+              <Mailbox letterId="catalog" />
               <p>
                 Your guide is Cid. Not any specific Cid — the recurring one.
                 The engineer who shows up in every installment, names his
@@ -241,6 +245,7 @@ export default function App() {
                 He had not understood what his research would become.
               </p>
               <DialogueBox label="CID" body={CID_DEL_NORTE_MARQUEZ} />
+              <Mailbox letterId="pollendina" />
               <p>
                 The Empire produces a second figure who matters: Kefka. He
                 was the first Magitek-infused soldier, before the process
@@ -337,6 +342,7 @@ export default function App() {
                 ontology in 1990s media:
               </p>
               <DialogueBox label="BUGENHAGEN" body={BUGENHAGEN} />
+              <Mailbox letterId="hearth" />
               <p>
                 The Lifestream is what every focal practice ever performed
                 eventually deposits back into the world's substrate.
@@ -599,6 +605,7 @@ export default function App() {
                 it did not need a record.
               </p>
               <p>The brushwork is what makes the brusher.</p>
+              <Mailbox letterId="castorp" />
               <EsperCameo variant="dimmed-with-chocobo" />
             </div>
           </section>
@@ -634,6 +641,7 @@ export default function App() {
                 available because you have spent your minutes maintaining
                 the watch.
               </p>
+              <Mailbox letterId="quentin-watch" />
               <p>
                 Cortázar sharpens the picture in <em>Hopscotch.</em> The
                 protagonist, Horacio Oliveira, sits in a Paris flat where
@@ -688,6 +696,7 @@ export default function App() {
                 not absolve any of them. He is shouting at them through
                 the glass.
               </p>
+              <Mailbox letterId="moth" />
               <p>
                 Section 8 will return to Cid. Notice, when we get there,
                 that the recurring Cid has never been the same Cid twice.
@@ -782,6 +791,7 @@ export default function App() {
                 maintainers do not.
               </p>
               <p>This is what institutional focal practice looks like.</p>
+              <Mailbox letterId="pace-layers" />
               <p>
                 Stewart Brand has been arguing for it in non-fictional
                 register for sixty years. Whole Earth Catalog was a Cid
@@ -808,6 +818,7 @@ export default function App() {
                 moth.
               </p>
               <p>This is the answer the post has been walking toward.</p>
+              <Mailbox letterId="long-now" />
               <p>Cid steps forward.</p>
               <DialogueBox label="CID" body={CID_BREAK_FOURTH_WALL} maxCols={64} />
               <p className="cfe-quiet-beat">
@@ -949,6 +960,8 @@ export default function App() {
                 <em>the esper is here.</em>
               </p>
               <CodaEsper />
+
+              <Mailbox letterId="rick-slot" />
 
               <DialogueBox label="CID" body={CID_FINAL} maxCols={48} />
             </div>

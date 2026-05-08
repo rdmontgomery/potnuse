@@ -34,6 +34,9 @@
   max-width: 78ch;
   margin: 0 auto;
   padding: 1.6rem 1rem 0;
+  /* Sprite layer is absolutely positioned within the article, so
+     sprites walk through the column as the reader scrolls. */
+  position: relative;
 }
 @media (min-width: 720px) {
   .cfe-article {
@@ -389,6 +392,100 @@
   border-left: 2px solid var(--cfe-rule);
   white-space: pre;
   letter-spacing: 0;
+}
+
+/* ─────────── Mailboxes ─────────── */
+/* Inline drop-target. Reads as a small ASCII glyph between
+   paragraphs — discoverable without being loud. Hover and
+   drag-target states intensify the contrast. Once opened, the
+   letter slides in below and the mailbox shows its open state. */
+
+.cfe-mailbox-wrap {
+  margin: 1.6em 0;
+  text-align: center;
+}
+.cfe-mailbox {
+  display: inline-block;
+  font-size: clamp(0.78rem, 2.4vw, 0.88rem);
+  color: var(--cfe-ink-muted);
+  letter-spacing: 0.08em;
+  padding: 0.45em 0.9em;
+  border: 1px dashed transparent;
+  border-radius: 0;
+  cursor: default;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  user-select: none;
+}
+.cfe-mailbox:not(.is-open):hover {
+  color: var(--cfe-accent);
+  border-color: var(--cfe-rule);
+}
+.cfe-mailbox.is-drop-target {
+  color: var(--cfe-accent);
+  border-color: var(--cfe-accent);
+  background: rgba(217, 148, 33, 0.08);
+}
+.cfe-mailbox.is-open {
+  color: var(--cfe-chocobo-warm);
+  border-color: var(--cfe-rule);
+  border-style: solid;
+}
+
+/* ─────────── Wandering sprites ─────────── */
+/* Absolutely positioned children of .cfe-article. The container
+   itself is a no-op span; each sprite has its own pointer-events.
+   Sprites overlay the prose at z-index above text — they appear
+   to walk through the words. */
+
+.cfe-sprites {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.cfe-sprite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: inherit;
+  font-size: clamp(0.85rem, 2.6vw, 1rem);
+  line-height: 1;
+  white-space: pre;
+  letter-spacing: 0;
+  color: var(--cfe-ink);
+  opacity: 0.86;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  padding: 0.3em 0.4em;
+  background: rgba(248, 240, 219, 0.55);
+  border-radius: 2px;
+  transition: opacity 0.2s ease, transform 0.05s linear;
+  will-change: transform;
+}
+.cfe-sprite:hover { opacity: 1; }
+.cfe-sprite.is-dragged {
+  cursor: grabbing;
+  opacity: 1;
+  background: rgba(217, 148, 33, 0.18);
+  z-index: 6;
+  transition: opacity 0.2s ease;
+}
+
+/* Per-kind tints — small chromatic differentiation so the four
+   wanderers read distinctly without breaking the cream-paper
+   register. */
+.cfe-sprite-moogle   { color: #5a4a2c; }
+.cfe-sprite-tonberry { color: #44503a; }
+.cfe-sprite-marlboro { color: #5d3a3a; }
+.cfe-sprite-cactuar  { color: #3a5040; }
+
+/* Reduced motion: hold sprites still. Reader still gets the page
+   and the letters; just no walking glyphs. */
+@media (prefers-reduced-motion: reduce) {
+  .cfe-sprites { display: none; }
 }
 
 .cfe-letter-enter {
