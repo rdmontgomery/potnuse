@@ -52,6 +52,12 @@ export default function Exp08PretextWords() {
   });
   const { opened, open, reset, count } = useDelivery(LETTERS);
 
+  // The spring loop reads sprites every frame. Going through a ref
+  // (instead of the rAF effect's deps) means we don't tear the loop
+  // down 60 times a second when sprite positions update.
+  const spritesRef = useRef(sprites);
+  spritesRef.current = sprites;
+
   // Lay out the prose with pretext when the stage size is known.
   const [layout, setLayout] = useState<{ words: WordSpan[]; height: number }>({
     words: [],
@@ -92,7 +98,10 @@ export default function Exp08PretextWords() {
       const stage = stageRef.current;
       const prose = proseRef.current;
       if (!stage || !prose) return;
-      const w = prose.clientWidth;
+      // Lay out for slightly less than the rendered width — gives
+      // pretext-computed spans a few px of slack so subpixel rounding
+      // can't push the right-most word past the container edge.
+      const w = Math.max(0, prose.clientWidth - 4);
       if (w < 50) return;
       const prepared = prepareRichInline(items.items);
       const out: WordSpan[] = [];
@@ -132,7 +141,8 @@ export default function Exp08PretextWords() {
     wordRefs.current = layout.words.map(() => null);
   }, [layout.words.length]);
 
-  // Drive springs at 60 fps based on current sprite positions.
+  // Drive springs at 60 fps. Reads sprites through a ref so the
+  // effect only re-runs when the laid-out word list changes.
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
@@ -141,14 +151,14 @@ export default function Exp08PretextWords() {
       last = now;
       const offsets = offsetRef.current;
       const words = layout.words;
+      const liveSprites = spritesRef.current;
       for (let i = 0; i < words.length; i++) {
         const w = words[i];
         const wcx = w.x + w.w / 2;
         const wcy = w.y + LINE_HEIGHT / 2;
-        // Find the closest sprite center
         let tx = 0;
         let ty = 0;
-        for (const s of sprites) {
+        for (const s of liveSprites) {
           if (s.state === 'held') continue;
           const sx = s.x + 30;
           const sy = s.y + 12;
@@ -163,7 +173,6 @@ export default function Exp08PretextWords() {
         }
         const o = offsets[i];
         if (!o) continue;
-        // Spring toward (tx, ty)
         const ax = (tx - o.ox) * STIFFNESS - o.vx * DAMPING;
         const ay = (ty - o.oy) * STIFFNESS - o.vy * DAMPING;
         o.vx += ax * dt;
@@ -179,7 +188,7 @@ export default function Exp08PretextWords() {
     }
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [layout.words, sprites]);
+  }, [layout.words]);
 
   function onPointerDown(id: number, ev: React.PointerEvent) {
     (ev.target as Element).setPointerCapture?.(ev.pointerId);

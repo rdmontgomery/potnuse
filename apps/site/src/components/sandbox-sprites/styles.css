@@ -208,7 +208,15 @@
   /* per-word absolutely positioned spans */
   font-family: ui-monospace, 'JetBrains Mono', monospace;
   font-size: 14px;
+  width: 100%;
   max-width: none;
+  box-sizing: border-box;
+  /* Crucial: clip the absolute word spans here. Without this, a
+     subpixel-rounded `left` value or a stray fractional width can
+     extend the document's scroll area, which on mobile triggers the
+     shrink-to-fit zoom behavior. */
+  overflow: hidden;
+  contain: layout paint;
 }
 .sbs-word {
   position: absolute;

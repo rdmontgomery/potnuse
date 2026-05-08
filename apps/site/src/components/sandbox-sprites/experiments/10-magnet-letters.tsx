@@ -11,7 +11,7 @@ import {
 
 const LETTERS = ['cid', 'terra'];
 const PULL_RADIUS = 60;
-const PULL_AMOUNT = 4; // max px translate per letter
+const PULL_AMOUNT = 12; // max px translate per letter
 
 export default function Exp10MagnetLetters() {
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -107,7 +107,7 @@ export default function Exp10MagnetLetters() {
     <Stage
       index={10}
       title="magnetic letters"
-      blurb={`Each glyph leans toward a passing sprite by up to ${PULL_AMOUNT} px. Per-letter, not per-word.`}
+      blurb={`Each glyph leans toward a passing sprite by up to ${PULL_AMOUNT} px. Per-letter, not per-word — bigger than 4 px so the wake actually reads.`}
       delivered={count}
       onReset={() => {
         reset();
