@@ -12,7 +12,11 @@ export type Stage =
   | 'section-5'
   | 'section-5-resolved'
   | 'section-6'
-  | 'section-6-resolved';
+  | 'section-6-resolved'
+  | 'section-7'
+  | 'section-8'
+  | 'section-9'
+  | 'section-10';
 
 export type EngagementEvent =
   | 'cid-intro-tapped'
@@ -21,7 +25,8 @@ export type EngagementEvent =
   | 'bugenhagen-dwelled'
   | 'ramza-1-tapped'
   | 'ramza-2-tapped'
-  | 'ramza-3-tapped';
+  | 'ramza-3-tapped'
+  | 'cid-monologue-dwelled';
 
 type State = {
   stage: Stage;
@@ -44,6 +49,7 @@ const VIBRANCY_BUMPS: Partial<Record<EngagementEvent, { who: 'esper' | 'chocobo'
   'ramza-1-tapped': { who: 'esper', delta: 0.10 },
   'ramza-2-tapped': { who: 'esper', delta: 0.10 },
   'ramza-3-tapped': { who: 'esper', delta: 0.10 },
+  'cid-monologue-dwelled': { who: 'esper', delta: 0.15 },
 };
 
 const ESPER_INITIAL_VIBRANCY = 0.85;

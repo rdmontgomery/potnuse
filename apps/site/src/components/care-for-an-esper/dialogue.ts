@@ -81,3 +81,26 @@ export const CID_THUNDER_GOD = `There's a Cid in this one too. Old man. Best swo
 He saw what the Church was doing and joined the boy.
 
 The old ones can still see.`;
+
+// §8 — the recurring Cid breaks the fourth wall. Same gruff archetype,
+// softer beat at the close. The post's emotional peak.
+export const CID_BREAK_FOURTH_WALL = `Hey. Set the controls down a minute.
+
+I know I've been gruff. The engine work makes you that way.
+
+I want to tell you something before we land.
+
+The chocobo. The esper. The tending you've been doing or not doing through this whole thing. None of it was for me. None of it was for them.
+
+It was for the version of you that walks off the post when this is over.
+
+The brushwork makes the brusher. You knew that. I just wanted to say it once with my own mouth.
+
+Two more sections. Stay close.`;
+
+// §10 — final Cid. Quiet. The walkthrough's outro.
+export const CID_FINAL = `Alright. We're here.
+
+Go on. Get out. Look around.
+
+I'll be in the next one.`;

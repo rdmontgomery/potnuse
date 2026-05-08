@@ -6,12 +6,15 @@ import { Chocobo } from './Chocobo';
 import { Bugenhagen } from './Bugenhagen';
 import { EsperCameo } from './EsperCameo';
 import { RamzaBeat } from './RamzaBeat';
+import { CidMonologue } from './CidMonologue';
+import { CodaChocobo, CodaEsper } from './CodaCameo';
 import { AtbGauge } from './AtbGauge';
 import { Masthead } from './Masthead';
 import { Toc } from './Toc';
 import { SectionHeader, SceneBreak } from './SectionHeader';
 import {
   CID_DEL_NORTE_MARQUEZ,
+  CID_FINAL,
   CID_PARAPHRASE_DISCLAIMER,
   CID_THUNDER_GOD,
   CID_WOOD_STOVE,
@@ -59,6 +62,9 @@ export default function App() {
   const section4SentinelRef = useRef<HTMLDivElement>(null);
   const section5SentinelRef = useRef<HTMLDivElement>(null);
   const section6SentinelRef = useRef<HTMLDivElement>(null);
+  const section7SentinelRef = useRef<HTMLDivElement>(null);
+  const section8SentinelRef = useRef<HTMLDivElement>(null);
+  const section9SentinelRef = useRef<HTMLDivElement>(null);
 
   // Cold-open scroll gate — §1 reveals after the user has scrolled past
   // the entire cold-open passage. The pusher below the cold-open
@@ -122,6 +128,14 @@ export default function App() {
     }
   }, [stage, advance]);
 
+  // §6 closes with the dimmed-with-chocobo cameo — let it land before §7.
+  useEffect(() => {
+    if (stage === 'section-6-resolved') {
+      const t = setTimeout(() => advance('section-7'), 800);
+      return () => clearTimeout(t);
+    }
+  }, [stage, advance]);
+
   // Section advance via sentinel — each subsequent section's bottom
   // edge crossing upward bumps the gauge and moves the stage forward.
   useEffect(() => {
@@ -130,6 +144,9 @@ export default function App() {
       { ref: section4SentinelRef, from: 'section-4', to: 'section-5', atb: 0.06 },
       { ref: section5SentinelRef, from: 'section-5', to: 'section-5-resolved', atb: 0.06 },
       { ref: section6SentinelRef, from: 'section-6', to: 'section-6-resolved', atb: 0.06 },
+      { ref: section7SentinelRef, from: 'section-7', to: 'section-8', atb: 0.07 },
+      { ref: section8SentinelRef, from: 'section-8', to: 'section-9', atb: 0.07 },
+      { ref: section9SentinelRef, from: 'section-9', to: 'section-10', atb: 0.07 },
     ];
     const observers = targets
       .filter((t) => stage === t.from && t.ref.current)
@@ -176,6 +193,10 @@ export default function App() {
   const showSection4 = reached(stage, 'section-3'); // §4 reveals together with §3
   const showSection5 = reached(stage, 'section-3');
   const showSection6 = reached(stage, 'section-6');
+  const showSection7 = reached(stage, 'section-7');
+  const showSection8 = reached(stage, 'section-7');
+  const showSection9 = reached(stage, 'section-7');
+  const showSection10 = reached(stage, 'section-10');
   const showAtb = reached(stage, 'section-1');
 
   return (
@@ -802,10 +823,391 @@ export default function App() {
           </section>
         )}
 
+        {showSection7 && (
+          <section className="cfe-section cfe-section-quiet">
+            <SceneBreak />
+            <SectionHeader ordinal="VII" title="Cortázar's Watch" />
+            <div className="cfe-body cfe-body-dense">
+              <p>
+                The Final Fantasy chambers are four behind you. The post is
+                going to leave them.
+              </p>
+              <p>
+                Cortázar wrote a small piece called <em>Preamble to the
+                Instructions on How to Wind a Watch.</em> When someone gives
+                you a watch, they have not given you a watch. They have
+                given you a chain of obligation, a small machine of hours,
+                an artifact that will require you every day for the rest of
+                your life. You will wind it. You will sleep beside it. You
+                will hand it down to your son. You did not get a watch. The
+                watch got you.
+              </p>
+              <p>This is Borgmann's horse seen from the other side of the room.</p>
+              <p>
+                Same maintenance loop. Same human bent over the artifact,
+                attending to it, returning to it daily. Same pattern of
+                demand-and-tending the focal-thing argument celebrates. But
+                Cortázar is reporting from inside the loop, and what he
+                reports is different. The horse looks at you with a liquid
+                eye and the question of where you want to be has been
+                answered. The watch ticks on your wrist and the question
+                is being asked, every minute, with the answer no longer
+                available because you have spent your minutes maintaining
+                the watch.
+              </p>
+              <p>
+                Cortázar sharpens the picture in <em>Hopscotch.</em> The
+                protagonist, Horacio Oliveira, sits in a Paris flat where
+                the world keeps offering him the same things each morning —
+                the partner, the watch, the novel reopening at the same
+                fold in the curve of his glasses. The pattern accepts
+                itself. The cloud, he writes, "cunningly accepts its name
+                as cloud." Hope compresses into a small primate that
+                shivers on a tabletop. Cortázar's instruction to Horacio —
+                and to the reader who feels Horacio's predicament in his
+                own bones — is: break the primate's head. Push outward
+                from the center of the room. Open a passage to the street
+                the pattern has never let you see.
+              </p>
+              <p>
+                Cortázar is not describing a way to live. He is describing
+                a way to die slowly, and warning us against it.
+              </p>
+              <p>This is the failure mode Borgmann does not address.</p>
+              <p>
+                Focal practice has its own pathology. When the brushwork
+                becomes routine — when the daily winding becomes habit,
+                when the daily tending of the horse becomes the indistinct
+                fact of mornings — the brusher is still being made by the
+                brushwork. But what is being made is the primate. The
+                maintenance has not stopped. The relation has gone. What
+                remains is the chain of obligation.
+              </p>
+              <p>
+                What saves the maintainer from the primate is what
+                Cortázar calls the moth — the small irruption on the
+                pencil's edge, the unscheduled encounter, the thing that
+                wakes you to the artifact again as if you had not seen
+                it. Borgmann's focal practice depends on this without
+                saying so. The horse is focal because the horse is alive
+                and surprises you. The hearth is focal because the fire
+                moves. The watch is harder, because the watch is exactly
+                what does not surprise. The watch was Cortázar's example
+                for a reason.
+              </p>
+              <p>
+                The Magitek Knight, by the way, is not Horacio. The
+                Magitek Knight is not maintaining anything — the armor
+                maintains itself, the slave crown maintains the rider, no
+                relation exists. Horacio's failure is not the absence of
+                focal practice. It is focal practice that has lost its
+                moth: the engineer who has polished the same airship for
+                forty years and stopped seeing it, the priest who has lit
+                the same candle for forty years and forgotten what the
+                candle was for, the watch-winder who has wound the watch
+                for forty years and become its instrument. Cortázar does
+                not absolve any of them. He is shouting at them through
+                the glass.
+              </p>
+              <p>
+                Section 8 will return to Cid. Notice, when we get there,
+                that the recurring Cid has never been the same Cid twice.
+                Each game gives him a new airship to invent, a new
+                emergency, a new young pilot to take under his wing. He
+                recurs at the level of archetype, never at the level of
+                his own routine. The games keep giving him moths.
+              </p>
+              <p className="cfe-quiet-beat">
+                <em>
+                  the post is quiet here. the sprite layer has withdrawn.
+                  the chocobo has wandered off-screen. the esper is somewhere
+                  else.
+                </em>
+              </p>
+              <div
+                ref={section7SentinelRef}
+                className="cfe-sentinel"
+                aria-hidden="true"
+              />
+            </div>
+          </section>
+        )}
+
+        {showSection8 && (
+          <section className="cfe-section">
+            <SceneBreak />
+            <SectionHeader ordinal="VIII" title="Cid" />
+            <div className="cfe-body">
+              <p>Every Final Fantasy has a Cid.</p>
+              <p>
+                Cid Del Norte Marquez built the Magitek armor that powered
+                the Empire, and recoiled when he found out what they had
+                done with his work. Cid Highwind kept rocket parts in his
+                backyard, smoked while he built them, named his airship
+                and yelled at it like a father yelling at a son he could
+                not love any other way. Cidolfus Orlandeau, the Thunder
+                God, was the strongest swordsman in Ivalice and joined a
+                teenager named Ramza when he saw what the Church was
+                doing with the Stones. Cid Pollendina led the Al Bhed, a
+                people who refused Yevon's prohibition on machina and
+                kept building airships in the desert because someone had
+                to remember how.
+              </p>
+              <p>
+                These are the four we walked through. There are more. Cid
+                Pollendina the elder hammered the airships of Baron
+                together by hand, and lived through more deaths than the
+                writers thought he should. Cid Previa abandoned his
+                weapons program in 1992 and went looking for his
+                grandson. Regent Cid Fabool of Lindblum built airships
+                for sport and statecraft and once spent half a game
+                cursed into the body of an oglop. Cid Garlond founded
+                Garlond Ironworks and has been hauling parts across an
+                MMO for over a decade. Cid Sophiar fixes the black car at
+                a desert garage in FFXV with his granddaughter Cindy
+                learning the trade beside him. In FFXVI the name itself
+                is the inheritance — a man called Cid dies, and his
+                apprentice takes the name as a vow.
+              </p>
+              <p>
+                The pattern is forty years deep and has failed once.
+                Doctor Cid Bunansa, in FFXII, let his maintenance project
+                consume him. He stopped tending the artifacts and started
+                serving them. He became their instrument. He became
+                Horacio with a physicist's vocabulary, and the game made
+                him a villain and killed him for it. The exception proves
+                the rule. Square knows what Cid becomes if he stops
+                getting moths. Most of the time, they remember.
+              </p>
+              <p>
+                He has never been the same Cid twice. He has been
+                scientist, pilot, knight, regent, chieftain, mechanic,
+                outlaw. He has worked on Magitek, rockets, sword arts,
+                airship engines, mist engines, branded magic, the cars of
+                a road movie. He has fought empires, corporations,
+                churches, theocracies, gods. The thing that has held
+                constant is structural: he is the figure who keeps
+                relation to the artifact in a world that has organized
+                itself around the artifact's apparatus.
+              </p>
+              <p>
+                That structural position has a name now, after seven
+                sections of working it out. Cid is the maintainer who
+                never becomes Horacio.
+              </p>
+              <p>
+                Look at the medium. Each Final Fantasy resets Cid to a
+                new airship he has never built, a new emergency he has
+                never seen, a new young protagonist he has never
+                mentored. The repetition that would make him Horacio —
+                same Cid, same routine, same airship for forty years — is
+                structurally impossible. The form requires a new moth
+                every game. Square has been giving him moths since the
+                8-bit era. He has been kept alive at the archetypal
+                level by the medium's refusal to let any single Cid
+                finish his story. Every Cid passes the airship to the
+                next Cid. The maintenance survives because the
+                maintainers do not.
+              </p>
+              <p>This is what institutional focal practice looks like.</p>
+              <p>
+                Stewart Brand has been arguing for it in non-fictional
+                register for sixty years. Whole Earth Catalog was a Cid
+                object — a manual for people who maintain.{' '}
+                <em>How Buildings Learn</em> is the Cid argument applied
+                to architecture: buildings are not commodities you finish
+                and ship; they are airships in slow motion, demanding
+                tending across generations, growing pace layers as the
+                maintainers cycle through. Long Now is the same argument
+                scaled to civilizational time. The 10,000-year clock in
+                the Texas mountain is an artifact engineered to require a
+                new maintainer every generation, forever, with the
+                maintenance-relation passing down a chain that no single
+                Horacio can ossify because no single Horacio gets to live
+                ten thousand years.
+              </p>
+              <p>
+                Brand is the real-world Cid. Borgmann gave us the theory.
+                Cortázar gave us the warning. Brand is the engineer who
+                has been building the machine that lets the theory
+                survive the warning — the institution that requires its
+                maintainers to cycle, that hands the airship to a new
+                generation before the old one has time to forget the
+                moth.
+              </p>
+              <p>This is the answer the post has been walking toward.</p>
+              <p>Cid steps forward.</p>
+              <CidMonologue />
+              <p className="cfe-quiet-beat">
+                <em>the chocobo is still here. the esper is still here.</em>
+              </p>
+              <div
+                ref={section8SentinelRef}
+                className="cfe-sentinel"
+                aria-hidden="true"
+              />
+            </div>
+          </section>
+        )}
+
+        {showSection9 && (
+          <section className="cfe-section">
+            <SceneBreak />
+            <SectionHeader ordinal="IX" title="The Engineer's Position" />
+            <div className="cfe-body">
+              <p>
+                There is an alternative to the argument the post has just
+                spent eight sections building. It is honorable, it is held
+                by serious people, and the post has been pushing past it
+                without naming it directly. Now is the moment to name it.
+              </p>
+              <p>
+                The alternative is the engineer's position. The most
+                articulate version of it is Stuart Russell's{' '}
+                <em>Human Compatible</em> — an argument that the alignment
+                problem is solvable if we design AI systems with three
+                structural commitments: the AI exists to satisfy human
+                preferences, it is initially uncertain what those
+                preferences are, and it learns about them by attending to
+                human behavior. Russell calls this the assistance game.
+                It is an attempt to engineer, into the artifact's design,
+                something structurally homologous to care. The AI defers.
+                The AI listens. The AI is constituted as a being whose
+                function is the realization of someone else's good.
+              </p>
+              <p>
+                This is a beautiful argument. It is the most serious
+                technical attempt anyone has made at putting the liquid
+                eye into the silicon. Russell is not a fool, and he is
+                not engaged in metaphysical hand-waving. He is bracketing
+                the question of whether the AI is conscious and asking
+                what design choices make the artifact behave as if it
+                were attending to us.
+              </p>
+              <p>
+                The bracketing is the move the post has been refusing for
+                eight sections.
+              </p>
+              <p>
+                Borgmann's argument is not that we cannot design
+                artifacts that approximate care. It is that the moral
+                substance of the relation is not located in the artifact.
+                It is located in the practice. The horse is focal because
+                of what brushing the horse does to the brusher — what
+                kind of person you become through the years of brushwork.
+                The hearth is focal because of what tending the fire does
+                to the tender. The watch is focal — when it is focal —
+                because of what winding it does to the winder. Russell's
+                AI can be perfectly designed and the user can still treat
+                it as a device. The artifact's structure does not
+                determine the practice's structure. The user is the
+                variable.
+              </p>
+              <p>
+                The Magitek Knight had armor that was, in its way, an
+                engineering triumph. Square's writers gave us an artifact
+                designed to extend its operator's capacities almost
+                limitlessly. The problem was never the artifact. The
+                problem was the civilization that organized itself around
+                making the artifact and around being the people who used
+                it. Russell's frame can give us better artifacts. It
+                cannot give us the civilization that maintains them with
+                relation rather than apparatus.
+              </p>
+              <p>
+                Brand has been arguing this for sixty years in a
+                different idiom. Borgmann has been arguing it since 1992.
+                Square Enix has been animating it for forty. The post
+                has been arguing it for nine sections.
+              </p>
+              <p>
+                Cid is the answer because Cid is the figure who tends.
+                His airship is not a more carefully designed machine. It
+                is the same machine he has always built. What is
+                different about Cid is what <em>he</em> does at the
+                workbench every morning, with his hands, with his
+                attention, with his mortal time. Russell engineers the
+                airship. Cid is what makes the airship matter.
+              </p>
+              <p>
+                The argument is not against Russell. It is around him.
+                He is solving an important problem. He is solving it on
+                the wrong side of the relation. The interesting question
+                — the question this post has been asking — is on the
+                other side, where the brushwork lives.
+              </p>
+              <div
+                ref={section9SentinelRef}
+                className="cfe-sentinel"
+                aria-hidden="true"
+              />
+            </div>
+          </section>
+        )}
+
+        {showSection10 && (
+          <section className="cfe-section cfe-section-coda">
+            <SceneBreak />
+            <SectionHeader ordinal="X" title="Coda" />
+            <div className="cfe-body">
+              <p>
+                The horse stamps in the snow. The handler's hands are
+                sore from the brushing. The cold has gotten into the
+                seams of his coat. He has fed the horse and watered the
+                horse and cleaned the stall. He is going to do it again
+                tomorrow. Tomorrow morning is a long way off. The horse
+                looks up.
+              </p>
+              <p>What did Borgmann say happens next.</p>
+              <p>
+                The question of where you want to be and what you want
+                to do has been answered. Not by the gaze. The gaze is a
+                small fact at the end of the day. The answer is what
+                came before the gaze — the brushing, the feeding, the
+                cleaning, the years. The years made a man who was
+                capable of standing in a stall in the cold and
+                recognizing what was looking at him. The years were the
+                answer. The eye was the receipt.
+              </p>
+              <p>
+                This was the post's argument. The Final Fantasy chambers
+                were the long working-out. The Cortázar interlude was the
+                warning. The Cid section was the answer. The Russell
+                section was the foil. The horse passage we opened with —
+                the man with the sore hands, the liquid eye — was the
+                entire argument compressed into one paragraph that you
+                read before the post said anything else.
+              </p>
+              <p>
+                We are going to leave you with two things and then leave.
+              </p>
+
+              <p className="cfe-coda-line">
+                <em>
+                  the chocobo is here. she is lighter or heavier than
+                  she was, depending on what you fed her.
+                </em>
+              </p>
+              <CodaChocobo />
+
+              <p className="cfe-coda-line">
+                <em>
+                  the esper is here. her color is what you made it.
+                </em>
+              </p>
+              <CodaEsper />
+
+              <p>The form is not going to tell you which. You know.</p>
+
+              <DialogueBox label="CID" body={CID_FINAL} maxCols={48} />
+            </div>
+          </section>
+        )}
+
         <footer className="cfe-footer">
           <p className="cfe-demo-note">
             <em>
-              [ end of v3 demo. cold open through §6. four sections to go. ]
+              [ end of walkthrough. ]
             </em>
           </p>
         </footer>
