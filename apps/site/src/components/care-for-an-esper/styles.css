@@ -27,39 +27,6 @@
   background-size: 3px 3px;
 }
 
-/* Sticky ATB rail. */
-.cfe-atb-rail {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--cfe-bg);
-  border-bottom: 1px solid var(--cfe-rule);
-  padding: 0.5rem 1rem;
-}
-.cfe-atb {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-  font-size: 0.78rem;
-  letter-spacing: 0.05em;
-  color: var(--cfe-ink-dim);
-  max-width: 78ch;
-  margin: 0 auto;
-}
-.cfe-atb-label {
-  font-weight: 700;
-  color: var(--cfe-ink);
-}
-.cfe-atb-bar {
-  font-family: inherit;
-  letter-spacing: -0.02em;
-  color: var(--cfe-accent);
-  white-space: pre;
-  overflow: hidden;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 /* Page width — left-aligned column like a printed FAQ.
    76 chars at body font feels right for prose; the masthead pre overflows
    horizontally only on extreme-narrow viewports. */
@@ -184,43 +151,14 @@
   color: var(--cfe-ink-dim);
 }
 
-.cfe-sentinel {
-  height: 1px;
-  margin-top: 1.5rem;
-}
-
-/* Holds the page taller than the viewport so the gate gesture is always
-   possible — even when the cold-open placeholder is just a few lines.
-   Removed from the DOM when §1 reveals. */
-.cfe-cold-open-pusher {
-  min-height: 100vh;
-}
-
-/* Visual weight for the cold-open while we're still using a placeholder
-   for the Borgmann passage. The actual passage will have its own bulk. */
-.cfe-cold-open-body {
-  min-height: 30vh;
-}
-
-/* Fixed at the bottom of the viewport while the gate is closed so the
-   reader sees a clear affordance regardless of scroll position. */
-.cfe-gate-hint {
-  position: fixed;
-  bottom: 1.2rem;
-  left: 0;
-  right: 0;
-  margin: 0;
-  text-align: center;
-  font-size: 0.75rem;
+/* Cold-open citation line beneath the Borgmann epigraph. */
+.cfe-epigraph-cite {
+  display: block;
+  margin-top: 1.2em;
+  font-size: 0.82em;
   color: var(--cfe-ink-muted);
-  letter-spacing: 0.4em;
-  animation: cfe-bob 2.4s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 8;
-}
-@keyframes cfe-bob {
-  0%, 100% { transform: translateY(0); opacity: 0.55; }
-  50%      { transform: translateY(4px); opacity: 1; }
+  font-style: normal;
+  letter-spacing: 0;
 }
 
 /* Section reveal — gentle fade. */
@@ -288,20 +226,6 @@
   margin: 2.4em auto 1em;
 }
 
-/* ─────────── §6 Ramza beats ─────────── */
-
-.cfe-ramza-beat {
-  margin: 1.6em 0 0.5em;
-  transition: opacity 0.6s ease;
-}
-.cfe-ramza-beat.is-tapped {
-  /* Settled tone after the tap — readable but no longer the active beat. */
-  opacity: 0.78;
-}
-.cfe-ramza-beat .cfe-action-row {
-  margin: 0.4em 0 0.2em;
-}
-
 /* ─────────── §5 silent beat ─────────── */
 
 .cfe-quiet-beat {
@@ -322,81 +246,4 @@
   white-space: pre;
   color: var(--cfe-ink);
   letter-spacing: 0;
-}
-
-/* ─────────── Bracketed inline actions ─────────── */
-/*
-   Designed to read as bracketed text in the prose, but the whole bracket
-   is the tap target. min-height/min-width hit the 44×44 minimum.
-*/
-.cfe-action-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1rem;
-  margin: 0.8em 0 0.4em;
-}
-
-.cfe-bracket {
-  font: inherit;
-  font-size: clamp(0.82rem, 2.6vw, 0.92rem);
-  line-height: 1.3;
-  background: transparent;
-  border: 0;
-  padding: 0.55em 0.6em;
-  margin: 0;
-  color: var(--cfe-ink);
-  cursor: pointer;
-  white-space: pre;
-  letter-spacing: 0;
-  min-height: 44px;
-  min-width: 44px;
-  text-align: left;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-  border-radius: 0;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-.cfe-bracket:hover:not(:disabled),
-.cfe-bracket:focus-visible:not(:disabled) {
-  background: var(--cfe-ink);
-  color: var(--cfe-bg);
-  outline: none;
-}
-.cfe-bracket:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.cfe-bracket-feed.is-holding {
-  background: rgba(217, 148, 33, 0.18);
-  color: var(--cfe-accent);
-}
-.cfe-bracket-feed.is-done {
-  color: var(--cfe-chocobo-warm);
-  opacity: 1;
-}
-
-.cfe-action-hint {
-  font-size: clamp(0.72rem, 2.3vw, 0.82rem);
-  color: var(--cfe-ink-muted);
-  margin: 0.2em 0 0;
-  letter-spacing: 0;
-  white-space: pre-wrap;
-  min-height: 1.2em;
-  font-style: italic;
-}
-
-/* ─────────── Footer ─────────── */
-
-.cfe-footer {
-  margin-top: 5rem;
-  border-top: 1px solid var(--cfe-rule);
-  padding-top: 1.2rem;
-}
-.cfe-demo-note {
-  font-size: clamp(0.72rem, 2.3vw, 0.85rem);
-  color: var(--cfe-ink-muted);
-  text-align: left;
-  margin: 0;
 }

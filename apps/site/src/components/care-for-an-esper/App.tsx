@@ -1,20 +1,16 @@
-import { useEffect, useRef } from 'react';
-import { useEsperStore, type Stage } from './state';
 import { DialogueBox } from './DialogueBox';
-import { CidIntro } from './CidIntro';
 import { Chocobo } from './Chocobo';
-import { Bugenhagen } from './Bugenhagen';
 import { EsperCameo } from './EsperCameo';
-import { RamzaBeat } from './RamzaBeat';
-import { CidMonologue } from './CidMonologue';
 import { CodaChocobo, CodaEsper } from './CodaCameo';
-import { AtbGauge } from './AtbGauge';
 import { Masthead } from './Masthead';
 import { Toc } from './Toc';
 import { SectionHeader, SceneBreak } from './SectionHeader';
 import {
+  BUGENHAGEN,
+  CID_BREAK_FOURTH_WALL,
   CID_DEL_NORTE_MARQUEZ,
   CID_FINAL,
+  CID_INTRO,
   CID_PARAPHRASE_DISCLAIMER,
   CID_THUNDER_GOD,
   CID_WOOD_STOVE,
@@ -26,187 +22,9 @@ import {
 } from './dialogue';
 import './styles.css';
 
-const STAGE_ORDER: Stage[] = [
-  'cold-open',
-  'section-1',
-  'section-1-cid-shown',
-  'section-2',
-  'section-2-fed-prompt',
-  'section-2-resolved',
-  'section-3',
-  'section-4',
-  'section-5',
-  'section-5-resolved',
-];
-
-function reached(current: Stage, target: Stage): boolean {
-  return STAGE_ORDER.indexOf(current) >= STAGE_ORDER.indexOf(target);
-}
-
-// Passive decay rate for esper vibrancy: applied per second the esper has
-// been on stage. Tuned so a reader who scrolls through §3–§5 in ~3 minutes
-// without any engagement loses roughly 0.15. Engagement bumps offset it.
-const ESPER_DECAY_PER_SECOND = 0.0008;
-
 export default function App() {
-  const stage = useEsperStore((s) => s.stage);
-  const advance = useEsperStore((s) => s.advance);
-  const bumpAtb = useEsperStore((s) => s.bumpAtb);
-  const introduceEsper = useEsperStore((s) => s.introduceEsper);
-  const decayEsper = useEsperStore((s) => s.decayEsper);
-  const esperIntroduced = useEsperStore((s) => s.esperIntroduced);
-
-  const pusherRef = useRef<HTMLDivElement>(null);
-  const section1Ref = useRef<HTMLElement>(null);
-  const section3SentinelRef = useRef<HTMLDivElement>(null);
-  const section4SentinelRef = useRef<HTMLDivElement>(null);
-  const section5SentinelRef = useRef<HTMLDivElement>(null);
-  const section6SentinelRef = useRef<HTMLDivElement>(null);
-  const section7SentinelRef = useRef<HTMLDivElement>(null);
-  const section8SentinelRef = useRef<HTMLDivElement>(null);
-  const section9SentinelRef = useRef<HTMLDivElement>(null);
-
-  // Cold-open scroll gate — §1 reveals after the user has scrolled past
-  // the entire cold-open passage. The pusher below the cold-open
-  // guarantees the page is taller than the viewport. The negative
-  // bottom rootMargin shrinks the observer root to a 1px line at the
-  // top of the viewport, so the pusher 'intersects' that line only when
-  // its top edge has reached viewport top — i.e., when the user has
-  // scrolled exactly past the cold-open. After the gate fires we
-  // smooth-scroll to §1's header so the reader lands at its start.
-  useEffect(() => {
-    if (stage !== 'cold-open') return;
-    const el = pusherRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            advance('section-1');
-            bumpAtb(0.05);
-            obs.disconnect();
-            requestAnimationFrame(() => {
-              section1Ref.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start',
-              });
-            });
-          }
-        }
-      },
-      { threshold: 0, rootMargin: '0px 0px -100% 0px' },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [stage, advance, bumpAtb]);
-
-  // Cid intro tap → reveal Section 2.
-  useEffect(() => {
-    if (stage === 'section-1-cid-shown') {
-      const t = setTimeout(() => advance('section-2'), 400);
-      return () => clearTimeout(t);
-    }
-  }, [stage, advance]);
-
-  // Chocobo fed/skipped → introduce esper, advance to §3.
-  useEffect(() => {
-    if (stage === 'section-2-resolved') {
-      const t = setTimeout(() => {
-        introduceEsper();
-        advance('section-3');
-        bumpAtb(0.05);
-      }, 700);
-      return () => clearTimeout(t);
-    }
-  }, [stage, advance, introduceEsper, bumpAtb]);
-
-  // §5's silent beat lingers briefly, then §6 reveals.
-  useEffect(() => {
-    if (stage === 'section-5-resolved') {
-      const t = setTimeout(() => advance('section-6'), 700);
-      return () => clearTimeout(t);
-    }
-  }, [stage, advance]);
-
-  // §6 closes with the dimmed-with-chocobo cameo — let it land before §7.
-  useEffect(() => {
-    if (stage === 'section-6-resolved') {
-      const t = setTimeout(() => advance('section-7'), 800);
-      return () => clearTimeout(t);
-    }
-  }, [stage, advance]);
-
-  // Section advance via sentinel — each subsequent section's bottom
-  // edge crossing upward bumps the gauge and moves the stage forward.
-  useEffect(() => {
-    const targets: Array<{ ref: typeof pusherRef; from: Stage; to: Stage; atb: number }> = [
-      { ref: section3SentinelRef, from: 'section-3', to: 'section-4', atb: 0.06 },
-      { ref: section4SentinelRef, from: 'section-4', to: 'section-5', atb: 0.06 },
-      { ref: section5SentinelRef, from: 'section-5', to: 'section-5-resolved', atb: 0.06 },
-      { ref: section6SentinelRef, from: 'section-6', to: 'section-6-resolved', atb: 0.06 },
-      { ref: section7SentinelRef, from: 'section-7', to: 'section-8', atb: 0.07 },
-      { ref: section8SentinelRef, from: 'section-8', to: 'section-9', atb: 0.07 },
-      { ref: section9SentinelRef, from: 'section-9', to: 'section-10', atb: 0.07 },
-    ];
-    const observers = targets
-      .filter((t) => stage === t.from && t.ref.current)
-      .map((t) => {
-        const obs = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
-                advance(t.to);
-                bumpAtb(t.atb);
-                obs.disconnect();
-              }
-            }
-          },
-          { threshold: 0 },
-        );
-        obs.observe(t.ref.current!);
-        return obs;
-      });
-    return () => observers.forEach((o) => o.disconnect());
-  }, [stage, advance, bumpAtb]);
-
-  // Passive esper decay — runs while the esper is on stage. Pauses when
-  // the tab is hidden so leaving the page open doesn't kill her.
-  useEffect(() => {
-    if (!esperIntroduced) return;
-    let last = performance.now();
-    const id = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') {
-        last = performance.now();
-        return;
-      }
-      const now = performance.now();
-      const dt = (now - last) / 1000;
-      last = now;
-      decayEsper(dt * ESPER_DECAY_PER_SECOND);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [esperIntroduced, decayEsper]);
-
-  const showSection1 = reached(stage, 'section-1');
-  const showSection2 = reached(stage, 'section-2');
-  const showSection3 = reached(stage, 'section-3');
-  const showSection4 = reached(stage, 'section-3'); // §4 reveals together with §3
-  const showSection5 = reached(stage, 'section-3');
-  const showSection6 = reached(stage, 'section-6');
-  const showSection7 = reached(stage, 'section-7');
-  const showSection8 = reached(stage, 'section-7');
-  const showSection9 = reached(stage, 'section-7');
-  const showSection10 = reached(stage, 'section-10');
-  const showAtb = reached(stage, 'section-1');
-
   return (
     <div className="cfe-root">
-      {showAtb && (
-        <div className="cfe-atb-rail">
-          <AtbGauge />
-        </div>
-      )}
-
       <article className="cfe-article">
         <Masthead />
         <Toc />
@@ -216,41 +34,28 @@ export default function App() {
           <div className="cfe-body cfe-cold-open-body">
             <blockquote className="cfe-epigraph">
               <p>
-                <em>
-                  [ borgmann horse passage — Crossing the Postmodern Divide,
-                  U. Chicago, 1992. The passage opens with the gentleness of
-                  the well-bred horse, moves through the burdens of feeding
-                  and worming and shoeing, and lands on the nicker, the
-                  nuzzle, and the large and liquid eye that answers the
-                  question of where you want to be and what you want to do. ]
-                </em>
+                You cannot remain unmoved by the gentleness and conformation
+                of well-bred and well-trained horse — more than a thousand
+                pounds of big-boned, well-muscled animal, slick of coat and
+                sweet of smell, obedient and mannerly, and yet forever a
+                menace with its innocent power and ineradicable inclination
+                to seek refuge in flight, and always a burden with its need
+                to be fed, wormed and shod, and its liability to cuts and
+                infections, to laming and heaves. But when it greets you
+                with a nicker, nuzzles your chest, and regards you with a
+                large and liquid eye, the question of where you want to be
+                and what you want to do has been answered.
               </p>
-              <p>
-                <em>
-                  Sit with the passage in full before continuing. The post's
-                  argument depends on it.
-                </em>
-              </p>
+              <footer className="cfe-epigraph-cite">
+                — Albert Borgmann, <em>Crossing the Postmodern Divide</em>,
+                University of Chicago Press, 1992.
+              </footer>
             </blockquote>
           </div>
         </section>
 
-        {!showSection1 && (
-          <>
-            <div
-              ref={pusherRef}
-              className="cfe-cold-open-pusher"
-              aria-hidden="true"
-            />
-            <p className="cfe-gate-hint" aria-hidden="true">
-              ↓ scroll
-            </p>
-          </>
-        )}
-
-        {showSection1 && (
-          <section ref={section1Ref} className="cfe-section">
-            <SectionHeader ordinal="I" title="The Liquid Eye" />
+        <section className="cfe-section">
+          <SectionHeader ordinal="I" title="The Liquid Eye" />
             <div className="cfe-body">
               <p>
                 Stewart Brand reached for that passage on Ezra Klein recently
@@ -308,12 +113,10 @@ export default function App() {
                 lands on. Better to introduce him at the door than smuggle
                 him in at the end.
               </p>
-              <CidIntro />
+              <DialogueBox label="CID" body={CID_INTRO} />
             </div>
           </section>
-        )}
 
-        {showSection2 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader ordinal="II" title="The Device Paradigm" />
@@ -380,17 +183,13 @@ export default function App() {
                 cleanest version.
               </p>
               <p>
-                But before we go — the chocobo at the edge of the screen
-                has not eaten today. You don't have to feed her to
-                continue. You can scroll past. Most readers will. The post
-                will not stop you.
+                But before we go — there is a chocobo at the edge of the
+                screen. She is not asking anything of you. She is here.
               </p>
               <Chocobo />
             </div>
           </section>
-        )}
 
-        {showSection3 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader
@@ -474,20 +273,12 @@ export default function App() {
                 a self around it.
               </p>
               <p>
-                The chocobo at the edge of the screen is still hungry, by
-                the way. So is the esper now watching from the corner.
+                Watch the corner. An esper has appeared.
               </p>
               <EsperCameo variant="intro" />
-              <div
-                ref={section3SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection4 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader
@@ -536,7 +327,7 @@ export default function App() {
                 fanfare, the most accurate gloss on focal-substrate
                 ontology in 1990s media:
               </p>
-              <Bugenhagen />
+              <DialogueBox label="BUGENHAGEN" body={BUGENHAGEN} />
               <p>
                 The Lifestream is what every focal practice ever performed
                 eventually deposits back into the world's substrate.
@@ -596,16 +387,9 @@ export default function App() {
                 absorb. They wake up. They walk toward the reactors.
               </p>
               <EsperCameo variant="fading" />
-              <div
-                ref={section4SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection5 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader
@@ -674,16 +458,9 @@ export default function App() {
               <p className="cfe-quiet-beat">
                 <em>no chocobo. no esper. the screen is quiet for a beat.</em>
               </p>
-              <div
-                ref={section5SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection6 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader
@@ -726,7 +503,7 @@ export default function App() {
                 Ramza grew up believing was honorable is a chess piece in
                 a private campaign. He leaves.
               </p>
-              <RamzaBeat body={RAMZA_TIETRA} event="ramza-1-tapped" />
+              <DialogueBox label="RAMZA" body={RAMZA_TIETRA} />
               <p>
                 The second stone is the Church. The Knights Templar, the
                 Church's military arm, are using Auracite as weapons.
@@ -737,7 +514,7 @@ export default function App() {
                 engineers of the bloodshed they pray to end. He fights
                 them.
               </p>
-              <RamzaBeat body={RAMZA_WIEGRAF} event="ramza-2-tapped" />
+              <DialogueBox label="RAMZA" body={RAMZA_WIEGRAF} />
               <p>
                 The third stone is the saint. Saint Ajora — the messianic
                 figure the entire faith is built around, the man who
@@ -747,7 +524,7 @@ export default function App() {
                 There is no clean institution underneath the corrupt one.
                 The corruption is the institution, all the way down.
               </p>
-              <RamzaBeat body={RAMZA_AJORA} event="ramza-3-tapped" />
+              <DialogueBox label="RAMZA" body={RAMZA_AJORA} />
               <p>
                 This is the move FFT puts in front of you that the
                 previous three games did not. FFVI gave you an Empire to
@@ -814,16 +591,9 @@ export default function App() {
               </p>
               <p>The brushwork is what makes the brusher.</p>
               <EsperCameo variant="dimmed-with-chocobo" />
-              <div
-                ref={section6SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection7 && (
           <section className="cfe-section cfe-section-quiet">
             <SceneBreak />
             <SectionHeader ordinal="VII" title="Cortázar's Watch" />
@@ -924,16 +694,9 @@ export default function App() {
                   else.
                 </em>
               </p>
-              <div
-                ref={section7SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection8 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader ordinal="VIII" title="Cid" />
@@ -1037,20 +800,13 @@ export default function App() {
               </p>
               <p>This is the answer the post has been walking toward.</p>
               <p>Cid steps forward.</p>
-              <CidMonologue />
+              <DialogueBox label="CID" body={CID_BREAK_FOURTH_WALL} maxCols={64} />
               <p className="cfe-quiet-beat">
                 <em>the chocobo is still here. the esper is still here.</em>
               </p>
-              <div
-                ref={section8SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection9 && (
           <section className="cfe-section">
             <SceneBreak />
             <SectionHeader ordinal="IX" title="The Engineer's Position" />
@@ -1136,16 +892,9 @@ export default function App() {
                 — the question this post has been asking — is on the
                 other side, where the brushwork lives.
               </p>
-              <div
-                ref={section9SentinelRef}
-                className="cfe-sentinel"
-                aria-hidden="true"
-              />
             </div>
           </section>
-        )}
 
-        {showSection10 && (
           <section className="cfe-section cfe-section-coda">
             <SceneBreak />
             <SectionHeader ordinal="X" title="Coda" />
@@ -1183,34 +932,18 @@ export default function App() {
               </p>
 
               <p className="cfe-coda-line">
-                <em>
-                  the chocobo is here. she is lighter or heavier than
-                  she was, depending on what you fed her.
-                </em>
+                <em>the chocobo is here.</em>
               </p>
               <CodaChocobo />
 
               <p className="cfe-coda-line">
-                <em>
-                  the esper is here. her color is what you made it.
-                </em>
+                <em>the esper is here.</em>
               </p>
               <CodaEsper />
-
-              <p>The form is not going to tell you which. You know.</p>
 
               <DialogueBox label="CID" body={CID_FINAL} maxCols={48} />
             </div>
           </section>
-        )}
-
-        <footer className="cfe-footer">
-          <p className="cfe-demo-note">
-            <em>
-              [ end of walkthrough. ]
-            </em>
-          </p>
-        </footer>
       </article>
     </div>
   );
