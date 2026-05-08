@@ -49,3 +49,35 @@ The Mako reactors do not wait for it to return.`;
 export const YUNA = `I will defeat Sin.
 
 I knew, when I left, that I would not return. I did not know it was a lie either way.`;
+
+// FFT — Ramza's three disillusionments. Each ends with a tap-to-continue
+// affordance rendered separately by RamzaBeat; the body strings here are
+// just the dialogue.
+
+export const RAMZA_TIETRA = `Tietra is dead.
+
+She was raised in our house. Slept down the hall from me. My brother knew where she was kept. He gave the order anyway.
+
+I do not know my family's name anymore.`;
+
+export const RAMZA_WIEGRAF = `Wiegraf wanted what we wanted — a country that does not eat its poor.
+
+The Church gave him a stone. The stone hollowed him out. By the time I drew on him, the man was gone. Only the Lucavi answered.
+
+The hymns I was taught to sing were the bait.`;
+
+export const RAMZA_AJORA = `Ajora. The saint himself.
+
+The story I was raised on. The reason for the calendar. The hymn we sang at table.
+
+It was lies. All of it. Lies on lies on lies.
+
+And still — Agrias is wounded. There are people in front of me who need me. I will fight for them. That is what I have left.`;
+
+// FFT register — Cid Orlandeau, the Thunder God. Older Cid, fewer words,
+// the gravity of the vow at the end.
+export const CID_THUNDER_GOD = `There's a Cid in this one too. Old man. Best sword in Ivalice. Thunder God, they called him.
+
+He saw what the Church was doing and joined the boy.
+
+The old ones can still see.`;

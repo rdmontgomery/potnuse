@@ -250,6 +250,20 @@
   transition: color 1.4s ease, opacity 1.4s ease;
 }
 
+/* ─────────── §6 Ramza beats ─────────── */
+
+.cfe-ramza-beat {
+  margin: 1.6em 0 0.5em;
+  transition: opacity 0.6s ease;
+}
+.cfe-ramza-beat.is-tapped {
+  /* Settled tone after the tap — readable but no longer the active beat. */
+  opacity: 0.78;
+}
+.cfe-ramza-beat .cfe-action-row {
+  margin: 0.4em 0 0.2em;
+}
+
 /* ─────────── §5 silent beat ─────────── */
 
 .cfe-quiet-beat {

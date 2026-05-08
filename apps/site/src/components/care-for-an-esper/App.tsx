@@ -5,6 +5,7 @@ import { CidIntro } from './CidIntro';
 import { Chocobo } from './Chocobo';
 import { Bugenhagen } from './Bugenhagen';
 import { EsperCameo } from './EsperCameo';
+import { RamzaBeat } from './RamzaBeat';
 import { AtbGauge } from './AtbGauge';
 import { Masthead } from './Masthead';
 import { Toc } from './Toc';
@@ -12,7 +13,11 @@ import { SectionHeader, SceneBreak } from './SectionHeader';
 import {
   CID_DEL_NORTE_MARQUEZ,
   CID_PARAPHRASE_DISCLAIMER,
+  CID_THUNDER_GOD,
   CID_WOOD_STOVE,
+  RAMZA_AJORA,
+  RAMZA_TIETRA,
+  RAMZA_WIEGRAF,
   TERRA_MOBLIZ,
   YUNA,
 } from './dialogue';
@@ -53,6 +58,7 @@ export default function App() {
   const section3SentinelRef = useRef<HTMLDivElement>(null);
   const section4SentinelRef = useRef<HTMLDivElement>(null);
   const section5SentinelRef = useRef<HTMLDivElement>(null);
+  const section6SentinelRef = useRef<HTMLDivElement>(null);
 
   // Cold-open scroll gate — §1 reveals after the user has scrolled past
   // the entire cold-open passage. The pusher below the cold-open
@@ -108,6 +114,14 @@ export default function App() {
     }
   }, [stage, advance, introduceEsper, bumpAtb]);
 
+  // §5's silent beat lingers briefly, then §6 reveals.
+  useEffect(() => {
+    if (stage === 'section-5-resolved') {
+      const t = setTimeout(() => advance('section-6'), 700);
+      return () => clearTimeout(t);
+    }
+  }, [stage, advance]);
+
   // Section advance via sentinel — each subsequent section's bottom
   // edge crossing upward bumps the gauge and moves the stage forward.
   useEffect(() => {
@@ -115,6 +129,7 @@ export default function App() {
       { ref: section3SentinelRef, from: 'section-3', to: 'section-4', atb: 0.06 },
       { ref: section4SentinelRef, from: 'section-4', to: 'section-5', atb: 0.06 },
       { ref: section5SentinelRef, from: 'section-5', to: 'section-5-resolved', atb: 0.06 },
+      { ref: section6SentinelRef, from: 'section-6', to: 'section-6-resolved', atb: 0.06 },
     ];
     const observers = targets
       .filter((t) => stage === t.from && t.ref.current)
@@ -158,8 +173,9 @@ export default function App() {
   const showSection1 = reached(stage, 'section-1');
   const showSection2 = reached(stage, 'section-2');
   const showSection3 = reached(stage, 'section-3');
-  const showSection4 = reached(stage, 'section-3'); // §4 reveals together with §3 once we're past §2
+  const showSection4 = reached(stage, 'section-3'); // §4 reveals together with §3
   const showSection5 = reached(stage, 'section-3');
+  const showSection6 = reached(stage, 'section-6');
   const showAtb = reached(stage, 'section-1');
 
   return (
@@ -646,10 +662,150 @@ export default function App() {
           </section>
         )}
 
+        {showSection6 && (
+          <section className="cfe-section">
+            <SceneBreak />
+            <SectionHeader
+              ordinal="VI"
+              title="The False Relics (FFT, 1997)"
+            />
+            <div className="cfe-body">
+              <p>
+                Ivalice, late in the War of the Lions. A boy named Ramza
+                Beoulve, second son of a noble house, watches his country
+                bleed itself for a throne nobody can sit on. The war is a
+                noble dispute dressed as a religious one. Sakimoto's score
+                plays under it the way a requiem plays under a funeral the
+                family is pretending is a wedding. The Church of Glabados,
+                custodian of the faith of Saint Ajora and keeper of the
+                twelve Zodiac Stones, sits behind the war as referee,
+                judge, and beneficiary. The Stones — Auracite, the holy
+                relics of the Zodiac Braves legend — are the Church's
+                spiritual currency.
+              </p>
+              <p>The Stones are demons.</p>
+              <p>
+                Auracite contains Lucavi. When a person attuned to a stone
+                uses it under sufficient desire, the Lucavi possesses
+                them. The Church knows this. Saint Ajora himself was a
+                Lucavi pawn. The legend is the cover for the mechanism.
+                The religion that claims to have defeated demons is the
+                institution that keeps them on retainer.
+              </p>
+              <p>
+                Ramza does not learn this all at once. He learns it three
+                times, in stages, each time discovering that what he had
+                not yet doubted was already rotten.
+              </p>
+              <p>
+                The first stone is dropped at home. His brother Dycedarg,
+                patriarch of the Beoulve house, has been moving the war
+                for private advancement — abducting a princess, murdering
+                allies, treating the family name as a lever. The house
+                Ramza grew up believing was honorable is a chess piece in
+                a private campaign. He leaves.
+              </p>
+              <RamzaBeat body={RAMZA_TIETRA} event="ramza-1-tapped" />
+              <p>
+                The second stone is the Church. The Knights Templar, the
+                Church's military arm, are using Auracite as weapons.
+                Wiegraf Folles, the rebel-turned-Templar, is given a
+                stone and consumed by the Lucavi inside it. The High
+                Priest has been orchestrating the war from underneath the
+                war. The clergy that taught Ramza to pray are the
+                engineers of the bloodshed they pray to end. He fights
+                them.
+              </p>
+              <RamzaBeat body={RAMZA_WIEGRAF} event="ramza-2-tapped" />
+              <p>
+                The third stone is the saint. Saint Ajora — the messianic
+                figure the entire faith is built around, the man who
+                supposedly defeated the Lucavi a millennium ago — was a
+                Lucavi himself. The religion was always upside down. The
+                thing it pretends to fight is the thing that founded it.
+                There is no clean institution underneath the corrupt one.
+                The corruption is the institution, all the way down.
+              </p>
+              <RamzaBeat body={RAMZA_AJORA} event="ramza-3-tapped" />
+              <p>
+                This is the move FFT puts in front of you that the
+                previous three games did not. FFVI gave you an Empire to
+                overthrow. FFVII gave you a corporation to bomb. FFX gave
+                you a pilgrimage to refuse. FFT gives you something
+                harder: a world in which the institution that licenses
+                your moral vocabulary is the same institution running the
+                parasitism. The relics you were taught to revere are
+                demons. The saint is a demon. The hymns are demonic.
+                There is no outside.
+              </p>
+              <p>
+                Borgmann's distinction was device versus focal thing.
+                Girard's distinction was clean ritual versus scapegoat
+                mechanism. FFT is Borgmann and Girard at once: the relic
+                is a device in focal-thing clothes <em>and</em> the
+                religion is the scapegoat mechanism in focal-practice
+                clothes. The discrimination problem stacks. How do you
+                tell a real focal practice from sanctified parasitism
+                when the parasitism has had a thousand years to perfect
+                the costume?
+              </p>
+              <DialogueBox label="CID" body={CID_THUNDER_GOD} />
+              <p>
+                The other answer is Delita. He grew up beside Ramza,
+                watched the same war, learned the same lessons — and
+                concluded that the mechanism is the only operative
+                reality and the only sane path is to use it. He uses the
+                war. He uses the princess. He uses the Church. By the end
+                of the game he has won everything Ramza would have won by
+                refusing the mechanism: the throne, the crown, the
+                historical record. The history books call Delita the hero
+                who ended the war. They do not record Ramza.
+              </p>
+              <p>
+                The final cinematic of FFT is one of the great endings in
+                any video game. Delita rides through the streets in his
+                coronation procession. He sits on the throne. Ovelia, his
+                queen, stabs him. He stabs her back. They die together,
+                alone, on the throne, having achieved the mechanism's
+                full reward. The game cuts to a chronicler asking the
+                void: <em>Tell me, Ramza… what did you fight for?</em>{' '}
+                Ramza does not answer because Ramza is gone — either
+                dead, or escaped, or living anonymously in a town nobody
+                chronicles.
+              </p>
+              <p>
+                This is the post's hardest claim. The mechanism punishes
+                the refusers. Refusal does not produce historical
+                victory. It does not produce institutional reward. It
+                does not even produce a stable narrative — Ramza is
+                officially a heretic, a traitor, or a hero, depending on
+                which surviving manuscript you read. Refusal produces
+                only what Borgmann said focal practice produces: what you
+                became through the refusing.
+              </p>
+              <p>
+                That is what Ramza fought for. There is not another
+                answer. Delita won the throne and died on it because he
+                had nothing left to be when the mechanism finished using
+                him. Ramza disappeared from the record because what he
+                had become was the only thing that was actually his, and
+                it did not need a record.
+              </p>
+              <p>The brushwork is what makes the brusher.</p>
+              <EsperCameo variant="dimmed-with-chocobo" />
+              <div
+                ref={section6SentinelRef}
+                className="cfe-sentinel"
+                aria-hidden="true"
+              />
+            </div>
+          </section>
+        )}
+
         <footer className="cfe-footer">
           <p className="cfe-demo-note">
             <em>
-              [ end of v2 demo. cold open through §5. five sections to go. ]
+              [ end of v3 demo. cold open through §6. four sections to go. ]
             </em>
           </p>
         </footer>

@@ -16,7 +16,7 @@ function vibrancyOpacity(v: number): number {
   return 0.55 + v * 0.45;
 }
 
-function Sprite({ children }: { children: ReactNode }) {
+function EsperSprite({ children }: { children: ReactNode }) {
   const v = useEsperStore((s) => s.esperVibrancy);
   return (
     <span
@@ -28,11 +28,26 @@ function Sprite({ children }: { children: ReactNode }) {
   );
 }
 
+function ChocoboSprite({ children }: { children: ReactNode }) {
+  const v = useEsperStore((s) => s.chocoboVibrancy);
+  // The chocobo's color register is the same warm-gold gradient as the
+  // esper — both are focal sprites in the post's economy. They drift on
+  // separate vibrancy values driven by their own engagement events.
+  return (
+    <span
+      className="cfe-esper-glyph"
+      style={{ color: vibrancyColor(v), opacity: vibrancyOpacity(v) }}
+    >
+      {children}
+    </span>
+  );
+}
+
 type Props = {
-  variant: 'intro' | 'fading';
+  variant: 'intro' | 'fading' | 'dimmed-with-chocobo';
 };
 
-// Both variants are 36 visible columns wide. Hand-laid so the box
+// All variants are 36 visible columns wide. Hand-laid so the box
 // drawing stays exact; useFit scales the whole pre to the parent.
 export function EsperCameo({ variant }: Props) {
   const ref = useRef<HTMLPreElement>(null);
@@ -42,25 +57,43 @@ export function EsperCameo({ variant }: Props) {
     return (
       <pre ref={ref} className="cfe-esper-cameo">
         {'╔══════════════════════════════════╗\n║       '}
-        <Sprite>✦</Sprite>
+        <EsperSprite>✦</EsperSprite>
         {'                          ║\n║      '}
-        <Sprite>{'/ \\'}</Sprite>
+        <EsperSprite>{'/ \\'}</EsperSprite>
         {'    *an esper, watching* ║\n║     '}
-        <Sprite>{'✦   ✦'}</Sprite>
+        <EsperSprite>{'✦   ✦'}</EsperSprite>
         {'                        ║\n╚══════════════════════════════════╝'}
       </pre>
     );
   }
 
+  if (variant === 'fading') {
+    return (
+      <pre ref={ref} className="cfe-esper-cameo">
+        {'╔══════════════════════════════════╗\n║       '}
+        <EsperSprite>✦</EsperSprite>
+        {'                          ║\n║      '}
+        <EsperSprite>{'/|\\'}</EsperSprite>
+        {'    *the esper has lost  ║\n║     '}
+        <EsperSprite>{'✦-✦-✦'}</EsperSprite>
+        {'   a little of her      ║\n║              color since Mobliz.*║\n╚══════════════════════════════════╝'}
+      </pre>
+    );
+  }
+
+  // dimmed-with-chocobo — closes §6. The esper is dimmer than in §4;
+  // the chocobo's color rides her own vibrancy (whether she was fed).
   return (
     <pre ref={ref} className="cfe-esper-cameo">
       {'╔══════════════════════════════════╗\n║       '}
-      <Sprite>✦</Sprite>
+      <EsperSprite>✦</EsperSprite>
       {'                          ║\n║      '}
-      <Sprite>{'/|\\'}</Sprite>
-      {'    *the esper has lost  ║\n║     '}
-      <Sprite>{'✦-✦-✦'}</Sprite>
-      {'   a little of her      ║\n║              color since Mobliz.*║\n╚══════════════════════════════════╝'}
+      <EsperSprite>{'/|\\'}</EsperSprite>
+      {'    *the esper is dimmer ║\n║     '}
+      <EsperSprite>{'✦-✦-✦'}</EsperSprite>
+      {'   than before. she     ║\n║             does not say why.*   ║\n║                                  ║\n║   '}
+      <ChocoboSprite>⌒(•ㅅ•)⌒</ChocoboSprite>
+      {'  *the chocobo is       ║\n║              still here.*        ║\n╚══════════════════════════════════╝'}
     </pre>
   );
 }
