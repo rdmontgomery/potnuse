@@ -450,10 +450,42 @@
   image-rendering: pixelated;
 }
 
-/* Reduced motion: hide the canvas entirely. Reader still gets the
-   page and the letters; just no walking sprites. */
+/* Per-sprite invisible DOM hitboxes. Canvas does the visuals; these
+   handle pointer events. They're tiny (52 px square) so they don't
+   blanket the article — the reader can still select text and tap
+   links between sprites. touch-action: none stops mobile Safari
+   from interpreting a sprite-grab as a scroll gesture. */
+.cfe-sprite-hits {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.cfe-sprite-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Invisible by design — no fill, no border. The sprite under it
+     is drawn by the canvas. */
+  background: transparent;
+  will-change: transform;
+}
+.cfe-sprite-hit:active {
+  cursor: grabbing;
+}
+
+/* Reduced motion: hide the canvas + hitboxes entirely. Reader still
+   gets the page and the letters; just no walking sprites. */
 @media (prefers-reduced-motion: reduce) {
-  .cfe-sprite-canvas { display: none; }
+  .cfe-sprite-canvas,
+  .cfe-sprite-hits {
+    display: none;
+  }
 }
 
 .cfe-letter-enter {
