@@ -608,7 +608,6 @@ export default function App() {
                 it did not need a record.
               </p>
               <p>The brushwork is what makes the brusher.</p>
-              <Mailbox letterId="castorp" />
               <EsperCameo variant="dimmed-with-chocobo" />
             </div>
           </section>
@@ -700,6 +699,7 @@ export default function App() {
                 the glass.
               </p>
               <Mailbox letterId="moth" />
+              <Mailbox letterId="castorp" />
               <p>
                 Chapter 8 will return to Cid. Notice, when we get there,
                 that the recurring Cid has never been the same Cid twice.
