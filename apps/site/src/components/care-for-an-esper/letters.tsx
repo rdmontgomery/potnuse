@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
 // full esper + chocobo brightness; one who finds nothing stays at
 // the warm-gold default. Both register honestly at the coda.
 
-export type SpriteKind = 'moogle' | 'tonberry' | 'marlboro' | 'cactuar' | 'chocobo';
+export type SpriteKind = 'mog' | 'chocobo';
 
 export type LetterId =
   | 'moth'
@@ -39,7 +39,7 @@ export type Letter = {
 export const LETTERS: Letter[] = [
   {
     id: 'moth',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moth that was here a moment ago',
     re: "Cortázar's actual passage",
     body: (
@@ -64,7 +64,7 @@ export const LETTERS: Letter[] = [
   },
   {
     id: 'catalog',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moogle, fluttering',
     re: 'the original instinct',
     body: (
@@ -91,7 +91,7 @@ export const LETTERS: Letter[] = [
   },
   {
     id: 'pace-layers',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moogle who has read the Brand',
     re: 'the layers',
     body: (
@@ -122,7 +122,7 @@ STUFF       — daily`}
   },
   {
     id: 'pollendina',
-    carrier: 'tonberry',
+    carrier: 'mog',
     from: 'a tonberry, very slow, with a small lantern',
     re: 'the moment Cid realizes',
     body: (
@@ -150,7 +150,7 @@ STUFF       — daily`}
   },
   {
     id: 'castorp',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moogle, slow today',
     re: 'Mann, Magic Mountain',
     body: (
@@ -180,7 +180,7 @@ STUFF       — daily`}
   },
   {
     id: 'quentin-watch',
-    carrier: 'marlboro',
+    carrier: 'mog',
     from: 'a marlboro, dragging slightly',
     re: 'the watch',
     body: (
@@ -208,7 +208,7 @@ STUFF       — daily`}
   },
   {
     id: 'hearth',
-    carrier: 'cactuar',
+    carrier: 'mog',
     from: 'a cactuar, vibrating',
     re: 'beyond the horse',
     body: (
@@ -235,7 +235,7 @@ STUFF       — daily`}
   },
   {
     id: 'long-now',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moogle who has been waiting',
     re: 'Long Now',
     body: (
@@ -278,7 +278,7 @@ STUFF       — daily`}
   },
   {
     id: 'rick-slot',
-    carrier: 'moogle',
+    carrier: 'mog',
     from: 'a moogle that knows you',
     re: 'something personal',
     body: (

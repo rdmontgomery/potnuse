@@ -1,54 +1,51 @@
 import { useEffect, useRef, useState } from 'react';
 import { useEsperStore, type EngagementEvent } from './state';
 import type { LetterId, SpriteKind } from './letters';
-import { getSpriteBitmap, SPRITE_PX } from './PixelSprite';
 
-// The wandering layer. Pixel-art sprites enter at one margin of the
-// article, walk across at a random vertical position within the
+// The wandering layer. Pixel-art GIF sprites enter at one margin of
+// the article, walk across at a random vertical position within the
 // reader's current viewport, exit at the other margin. The reader
 // can grab one and drag it onto a mailbox in the prose; on drop,
 // the mailbox's letter opens.
 //
-// Render path: sprites pre-rasterized to ImageBitmaps in an
-// OffscreenCanvas (see PixelSprite.tsx), then drawImage'd into a
-// viewport-sized <canvas> every frame. Sprite state lives in a ref
-// — the rAF loop mutates it directly. React isn't asked to
-// re-render per-frame.
+// Render path: each active sprite is a DOM <img>. The rAF loop
+// updates each img's transform every frame; React re-renders only
+// when the live set of sprites changes (spawn / exit / delivery).
+// GIFs animate natively — no manual frame stepping.
 //
-// Canvas is position: fixed at viewport size. Sprite coords are
-// article-local; we translate to viewport-local each frame using
-// the article's getBoundingClientRect. This avoids needing a
-// canvas big enough to cover the entire (very tall) article — that
-// would blow Safari's max canvas size on mobile.
-//
-// Pointer events: the canvas itself is pointer-events: none so the
-// reader can still select text, scroll, click links normally. Each
-// active sprite has a tiny invisible DOM hitbox positioned over it
-// — those carry pointer-events: auto + touch-action: none, and use
-// setPointerCapture so the gesture survives leaving the hitbox.
-// The hitboxes are React-managed but their transforms are written
-// imperatively from the rAF loop so React doesn't re-render at 60
-// fps.
+// Pointer events are on the imgs themselves (touch-action: none,
+// setPointerCapture so the gesture survives leaving the img).
 
 type SpriteId = number;
 
+const SPRITES: Record<
+  Exclude<SpriteKind, 'chocobo'>,
+  { src: string; w: number; h: number }
+> = {
+  mog: { src: '/sprites/mog-walk.gif', w: 32, h: 44 },
+};
+
+// Pixel sprites are small natively; render at 1.5× — readable but
+// not so big that mog dominates the column.
+const SCALE = 1.5;
+
+type WanderKind = keyof typeof SPRITES;
+
 type Sprite = {
   id: SpriteId;
-  kind: SpriteKind;
-  /** article-local coords, top-left of the sprite bitmap */
+  kind: WanderKind;
+  /** article-local coords, top-left of the sprite */
   x: number;
   y: number;
-  /** px/sec on the x axis */
+  /** px/sec on the x axis; sign also controls horizontal flip */
   vx: number;
   /** sprite continues until x crosses this; positive vx exits at +exitX */
   exitX: number;
-  /** ms accumulator for the walk-cycle */
-  framePhase: number;
   /** when set, sprite is being held by this pointer */
   draggedBy: number | null;
 };
 
-const KINDS: SpriteKind[] = ['moogle', 'tonberry', 'marlboro', 'cactuar'];
+const KINDS: WanderKind[] = ['mog', 'ultros'];
 
 const SPAWN_DELAY_FIRST = 4000;
 const SPAWN_DELAY_MIN = 9000;
@@ -56,26 +53,16 @@ const SPAWN_DELAY_MAX = 18000;
 const SPRITE_SPEED_MIN = 45;
 const SPRITE_SPEED_MAX = 95;
 const SPRITE_PAD = 80;
-const FRAME_MS = 220;
-
-// Hitbox is bigger than the bitmap so a thumb can land on it
-// reliably. Padding is added on every side.
-const HIT_PADDING = 12;
-const HIT_PX = SPRITE_PX + HIT_PADDING * 2;
 
 export function SpriteManager() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const spritesRef = useRef<Sprite[]>([]);
   const idRef = useRef(0);
-  const bitmapsRef = useRef<Record<string, ImageBitmap>>({});
   const dragRef = useRef<{ id: SpriteId; pointerId: number } | null>(null);
-  const hitboxRefs = useRef<Map<SpriteId, HTMLDivElement>>(new Map());
+  const elRefs = useRef<Map<SpriteId, HTMLImageElement>>(new Map());
   const lastSyncedIds = useRef<SpriteId[]>([]);
   const [spriteIds, setSpriteIds] = useState<SpriteId[]>([]);
   const recordEvent = useEsperStore((s) => s.recordEvent);
 
-  // Sync the React id list with whatever's in spritesRef.current.
-  // Called whenever the live set changes (spawn / exit / delivery).
   function syncIds() {
     const current = spritesRef.current.map((s) => s.id);
     const last = lastSyncedIds.current;
@@ -87,23 +74,6 @@ export function SpriteManager() {
       setSpriteIds(current);
     }
   }
-
-  // ─────── Preload bitmaps ───────
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      for (const kind of KINDS) {
-        for (const f of [0, 1] as const) {
-          if (cancelled) return;
-          const bm = await getSpriteBitmap(kind, f);
-          bitmapsRef.current[`${kind}:${f}`] = bm;
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // ─────── Spawn loop ───────
   useEffect(() => {
@@ -149,6 +119,7 @@ export function SpriteManager() {
       const speed =
         SPRITE_SPEED_MIN + Math.random() * (SPRITE_SPEED_MAX - SPRITE_SPEED_MIN);
       const kind = KINDS[Math.floor(Math.random() * KINDS.length)];
+      const def = SPRITES[kind];
 
       idRef.current += 1;
       spritesRef.current.push({
@@ -157,8 +128,9 @@ export function SpriteManager() {
         x: fromLeft ? -SPRITE_PAD : articleW + SPRITE_PAD,
         y,
         vx: fromLeft ? speed : -speed,
-        exitX: fromLeft ? articleW + SPRITE_PAD : -SPRITE_PAD,
-        framePhase: Math.random() * FRAME_MS,
+        exitX: fromLeft
+          ? articleW + SPRITE_PAD
+          : -SPRITE_PAD - def.w * SCALE,
         draggedBy: null,
       });
       syncIds();
@@ -172,7 +144,7 @@ export function SpriteManager() {
     };
   }, []);
 
-  // ─────── Animation + render loop ───────
+  // ─────── Step + transform-write loop ───────
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
@@ -181,13 +153,11 @@ export function SpriteManager() {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
-      // Step
       let removed = false;
       const next: Sprite[] = [];
       for (const s of spritesRef.current) {
-        const phase = s.framePhase + dt * 1000;
         if (s.draggedBy != null) {
-          next.push({ ...s, framePhase: phase });
+          next.push(s);
           continue;
         }
         const nx = s.x + s.vx * dt;
@@ -195,13 +165,12 @@ export function SpriteManager() {
           removed = true;
           continue;
         }
-        next.push({ ...s, x: nx, framePhase: phase });
+        s.x = nx;
+        next.push(s);
       }
       spritesRef.current = next;
       if (removed) syncIds();
 
-      // Render canvas
-      const c = canvasRef.current;
       const article = document.querySelector('.cfe-article') as HTMLElement | null;
       let articleLeft = 0;
       let articleTop = 0;
@@ -210,43 +179,15 @@ export function SpriteManager() {
         articleLeft = ar.left;
         articleTop = ar.top;
       }
-      if (c) {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const dpr = window.devicePixelRatio || 1;
-        if (c.width !== w * dpr || c.height !== h * dpr) {
-          c.width = w * dpr;
-          c.height = h * dpr;
-          c.style.width = `${w}px`;
-          c.style.height = `${h}px`;
-        }
-        const ctx = c.getContext('2d');
-        if (ctx) {
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          ctx.imageSmoothingEnabled = false;
-          ctx.clearRect(0, 0, w, h);
-          for (const s of next) {
-            const vx = s.x + articleLeft;
-            const vy = s.y + articleTop;
-            if (vx + SPRITE_PX < 0 || vx > w || vy + SPRITE_PX < 0 || vy > h)
-              continue;
-            const f = (Math.floor(s.framePhase / FRAME_MS) % 2) as 0 | 1;
-            const bm = bitmapsRef.current[`${s.kind}:${f}`];
-            if (!bm) continue;
-            ctx.globalAlpha = s.draggedBy != null ? 1 : 0.92;
-            ctx.drawImage(bm, Math.round(vx), Math.round(vy));
-          }
-          ctx.globalAlpha = 1;
-        }
-      }
 
-      // Update each hitbox's transform to ride its sprite.
       for (const s of next) {
-        const el = hitboxRefs.current.get(s.id);
+        const el = elRefs.current.get(s.id);
         if (!el) continue;
-        const vx = s.x + articleLeft - HIT_PADDING;
-        const vy = s.y + articleTop - HIT_PADDING;
-        el.style.transform = `translate3d(${Math.round(vx)}px, ${Math.round(vy)}px, 0)`;
+        const vx = s.x + articleLeft;
+        const vy = s.y + articleTop;
+        // GIFs are drawn facing left; flip when traveling right.
+        const flip = s.vx > 0 ? -1 : 1;
+        el.style.transform = `translate3d(${Math.round(vx)}px, ${Math.round(vy)}px, 0) scaleX(${flip})`;
       }
 
       raf = requestAnimationFrame(frame);
@@ -274,8 +215,9 @@ export function SpriteManager() {
     const r = article.getBoundingClientRect();
     const s = spritesRef.current.find((sp) => sp.id === spriteId);
     if (!s) return;
-    s.x = ev.clientX - r.left - SPRITE_PX / 2;
-    s.y = ev.clientY - r.top - SPRITE_PX / 2;
+    const def = SPRITES[s.kind];
+    s.x = ev.clientX - r.left - (def.w * SCALE) / 2;
+    s.y = ev.clientY - r.top - (def.h * SCALE) / 2;
   }
 
   function onPointerUp(spriteId: SpriteId, ev: React.PointerEvent) {
@@ -283,10 +225,6 @@ export function SpriteManager() {
     if (dragRef.current.id !== spriteId) return;
     dragRef.current = null;
 
-    // Hit-test mailbox via elementFromPoint. The hitbox carries
-    // pointer-events: auto, but elementFromPoint walks the visual
-    // stack — we need to suppress the hitbox itself momentarily so
-    // it doesn't always claim the drop.
     const target = ev.currentTarget as HTMLElement;
     const prevPe = target.style.pointerEvents;
     target.style.pointerEvents = 'none';
@@ -311,35 +249,38 @@ export function SpriteManager() {
       return;
     }
 
-    // No drop target — sprite resumes wandering.
     const s = spritesRef.current.find((sp) => sp.id === spriteId);
     if (s) s.draggedBy = null;
   }
 
   return (
-    <>
-      <canvas
-        ref={canvasRef}
-        className="cfe-sprite-canvas"
-        aria-hidden="true"
-      />
-      <div className="cfe-sprite-hits" aria-hidden="true">
-        {spriteIds.map((id) => (
-          <div
+    <div className="cfe-sprite-layer" aria-hidden="true">
+      {spriteIds.map((id) => {
+        const s = spritesRef.current.find((sp) => sp.id === id);
+        if (!s) return null;
+        const def = SPRITES[s.kind];
+        return (
+          <img
             key={id}
-            className="cfe-sprite-hit"
+            src={def.src}
+            alt=""
+            draggable={false}
+            className={`cfe-sprite cfe-sprite-${s.kind}`}
             ref={(el) => {
-              if (el) hitboxRefs.current.set(id, el);
-              else hitboxRefs.current.delete(id);
+              if (el) elRefs.current.set(id, el);
+              else elRefs.current.delete(id);
             }}
-            style={{ width: `${HIT_PX}px`, height: `${HIT_PX}px` }}
+            style={{
+              width: `${def.w * SCALE}px`,
+              height: `${def.h * SCALE}px`,
+            }}
             onPointerDown={(ev) => onPointerDown(id, ev)}
             onPointerMove={(ev) => onPointerMove(id, ev)}
             onPointerUp={(ev) => onPointerUp(id, ev)}
             onPointerCancel={(ev) => onPointerUp(id, ev)}
           />
-        ))}
-      </div>
-    </>
+        );
+      })}
+    </div>
   );
 }

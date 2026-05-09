@@ -19,7 +19,9 @@ export function SectionHeader({ ordinal, title }: Props) {
   const block = useMemo(() => {
     const rule = '='.repeat(cols);
     const isNumber = /^[IVX]+$/i.test(ordinal);
-    const label = isNumber ? `     ${ordinal}.  ${title}` : `     ${ordinal}:  ${title}`;
+    const inner = isNumber ? `${ordinal}.  ${title}` : `${ordinal}:  ${title}`;
+    const lead = Math.max(0, Math.floor((cols - inner.length) / 2));
+    const label = ' '.repeat(lead) + inner;
     return `${rule}\n${label}\n${rule}`;
   }, [cols, ordinal, title]);
   return (

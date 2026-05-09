@@ -3,13 +3,22 @@ import { useFit } from './useFit';
 import { trimNl } from './text';
 
 const BANNER = String.raw`
-═════════════════════════════════════════════════════════════════════════
-                                                                     ✦
-       H O W   T O   C A R E   F O R   A N   E S P E R              /|\
-                                                                   ✦-✦-✦
-─────────────────────────────────────────────────────────────────────────
-                  a walkthrough through the glass brick
-═════════════════════════════════════════════════════════════════════════
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║                  H O W   T O   C A R E   F O R   A N                 ║
+║                                                                      ║
+║              ███████╗███████╗██████╗ ███████╗██████╗                 ║
+║              ██╔════╝██╔════╝██╔══██╗██╔════╝██╔══██╗                ║
+║              █████╗  ███████╗██████╔╝█████╗  ██████╔╝                ║
+║              ██╔══╝  ╚════██║██╔═══╝ ██╔══╝  ██╔══██╗                ║
+║              ███████╗███████║██║     ███████╗██║  ██║                ║
+║              ╚══════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝                ║
+║                                                                      ║
+║                     ::  a magitek walkthrough  ::                    ║
+║                                                                      ║
+║       by rdmontgomery                                     v1.00      ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
 `;
 
 const META = String.raw`
@@ -38,14 +47,14 @@ const EPIGRAPH = String.raw`
 
 export function Masthead() {
   const bannerRef = useRef<HTMLPreElement>(null);
-  // Banner is fixed at 73 visible columns wide.
-  useFit(bannerRef, 73, { min: 7, max: 14 });
+  // Banner is fixed at 72 visible columns wide.
+  useFit(bannerRef, 72, { min: 7, max: 14 });
   return (
     <header className="cfe-masthead">
       <pre
         ref={bannerRef}
         className="cfe-banner"
-        aria-label="how to care for an esper — a walkthrough through the glass brick"
+        aria-label="how to care for an esper — a magitek walkthrough by rdmontgomery, v1.00"
       >
         {trimNl(BANNER)}
       </pre>

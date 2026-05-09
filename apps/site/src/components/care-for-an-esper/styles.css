@@ -21,6 +21,10 @@
   /* Belt-and-suspenders: keep ASCII art that overruns by a fraction of a
      pixel from triggering page-level horizontal scroll. */
   overflow-x: clip;
+  /* Make .cfe-root its own stacking context so the wandering-sprite
+     layer can sit at z-index: -1 (between this background and the
+     article content) without falling behind the page background. */
+  isolation: isolate;
 
   background-image:
     radial-gradient(rgba(21, 17, 10, 0.04) 1px, transparent 1px);
@@ -174,21 +178,39 @@
 }
 
 /* ─────────── Esper cameo ─────────── */
+/* GIF magicite (and chocobo, in the pair variant) with an italic
+   caption. Vibrancy rides via inline filter/opacity; transition
+   smooths the drift across passive decay and engagement bumps. */
 
 .cfe-esper-cameo {
-  font-family: inherit;
-  /* useFit overwrites this on mount. */
-  font-size: 0.85rem;
-  line-height: 1.4;
   margin: 1.6em 0 0.6em;
-  white-space: pre;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  font-style: italic;
   color: var(--cfe-ink);
-  letter-spacing: 0;
+  text-align: center;
 }
-.cfe-esper-glyph {
-  /* color + opacity ride vibrancy via inline style; transition smooths the
-     drift across passive decay and engagement bumps. */
-  transition: color 1.4s ease, opacity 1.4s ease;
+.cfe-esper-cameo figcaption {
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+}
+.cfe-esper-cameo-pair {
+  gap: 0.8em;
+}
+.cfe-esper-cameo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+}
+.cfe-esper-sprite,
+.cfe-chocobo-sprite {
+  image-rendering: pixelated;
+  transition: filter 1.4s ease, opacity 1.4s ease;
 }
 
 /* ─────────── §7 denser monospace ─────────── */
@@ -201,23 +223,17 @@
 }
 
 /* ─────────── §10 coda sprites ─────────── */
-/* No box-drawing chrome — bare ASCII. Their color rides current
-   vibrancy. The italic prose just above each does the framing
-   ('she is lighter or heavier than she was'); the visual is the state. */
+/* The italic prose just above each does the framing ('she is
+   lighter or heavier than she was'); the visual is the state. */
 
 .cfe-coda-sprite {
   margin: 0.6em 0 1.6em;
   display: flex;
   justify-content: center;
 }
-.cfe-coda-sprite pre {
-  font-family: inherit;
-  font-size: clamp(1rem, 4vw, 1.4rem);
-  line-height: 1.2;
-  margin: 0;
-  letter-spacing: 0;
-  white-space: pre;
-  transition: color 1.4s ease, opacity 1.4s ease;
+.cfe-coda-sprite img {
+  image-rendering: pixelated;
+  transition: filter 1.4s ease, opacity 1.4s ease;
 }
 
 .cfe-coda-line {
@@ -251,6 +267,19 @@
   letter-spacing: 0;
 }
 
+/* ─────────── Chocobo portrait ─────────── */
+/* Walking GIF above the §2 chocobo dialogue. Centers in the column
+   so the speech bubble feels addressed by the bird, not appended. */
+
+.cfe-chocobo-portrait {
+  display: flex;
+  justify-content: center;
+  margin: 0.4em 0 0.2em;
+}
+.cfe-chocobo-portrait img {
+  image-rendering: pixelated;
+}
+
 /* ─────────── Bracketed inline actions ─────────── */
 /* Gestures that fit in the prose grid. The bracketed glyphs read as
    ASCII-walkthrough notation; the whole bracket is the tap target.
@@ -259,6 +288,7 @@
 .cfe-action-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.6rem 1rem;
   margin: 0.8em 0 0.4em;
 }
@@ -432,36 +462,21 @@
 }
 
 /* ─────────── Wandering sprites ─────────── */
-/* Pixel-art sprites are rendered to a single viewport-fixed
-   <canvas> by SpriteManager (see PixelSprite.tsx for the bitmap
-   pipeline). The canvas itself is non-interactive; pointer hits
-   are routed to sprites by a document-level pointerdown listener
-   that hit-tests sprite rects in viewport space. */
+/* Each active sprite is a viewport-fixed <img> with the walk-cycle
+   GIF as src. The rAF loop in SpriteManager writes transforms
+   directly; React only re-renders when the live id set changes. */
 
-.cfe-sprite-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 5;
-  /* Crisp pixel rendering — drawImage stays nearest-neighbour even
-     after compositor passes. */
-  image-rendering: pixelated;
-}
-
-/* Per-sprite invisible DOM hitboxes. Canvas does the visuals; these
-   handle pointer events. They're tiny (52 px square) so they don't
-   blanket the article — the reader can still select text and tap
-   links between sprites. touch-action: none stops mobile Safari
-   from interpreting a sprite-grab as a scroll gesture. */
-.cfe-sprite-hits {
+.cfe-sprite-layer {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 6;
+  /* Negative z-index puts mog behind the article text. .cfe-root has
+     isolation: isolate so the layer doesn't fall behind the page bg.
+     Trade-off: text catches pointer events first, so mog is grabbable
+     only in paragraph gaps / margins — felt fine in testing. */
+  z-index: -1;
 }
-.cfe-sprite-hit {
+.cfe-sprite {
   position: absolute;
   top: 0;
   left: 0;
@@ -470,20 +485,19 @@
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-  /* Invisible by design — no fill, no border. The sprite under it
-     is drawn by the canvas. */
-  background: transparent;
+  -webkit-user-drag: none;
+  image-rendering: pixelated;
   will-change: transform;
+  transform-origin: center center;
 }
-.cfe-sprite-hit:active {
+.cfe-sprite:active {
   cursor: grabbing;
 }
 
-/* Reduced motion: hide the canvas + hitboxes entirely. Reader still
+/* Reduced motion: hide the wandering layer entirely. Reader still
    gets the page and the letters; just no walking sprites. */
 @media (prefers-reduced-motion: reduce) {
-  .cfe-sprite-canvas,
-  .cfe-sprite-hits {
+  .cfe-sprite-layer {
     display: none;
   }
 }

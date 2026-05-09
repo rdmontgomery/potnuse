@@ -77,11 +77,20 @@ export function Chocobo() {
     : '[ HOLD: gysahl greens ]';
 
   const body = fed
-    ? '⌒(•ㅅ•)⌒    *she eats from your hand. she nickers softly.*'
-    : '⌒(•ㅅ•)⌒    *kweh.*';
+    ? '*she eats from your hand. she nickers softly.*'
+    : '*kweh.*';
 
   return (
     <div className="cfe-chocobo">
+      <div className="cfe-chocobo-portrait">
+        <img
+          src="/sprites/chocobo-walk.gif"
+          alt="chocobo"
+          width={120}
+          height={128}
+          draggable={false}
+        />
+      </div>
       <DialogueBox body={body} maxCols={56} />
       <div className="cfe-action-row">
         <button

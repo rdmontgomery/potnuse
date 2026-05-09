@@ -1,45 +1,52 @@
-import { useRef, type ReactNode } from 'react';
-import { useFit } from './useFit';
 import { useEsperStore } from './state';
 
-// Maps esper vibrancy [0,1] to a CSS color. >=0.7 reads as warm gold;
-// <=0.3 fades to a desaturated muted gray. We modulate saturation and
-// lightness rather than hue so the drift reads as 'losing color'
-// rather than 'changing identity'.
-function vibrancyColor(v: number): string {
-  const sat = Math.round(15 + v * 70); // 15..85
-  const light = Math.round(54 - v * 16); // 54..38
-  return `hsl(36, ${sat}%, ${light}%)`;
+// Vibrancy [0,1] → CSS filter that desaturates the GIF as the
+// reader's engagement drops. Saturation rides 0.25..1; brightness
+// nudges down slightly when low so a fully-fallen sprite doesn't
+// glare against the cream paper.
+function vibrancyFilter(v: number): string {
+  const sat = 0.25 + v * 0.75;
+  const bright = 0.85 + v * 0.15;
+  return `saturate(${sat}) brightness(${bright})`;
 }
 
 function vibrancyOpacity(v: number): number {
   return 0.55 + v * 0.45;
 }
 
-function EsperSprite({ children }: { children: ReactNode }) {
+function EsperGlyph() {
   const v = useEsperStore((s) => s.esperVibrancy);
   return (
-    <span
-      className="cfe-esper-glyph"
-      style={{ color: vibrancyColor(v), opacity: vibrancyOpacity(v) }}
-    >
-      {children}
-    </span>
+    <img
+      src="/sprites/magicite.gif"
+      alt=""
+      width={48}
+      height={84}
+      draggable={false}
+      className="cfe-esper-sprite"
+      style={{
+        filter: vibrancyFilter(v),
+        opacity: vibrancyOpacity(v),
+      }}
+    />
   );
 }
 
-function ChocoboSprite({ children }: { children: ReactNode }) {
+function ChocoboGlyph() {
   const v = useEsperStore((s) => s.chocoboVibrancy);
-  // The chocobo's color register is the same warm-gold gradient as the
-  // esper — both are focal sprites in the post's economy. They drift on
-  // separate vibrancy values driven by their own engagement events.
   return (
-    <span
-      className="cfe-esper-glyph"
-      style={{ color: vibrancyColor(v), opacity: vibrancyOpacity(v) }}
-    >
-      {children}
-    </span>
+    <img
+      src="/sprites/chocobo-walk.gif"
+      alt=""
+      width={120}
+      height={128}
+      draggable={false}
+      className="cfe-chocobo-sprite"
+      style={{
+        filter: vibrancyFilter(v),
+        opacity: vibrancyOpacity(v),
+      }}
+    />
   );
 }
 
@@ -47,53 +54,43 @@ type Props = {
   variant: 'intro' | 'fading' | 'dimmed-with-chocobo';
 };
 
-// All variants are 36 visible columns wide. Hand-laid so the box
-// drawing stays exact; useFit scales the whole pre to the parent.
+// Three cameo variants. Each pairs the magicite (the esper as
+// crystallized stone) with a one-line italic narration. The
+// 'dimmed-with-chocobo' variant adds the chocobo alongside.
 export function EsperCameo({ variant }: Props) {
-  const ref = useRef<HTMLPreElement>(null);
-  useFit(ref, 36, { min: 8, max: 14 });
-
   if (variant === 'intro') {
     return (
-      <pre ref={ref} className="cfe-esper-cameo">
-        {'╔══════════════════════════════════╗\n║       '}
-        <EsperSprite>✦</EsperSprite>
-        {'                          ║\n║      '}
-        <EsperSprite>{'/ \\'}</EsperSprite>
-        {'    *an esper, watching* ║\n║     '}
-        <EsperSprite>{'✦   ✦'}</EsperSprite>
-        {'                        ║\n╚══════════════════════════════════╝'}
-      </pre>
+      <figure className="cfe-esper-cameo">
+        <EsperGlyph />
+        <figcaption>
+          <em>an esper, watching</em>
+        </figcaption>
+      </figure>
     );
   }
 
   if (variant === 'fading') {
     return (
-      <pre ref={ref} className="cfe-esper-cameo">
-        {'╔══════════════════════════════════╗\n║       '}
-        <EsperSprite>✦</EsperSprite>
-        {'                          ║\n║      '}
-        <EsperSprite>{'/|\\'}</EsperSprite>
-        {'    *the esper has lost  ║\n║     '}
-        <EsperSprite>{'✦-✦-✦'}</EsperSprite>
-        {'   a little of her      ║\n║              color since Mobliz.*║\n╚══════════════════════════════════╝'}
-      </pre>
+      <figure className="cfe-esper-cameo">
+        <EsperGlyph />
+        <figcaption>
+          <em>the esper has lost a little of her color since Mobliz.</em>
+        </figcaption>
+      </figure>
     );
   }
 
-  // dimmed-with-chocobo — closes §6. The esper is dimmer than in §4;
-  // the chocobo's color rides her own vibrancy (whether she was fed).
+  // dimmed-with-chocobo — closes §6.
   return (
-    <pre ref={ref} className="cfe-esper-cameo">
-      {'╔══════════════════════════════════╗\n║       '}
-      <EsperSprite>✦</EsperSprite>
-      {'                          ║\n║      '}
-      <EsperSprite>{'/|\\'}</EsperSprite>
-      {'    *the esper is dimmer ║\n║     '}
-      <EsperSprite>{'✦-✦-✦'}</EsperSprite>
-      {'   than before. she     ║\n║             does not say why.*   ║\n║                                  ║\n║   '}
-      <ChocoboSprite>⌒(•ㅅ•)⌒</ChocoboSprite>
-      {'  *the chocobo is       ║\n║              still here.*        ║\n╚══════════════════════════════════╝'}
-    </pre>
+    <figure className="cfe-esper-cameo cfe-esper-cameo-pair">
+      <div className="cfe-esper-cameo-row">
+        <EsperGlyph />
+        <em>the esper is dimmer than before. she does not say why.</em>
+      </div>
+      <div className="cfe-esper-cameo-row">
+        <ChocoboGlyph />
+        <em>the chocobo is still here.</em>
+      </div>
+    </figure>
   );
 }
