@@ -71,31 +71,52 @@ const EXPERIMENTS: ExpMeta[] = [
   },
   {
     num: 9,
-    title: 'wake parting',
+    title: 'magnetic letters',
     blurb:
-      'On the line a sprite is crossing, words split above and below to part around it. Cheap parlour trick.',
-    loader: () => import('./experiments/09-wake-parting'),
+      'Per-letter, not per-word. Each glyph leans toward a passing sprite by up to 12 px. Calmer than the spring push.',
+    loader: () => import('./experiments/09-magnet-letters'),
   },
   {
     num: 10,
-    title: 'magnetic letters',
-    blurb:
-      'Per-letter, not per-word. Each glyph leans toward a passing sprite by a few px. Calmer than the spring push.',
-    loader: () => import('./experiments/10-magnet-letters'),
-  },
-  {
-    num: 11,
     title: 'canvas sprite, DOM mailbox',
     blurb:
       'Sprite drawn to <canvas> for crisp 60 fps motion. Mailbox stays a DOM button. Hit-test via getBoundingClientRect.',
-    loader: () => import('./experiments/11-canvas'),
+    loader: () => import('./experiments/10-canvas'),
   },
   {
-    num: 12,
+    num: 11,
     title: 'svg foreignObject',
     blurb:
       'Whole stage in <svg>, prose in <foreignObject>, sprite as a vector group. One coordinate space, full transforms.',
-    loader: () => import('./experiments/12-svg-foreign'),
+    loader: () => import('./experiments/11-svg-foreign'),
+  },
+  {
+    num: 12,
+    title: 'pixel sprite baseline',
+    blurb:
+      'Drag pattern from №01, but the wanderer is a 14×14 inline-SVG pixel-art critter. Hit target naturally bigger; clearly readable on mobile.',
+    loader: () => import('./experiments/12-pixel-baseline'),
+  },
+  {
+    num: 13,
+    title: 'walk-cycle',
+    blurb:
+      'Two-frame walk loop on the pixel sprites. Frame swaps every 220 ms. Held sprites stop animating.',
+    loader: () => import('./experiments/13-walk-cycle'),
+  },
+  {
+    num: 14,
+    title: 'pixel magnet pickup',
+    blurb:
+      'Pixel-sprite take on №05 magnet pickup. Press anywhere within 80 px and the nearest critter slides to your finger.',
+    loader: () => import('./experiments/14-pixel-magnet'),
+  },
+  {
+    num: 15,
+    title: 'pixel canvas blit',
+    blurb:
+      'Sprites pre-rendered to ImageBitmaps via OffscreenCanvas, then blitted with drawImage every frame. Crisp at any DPR.',
+    loader: () => import('./experiments/15-pixel-canvas'),
   },
 ];
 
@@ -104,14 +125,16 @@ export default function App() {
     <div className="sbs-root">
       <header className="sbs-masthead">
         <div className="sbs-eyebrow">sandbox · sprite interactions</div>
-        <h1 className="sbs-title">a dozen ways to grab the moogle</h1>
+        <h1 className="sbs-title">ways to grab the moogle</h1>
         <p className="sbs-lede">
           The essay <em>care for an esper</em> sends ASCII sprites walking
           across the column; the reader drags one onto a mailbox to open a
           letter. The interaction works on desktop. On mobile the hit target is
-          tight. Below: twelve variants of the same gesture, each in its own
-          card with its own spawn loop. Try each in turn. Pick which one feels
-          right under a thumb.
+          tight. Below: variants of the same gesture, each in its own card with
+          its own spawn loop. The first eleven use ASCII glyphs; the last four
+          use original pixel-art critters drawn inline as SVG (drop-in
+          replaceable from <code>public/sprites/</code>). Try each in turn.
+          Pick which one feels right under a thumb.
         </p>
         <Toc />
       </header>

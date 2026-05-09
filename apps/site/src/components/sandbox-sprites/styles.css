@@ -353,6 +353,37 @@
   }
 }
 
+/* ─── Pixel-art sprites (experiments 12–15) ─── */
+/* Pixel sprites are 14×14 cells × 2 scale = 28 px square. Positioned
+   absolutely like ASCII sprites; the SVG is the visible glyph. */
+
+.sbs-pixel-sprite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  will-change: transform;
+  /* Crisp pixel rendering — keep the SVG nearest-neighbour even
+     after composite layer effects. */
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18));
+}
+.sbs-pixel-sprite svg {
+  display: block;
+  pointer-events: none;
+}
+.sbs-pixel-sprite.is-held {
+  cursor: grabbing;
+  filter: drop-shadow(0 0 6px rgba(217, 148, 33, 0.55));
+  z-index: 6;
+}
+
 /* ─── Magnet pickup overlay ─── */
 
 .sbs-magnet-overlay {

@@ -199,7 +199,7 @@ export default function Exp11Canvas() {
 
   return (
     <Stage
-      index={11}
+      index={10}
       title="canvas sprite, DOM mailbox"
       blurb="Sprite drawn to <canvas> for crisp 60 fps motion. Mailbox stays a DOM button."
       delivered={count}

@@ -92,7 +92,7 @@ export default function Exp12SvgForeign() {
 
   return (
     <Stage
-      index={12}
+      index={11}
       title="svg foreignObject"
       blurb="One SVG. Prose in <foreignObject>, sprites as <text>. Coordinates share a space."
       delivered={count}

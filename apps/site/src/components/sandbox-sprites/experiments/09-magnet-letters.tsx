@@ -105,7 +105,7 @@ export default function Exp10MagnetLetters() {
 
   return (
     <Stage
-      index={10}
+      index={9}
       title="magnetic letters"
       blurb={`Each glyph leans toward a passing sprite by up to ${PULL_AMOUNT} px. Per-letter, not per-word — bigger than 4 px so the wake actually reads.`}
       delivered={count}
