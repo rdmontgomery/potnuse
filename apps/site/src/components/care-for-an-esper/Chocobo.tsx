@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEsperStore } from './state';
+import { chocoboGifSrcFor, useEsperStore } from './state';
 import { DialogueBox } from './DialogueBox';
 import { LetterBox } from './Letter';
 import { LETTERS_BY_ID } from './letters';
@@ -22,6 +22,7 @@ export function Chocobo() {
   const fed = useEsperStore((s) => s.events.has('chocobo-fed'));
   const kwehOpened = useEsperStore((s) => s.events.has('letter:kweh'));
   const recordEvent = useEsperStore((s) => s.recordEvent);
+  const chocoboSrc = useEsperStore((s) => chocoboGifSrcFor(s.events));
 
   const [holdProgress, setHoldProgress] = useState(0);
   const startRef = useRef<number | null>(null);
@@ -85,7 +86,7 @@ export function Chocobo() {
     <div className="cfe-chocobo">
       <div className="cfe-chocobo-portrait">
         <img
-          src="/sprites/chocobo-walk.gif"
+          src={chocoboSrc}
           alt="chocobo"
           width={120}
           height={128}

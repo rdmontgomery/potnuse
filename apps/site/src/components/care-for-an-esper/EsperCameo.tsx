@@ -1,4 +1,4 @@
-import { useEsperStore } from './state';
+import { chocoboGifSrcFor, useEsperStore } from './state';
 
 // Vibrancy [0,1] → CSS filter that desaturates the GIF as the
 // reader's engagement drops. Saturation rides 0.25..1; brightness
@@ -34,9 +34,10 @@ function EsperGlyph() {
 
 function ChocoboGlyph() {
   const v = useEsperStore((s) => s.chocoboVibrancy);
+  const src = useEsperStore((s) => chocoboGifSrcFor(s.events));
   return (
     <img
-      src="/sprites/chocobo-walk.gif"
+      src={src}
       alt=""
       width={120}
       height={128}

@@ -1,4 +1,4 @@
-import { useEsperStore } from './state';
+import { chocoboGifSrcFor, useEsperStore } from './state';
 
 // Match EsperCameo's vibrancy treatment: desaturate as engagement
 // drops, fade slightly. The italic prose just above each cameo
@@ -16,10 +16,11 @@ function vibrancyOpacity(v: number): number {
 
 export function CodaChocobo() {
   const v = useEsperStore((s) => s.chocoboVibrancy);
+  const src = useEsperStore((s) => chocoboGifSrcFor(s.events));
   return (
     <div className="cfe-coda-sprite" aria-hidden="true">
       <img
-        src="/sprites/chocobo-walk.gif"
+        src={src}
         alt=""
         width={120}
         height={128}

@@ -101,6 +101,18 @@ function persistEvents(events: Set<EngagementEvent>) {
   }
 }
 
+// Chocobo's animation speed reflects the reader's engagement with the
+// post. Sleepy when the reader has barely opened anything; lively when
+// they've worked through most of the letters. Three pre-baked GIFs at
+// different frame delays — selected client-side from the events set.
+export function chocoboGifSrcFor(events: Set<EngagementEvent>): string {
+  let opened = 0;
+  for (const e of events) if (e.startsWith('letter:')) opened++;
+  if (opened >= 7) return '/sprites/chocobo-walk-fast.gif';
+  if (opened >= 3) return '/sprites/chocobo-walk-med.gif';
+  return '/sprites/chocobo-walk-slow.gif';
+}
+
 function pickLetterForDrop(
   home: LetterId,
   events: Set<EngagementEvent>,

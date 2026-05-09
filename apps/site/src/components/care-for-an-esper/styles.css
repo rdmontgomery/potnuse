@@ -21,10 +21,6 @@
   /* Belt-and-suspenders: keep ASCII art that overruns by a fraction of a
      pixel from triggering page-level horizontal scroll. */
   overflow-x: clip;
-  /* Make .cfe-root its own stacking context so the wandering-sprite
-     layer can sit at z-index: -1 (between this background and the
-     article content) without falling behind the page background. */
-  isolation: isolate;
 
   background-image:
     radial-gradient(rgba(21, 17, 10, 0.04) 1px, transparent 1px);
@@ -498,29 +494,24 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  /* Negative z-index puts mog behind the article text. .cfe-root has
-     isolation: isolate so the layer doesn't fall behind the page bg.
-     Trade-off: text catches pointer events first, so mog is grabbable
-     only in paragraph gaps / margins — felt fine in testing. */
-  z-index: -1;
+  z-index: 5;
 }
 .cfe-sprite {
   position: absolute;
   top: 0;
   left: 0;
-  /* Disabled by default — the sprite layer sits behind text, so the
-     img's own pointer hits would never fire anyway. The doc-level
-     pointerdown listener in SpriteManager handles 60px-radius
-     proximity grabs and forwards the gesture via setPointerCapture,
-     which works regardless of pointer-events. */
-  pointer-events: none;
+  pointer-events: auto;
   touch-action: none;
+  cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;
   image-rendering: pixelated;
   will-change: transform;
   transform-origin: center center;
+}
+.cfe-sprite:active {
+  cursor: grabbing;
 }
 
 /* Reduced motion: hide the wandering layer entirely. Reader still
