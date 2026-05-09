@@ -1,32 +1,33 @@
-import { useMemo, useRef } from 'react';
-import { useColumns } from './useColumns';
+import { useRef } from 'react';
+import { useFit } from './useFit';
 
 type Props = {
   ordinal: string; // "Prelude" | "I" | "II" | etc.
   title: string;
 };
 
-// Renders the GameFAQs-style ruled header:
+// Renders the GameFAQs-style ruled header at a fixed character width;
+// useFit scales the font so the rule spans the article column at any
+// viewport. Fixed cols means `lead` is always large enough to put real
+// padding on either side of the label, so the centering reads.
 //
 //   ===========================================================
-//        I.  The Liquid Eye
+//                          I.  The Liquid Eye
 //   ===========================================================
-//
-// The rules adapt to the body column width.
+
+const COLS = 64;
+
 export function SectionHeader({ ordinal, title }: Props) {
   const ref = useRef<HTMLPreElement>(null);
-  const cols = useColumns(ref, { min: 32, max: 76 });
-  const block = useMemo(() => {
-    const rule = '='.repeat(cols);
-    const isNumber = /^[IVX]+$/i.test(ordinal);
-    const inner = isNumber ? `${ordinal}.  ${title}` : `${ordinal}:  ${title}`;
-    const lead = Math.max(0, Math.floor((cols - inner.length) / 2));
-    const label = ' '.repeat(lead) + inner;
-    return `${rule}\n${label}\n${rule}`;
-  }, [cols, ordinal, title]);
+  useFit(ref, COLS, { min: 8, max: 14 });
+  const rule = '='.repeat(COLS);
+  const isNumber = /^[IVX]+$/i.test(ordinal);
+  const inner = isNumber ? `${ordinal}.  ${title}` : `${ordinal}:  ${title}`;
+  const lead = Math.max(0, Math.floor((COLS - inner.length) / 2));
+  const label = ' '.repeat(lead) + inner;
   return (
     <pre ref={ref} className="cfe-section-header">
-      {block}
+      {`${rule}\n${label}\n${rule}`}
     </pre>
   );
 }

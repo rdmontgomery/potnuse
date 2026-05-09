@@ -85,16 +85,31 @@ function loadPersistedEvents(): Set<EngagementEvent> {
     if (!raw) return new Set();
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return new Set();
-    return new Set(arr.filter((x): x is EngagementEvent => typeof x === 'string'));
+    // Drop 'chocobo-fed' on load too — prior sessions may have written
+    // it before we stopped persisting. The gesture repeats each visit.
+    return new Set(
+      arr.filter(
+        (x): x is EngagementEvent => typeof x === 'string' && x !== 'chocobo-fed',
+      ),
+    );
   } catch {
     return new Set();
   }
 }
 
+// Events that survive a reload. We deliberately drop 'chocobo-fed' so
+// the gysahl-greens gesture is repeatable each visit (the daily ritual
+// is the point); the kweh letter still carries the chocobo bump
+// because `letter:kweh` is persisted, so vibrancy from prior visits
+// doesn't reset to default.
+function persistedFor(events: Set<EngagementEvent>): EngagementEvent[] {
+  return [...events].filter((e) => e !== 'chocobo-fed');
+}
+
 function persistEvents(events: Set<EngagementEvent>) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([...events]));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedFor(events)));
   } catch {
     // Quota exceeded or storage disabled — fail silently. The runtime
     // experience is intact; only the cross-session memory is lost.
@@ -104,12 +119,14 @@ function persistEvents(events: Set<EngagementEvent>) {
 // Chocobo's animation speed reflects the reader's engagement with the
 // post. Sleepy when the reader has barely opened anything; lively when
 // they've worked through most of the letters. Three pre-baked GIFs at
-// different frame delays — selected client-side from the events set.
+// frame delays of 35 / 22 / 8 cs — selected client-side from the
+// events set. Threshold for `fast` lowered so a moderately engaged
+// reader visibly trips it.
 export function chocoboGifSrcFor(events: Set<EngagementEvent>): string {
   let opened = 0;
   for (const e of events) if (e.startsWith('letter:')) opened++;
-  if (opened >= 7) return '/sprites/chocobo-walk-fast.gif';
-  if (opened >= 3) return '/sprites/chocobo-walk-med.gif';
+  if (opened >= 5) return '/sprites/chocobo-walk-fast.gif';
+  if (opened >= 2) return '/sprites/chocobo-walk-med.gif';
   return '/sprites/chocobo-walk-slow.gif';
 }
 
