@@ -432,60 +432,28 @@
 }
 
 /* ─────────── Wandering sprites ─────────── */
-/* Absolutely positioned children of .cfe-article. The container
-   itself is a no-op span; each sprite has its own pointer-events.
-   Sprites overlay the prose at z-index above text — they appear
-   to walk through the words. */
+/* Pixel-art sprites are rendered to a single viewport-fixed
+   <canvas> by SpriteManager (see PixelSprite.tsx for the bitmap
+   pipeline). The canvas itself is non-interactive; pointer hits
+   are routed to sprites by a document-level pointerdown listener
+   that hit-tests sprite rects in viewport space. */
 
-.cfe-sprites {
-  position: absolute;
+.cfe-sprite-canvas {
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 5;
-}
-.cfe-sprite {
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-family: inherit;
-  font-size: clamp(0.85rem, 2.6vw, 1rem);
-  line-height: 1;
-  white-space: pre;
-  letter-spacing: 0;
-  color: var(--cfe-ink);
-  opacity: 0.86;
-  pointer-events: auto;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-  padding: 0.3em 0.4em;
-  background: rgba(248, 240, 219, 0.55);
-  border-radius: 2px;
-  transition: opacity 0.2s ease, transform 0.05s linear;
-  will-change: transform;
-}
-.cfe-sprite:hover { opacity: 1; }
-.cfe-sprite.is-dragged {
-  cursor: grabbing;
-  opacity: 1;
-  background: rgba(217, 148, 33, 0.18);
-  z-index: 6;
-  transition: opacity 0.2s ease;
+  /* Crisp pixel rendering — drawImage stays nearest-neighbour even
+     after compositor passes. */
+  image-rendering: pixelated;
 }
 
-/* Per-kind tints — small chromatic differentiation so the four
-   wanderers read distinctly without breaking the cream-paper
-   register. */
-.cfe-sprite-moogle   { color: #5a4a2c; }
-.cfe-sprite-tonberry { color: #44503a; }
-.cfe-sprite-marlboro { color: #5d3a3a; }
-.cfe-sprite-cactuar  { color: #3a5040; }
-
-/* Reduced motion: hold sprites still. Reader still gets the page
-   and the letters; just no walking glyphs. */
+/* Reduced motion: hide the canvas entirely. Reader still gets the
+   page and the letters; just no walking sprites. */
 @media (prefers-reduced-motion: reduce) {
-  .cfe-sprites { display: none; }
+  .cfe-sprite-canvas { display: none; }
 }
 
 .cfe-letter-enter {
