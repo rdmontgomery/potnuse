@@ -3,16 +3,18 @@ import { LetterBox } from './Letter';
 import { LETTERS_BY_ID, type LetterId } from './letters';
 
 // Inline drop-target. A reader who notices it can drag a wandering
-// sprite onto it; on drop the SpriteManager records the
-// `letter:<id>` event, this component re-renders open, and the
-// Hopscotch fragment slides in below.
+// sprite onto it; on drop the SpriteManager calls `dropOnMailbox` and
+// this component re-renders with whichever letter the store picked
+// (home letter on first drop, random unread on a re-arm).
 //
 // data-mailbox-letter-id is the contract with SpriteManager's
 // pointer-up hit-test (document.elementFromPoint walks ancestors
-// looking for it).
+// looking for it). Its value is the mailbox's home id.
 export function Mailbox({ letterId }: { letterId: LetterId }) {
-  const opened = useEsperStore((s) => s.events.has(`letter:${letterId}` as const));
-  const letter = LETTERS_BY_ID[letterId];
+  const showing = useEsperStore((s) => s.mailboxLetters[letterId]);
+  const closeMailbox = useEsperStore((s) => s.closeMailbox);
+  const opened = !!showing;
+  const letter = showing ? LETTERS_BY_ID[showing] : null;
 
   return (
     <div className="cfe-mailbox-wrap">
@@ -21,13 +23,15 @@ export function Mailbox({ letterId }: { letterId: LetterId }) {
         data-mailbox-letter-id={letterId}
         aria-label={
           opened
-            ? `mailbox opened, letter from ${letter.from}`
+            ? `mailbox opened, letter from ${letter?.from}`
             : 'mailbox — drag a wandering sprite to open'
         }
       >
         {opened ? '[ ✉  open ]' : '[ ✉ ]'}
       </div>
-      {opened && <LetterBox letter={letter} />}
+      {letter && (
+        <LetterBox letter={letter} onClose={() => closeMailbox(letterId)} />
+      )}
     </div>
   );
 }

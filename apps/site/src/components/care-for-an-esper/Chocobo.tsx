@@ -66,14 +66,15 @@ export function Chocobo() {
 
   useEffect(() => () => clearHold(), []);
 
-  // Eight-cell fill bar inside the GREENS bracket so the affordance
-  // stays on the same character grid as the prose.
+  // All three label states are 23 chars wide so the bracket has a
+  // stable visual mass through hold progress; FED ✓ is centered
+  // inside that fixed inner field.
   const filled = Math.round(holdProgress * 8);
   const fillBar = '▒'.repeat(filled) + ' '.repeat(8 - filled);
   const feedLabel = fed
-    ? '[ FED ✓               ]'
+    ? '[        FED ✓        ]'
     : holdProgress > 0
-    ? `[ ${fillBar}              ]`
+    ? `[      ${fillBar}       ]`
     : '[ HOLD: gysahl greens ]';
 
   const body = fed
@@ -91,7 +92,7 @@ export function Chocobo() {
           draggable={false}
         />
       </div>
-      <DialogueBox body={body} maxCols={56} />
+      <DialogueBox body={body} maxCols={56} align="center" />
       <div className="cfe-action-row">
         <button
           type="button"

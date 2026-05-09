@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useColumns } from './useColumns';
 
 type Props = {
-  ordinal: string; // "Cold Open" | "I" | "II" | etc.
+  ordinal: string; // "Prelude" | "I" | "II" | etc.
   title: string;
 };
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEsperStore, type EngagementEvent } from './state';
+import { useEsperStore } from './state';
 import type { LetterId, SpriteKind } from './letters';
 
 // The wandering layer. Pixel-art GIF sprites enter at one margin of
@@ -13,8 +13,13 @@ import type { LetterId, SpriteKind } from './letters';
 // when the live set of sprites changes (spawn / exit / delivery).
 // GIFs animate natively — no manual frame stepping.
 //
-// Pointer events are on the imgs themselves (touch-action: none,
-// setPointerCapture so the gesture survives leaving the img).
+// Pointer events: the sprite layer sits at z-index: -1 (behind
+// article text). To still let the reader grab mog, we install a
+// document-level pointerdown listener that hit-tests within
+// PROXIMITY_PX of any active sprite. If a hit lands, we
+// preventDefault, setPointerCapture on the sprite's img, and bump
+// the whole layer's z-index for the duration of the gesture so the
+// dragged sprite paints on top of text.
 
 type SpriteId = number;
 
@@ -45,7 +50,7 @@ type Sprite = {
   draggedBy: number | null;
 };
 
-const KINDS: WanderKind[] = ['mog', 'ultros'];
+const KINDS: WanderKind[] = ['mog'];
 
 const SPAWN_DELAY_FIRST = 4000;
 const SPAWN_DELAY_MIN = 9000;
@@ -54,14 +59,19 @@ const SPRITE_SPEED_MIN = 45;
 const SPRITE_SPEED_MAX = 95;
 const SPRITE_PAD = 80;
 
+// Magnetic grab radius. Anywhere within this distance of a sprite's
+// center counts as a hit even though the sprite paints behind text.
+const PROXIMITY_PX = 60;
+
 export function SpriteManager() {
   const spritesRef = useRef<Sprite[]>([]);
   const idRef = useRef(0);
   const dragRef = useRef<{ id: SpriteId; pointerId: number } | null>(null);
   const elRefs = useRef<Map<SpriteId, HTMLImageElement>>(new Map());
+  const layerRef = useRef<HTMLDivElement | null>(null);
   const lastSyncedIds = useRef<SpriteId[]>([]);
   const [spriteIds, setSpriteIds] = useState<SpriteId[]>([]);
-  const recordEvent = useEsperStore((s) => s.recordEvent);
+  const dropOnMailbox = useEsperStore((s) => s.dropOnMailbox);
 
   function syncIds() {
     const current = spritesRef.current.map((s) => s.id);
@@ -196,16 +206,63 @@ export function SpriteManager() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // ─────── Drag handlers ───────
+  // ─────── Document-level proximity grab ───────
+  // Sprite imgs paint behind text and are pointer-events: none, so
+  // their own pointerdown never fires. We hit-test on doc-level
+  // pointerdown and forward the gesture into the sprite via
+  // setPointerCapture.
+  useEffect(() => {
+    function isInteractive(el: EventTarget | null): boolean {
+      const node = el as HTMLElement | null;
+      return !!node?.closest?.(
+        'a, button, input, textarea, select, [role="button"], [data-mailbox-letter-id]',
+      );
+    }
 
-  function onPointerDown(spriteId: SpriteId, ev: React.PointerEvent) {
-    const s = spritesRef.current.find((sp) => sp.id === spriteId);
-    if (!s) return;
-    (ev.currentTarget as Element).setPointerCapture?.(ev.pointerId);
-    s.draggedBy = ev.pointerId;
-    dragRef.current = { id: spriteId, pointerId: ev.pointerId };
-    ev.preventDefault();
-  }
+    function onDocPointerDown(ev: PointerEvent) {
+      if (dragRef.current) return;
+      // Don't intercept clicks meant for links / buttons / mailboxes.
+      if (isInteractive(ev.target)) return;
+
+      const article = document.querySelector('.cfe-article') as HTMLElement | null;
+      if (!article) return;
+      const ar = article.getBoundingClientRect();
+
+      let best: { sprite: Sprite; dist: number } | null = null;
+      for (const s of spritesRef.current) {
+        if (s.draggedBy != null) continue;
+        const def = SPRITES[s.kind];
+        const cx = s.x + ar.left + (def.w * SCALE) / 2;
+        const cy = s.y + ar.top + (def.h * SCALE) / 2;
+        const dx = ev.clientX - cx;
+        const dy = ev.clientY - cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= PROXIMITY_PX && (!best || dist < best.dist)) {
+          best = { sprite: s, dist };
+        }
+      }
+
+      if (!best) return;
+      const el = elRefs.current.get(best.sprite.id);
+      if (!el) return;
+
+      ev.preventDefault();
+      try {
+        el.setPointerCapture(ev.pointerId);
+      } catch {
+        return; // browser refused capture; bail out without claiming the gesture
+      }
+      best.sprite.draggedBy = ev.pointerId;
+      dragRef.current = { id: best.sprite.id, pointerId: ev.pointerId };
+      // Bring the layer in front of text for the duration of the drag.
+      if (layerRef.current) layerRef.current.style.zIndex = '10';
+    }
+
+    document.addEventListener('pointerdown', onDocPointerDown);
+    return () => document.removeEventListener('pointerdown', onDocPointerDown);
+  }, []);
+
+  // ─────── Drag handlers (fire on the captured img) ───────
 
   function onPointerMove(spriteId: SpriteId, ev: React.PointerEvent) {
     if (!dragRef.current || dragRef.current.pointerId !== ev.pointerId) return;
@@ -220,11 +277,19 @@ export function SpriteManager() {
     s.y = ev.clientY - r.top - (def.h * SCALE) / 2;
   }
 
+  function endDrag() {
+    dragRef.current = null;
+    // Drop the layer back behind text.
+    if (layerRef.current) layerRef.current.style.zIndex = '';
+  }
+
   function onPointerUp(spriteId: SpriteId, ev: React.PointerEvent) {
     if (!dragRef.current || dragRef.current.pointerId !== ev.pointerId) return;
     if (dragRef.current.id !== spriteId) return;
-    dragRef.current = null;
 
+    // Hit-test for a mailbox under the release point. Suppress the
+    // captured img's hits temporarily so elementFromPoint sees
+    // through to the mailbox.
     const target = ev.currentTarget as HTMLElement;
     const prevPe = target.style.pointerEvents;
     target.style.pointerEvents = 'none';
@@ -236,25 +301,26 @@ export function SpriteManager() {
     while (elt && !elt.dataset?.mailboxLetterId) elt = elt.parentElement;
 
     if (elt && elt.dataset.mailboxLetterId) {
-      const letterId = elt.dataset.mailboxLetterId as LetterId;
-      const already = useEsperStore.getState().events.has(
-        `letter:${letterId}` as EngagementEvent,
-      );
-      if (!already) {
-        recordEvent(`letter:${letterId}` as EngagementEvent);
-        if ('vibrate' in navigator) navigator.vibrate(200);
-      }
+      const home = elt.dataset.mailboxLetterId as LetterId;
+      const before = useEsperStore.getState().mailboxLetters[home];
+      dropOnMailbox(home);
+      const after = useEsperStore.getState().mailboxLetters[home];
+      // Vibrate only when a fresh letter actually opened.
+      if (!before && after && 'vibrate' in navigator) navigator.vibrate(200);
       spritesRef.current = spritesRef.current.filter((sp) => sp.id !== spriteId);
       syncIds();
+      endDrag();
       return;
     }
 
+    // No drop target — sprite resumes wandering.
     const s = spritesRef.current.find((sp) => sp.id === spriteId);
     if (s) s.draggedBy = null;
+    endDrag();
   }
 
   return (
-    <div className="cfe-sprite-layer" aria-hidden="true">
+    <div ref={layerRef} className="cfe-sprite-layer" aria-hidden="true">
       {spriteIds.map((id) => {
         const s = spritesRef.current.find((sp) => sp.id === id);
         if (!s) return null;
@@ -274,7 +340,6 @@ export function SpriteManager() {
               width: `${def.w * SCALE}px`,
               height: `${def.h * SCALE}px`,
             }}
-            onPointerDown={(ev) => onPointerDown(id, ev)}
             onPointerMove={(ev) => onPointerMove(id, ev)}
             onPointerUp={(ev) => onPointerUp(id, ev)}
             onPointerCancel={(ev) => onPointerUp(id, ev)}

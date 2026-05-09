@@ -40,7 +40,7 @@ export default function App() {
         <Toc />
 
         <section className="cfe-section cfe-cold-open-section">
-          <SectionHeader ordinal="Cold Open" title="The Borgmann horse" />
+          <SectionHeader ordinal="Prelude" title="The Borgmann horse" />
           <div className="cfe-body cfe-cold-open-body">
             <blockquote className="cfe-epigraph">
               <p>

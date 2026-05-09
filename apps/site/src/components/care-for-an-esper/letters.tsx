@@ -54,8 +54,9 @@ export const LETTERS: Letter[] = [
           memory, with sticky things that hold us here on this side?
         </blockquote>
         <p>
-          — <em>Hopscotch</em>, Julio Cortázar, ch. 73, transl. Gregory
-          Rabassa.
+          — <em>
+            <a href="https://www.goodreads.com/book/show/53413.Hopscotch" target="_blank" rel="noopener">Hopscotch</a>
+          </em>, Julio Cortázar, ch. 73, transl. Gregory Rabassa.
         </p>
       </>
     ),
@@ -73,9 +74,11 @@ export const LETTERS: Letter[] = [
           We are as gods and might as well get good at it.
         </blockquote>
         <p>
-          That's the opening line of the Whole Earth Catalog, Fall 1968.
-          Stewart Brand wrote it at twenty-nine. Underneath the line, in
-          smaller type:{' '}
+          That's the opening line of the{' '}
+          <a href="https://wholeearth.info/" target="_blank" rel="noopener">Whole Earth Catalog</a>
+          , Fall 1968.{' '}
+          <a href="https://podcasts.apple.com/us/podcast/stewart-brand-silicon-valleys-favorite-prophet-on-lifes/id1548604447?i=1000763393453" target="_blank" rel="noopener">Stewart Brand</a>
+          {' '}wrote it at twenty-nine. Underneath the line, in smaller type:{' '}
           <em>
             a realm of intimate, personal power is developing — power of
             the individual to conduct his own education, find his own
@@ -97,8 +100,10 @@ export const LETTERS: Letter[] = [
     body: (
       <>
         <p>
-          Stewart Brand's diagram: every building is six layers, each
-          changing at its own rate.
+          Stewart Brand's diagram, from{' '}
+          <em>
+            <a href="https://www.goodreads.com/book/show/38310.How_Buildings_Learn" target="_blank" rel="noopener">How Buildings Learn</a>
+          </em>: every building is six layers, each changing at its own rate.
         </p>
         <pre className="cfe-letter-pre">
           {`SITE        — eternal
@@ -157,11 +162,15 @@ STUFF       — daily`}
       <>
         <p>
           Hans Castorp comes to Davos for three weeks and stays seven
-          years. The novel keeps changing time scales on you — chapters
-          that span an afternoon, chapters that span seasons, a chapter
-          (<em>By the Ocean of Time</em>) that just sits in the dilation.
-          Mann is doing on the page what the mountain does to Castorp:
-          the longer you stay, the less the clock means.
+          years.{' '}
+          <em>
+            <a href="https://www.goodreads.com/book/show/88077.The_Magic_Mountain" target="_blank" rel="noopener">The Magic Mountain</a>
+          </em>{' '}
+          keeps changing time scales on you — chapters that span an
+          afternoon, chapters that span seasons, a chapter (<em>By the
+          Ocean of Time</em>) that just sits in the dilation. Mann is
+          doing on the page what the mountain does to Castorp: the
+          longer you stay, the less the clock means.
         </p>
         <blockquote>
           Vacuity, monotony, have, indeed, this insidious quality, that
@@ -186,8 +195,11 @@ STUFF       — daily`}
     body: (
       <>
         <p>
-          The morning of his suicide, Quentin Compson takes the watch his
-          father gave him —{' '}
+          The morning of his suicide, Quentin Compson — narrator of{' '}
+          <em>
+            <a href="https://www.goodreads.com/book/show/10975.The_Sound_and_the_Fury" target="_blank" rel="noopener">The Sound and the Fury</a>
+          </em>
+          {' '}— takes the watch his father gave him —{' '}
           <em>a mausoleum of all hope and desire</em> — and breaks it.
           Twists the hands off, watches them spin to the floor. He still
           hears it ticking. He has spent the morning trying to outrun
@@ -220,8 +232,11 @@ STUFF       — daily`}
           becomes the structure of the dwelling around it.
         </blockquote>
         <p>
-          Borgmann, <em>Technology and the Character of Contemporary
-          Life</em>, 1984. (The book before the one we cited at the top.)
+          Borgmann,{' '}
+          <em>
+            <a href="https://www.goodreads.com/book/show/704227.Technology_and_the_Character_of_Contemporary_Life" target="_blank" rel="noopener">Technology and the Character of Contemporary Life</a>
+          </em>
+          , 1984. (The book before the one we cited at the top.)
         </p>
         <p>
           The horse is the second example in his catalog. The hearth is
@@ -241,11 +256,13 @@ STUFF       — daily`}
     body: (
       <>
         <p>
-          The clock in the Texas mountain ticks once a year. The century
-          hand advances every hundred years. The cuckoo comes out every
+          The{' '}
+          <a href="https://longnow.org/clock/" target="_blank" rel="noopener">clock</a>
+          {' '}in the Texas mountain ticks once a year. The century hand
+          advances every hundred years. The cuckoo comes out every
           millennium. Brand and Hillis built it — are still building it —
-          to require a maintainer every generation, forever, and to
-          refuse to be finished by any single one of them.
+          to require a maintainer every generation, forever, and to refuse
+          to be finished by any single one of them.
         </p>
         <p>
           The maintenance survives because the maintainers do not. That

@@ -261,7 +261,12 @@
   font-family: inherit;
   font-size: clamp(0.78rem, 2.5vw, 0.9rem);
   line-height: 1.4;
-  margin: 1.6em 0 0.6em;
+  /* Auto margins center the box (which sizes to its own content width)
+     within the article column. */
+  margin: 1.6em auto 0.6em;
+  display: block;
+  width: max-content;
+  max-width: 100%;
   white-space: pre;
   color: var(--cfe-ink);
   letter-spacing: 0;
@@ -370,8 +375,31 @@
   padding: 0.55em 1.2em;
   font-style: italic;
 }
+.cfe-letter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+}
 .cfe-letter-bottom {
   text-align: right;
+}
+.cfe-letter-close {
+  font: inherit;
+  font-style: normal;
+  background: transparent;
+  border: 0;
+  color: var(--cfe-ink-muted);
+  cursor: pointer;
+  padding: 0.2em 0.4em;
+  border-radius: 0;
+  letter-spacing: 0;
+  transition: color 0.12s ease;
+}
+.cfe-letter-close:hover,
+.cfe-letter-close:focus-visible {
+  color: var(--cfe-accent);
+  outline: none;
 }
 .cfe-letter-meta-label {
   font-style: normal;
@@ -480,18 +508,19 @@
   position: absolute;
   top: 0;
   left: 0;
-  pointer-events: auto;
+  /* Disabled by default — the sprite layer sits behind text, so the
+     img's own pointer hits would never fire anyway. The doc-level
+     pointerdown listener in SpriteManager handles 60px-radius
+     proximity grabs and forwards the gesture via setPointerCapture,
+     which works regardless of pointer-events. */
+  pointer-events: none;
   touch-action: none;
-  cursor: grab;
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;
   image-rendering: pixelated;
   will-change: transform;
   transform-origin: center center;
-}
-.cfe-sprite:active {
-  cursor: grabbing;
 }
 
 /* Reduced motion: hide the wandering layer entirely. Reader still

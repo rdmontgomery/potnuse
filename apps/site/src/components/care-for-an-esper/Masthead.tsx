@@ -30,18 +30,16 @@ const META = String.raw`
    [version]  v1 (seedling)
 `;
 
+// No hard newlines inside the paragraphs — CSS reflow handles the wrap so
+// mobile and desktop both read cleanly. Blank lines stay (paragraph breaks).
 const COPYRIGHT = String.raw`
-  This document is © 2026 rick montgomery, but the brushwork is its own.
-  Borgmann, Cortázar, Brand, and every Cid in every airship are credited
-  as the authors of the argument.
+  This document is © 2026 rick montgomery, but the brushwork is its own. Borgmann, Cortázar, Brand, and every Cid in every airship are credited as the authors of the argument.
 
-  This walkthrough is meant to appear at rdmontgomery.com.  If you find
-  it elsewhere, send a chocobo to bring it home.
+  This walkthrough is meant to appear at rdmontgomery.com. If you find it elsewhere, send a chocobo to bring it home.
 `;
 
 const EPIGRAPH = String.raw`
-   "the engine needs you more than you need it.
-    most folks have it backwards their whole lives."
+   "the engine needs you more than you need it. most folks have it backwards their whole lives."
                                                           — cid
 `;
 

@@ -5,19 +5,42 @@ import { LETTERS_BY_ID, type LetterId } from './letters';
 //   - 'chocobo-fed' : the long-press gysahl-greens offering on the §2
 //     chocobo. A focal gesture; bumps chocobo vibrancy and, by
 //     extension, opens the kweh letter inline. The post's tutorial.
-//   - `letter:<id>` : a wandering sprite was dragged onto a mailbox.
-//     One per discovered letter. Each opens a vibrancy bump (esper
-//     for most, chocobo for kweh) and a Hopscotch-fragment payload.
+//   - `letter:<id>` : a mailbox dropped a letter (either its home
+//     letter on first drop, or a random unread letter on a re-arm).
+//     Each opens a vibrancy bump and a Hopscotch-fragment payload.
 //
 // Persisted across visits via localStorage so a returning reader's
-// progress survives. Active reader's coda is stable.
+// vibrancy survives. The currently-open mailbox state is *not*
+// persisted — letters re-close between sessions, the discovery
+// gesture stays meaningful.
 export type EngagementEvent = 'chocobo-fed' | `letter:${LetterId}`;
+
+// Mailbox-eligible letter ids. The mailboxes scattered through the
+// prose each declare a "home" letterId from this list. `kweh` is
+// chocobo-only and never appears in the mailbox random-draw pool.
+const MAILBOX_LETTER_IDS: LetterId[] = [
+  'catalog',
+  'pollendina',
+  'hearth',
+  'castorp',
+  'quentin-watch',
+  'moth',
+  'pace-layers',
+  'long-now',
+  'rick-slot',
+];
 
 type State = {
   esperVibrancy: number;
   chocoboVibrancy: number;
   events: Set<EngagementEvent>;
+  /** Per-mailbox: letterId currently displayed (key = mailbox home). */
+  mailboxLetters: Partial<Record<LetterId, LetterId>>;
   recordEvent: (e: EngagementEvent) => void;
+  /** Drop a sprite on the mailbox at `home`. First drop opens the home
+   * letter; subsequent drops draw from unread mailbox-eligible letters. */
+  dropOnMailbox: (home: LetterId) => void;
+  closeMailbox: (home: LetterId) => void;
   hydrate: () => void;
 };
 
@@ -78,10 +101,35 @@ function persistEvents(events: Set<EngagementEvent>) {
   }
 }
 
+function pickLetterForDrop(
+  home: LetterId,
+  events: Set<EngagementEvent>,
+): LetterId {
+  // First-time drop on this mailbox: open its home letter.
+  const homeRead = events.has(`letter:${home}` as EngagementEvent);
+  if (!homeRead) return home;
+
+  // Re-arm: draw a random unread letter from the mailbox pool.
+  const unread = MAILBOX_LETTER_IDS.filter(
+    (id) => !events.has(`letter:${id}` as EngagementEvent),
+  );
+  if (unread.length > 0) {
+    return unread[Math.floor(Math.random() * unread.length)];
+  }
+
+  // All mailbox letters already read — re-show a random one as a
+  // re-engagement gesture. Vibrancy doesn't bump again (it's gated
+  // on `events`); the letter simply opens for re-reading.
+  return MAILBOX_LETTER_IDS[
+    Math.floor(Math.random() * MAILBOX_LETTER_IDS.length)
+  ];
+}
+
 export const useEsperStore = create<State>((set) => ({
   esperVibrancy: INITIAL_VIBRANCY,
   chocoboVibrancy: INITIAL_VIBRANCY,
   events: new Set(),
+  mailboxLetters: {},
   recordEvent: (e) =>
     set((s) => {
       if (s.events.has(e)) return s;
@@ -94,6 +142,32 @@ export const useEsperStore = create<State>((set) => ({
       });
       return { events: next, ...bumped };
     }),
+  dropOnMailbox: (home) =>
+    set((s) => {
+      // If something is already shown at this mailbox, do nothing.
+      if (s.mailboxLetters[home]) return s;
+      const picked = pickLetterForDrop(home, s.events);
+      const ev = `letter:${picked}` as EngagementEvent;
+      const next = new Set(s.events);
+      let bumped = { esperVibrancy: s.esperVibrancy, chocoboVibrancy: s.chocoboVibrancy };
+      if (!next.has(ev)) {
+        next.add(ev);
+        persistEvents(next);
+        bumped = applyBumps([ev], bumped);
+      }
+      return {
+        events: next,
+        mailboxLetters: { ...s.mailboxLetters, [home]: picked },
+        ...bumped,
+      };
+    }),
+  closeMailbox: (home) =>
+    set((s) => {
+      if (!s.mailboxLetters[home]) return s;
+      const { [home]: _removed, ...rest } = s.mailboxLetters;
+      void _removed;
+      return { mailboxLetters: rest };
+    }),
   hydrate: () =>
     set(() => {
       const events = loadPersistedEvents();
@@ -101,6 +175,6 @@ export const useEsperStore = create<State>((set) => ({
         esperVibrancy: INITIAL_VIBRANCY,
         chocoboVibrancy: INITIAL_VIBRANCY,
       });
-      return { events, ...bumped };
+      return { events, mailboxLetters: {}, ...bumped };
     }),
 }));

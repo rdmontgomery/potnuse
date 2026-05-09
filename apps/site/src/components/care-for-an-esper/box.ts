@@ -6,9 +6,17 @@ const TOP = (cols: number) => '╔' + '═'.repeat(cols - 2) + '╗';
 const BOT = (cols: number) => '╚' + '═'.repeat(cols - 2) + '╝';
 const SEP = (cols: number) => '╠' + '═'.repeat(cols - 2) + '╣';
 
-function pad(line: string, inner: number): string {
+function padLeft(line: string, inner: number): string {
   if (line.length >= inner) return line.slice(0, inner);
   return line + ' '.repeat(inner - line.length);
+}
+
+function padCenter(line: string, inner: number): string {
+  if (line.length >= inner) return line.slice(0, inner);
+  const total = inner - line.length;
+  const left = Math.floor(total / 2);
+  const right = total - left;
+  return ' '.repeat(left) + line + ' '.repeat(right);
 }
 
 // Word-wrap to a fixed character width, preserving paragraph breaks ('').
@@ -47,11 +55,14 @@ export function renderDialogue(
   label: string | null,
   body: string,
   cols: number,
+  align: 'left' | 'center' = 'left',
 ): DialogueRender {
   const inner = cols - 4; // "║ " + content + " ║"
+  const pad = align === 'center' ? padCenter : padLeft;
   const lines: string[] = [TOP(cols)];
   if (label) {
-    lines.push('║ ' + pad(label, inner) + ' ║');
+    // Labels (speaker name) always left-aligned regardless of body align.
+    lines.push('║ ' + padLeft(label, inner) + ' ║');
     lines.push(SEP(cols));
   }
   for (const w of wrap(body, inner)) {

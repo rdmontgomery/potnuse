@@ -17,10 +17,11 @@ Both warm the room. Only one wakes you up at 4 a.m. because it needs another log
 
 Engineer's question: which one do you mourn when it's gone?`;
 
-// FFVI register — the older Cid, Pollendina-ish, regretful.
-export const CID_DEL_NORTE_MARQUEZ = `There was a Cid in this one too.
+// FFVI register — the older Cid, Pollendina-ish, regretful. He owns
+// the Magitek work in his own mouth instead of narrating about it.
+export const CID_DEL_NORTE_MARQUEZ = `I was a Cid in this one too. Cid del Norte Marquez.
 
-He invented the Magitek. He didn't know what they'd do with it.
+I invented the Magitek. Didn't know what they'd do with it.
 
 None of us ever do.`;
 
@@ -74,11 +75,11 @@ It was lies. All of it. Lies on lies on lies.
 
 And still — Agrias is wounded. There are people in front of me who need me. I will fight for them. That is what I have left.`;
 
-// FFT register — Cid Orlandeau, the Thunder God. Older Cid, fewer words,
-// the gravity of the vow at the end.
-export const CID_THUNDER_GOD = `There's a Cid in this one too. Old man. Best sword in Ivalice. Thunder God, they called him.
+// FFT register — Cid Orlandeau, the Thunder God. Older Cid, fewer
+// words, the gravity of the vow. He claims this self in his own mouth.
+export const CID_THUNDER_GOD = `I was a Cid in this one too. Old man. Best sword in Ivalice. Thunder God, they called me.
 
-He saw what the Church was doing and joined the boy.
+Saw what the Church was doing. Joined the boy.
 
 The old ones can still see.`;
 
