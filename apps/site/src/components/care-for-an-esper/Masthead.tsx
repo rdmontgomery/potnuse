@@ -1,6 +1,6 @@
-import { useRef } from 'react';
-import { useFit } from './useFit';
-import { trimNl } from './text';
+import { useRef } from "react";
+import { useFit } from "./useFit";
+import { trimNl } from "./text";
 
 const BANNER = String.raw`
 ╔══════════════════════════════════════════════════════════════════════╗
@@ -22,7 +22,8 @@ const BANNER = String.raw`
 `;
 
 const META = String.raw`
-    [author]  rick montgomery
+  [director]  rick montgomery
+    [writer]  claude
    [contact]  rdmontgomery.com
    [release]  potnuse — essay
   [platform]  post / web / cloudflare pages
@@ -34,14 +35,11 @@ const META = String.raw`
 // mobile and desktop both read cleanly. Blank lines stay (paragraph breaks).
 const COPYRIGHT = String.raw`
   This document is © 2026 rick montgomery, but the brushwork is its own. Borgmann, Cortázar, Brand, and every Cid in every airship are credited as the authors of the argument.
-
-  This walkthrough is meant to appear at rdmontgomery.com. If you find it elsewhere, send a chocobo to bring it home.
 `;
 
-const EPIGRAPH = String.raw`
-   "the engine needs you more than you need it. most folks have it backwards their whole lives."
-                                                          — cid
-`;
+const EPIGRAPH_QUOTE =
+  '"the engine needs you more than you need it. most folks have it backwards their whole lives."';
+const EPIGRAPH_CITE = '— cid';
 
 export function Masthead() {
   const bannerRef = useRef<HTMLPreElement>(null);
@@ -58,7 +56,10 @@ export function Masthead() {
       </pre>
       <pre className="cfe-meta">{trimNl(META)}</pre>
       <pre className="cfe-copyright">{trimNl(COPYRIGHT)}</pre>
-      <pre className="cfe-epigraph-block">{trimNl(EPIGRAPH)}</pre>
+      <div className="cfe-epigraph-block">
+        <p>{EPIGRAPH_QUOTE}</p>
+        <p>{EPIGRAPH_CITE}</p>
+      </div>
     </header>
   );
 }

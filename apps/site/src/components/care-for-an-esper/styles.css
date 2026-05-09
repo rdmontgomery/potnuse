@@ -22,8 +22,10 @@
      pixel from triggering page-level horizontal scroll. */
   overflow-x: clip;
 
-  background-image:
-    radial-gradient(rgba(21, 17, 10, 0.04) 1px, transparent 1px);
+  background-image: radial-gradient(
+    rgba(21, 17, 10, 0.04) 1px,
+    transparent 1px
+  );
   background-size: 3px 3px;
 }
 
@@ -88,6 +90,18 @@
   margin-top: 2rem;
   color: var(--cfe-ink);
   font-style: normal;
+  /* Now a <div> of <p>s instead of a <pre>, so override the pre-wrap
+     inherited from the shared .cfe-meta/.cfe-copyright/.cfe-epigraph-block
+     rule above. The cite line is right-aligned via CSS rather than padded
+     into place with spaces. */
+  white-space: normal;
+}
+.cfe-epigraph-block p {
+  margin: 0;
+}
+.cfe-epigraph-block p + p {
+  margin-top: 0.4em;
+  text-align: right;
 }
 
 /* ─────────── TOC ─────────── */
@@ -103,7 +117,8 @@
      left inside the article column. */
   width: fit-content;
   max-width: 100%;
-  margin: 2.5rem 0 3rem 2ch;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--cfe-ink);
 }
 
@@ -115,8 +130,22 @@
   line-height: 1.4;
   white-space: pre;
   margin: 3rem 0 1.5rem;
+  /* margin-left: auto; */
+  /* margin-right: auto; */
   color: var(--cfe-ink);
   font-weight: 700;
+}
+@media (min-width: 720px) {
+  /* useFit clamps the font at 14px, so on wide viewports the 64-col rule
+     no longer fills the article column. Shrink the pre to its content
+     and auto-margin it so the whole bar centers as a unit — the label's
+     internal lead-padding still keeps it aligned under the rule. */
+  .cfe-section-header {
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 .cfe-scene-break {
@@ -134,8 +163,16 @@
   padding-left: 1.5ch;
 }
 @media (min-width: 720px) {
+  /* Desktop has slack in the article column for centering, so drop the
+     walkthrough indent and cap the body at the paragraph max-width with
+     auto margins. This puts paragraphs, dialogue boxes, mailboxes, and
+     letters on a single centered column axis instead of leaving each
+     element to decide its own centering. */
   .cfe-body {
-    padding-left: 2.5ch;
+    padding-left: 0;
+    max-width: 72ch;
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -174,8 +211,14 @@
   animation: cfe-fade-in 0.6s ease-out;
 }
 @keyframes cfe-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ─────────── Esper cameo ─────────── */
@@ -213,7 +256,9 @@
 .cfe-esper-sprite,
 .cfe-chocobo-sprite {
   image-rendering: pixelated;
-  transition: filter 1.4s ease, opacity 1.4s ease;
+  transition:
+    filter 1.4s ease,
+    opacity 1.4s ease;
 }
 
 /* ─────────── §7 denser monospace ─────────── */
@@ -236,7 +281,9 @@
 }
 .cfe-coda-sprite img {
   image-rendering: pixelated;
-  transition: filter 1.4s ease, opacity 1.4s ease;
+  transition:
+    filter 1.4s ease,
+    opacity 1.4s ease;
 }
 
 .cfe-coda-line {
@@ -320,7 +367,9 @@
   user-select: none;
   touch-action: manipulation;
   border-radius: 0;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
 }
 .cfe-bracket:hover:not(:disabled),
 .cfe-bracket:focus-visible:not(:disabled) {
@@ -360,7 +409,7 @@
 }
 .cfe-letter::before,
 .cfe-letter::after {
-  content: '';
+  content: "";
   display: block;
   height: 1px;
   background: repeating-linear-gradient(
@@ -476,7 +525,10 @@
   border: 1px dashed transparent;
   border-radius: 0;
   cursor: default;
-  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
   user-select: none;
 }
 .cfe-mailbox:not(.is-open):hover {
@@ -542,7 +594,9 @@
   cursor: pointer;
   border-radius: 1px;
   padding: 0 0.15em;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
   user-select: none;
   -webkit-user-select: none;
 }
