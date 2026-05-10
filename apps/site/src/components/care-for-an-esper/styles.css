@@ -98,7 +98,12 @@
   font-size: 0.7rem;
   line-height: 1.55;
   white-space: pre;
-  margin: 2.5rem 0 3rem;
+  /* Shrink-wrap to content width so the LEAD-padded lines aren't pushed
+     to the right by a parent-wide block. margin: auto then centers the
+     whole pre within the article column. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 2.5rem auto 3rem;
   color: var(--cfe-ink);
 }
 
