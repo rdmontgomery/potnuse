@@ -9,6 +9,7 @@ import { Masthead } from './Masthead';
 import { SpriteManager } from './SpriteManager';
 import { Toc } from './Toc';
 import { SectionHeader, SceneBreak } from './SectionHeader';
+import { Spoiler } from './Spoiler';
 import {
   BUGENHAGEN,
   CID_BREAK_FOURTH_WALL,
@@ -378,8 +379,9 @@ export default function App() {
               <p>
                 Aerith is the Terra-figure here, and the game does not
                 let her win. She tends flowers in a ruined church in
-                Sector 5, refuses every Shinra recruitment, and dies on
-                an altar trying to summon Holy. The flowers are the focal
+                Sector 5, refuses every Shinra recruitment, and{' '}
+                <Spoiler>dies on an altar trying to summon Holy</Spoiler>.
+                The flowers are the focal
                 practice. The church is where focal practice survives in
                 the slums beneath the plate. The death is what happens
                 when the empire is too far along to be answered.
@@ -466,7 +468,7 @@ export default function App() {
                 out to be a reactor.
               </p>
               <p>
-                This is the move. Section 6 will show you what it looks
+                This is the move. Chapter 6 will show you what it looks
                 like when the temple is also selling the pilgrimage as
                 virtue, and the parasites in the relics as sanctification.
               </p>
@@ -698,7 +700,7 @@ export default function App() {
               </p>
               <Mailbox letterId="moth" />
               <p>
-                Section 8 will return to Cid. Notice, when we get there,
+                Chapter 8 will return to Cid. Notice, when we get there,
                 that the recurring Cid has never been the same Cid twice.
                 Each game gives him a new airship to invent, a new
                 emergency, a new young pilot to take under his wing. He

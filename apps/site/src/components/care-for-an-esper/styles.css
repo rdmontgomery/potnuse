@@ -522,6 +522,33 @@
   }
 }
 
+/* ─────────── Spoiler ───────────
+   Inline black-bar redaction. Tap (or Enter / Space) to reveal. The bar
+   inherits its background-color as the foreground so the text is fully
+   masked but selection/highlight still works for readers who want it. */
+
+.cfe-spoiler {
+  background: var(--cfe-ink);
+  color: var(--cfe-ink);
+  cursor: pointer;
+  border-radius: 1px;
+  padding: 0 0.15em;
+  transition: color 120ms ease, background-color 120ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cfe-spoiler:focus-visible {
+  outline: 2px solid var(--cfe-accent);
+  outline-offset: 2px;
+}
+.cfe-spoiler-on {
+  background: transparent;
+  color: var(--cfe-ink);
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .cfe-letter-enter {
   animation: cfe-letter-slide 0.7s ease-out both;
 }
