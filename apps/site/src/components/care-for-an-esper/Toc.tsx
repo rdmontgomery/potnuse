@@ -5,7 +5,7 @@ import { useFit } from './useFit';
 // col 0; titles are flush at the right column; dotted leaders fill the
 // space between. Print-index style.
 
-const COLS = 56;
+const COLS = 36;
 
 const ENTRIES: Array<{ label: string; title: string }> = [
   { label: 'Prelude', title: 'The Borgmann horse' },

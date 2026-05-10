@@ -103,7 +103,7 @@
      left inside the article column. */
   width: fit-content;
   max-width: 100%;
-  margin: 2.5rem 0 3rem;
+  margin: 2.5rem 0 3rem 2ch;
   color: var(--cfe-ink);
 }
 
