@@ -182,7 +182,7 @@ export default function App() {
                 corners of life that still asked something of you.
               </p>
               <p>
-                This is the question the next four sections sit inside:
+                This is the question the next four chapters sit inside:
                 what happens to a civilization when the device paradigm
                 becomes total? When even the things designed to look like
                 focal things — the apps that gamify your meditation, the
@@ -461,7 +461,7 @@ export default function App() {
               </p>
               <DialogueBox label="YUNA" body={YUNA} />
               <p>
-                The tonal shift this section asks of you is the one the
+                The tonal shift this chapter asks of you is the one the
                 game asks of Yuna: stop trusting the institution that said
                 it had the answer. The Mako reactor was at least honest
                 about being a reactor. Yevon was the temple that turned
@@ -598,6 +598,7 @@ export default function App() {
                 only what Borgmann said focal practice produces: what you
                 became through the refusing.
               </p>
+              <Mailbox letterId="odell" />
               <p>
                 That is what Ramza fought for. There is not another
                 answer. Delita won the throne and died on it because he
@@ -775,7 +776,7 @@ export default function App() {
               </p>
               <p>
                 That structural position has a name now, after seven
-                sections of working it out. Cid is the maintainer who
+                chapters of working it out. Cid is the maintainer who
                 never becomes Horacio.
               </p>
               <p>
@@ -835,7 +836,7 @@ export default function App() {
             <div className="cfe-body">
               <p>
                 There is an alternative to the argument the post has just
-                spent eight sections building. It is honorable, it is held
+                spent eight chapters building. It is honorable, it is held
                 by serious people, and the post has been pushing past it
                 without naming it directly. Now is the moment to name it.
               </p>
@@ -864,7 +865,7 @@ export default function App() {
               </p>
               <p>
                 The bracketing is the move the post has been refusing for
-                eight sections.
+                eight chapters.
               </p>
               <p>
                 Borgmann's argument is not that we cannot design
@@ -896,7 +897,7 @@ export default function App() {
                 Brand has been arguing this for sixty years in a
                 different idiom. Borgmann has been arguing it since 1992.
                 Square Enix has been animating it for forty. The post
-                has been arguing it for nine sections.
+                has been arguing it for nine chapters.
               </p>
               <p>
                 Cid is the answer because Cid is the figure who tends.
@@ -943,8 +944,8 @@ export default function App() {
               <p>
                 This was the post's argument. The Final Fantasy chambers
                 were the long working-out. The Cortázar interlude was the
-                warning. The Cid section was the answer. The Russell
-                section was the foil. The horse passage we opened with —
+                warning. The Cid chapter was the answer. The Russell
+                chapter was the foil. The horse passage we opened with —
                 the man with the sore hands, the liquid eye — was the
                 entire argument compressed into one paragraph that you
                 read before the post said anything else.

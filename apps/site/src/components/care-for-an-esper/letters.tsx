@@ -20,6 +20,7 @@ export type LetterId =
   | 'pace-layers'
   | 'pollendina'
   | 'castorp'
+  | 'odell'
   | 'quentin-watch'
   | 'hearth'
   | 'long-now'
@@ -185,6 +186,38 @@ STUFF       — daily`}
       </>
     ),
     signoff: 'kupo, kupo.',
+    bump: { who: 'esper', delta: 0.04 },
+  },
+  {
+    id: 'odell',
+    carrier: 'mog',
+    from: 'a moogle, watching a heron',
+    re: 'Odell, How to Do Nothing',
+    body: (
+      <>
+        <p>
+          Jenny Odell's{' '}
+          <em>
+            <a href="https://www.goodreads.com/book/show/42771901-how-to-do-nothing" target="_blank" rel="noopener">How to Do Nothing</a>
+          </em>{' '}
+          gives Ramza's refusal a contemporary vocabulary. The
+          attention economy extracts; the refuser redirects; the place
+          attention gets redirected toward — Odell calls it the
+          bioregion — was always there, ignored by the apparatus. The
+          platform punishes the redirector with invisibility, which is
+          the same prize the chronicler offers Ramza. The bioregion
+          does not.
+        </p>
+        <p>
+          She is making the Borgmann move in 2019 idiom. The focal
+          substrate is a watershed, a heron, a row of rosemary on the
+          balcony — and the practice is paying attention to it on its
+          own terms. Refusal as redirection. The reward is what you
+          became through the redirecting.
+        </p>
+      </>
+    ),
+    signoff: 'kupo. it is watching the heron, too.',
     bump: { who: 'esper', delta: 0.04 },
   },
   {

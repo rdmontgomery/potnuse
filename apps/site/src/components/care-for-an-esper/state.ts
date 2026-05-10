@@ -23,6 +23,7 @@ const MAILBOX_LETTER_IDS: LetterId[] = [
   'pollendina',
   'hearth',
   'castorp',
+  'odell',
   'quentin-watch',
   'moth',
   'pace-layers',
