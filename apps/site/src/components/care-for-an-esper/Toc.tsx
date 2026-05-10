@@ -6,7 +6,6 @@ import { useFit } from './useFit';
 // every entry; titles are flush at the right column. Print-index style.
 
 const COLS = 56;
-const LEAD = 6; // left margin, in chars
 const LABEL_COL = 7; // width reserved for the label (longest is "Prelude")
 
 const ENTRIES: Array<{ label: string; title: string }> = [
@@ -25,26 +24,24 @@ const ENTRIES: Array<{ label: string; title: string }> = [
 
 function row({ label, title }: { label: string; title: string }): string {
   // Right-justify label inside LABEL_COL so leaders align across rows.
-  const lead = ' '.repeat(LEAD);
   const labelPad = ' '.repeat(Math.max(0, LABEL_COL - label.length)) + label;
   // " . " repeated; sandwich with spaces so neither dot kisses the label
   // or the title.
-  const used = LEAD + LABEL_COL + 1 + 1 + title.length;
+  const used = LABEL_COL + 1 + 1 + title.length;
   const fill = Math.max(1, COLS - used);
   let leader = '';
   for (let i = 0; i < fill; i++) leader += i % 2 === 1 ? '.' : ' ';
-  return `${lead}${labelPad} ${leader} ${title}`;
+  return `${labelPad} ${leader} ${title}`;
 }
 
-const RULE = '+-'.repeat(Math.floor((COLS - LEAD) / 2));
+const RULE = '+-'.repeat(Math.floor(COLS / 2));
 const HEAD = (() => {
   const text = 'T A B L E   O F   C O N T E N T S';
-  const indent = LEAD + Math.max(0, Math.floor((COLS - LEAD - text.length) / 2));
+  const indent = Math.max(0, Math.floor((COLS - text.length) / 2));
   return ' '.repeat(indent) + text;
 })();
-const RULE_LINE = ' '.repeat(LEAD) + RULE;
 
-const TOC = [RULE_LINE, HEAD, RULE_LINE, '', ...ENTRIES.map(row)].join('\n');
+const TOC = [RULE, HEAD, RULE, '', ...ENTRIES.map(row)].join('\n');
 
 export function Toc() {
   const ref = useRef<HTMLPreElement>(null);
