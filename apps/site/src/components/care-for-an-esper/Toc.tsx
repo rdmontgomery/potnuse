@@ -1,12 +1,11 @@
 import { useRef } from 'react';
 import { useFit } from './useFit';
 
-// GameFAQs-walkthrough TOC. Labels (Prelude / I..X) are right-justified
-// against a fixed column so the dotted leaders begin at the same x for
-// every entry; titles are flush at the right column. Print-index style.
+// GameFAQs-walkthrough TOC. Labels (Prelude / I..X) sit flush left at
+// col 0; titles are flush at the right column; dotted leaders fill the
+// space between. Print-index style.
 
 const COLS = 56;
-const LABEL_COL = 7; // width reserved for the label (longest is "Prelude")
 
 const ENTRIES: Array<{ label: string; title: string }> = [
   { label: 'Prelude', title: 'The Borgmann horse' },
@@ -23,15 +22,14 @@ const ENTRIES: Array<{ label: string; title: string }> = [
 ];
 
 function row({ label, title }: { label: string; title: string }): string {
-  // Right-justify label inside LABEL_COL so leaders align across rows.
-  const labelPad = ' '.repeat(Math.max(0, LABEL_COL - label.length)) + label;
   // " . " repeated; sandwich with spaces so neither dot kisses the label
-  // or the title.
-  const used = LABEL_COL + 1 + 1 + title.length;
+  // or the title. Leader length varies per row so each line still
+  // totals COLS, but every row starts flush at col 0.
+  const used = label.length + 1 + 1 + title.length;
   const fill = Math.max(1, COLS - used);
   let leader = '';
   for (let i = 0; i < fill; i++) leader += i % 2 === 1 ? '.' : ' ';
-  return `${labelPad} ${leader} ${title}`;
+  return `${label} ${leader} ${title}`;
 }
 
 const RULE = '+-'.repeat(Math.floor(COLS / 2));
