@@ -23,9 +23,13 @@ export function useFit(
 
     const fit = () => {
       const target = el.parentElement || el;
-      // Subtract a small safety margin so sub-pixel rendering can't push us
-      // a fraction of a column past the edge.
-      const usable = Math.max(0, target.clientWidth - 2);
+      // clientWidth includes the parent's padding, so subtract it — children
+      // only get the content box. Plus 2px of safety margin so sub-pixel
+      // rendering can't push us a fraction of a column past the edge.
+      const cs = getComputedStyle(target);
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padR = parseFloat(cs.paddingRight) || 0;
+      const usable = Math.max(0, target.clientWidth - padL - padR - 2);
       const desired = Math.floor(usable / naturalCols / ratio);
       const clamped = Math.max(min, Math.min(max, desired));
       el.style.fontSize = `${clamped}px`;
