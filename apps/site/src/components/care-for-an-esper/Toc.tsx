@@ -36,7 +36,7 @@ function row({ label, title }: { label: string; title: string }): string {
   return `${lead}${labelPad} ${leader} ${title}`;
 }
 
-const RULE = '+-'.repeat(Math.floor((COLS - LEAD) / 2)) + '+';
+const RULE = '+-'.repeat(Math.floor((COLS - LEAD) / 2));
 const HEAD = (() => {
   const text = 'T A B L E   O F   C O N T E N T S';
   const indent = LEAD + Math.max(0, Math.floor((COLS - LEAD - text.length) / 2));
