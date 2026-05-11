@@ -21,7 +21,10 @@ function esperOpacity(v: number): number {
 // custom properties; the keyframes reference them with bare var()
 // (no nested calc) so the browser interpolates filter cleanly between
 // keyframes. Flare endpoints get the same treatment.
-function EsperGlyph() {
+//
+// Exported so CodaEsper in CodaCameo can use the same sprite without
+// drifting from this implementation.
+export function EsperGlyph() {
   const v = useEsperStore((s) => s.esperVibrancy);
   const prev = useRef<number | null>(null);
   const [flareNonce, setFlareNonce] = useState(0);
