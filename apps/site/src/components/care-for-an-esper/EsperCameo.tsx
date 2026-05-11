@@ -16,10 +16,11 @@ function esperOpacity(v: number): number {
 }
 
 // The esper breathes by default and flares when an esper-bump letter
-// opens. The base <img> runs the breathing keyframe continuously; a
-// sibling <img>, keyed on a nonce that increments per bump, mounts to
-// run the flare keyframe and stays parked at opacity 0 until the next
-// bump remounts it. The breathing stream is never interrupted.
+// opens. Breathing endpoints (low/high saturate + brightness) are
+// computed in JS from vibrancy and passed as plain numeric CSS
+// custom properties; the keyframes reference them with bare var()
+// (no nested calc) so the browser interpolates filter cleanly between
+// keyframes. Flare endpoints get the same treatment.
 function EsperGlyph() {
   const v = useEsperStore((s) => s.esperVibrancy);
   const prev = useRef<number | null>(null);
@@ -32,9 +33,22 @@ function EsperGlyph() {
     prev.current = v;
   }, [v]);
 
-  const vibrancyStyle = {
-    ['--cfe-esper-vibrancy' as string]: v,
-  } as React.CSSProperties;
+  // Breathing oscillates saturate ±0.2, brightness ±0.04 around a
+  // vibrancy-tracked base. Wide enough to read on a small pixel sprite.
+  const baseSat = 0.45 + v * 0.55;
+  const baseBright = 0.9 + v * 0.1;
+  const breathStyle: React.CSSProperties = {
+    ['--cfe-breath-low-sat' as string]: Math.max(0, baseSat - 0.2),
+    ['--cfe-breath-high-sat' as string]: Math.min(1.3, baseSat + 0.2),
+    ['--cfe-breath-low-bright' as string]: Math.max(0.6, baseBright - 0.04),
+    ['--cfe-breath-high-bright' as string]: Math.min(1.15, baseBright + 0.04),
+  };
+  const flareStyle: React.CSSProperties = {
+    ['--cfe-flare-peak-sat' as string]: Math.min(1.4, baseSat + 0.5),
+    ['--cfe-flare-peak-bright' as string]: Math.min(1.25, baseBright + 0.15),
+    ['--cfe-flare-rest-sat' as string]: baseSat,
+    ['--cfe-flare-rest-bright' as string]: baseBright,
+  };
 
   return (
     <span className="cfe-esper-sprite-host">
@@ -45,7 +59,7 @@ function EsperGlyph() {
         height={84}
         draggable={false}
         className="cfe-esper-sprite"
-        style={{ ...vibrancyStyle, opacity: esperOpacity(v) }}
+        style={{ ...breathStyle, opacity: esperOpacity(v) }}
       />
       {flareNonce > 0 && (
         <img
@@ -57,7 +71,7 @@ function EsperGlyph() {
           draggable={false}
           aria-hidden
           className="cfe-esper-flare"
-          style={vibrancyStyle}
+          style={flareStyle}
         />
       )}
     </span>

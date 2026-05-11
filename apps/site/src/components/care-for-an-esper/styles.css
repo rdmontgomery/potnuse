@@ -273,43 +273,88 @@
     opacity 1.4s ease;
 }
 
-/* Filter base values track --cfe-esper-vibrancy (set inline, [0,1]).
-   Breathing oscillates filter ±0.05 saturate / ±0.02 brightness around
-   that base over 8s (barely perceptible, but enough that she reads
-   as a living thing between events). Opacity is set inline on the
-   element (does not animate with the breathing). */
-.cfe-esper-sprite {
-  --cfe-esper-sat: calc(0.25 + var(--cfe-esper-vibrancy, 0.7) * 0.75);
-  --cfe-esper-bright: calc(0.85 + var(--cfe-esper-vibrancy, 0.7) * 0.15);
-  transition: opacity 1.4s ease;
-  animation: cfe-esper-breathe 8s ease-in-out infinite;
+/* Register the breath/flare endpoints as <number> properties so the
+   browser interpolates them across keyframes. Without @property, var()
+   substitution into filter()/transform() can resolve as token-stream and
+   silently skip interpolation in some configurations. */
+@property --cfe-breath-low-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.5;
+}
+@property --cfe-breath-high-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.9;
+}
+@property --cfe-breath-low-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.92;
+}
+@property --cfe-breath-high-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.0;
+}
+@property --cfe-flare-peak-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.2;
+}
+@property --cfe-flare-peak-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.1;
+}
+@property --cfe-flare-rest-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.8;
+}
+@property --cfe-flare-rest-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.95;
 }
 
-/* The flare overlay sits absolute on top of the base sprite. It is
-   remounted (via React key) on every esper-bump so the keyframe re-runs
-   cleanly. Animation has fill-mode forwards so it parks at opacity 0
-   between flares. */
+/* Breathing runs the keyframe continuously. Endpoints come from React
+   as bare numbers; the keyframes do filter: saturate(var(...))
+   brightness(var(...)), no nested calc, so the browser can interpolate
+   filter cleanly. A subtle scale pulse rides alongside so the life is
+   not contingent on color reading well on small sprites. */
+.cfe-esper-sprite {
+  transition: opacity 1.4s ease;
+  animation: cfe-esper-breathe 6s ease-in-out infinite;
+  transform-origin: center bottom;
+  will-change: filter, transform;
+}
+
+/* Flare overlay sits absolute over the base. Remounted via React key on
+   each esper-bump so the keyframe re-runs cleanly. fill-mode forwards
+   parks it invisible between flares. */
 .cfe-esper-flare {
   position: absolute;
   inset: 0;
   pointer-events: none;
   image-rendering: pixelated;
   opacity: 0;
-  --cfe-esper-sat: calc(0.25 + var(--cfe-esper-vibrancy, 0.7) * 0.75);
-  --cfe-esper-bright: calc(0.85 + var(--cfe-esper-vibrancy, 0.7) * 0.15);
   animation: cfe-esper-flare 1.2s ease-out forwards;
+  will-change: filter, opacity;
 }
 
 @keyframes cfe-esper-breathe {
   0%, 100% {
     filter:
-      saturate(calc(var(--cfe-esper-sat) - 0.05))
-      brightness(calc(var(--cfe-esper-bright) - 0.02));
+      saturate(var(--cfe-breath-low-sat))
+      brightness(var(--cfe-breath-low-bright));
+    transform: scale(0.96);
   }
   50% {
     filter:
-      saturate(calc(var(--cfe-esper-sat) + 0.05))
-      brightness(calc(var(--cfe-esper-bright) + 0.02));
+      saturate(var(--cfe-breath-high-sat))
+      brightness(var(--cfe-breath-high-bright));
+    transform: scale(1.04);
   }
 }
 
@@ -317,17 +362,17 @@
   0% {
     opacity: 0;
     filter:
-      saturate(calc(var(--cfe-esper-sat) + 0.5))
-      brightness(calc(var(--cfe-esper-bright) + 0.15));
+      saturate(var(--cfe-flare-peak-sat))
+      brightness(var(--cfe-flare-peak-bright));
   }
   18% {
-    opacity: 0.85;
+    opacity: 0.9;
   }
   100% {
     opacity: 0;
     filter:
-      saturate(var(--cfe-esper-sat))
-      brightness(var(--cfe-esper-bright));
+      saturate(var(--cfe-flare-rest-sat))
+      brightness(var(--cfe-flare-rest-bright));
   }
 }
 
