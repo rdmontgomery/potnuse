@@ -13,8 +13,8 @@ function buzz(ms: number) {
 }
 
 // The chocobo accepts gysahl greens. The feed gesture is the post's
-// one focal practice that fits the lore — feeding chocobos is a forty-
-// year ritual in this franchise, the small act every player learns.
+// one focal practice that fits the lore (feeding chocobos is a forty-
+// year ritual in this franchise, the small act every player learns).
 // Optional. Not a gate. Reader who skips it is fine. Reader who feeds
 // gets a small offering registered: chocobo vibrancy +0.15, a 200ms
 // haptic gravitas at completion, and a slightly different coda.
@@ -51,7 +51,7 @@ export function Chocobo() {
         // her own letter. Reader who scrolls past the §2 chocobo
         // entirely never sees the kweh letter.
         recordEvent('letter:kweh');
-        // 200ms gravitas — sustained, weighted; reads as gravity at the
+        // 200ms gravitas (sustained, weighted); reads as gravity at the
         // moment of offering, not as a UI-confirmation tick.
         buzz(200);
         return;

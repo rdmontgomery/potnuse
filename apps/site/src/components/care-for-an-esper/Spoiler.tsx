@@ -5,7 +5,7 @@ type Props = {
   label?: string;
 };
 
-export function Spoiler({ children, label = 'spoiler — tap to reveal' }: Props) {
+export function Spoiler({ children, label = 'spoiler (tap to reveal)' }: Props) {
   const [revealed, setRevealed] = useState(false);
 
   function onKeyDown(e: KeyboardEvent<HTMLSpanElement>) {

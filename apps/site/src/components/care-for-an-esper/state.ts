@@ -10,8 +10,8 @@ import { LETTERS_BY_ID, type LetterId } from './letters';
 //
 // Persisted across visits via localStorage so a returning reader's
 // vibrancy survives. The currently-open mailbox state is *not*
-// persisted — letters re-close between sessions, the discovery
-// gesture stays meaningful.
+// persisted (letters re-close between sessions, the discovery
+// gesture stays meaningful).
 export type EngagementEvent = 'chocobo-fed' | `letter:${LetterId}`;
 
 type State = {
@@ -22,7 +22,7 @@ type State = {
   mailboxLetters: Partial<Record<LetterId, LetterId>>;
   recordEvent: (e: EngagementEvent) => void;
   /** Drop a sprite on the mailbox at `home`. Opens the mailbox's home
-   * letter — one mailbox, one letter, no random draws. */
+   * letter (one mailbox, one letter, no random draws). */
   dropOnMailbox: (home: LetterId) => void;
   closeMailbox: (home: LetterId) => void;
   hydrate: () => void;
@@ -69,8 +69,8 @@ function loadPersistedEvents(): Set<EngagementEvent> {
     if (!raw) return new Set();
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return new Set();
-    // Drop 'chocobo-fed' on load too — prior sessions may have written
-    // it before we stopped persisting. The gesture repeats each visit.
+    // Drop 'chocobo-fed' on load too (prior sessions may have written
+    // it before we stopped persisting). The gesture repeats each visit.
     return new Set(
       arr.filter(
         (x): x is EngagementEvent => typeof x === 'string' && x !== 'chocobo-fed',
@@ -95,7 +95,7 @@ function persistEvents(events: Set<EngagementEvent>) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedFor(events)));
   } catch {
-    // Quota exceeded or storage disabled — fail silently. The runtime
+    // Quota exceeded or storage disabled: fail silently. The runtime
     // experience is intact; only the cross-session memory is lost.
   }
 }
@@ -103,8 +103,8 @@ function persistEvents(events: Set<EngagementEvent>) {
 // Chocobo's animation speed reflects the reader's engagement with the
 // post. Sleepy when the reader has barely opened anything; lively when
 // they've worked through most of the letters. Three pre-baked GIFs at
-// frame delays of 35 / 22 / 8 cs — selected client-side from the
-// events set. Threshold for `fast` lowered so a moderately engaged
+// frame delays of 35 / 22 / 8 cs (selected client-side from the
+// events set). Threshold for `fast` lowered so a moderately engaged
 // reader visibly trips it.
 export function chocoboGifSrcFor(events: Set<EngagementEvent>): string {
   let opened = 0;

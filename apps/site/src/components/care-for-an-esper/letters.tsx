@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 // The 10 letters scattered across the post. Each one a discovery the
-// linear post does not contain — a Hopscotch / Hotel Chevalier
+// linear post does not contain: a Hopscotch / Hotel Chevalier
 // fragment, available only to the active reader who notices a
 // mailbox between paragraphs and drags a wandering sprite onto it.
 //
@@ -55,7 +55,7 @@ export const LETTERS: Letter[] = [
           memory, with sticky things that hold us here on this side?
         </blockquote>
         <p>
-          — <em>
+          <em>
             <a href="https://www.goodreads.com/book/show/53413.Hopscotch" target="_blank" rel="noopener">Hopscotch</a>
           </em>, Julio Cortázar, ch. 73, transl. Gregory Rabassa.
         </p>
@@ -81,10 +81,10 @@ export const LETTERS: Letter[] = [
           <a href="https://podcasts.apple.com/us/podcast/stewart-brand-silicon-valleys-favorite-prophet-on-lifes/id1548604447?i=1000763393453" target="_blank" rel="noopener">Stewart Brand</a>
           {' '}wrote it at twenty-nine. Underneath the line, in smaller type:{' '}
           <em>
-            a realm of intimate, personal power is developing — power of
+            a realm of intimate, personal power is developing (power of
             the individual to conduct his own education, find his own
             inspiration, shape his own environment, and share his
-            adventure with whoever is interested.
+            adventure with whoever is interested).
           </em>
         </p>
         <p>A catalog, then, of access to tools.</p>
@@ -107,12 +107,12 @@ export const LETTERS: Letter[] = [
           </em>: every building is six layers, each changing at its own rate.
         </p>
         <pre className="cfe-letter-pre">
-          {`SITE        — eternal
-STRUCTURE   — 30 to 300 years
-SKIN        — 20 years
-SERVICES    — 7 to 15 years
-SPACE PLAN  — 3 to 30 years
-STUFF       — daily`}
+          {`SITE        : eternal
+STRUCTURE   : 30 to 300 years
+SKIN        : 20 years
+SERVICES    : 7 to 15 years
+SPACE PLAN  : 3 to 30 years
+STUFF       : daily`}
         </pre>
         <p>
           The fast layers learn from the slow. The slow layers constrain
@@ -135,7 +135,7 @@ STUFF       — daily`}
       <>
         <p>
           In FFIV, Cid Pollendina built the airships of Baron because the
-          king asked him to. Then he watched what they were used for —
+          king asked him to. Then he watched what they were used for:
           bombing raids, conscripted villages, monsters dropped on
           Mysidia. There is a scene where Cid stands on the deck of the{' '}
           <em>Enterprise</em> with the protagonist, Cecil, and says:
@@ -144,8 +144,8 @@ STUFF       — daily`}
         <p>
           Then he flies the <em>Enterprise</em> into the underground and
           detonates it, by hand, to seal a gate. The party leaves him
-          for dead. He turns up alive two chapters later — old men do, in
-          this game — but the ship is gone, and Cid spends the rest of
+          for dead. He turns up alive two chapters later (old men do, in
+          this game), but the ship is gone, and Cid spends the rest of
           the game building the next one.
         </p>
         <p>The airship is not the thing. Cid is the thing.</p>
@@ -167,7 +167,7 @@ STUFF       — daily`}
           <em>
             <a href="https://www.goodreads.com/book/show/88077.The_Magic_Mountain" target="_blank" rel="noopener">The Magic Mountain</a>
           </em>{' '}
-          keeps changing time scales on you — chapters that span an
+          keeps changing time scales on you: chapters that span an
           afternoon, chapters that span seasons, a chapter (<em>By the
           Ocean of Time</em>) that just sits in the dilation. Mann is
           doing on the page what the mountain does to Castorp: the
@@ -202,8 +202,8 @@ STUFF       — daily`}
           </em>{' '}
           gives Ramza's refusal a contemporary vocabulary. The
           attention economy extracts; the refuser redirects; the place
-          attention gets redirected toward — Odell calls it the
-          bioregion — was always there, ignored by the apparatus. The
+          attention gets redirected toward (Odell calls it the
+          bioregion) was always there, ignored by the apparatus. The
           platform punishes the redirector with invisibility, which is
           the same prize the chronicler offers Ramza. The bioregion
           does not.
@@ -211,7 +211,7 @@ STUFF       — daily`}
         <p>
           She is making the Borgmann move in 2019 idiom. The focal
           substrate is a watershed, a heron, a row of rosemary on the
-          balcony — and the practice is paying attention to it on its
+          balcony, and the practice is paying attention to it on its
           own terms. Refusal as redirection. The reward is what you
           became through the redirecting.
         </p>
@@ -228,12 +228,12 @@ STUFF       — daily`}
     body: (
       <>
         <p>
-          The morning of his suicide, Quentin Compson — narrator of{' '}
+          The morning of his suicide, Quentin Compson (narrator of{' '}
           <em>
             <a href="https://www.goodreads.com/book/show/10975.The_Sound_and_the_Fury" target="_blank" rel="noopener">The Sound and the Fury</a>
           </em>
-          {' '}— takes the watch his father gave him —{' '}
-          <em>a mausoleum of all hope and desire</em> — and breaks it.
+          ){' '}takes the watch his father gave him (
+          <em>a mausoleum of all hope and desire</em>) and breaks it.
           Twists the hands off, watches them spin to the floor. He still
           hears it ticking. He has spent the morning trying to outrun
           time and the watch will not stop.
@@ -293,7 +293,7 @@ STUFF       — daily`}
           <a href="https://longnow.org/clock/" target="_blank" rel="noopener">clock</a>
           {' '}in the Texas mountain ticks once a year. The century hand
           advances every hundred years. The cuckoo comes out every
-          millennium. Brand and Hillis built it — are still building it —
+          millennium. Brand and Hillis built it (are still building it)
           to require a maintainer every generation, forever, and to refuse
           to be finished by any single one of them.
         </p>
@@ -335,7 +335,7 @@ STUFF       — daily`}
       <>
         <p>
           <em>
-            [ Rick — this is your slot. A Stevie line about Hopscotch. A
+            [ Rick, this is your slot. A Stevie line about Hopscotch. A
             specific airship from your kid's playthrough. Something about
             the cabin or the horse or your dad or the stove. The letter
             that is yours, not mine. Anywhere from three sentences to

@@ -12,7 +12,7 @@ import type { LetterId, SpriteKind } from './letters';
 // Render path: each active sprite is a DOM <img>. The rAF loop
 // updates each img's transform every frame; React re-renders only
 // when the live set of sprites changes (spawn / exit / delivery).
-// GIFs animate natively — no manual frame stepping.
+// GIFs animate natively (no manual frame stepping).
 //
 // The layer paints in front of text (z-index above the article) so
 // pointer events on the img Just Work. Direct setPointerCapture on
@@ -28,8 +28,8 @@ const SPRITES: Record<
   mog: { src: '/sprites/mog-walk.gif', w: 32, h: 44 },
 };
 
-// Pixel sprites are small natively; render at 1× — half the size of the
-// first wandering pass. Small enough to feel ambient, big enough to grab.
+// Pixel sprites are small natively; render at 1× (half the size of the
+// first wandering pass). Small enough to feel ambient, big enough to grab.
 const SCALE = 1;
 
 type WanderKind = keyof typeof SPRITES;

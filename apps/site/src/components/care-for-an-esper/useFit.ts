@@ -23,8 +23,8 @@ export function useFit(
 
     const fit = () => {
       const target = el.parentElement || el;
-      // clientWidth includes the parent's padding, so subtract it — children
-      // only get the content box. Plus 2px of safety margin so sub-pixel
+      // clientWidth includes the parent's padding, so subtract it (children
+      // only get the content box). Plus 2px of safety margin so sub-pixel
       // rendering can't push us a fraction of a column past the edge.
       const cs = getComputedStyle(target);
       const padL = parseFloat(cs.paddingLeft) || 0;

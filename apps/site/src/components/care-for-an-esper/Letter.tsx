@@ -42,7 +42,7 @@ export function LetterBox({ letter, onClose }: Props) {
         </p>
         {letter.body}
       </div>
-      <footer className="cfe-letter-bottom">— {letter.signoff}</footer>
+      <footer className="cfe-letter-bottom">{letter.signoff}</footer>
     </aside>
   );
 }

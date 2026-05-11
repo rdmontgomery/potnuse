@@ -25,21 +25,21 @@ const META = String.raw`
   [director]  rick montgomery
     [writer]  claude
    [contact]  rdmontgomery.com
-   [release]  potnuse — essay
+   [release]  potnuse (essay)
   [platform]  post / web / cloudflare pages
    [updated]  2026-05-07
    [version]  v1 (seedling)
 `;
 
-// No hard newlines inside the paragraphs — CSS reflow handles the wrap so
-// mobile and desktop both read cleanly. Blank lines stay (paragraph breaks).
+// No hard newlines inside the paragraphs (CSS reflow handles the wrap so
+// mobile and desktop both read cleanly). Blank lines stay (paragraph breaks).
 const COPYRIGHT = String.raw`
   This document is © 2026 rick montgomery, but the brushwork is its own. Borgmann, Cortázar, Brand, and every Cid in every airship are credited as the authors of the argument.
 `;
 
 const EPIGRAPH_QUOTE =
   '"the engine needs you more than you need it. most folks have it backwards their whole lives."';
-const EPIGRAPH_CITE = '— cid';
+const EPIGRAPH_CITE = '(cid)';
 
 export function Masthead() {
   const bannerRef = useRef<HTMLPreElement>(null);
@@ -50,7 +50,7 @@ export function Masthead() {
       <pre
         ref={bannerRef}
         className="cfe-banner"
-        aria-label="how to care for an esper — a magitek walkthrough by rdmontgomery, v1.00"
+        aria-label="how to care for an esper (a magitek walkthrough by rdmontgomery, v1.00)"
       >
         {trimNl(BANNER)}
       </pre>

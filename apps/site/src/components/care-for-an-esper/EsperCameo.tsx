@@ -1,34 +1,66 @@
+import { useEffect, useRef, useState } from 'react';
 import { chocoboGifSrcFor, useEsperStore } from './state';
 
-// Vibrancy [0,1] → CSS filter that desaturates the GIF as the
-// reader's engagement drops. Saturation rides 0.25..1; brightness
-// nudges down slightly when low so a fully-fallen sprite doesn't
-// glare against the cream paper.
-function vibrancyFilter(v: number): string {
+function chocoboFilter(v: number): string {
   const sat = 0.25 + v * 0.75;
   const bright = 0.85 + v * 0.15;
   return `saturate(${sat}) brightness(${bright})`;
 }
 
-function vibrancyOpacity(v: number): number {
+function chocoboOpacity(v: number): number {
   return 0.55 + v * 0.45;
 }
 
+function esperOpacity(v: number): number {
+  return 0.55 + v * 0.45;
+}
+
+// The esper breathes by default and flares when an esper-bump letter
+// opens. The base <img> runs the breathing keyframe continuously; a
+// sibling <img>, keyed on a nonce that increments per bump, mounts to
+// run the flare keyframe and stays parked at opacity 0 until the next
+// bump remounts it. The breathing stream is never interrupted.
 function EsperGlyph() {
   const v = useEsperStore((s) => s.esperVibrancy);
+  const prev = useRef<number | null>(null);
+  const [flareNonce, setFlareNonce] = useState(0);
+
+  useEffect(() => {
+    if (prev.current !== null && v > prev.current) {
+      setFlareNonce((n) => n + 1);
+    }
+    prev.current = v;
+  }, [v]);
+
+  const vibrancyStyle = {
+    ['--cfe-esper-vibrancy' as string]: v,
+  } as React.CSSProperties;
+
   return (
-    <img
-      src="/sprites/magicite.gif"
-      alt=""
-      width={48}
-      height={84}
-      draggable={false}
-      className="cfe-esper-sprite"
-      style={{
-        filter: vibrancyFilter(v),
-        opacity: vibrancyOpacity(v),
-      }}
-    />
+    <span className="cfe-esper-sprite-host">
+      <img
+        src="/sprites/magicite.gif"
+        alt=""
+        width={48}
+        height={84}
+        draggable={false}
+        className="cfe-esper-sprite"
+        style={{ ...vibrancyStyle, opacity: esperOpacity(v) }}
+      />
+      {flareNonce > 0 && (
+        <img
+          key={flareNonce}
+          src="/sprites/magicite.gif"
+          alt=""
+          width={48}
+          height={84}
+          draggable={false}
+          aria-hidden
+          className="cfe-esper-flare"
+          style={vibrancyStyle}
+        />
+      )}
+    </span>
   );
 }
 
@@ -44,8 +76,8 @@ function ChocoboGlyph() {
       draggable={false}
       className="cfe-chocobo-sprite"
       style={{
-        filter: vibrancyFilter(v),
-        opacity: vibrancyOpacity(v),
+        filter: chocoboFilter(v),
+        opacity: chocoboOpacity(v),
       }}
     />
   );
@@ -55,16 +87,17 @@ type Props = {
   variant: 'intro' | 'fading' | 'dimmed-with-chocobo';
 };
 
-// Three cameo variants. Each pairs the magicite (the esper as
-// crystallized stone) with a one-line italic narration. The
-// 'dimmed-with-chocobo' variant adds the chocobo alongside.
+// Three cameo variants. The figcaption just names her presence (Path 3:
+// stop-narrating). The visual carries the trajectory: vibrancy state
+// from the store sets the floor, the breathing keeps her alive, the
+// flare on letter-open puts the reader's hand on her.
 export function EsperCameo({ variant }: Props) {
   if (variant === 'intro') {
     return (
       <figure className="cfe-esper-cameo">
         <EsperGlyph />
         <figcaption>
-          <em>an esper, watching</em>
+          <em>an esper, watching.</em>
         </figcaption>
       </figure>
     );
@@ -75,22 +108,21 @@ export function EsperCameo({ variant }: Props) {
       <figure className="cfe-esper-cameo">
         <EsperGlyph />
         <figcaption>
-          <em>the esper has lost a little of her color since Mobliz.</em>
+          <em>the esper, again.</em>
         </figcaption>
       </figure>
     );
   }
 
-  // dimmed-with-chocobo — closes §6.
+  // dimmed-with-chocobo (closes §6).
   return (
     <figure className="cfe-esper-cameo cfe-esper-cameo-pair">
       <div className="cfe-esper-cameo-row">
         <EsperGlyph />
-        <em>the esper is dimmer than before. she does not say why.</em>
+        <em>the esper.</em>
       </div>
       <div className="cfe-esper-cameo-row">
         <ChocoboGlyph />
-        <em>the chocobo is still here.</em>
       </div>
     </figure>
   );

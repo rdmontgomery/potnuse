@@ -24,7 +24,7 @@ export function Mailbox({ letterId }: { letterId: LetterId }) {
         aria-label={
           opened
             ? `mailbox opened, letter from ${letter?.from}`
-            : 'mailbox — drag a wandering sprite to open'
+            : 'mailbox (drag a wandering sprite to open)'
         }
       >
         {opened ? '[ ✉  open ]' : '[ ✉ ]'}

@@ -1,4 +1,4 @@
-/* care-for-an-esper — gamefaqs register, 1998, mountain-dew-stained.
+/* care-for-an-esper (gamefaqs register, 1998, mountain-dew-stained).
    Cream paper, near-black ink, monospace from masthead to coda. */
 
 .cfe-root {
@@ -29,7 +29,7 @@
   background-size: 3px 3px;
 }
 
-/* Page width — left-aligned column like a printed FAQ.
+/* Page width: left-aligned column like a printed FAQ.
    76 chars at body font feels right for prose; the masthead pre overflows
    horizontally only on extreme-narrow viewports. */
 .cfe-article {
@@ -138,8 +138,8 @@
 @media (min-width: 720px) {
   /* useFit clamps the font at 14px, so on wide viewports the 64-col rule
      no longer fills the article column. Shrink the pre to its content
-     and auto-margin it so the whole bar centers as a unit — the label's
-     internal lead-padding still keeps it aligned under the rule. */
+     and auto-margin it so the whole bar centers as a unit (the label's
+     internal lead-padding still keeps it aligned under the rule). */
   .cfe-section-header {
     width: fit-content;
     max-width: 100%;
@@ -206,7 +206,7 @@
   letter-spacing: 0;
 }
 
-/* Section reveal — gentle fade. */
+/* Section reveal (gentle fade). */
 .cfe-section {
   animation: cfe-fade-in 0.6s ease-out;
 }
@@ -223,8 +223,10 @@
 
 /* ─────────── Esper cameo ─────────── */
 /* GIF magicite (and chocobo, in the pair variant) with an italic
-   caption. Vibrancy rides via inline filter/opacity; transition
-   smooths the drift across passive decay and engagement bumps. */
+   caption. The esper breathes continuously and flares when an
+   esper-bump letter opens (see the cfe-esper-* keyframes below).
+   The chocobo stays on a static filter; its life comes from the
+   GIF-speed swap (chocoboGifSrcFor) driven by engagement count. */
 
 .cfe-esper-cameo {
   margin: 1.6em 0 0.6em;
@@ -253,17 +255,85 @@
   line-height: 1.4;
   text-align: center;
 }
+
+.cfe-esper-sprite-host {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
 .cfe-esper-sprite,
 .cfe-chocobo-sprite {
   image-rendering: pixelated;
+}
+
+.cfe-chocobo-sprite {
   transition:
     filter 1.4s ease,
     opacity 1.4s ease;
 }
 
+/* Filter base values track --cfe-esper-vibrancy (set inline, [0,1]).
+   Breathing oscillates filter ±0.05 saturate / ±0.02 brightness around
+   that base over 8s (barely perceptible, but enough that she reads
+   as a living thing between events). Opacity is set inline on the
+   element (does not animate with the breathing). */
+.cfe-esper-sprite {
+  --cfe-esper-sat: calc(0.25 + var(--cfe-esper-vibrancy, 0.7) * 0.75);
+  --cfe-esper-bright: calc(0.85 + var(--cfe-esper-vibrancy, 0.7) * 0.15);
+  transition: opacity 1.4s ease;
+  animation: cfe-esper-breathe 8s ease-in-out infinite;
+}
+
+/* The flare overlay sits absolute on top of the base sprite. It is
+   remounted (via React key) on every esper-bump so the keyframe re-runs
+   cleanly. Animation has fill-mode forwards so it parks at opacity 0
+   between flares. */
+.cfe-esper-flare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+  opacity: 0;
+  --cfe-esper-sat: calc(0.25 + var(--cfe-esper-vibrancy, 0.7) * 0.75);
+  --cfe-esper-bright: calc(0.85 + var(--cfe-esper-vibrancy, 0.7) * 0.15);
+  animation: cfe-esper-flare 1.2s ease-out forwards;
+}
+
+@keyframes cfe-esper-breathe {
+  0%, 100% {
+    filter:
+      saturate(calc(var(--cfe-esper-sat) - 0.05))
+      brightness(calc(var(--cfe-esper-bright) - 0.02));
+  }
+  50% {
+    filter:
+      saturate(calc(var(--cfe-esper-sat) + 0.05))
+      brightness(calc(var(--cfe-esper-bright) + 0.02));
+  }
+}
+
+@keyframes cfe-esper-flare {
+  0% {
+    opacity: 0;
+    filter:
+      saturate(calc(var(--cfe-esper-sat) + 0.5))
+      brightness(calc(var(--cfe-esper-bright) + 0.15));
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    filter:
+      saturate(var(--cfe-esper-sat))
+      brightness(var(--cfe-esper-bright));
+  }
+}
+
 /* ─────────── §7 denser monospace ─────────── */
 /* Per the spec, when the sprite layer withdraws the prose tightens.
-   Reads as the form 'leaning forward' — closer to the page, less air. */
+   Reads as the form 'leaning forward' (closer to the page, less air). */
 
 .cfe-body-dense p {
   line-height: 1.5;
@@ -271,8 +341,7 @@
 }
 
 /* ─────────── §10 coda sprites ─────────── */
-/* The italic prose just above each does the framing ('she is
-   lighter or heavier than she was'); the visual is the state. */
+/* The visual carries the state; no caption frames them. */
 
 .cfe-coda-sprite {
   margin: 0.6em 0 1.6em;
@@ -286,23 +355,8 @@
     opacity 1.4s ease;
 }
 
-.cfe-coda-line {
-  text-align: center;
-  margin: 2.2em 0 0.4em;
-}
-
 .cfe-section-coda .cfe-dialogue {
   margin: 2.4em auto 1em;
-}
-
-/* ─────────── §5 silent beat ─────────── */
-
-.cfe-quiet-beat {
-  text-align: center;
-  color: var(--cfe-ink-muted);
-  margin: 2.5em auto;
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
 }
 
 /* ─────────── Dialogue boxes ─────────── */
@@ -508,7 +562,7 @@
 
 /* ─────────── Mailboxes ─────────── */
 /* Inline drop-target. Reads as a small ASCII glyph between
-   paragraphs — discoverable without being loud. Hover and
+   paragraphs (discoverable without being loud). Hover and
    drag-target states intensify the contrast. Once opened, the
    letter slides in below and the mailbox shows its open state. */
 

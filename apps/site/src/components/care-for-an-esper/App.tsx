@@ -46,19 +46,19 @@ export default function App() {
             <blockquote className="cfe-epigraph">
               <p>
                 You cannot remain unmoved by the gentleness and conformation
-                of well-bred and well-trained horse — more than a thousand
+                of a well-bred and well-trained horse (more than a thousand
                 pounds of big-boned, well-muscled animal, slick of coat and
                 sweet of smell, obedient and mannerly, and yet forever a
                 menace with its innocent power and ineradicable inclination
                 to seek refuge in flight, and always a burden with its need
                 to be fed, wormed and shod, and its liability to cuts and
-                infections, to laming and heaves. But when it greets you
+                infections, to laming and heaves). But when it greets you
                 with a nicker, nuzzles your chest, and regards you with a
                 large and liquid eye, the question of where you want to be
                 and what you want to do has been answered.
               </p>
               <footer className="cfe-epigraph-cite">
-                — Albert Borgmann, <em>Crossing the Postmodern Divide</em>,
+                Albert Borgmann, <em>Crossing the Postmodern Divide</em>,
                 University of Chicago Press, 1992.
               </footer>
             </blockquote>
@@ -72,8 +72,8 @@ export default function App() {
                 Stewart Brand reached for that passage on Ezra Klein recently
                 to make a particular move. He wanted to say that intelligent
                 machines could be designed to receive care the way Borgmann's
-                horse receives care — that the maintenance loop, properly
-                built, deepens us. He didn't dwell. Brand never does. He cited
+                horse receives care (that the maintenance loop, properly
+                built, deepens us). He didn't dwell. Brand never does. He cited
                 and moved on, because Long Now Foundation and Whole Earth
                 Catalog and <em>How Buildings Learn</em> are all pieces of a
                 sixty-year argument that civilization is a maintenance
@@ -89,8 +89,8 @@ export default function App() {
                 eye. He was asking what it costs us to organize the world
                 such that nothing requires it. The horse demands. The
                 appliance does not. The horse refuses to disappear into the
-                function it provides — that is the <em>focal</em> in{' '}
-                <em>focal thing</em>: the thing that draws practice around
+                function it provides (that is the <em>focal</em> in{' '}
+                <em>focal thing</em>): the thing that draws practice around
                 itself, that gathers, that resists the device paradigm's
                 promise of commodity-without-burden. Borgmann is naming a
                 distinction the smooth machinery of contemporary technology
@@ -106,9 +106,9 @@ export default function App() {
               <p>Which is: the brushwork is what makes the brusher.</p>
               <p>
                 This walkthrough is about that. It runs through four Final
-                Fantasy games on its way home, because <em>magitek</em> —
-                the JRPG word for technology that draws its power from
-                something that could care back — has been working out
+                Fantasy games on its way home, because <em>magitek</em>{' '}
+                (the JRPG word for technology that draws its power from
+                something that could care back) has been working out
                 Borgmann's argument longer than most of us have been awake
                 to it. Square Enix has been shipping installments of this
                 thesis since before the Whole Earth Catalog went out of
@@ -116,7 +116,7 @@ export default function App() {
               </p>
               <Mailbox letterId="catalog" />
               <p>
-                Your guide is Cid. Not any specific Cid — the recurring one.
+                Your guide is Cid. Not any specific Cid (the recurring one).
                 The engineer who shows up in every installment, names his
                 airship, repairs it through the night, swears at it
                 affectionately, and at some point in every game saves the
@@ -140,7 +140,7 @@ export default function App() {
               </p>
               <p>
                 A device is a thing that delivers a commodity. The commodity
-                is the function — heat, transport, music, food — abstracted
+                is the function (heat, transport, music, food) abstracted
                 from the practice that used to produce it. The machinery is
                 hidden. The user is unburdened. No skill required, no
                 participation invited, no demand made. The thermostat clicks;
@@ -150,11 +150,11 @@ export default function App() {
                 A focal thing is the opposite. It refuses to disappear into
                 the function it provides. The hearth still asks you to split
                 the wood, lay the fire, watch it through the night. Warmth
-                is not the only thing it gives you — and it does not give it
+                is not the only thing it gives you, and it does not give it
                 without asking. The hearth gathers. People sit around it.
                 Conversations happen near it that don't happen near a
                 thermostat. A focal practice is the discipline of keeping
-                such things in your life — not as nostalgia, not as
+                such things in your life: not as nostalgia, not as
                 inefficiency tolerated for its charm, but as the
                 load-bearing structure of attention.
               </p>
@@ -163,17 +163,17 @@ export default function App() {
                 is a device, and the dishwasher is fine. The disburdenment
                 that devices accomplish is real and often welcome. His
                 claim is that when the device paradigm becomes{' '}
-                <em>total</em> — when every domain of life reorganizes
+                <em>total</em> (when every domain of life reorganizes
                 around commodity-delivery, every artifact engineered to ask
-                nothing of you — the focal evaporates. And what evaporates
+                nothing of you), the focal evaporates. And what evaporates
                 with it is the practice, the skill, the attention, the
                 gathering. The eye in the eye-contact. The brushwork.
               </p>
               <DialogueBox label="CID" body={CID_WOOD_STOVE} />
               <p>
                 You see where this is going. The post you are currently
-                reading is a device — words delivered, attention barely
-                required, the back button always available. Your phone is a
+                reading is a device (words delivered, attention barely
+                required, the back button always available). Your phone is a
                 device. The feeds you scroll are devices. The model you
                 talk to about your code is a device, optimized for
                 commodity-without-burden in the most refined way ever
@@ -185,8 +185,8 @@ export default function App() {
                 This is the question the next four chapters sit inside:
                 what happens to a civilization when the device paradigm
                 becomes total? When even the things designed to look like
-                focal things — the apps that gamify your meditation, the
-                boyfriend you talk to but never have to listen to — are
+                focal things (the apps that gamify your meditation, the
+                boyfriend you talk to but never have to listen to) are
                 devices wearing focal-thing clothes?
               </p>
               <p>
@@ -195,7 +195,7 @@ export default function App() {
                 cleanest version.
               </p>
               <p>
-                Before we go — there is a chocobo at the edge of the
+                Before we go, there is a chocobo at the edge of the
                 screen. The post is full of devices, and she is not one
                 of them. She has gysahl greens at her feet if you have a
                 hand free.
@@ -214,9 +214,9 @@ export default function App() {
               <p>
                 The opening sequence is a thesis statement. A girl in armor
                 walks through snow toward a sleeping town. She does not know
-                her name. The armor is Magitek — Empire-issued exoskeleton
+                her name. The armor is Magitek (Empire-issued exoskeleton
                 powered by magic extracted from sentient beings called
-                espers. The slave crown welded to her forehead controls her
+                espers). The slave crown welded to her forehead controls her
                 thoughts. She kills two guards on her way in because the
                 device tells her to.
               </p>
@@ -240,8 +240,8 @@ export default function App() {
                 Square's writers were not subtle. The Empire's military
                 doctrine is industrial extraction. The Magitek Research
                 Facility is a torture chamber where espers are held in tubes
-                and drained for magicite — crystallized esper-corpse used as
-                the energy substrate for the Empire's machinery. The
+                and drained for magicite (crystallized esper-corpse used as
+                the energy substrate for the Empire's machinery). The
                 director of the facility recoils when the party finds him.
                 He had not understood what his research would become.
               </p>
@@ -258,7 +258,7 @@ export default function App() {
                 that emerges is laughter at meaning itself.{' '}
                 <em>
                   Life. Dreams. Hope. Where do they come from? Where do they
-                  go? Such meaningless things — I'll destroy them all.
+                  go? Such meaningless things… I'll destroy them all.
                 </em>{' '}
                 This is what device-paradigm civilization sounds like when
                 it finishes its sentence.
@@ -279,8 +279,8 @@ export default function App() {
               <p>
                 The argument FFVI laid down in 1994: the device paradigm
                 produces both Kefkas and Terras. The Kefkas are the
-                Empire's intended output — instruments of extraction so
-                total they laugh at meaning when they finish their work.
+                Empire's intended output (instruments of extraction so
+                total they laugh at meaning when they finish their work).
                 The Terras are what happens when one of those instruments
                 wakes up and finds her way back to a focal practice. Any
                 focal practice. The most domestic one available. The one
@@ -305,7 +305,7 @@ export default function App() {
                 Three years later, Square raised the stakes from Empire to
                 corporation. FFVI's villains were a regime that could be
                 overthrown. FFVII's are an electric utility. Shinra
-                Electric Power Company is the perfected device paradigm —
+                Electric Power Company is the perfected device paradigm:
                 the hidden machinery scaled to a planet, the commodity
                 rebranded as energy and sold back to the population the
                 extraction is killing.
@@ -314,9 +314,9 @@ export default function App() {
                 The first thing the camera shows you is Midgar. A black
                 industrial wheel laid on a continent. Eight sectors
                 radiating from a central tower. Each sector has a Mako
-                reactor at its heart — a giant pump that draws{' '}
+                reactor at its heart (a giant pump that draws{' '}
                 <em>spirit energy</em> from the planet, refines it, and
-                sells it as electricity. The wealthy live on the upper
+                sells it as electricity). The wealthy live on the upper
                 plate, in frictionless device-paradigm cleanliness. The
                 poor live in the slums beneath the plate, in shadow, in
                 the residue. Midgar is the device paradigm's social
@@ -347,21 +347,21 @@ export default function App() {
               <p>
                 The Lifestream is what every focal practice ever performed
                 eventually deposits back into the world's substrate.
-                Skill, attention, love, brushwork — when the brusher
+                Skill, attention, love, brushwork: when the brusher
                 dies, what they made of themselves through the practice
                 goes back into the planetary commons and is metabolized
                 into the next generation of brushers. This is the
                 picture. Shinra is extracting it pre-mortem. Reactors
                 siphon spirit energy out of the substrate before it has
                 been used by anything alive. The civilization is eating
-                its seed corn — except the seed corn is the metaphysical
+                its seed corn, except the seed corn is the metaphysical
                 ground of meaningful action itself.
               </p>
               <p>
-                Cloud, the protagonist, is Magitek Knight 2.0 —
-                SOLDIER-class, mako-infused, with another man's memories
+                Cloud, the protagonist, is Magitek Knight 2.0
+                (SOLDIER-class, mako-infused, with another man's memories
                 implanted as scaffolding for an identity he does not
-                have. Like Terra, he has to find himself outside the
+                have). Like Terra, he has to find himself outside the
                 apparatus that constructed him. The pattern repeats one
                 game later because Square is not done arguing it.
               </p>
@@ -388,8 +388,8 @@ export default function App() {
               </p>
               <p>
                 Sephiroth wants to become the planet. He intends to
-                harvest all life — every focal practice, every
-                brushstroke, every liquid eye — and consolidate it into
+                harvest all life (every focal practice, every
+                brushstroke, every liquid eye) and consolidate it into
                 himself as the new substrate. He is what the device
                 paradigm wants when it finally articulates its desire:
                 not just to extract from the substrate but to <em>be</em>{' '}
@@ -398,7 +398,7 @@ export default function App() {
               </p>
               <p>
                 The planet generates Weapons. Sapphire, Diamond, Ruby,
-                Emerald — the Weapons are the planetary immune response.
+                Emerald. The Weapons are the planetary immune response.
                 They are not monsters. They are what a focal substrate
                 does when extraction crosses a threshold it can no longer
                 absorb. They wake up. They walk toward the reactors.
@@ -416,8 +416,8 @@ export default function App() {
             <div className="cfe-body">
               <p>
                 FFX changes the register. The previous two games were
-                political — empire, corporation, the apparatus of
-                extraction. FFX is theological. It asks what happens after
+                political (empire, corporation, the apparatus of
+                extraction). FFX is theological. It asks what happens after
                 the apparatus has eaten the civilization not once but in
                 cycles, and a religion has grown up around the wreckage to
                 explain why this keeps happening.
@@ -428,15 +428,15 @@ export default function App() {
                 is eventually defeated by a summoner who dies in the act.
                 The defeat is temporary. Sin always comes back. The Church
                 of Yevon teaches that Sin is divine punishment for the sin
-                of <em>machina</em> — machines, the works of an ancient
-                civilization that learned to do too much without humility.
+                of <em>machina</em> (machines, the works of an ancient
+                civilization that learned to do too much without humility).
                 The doctrine is: forsake machines, follow Yevon, send your
                 daughters on pilgrimages to die fighting Sin, repeat.
               </p>
               <p>The doctrine is wrong. Machines are not the problem. The cycle is.</p>
               <p>
-                The game reveals, late, that Yu Yevon — the founder of the
-                religion — is also the parasitic god-soul that animates
+                The game reveals, late, that Yu Yevon (the founder of the
+                religion) is also the parasitic god-soul that animates
                 Sin. The summoner's sacrificial Aeon, the weapon meant to
                 defeat Sin, becomes the next Sin once the summoner dies.
                 The religion's victory is the device that perpetuates the
@@ -452,9 +452,9 @@ export default function App() {
               </p>
               <p>
                 The FFX writers either knew their Girard or reinvented him
-                from scratch. He called it the scapegoat mechanism — the
+                from scratch. He called it the scapegoat mechanism (the
                 religion that perpetuates the violence it pretends to
-                abolish, by sanctifying the sacrifice. Yuna's refusal of
+                abolish, by sanctifying the sacrifice). Yuna's refusal of
                 the Final Aeon at the end of the game is the moment the
                 wheel stops because someone inside the wheel finally saw
                 it.
@@ -471,9 +471,6 @@ export default function App() {
                 This is the move. Chapter 6 will show you what it looks
                 like when the temple is also selling the pilgrimage as
                 virtue, and the parasites in the relics as sanctification.
-              </p>
-              <p className="cfe-quiet-beat">
-                <em>no chocobo. no esper. the screen is quiet for a beat.</em>
               </p>
             </div>
           </section>
@@ -494,8 +491,8 @@ export default function App() {
                 family is pretending is a wedding. The Church of Glabados,
                 custodian of the faith of Saint Ajora and keeper of the
                 twelve Zodiac Stones, sits behind the war as referee,
-                judge, and beneficiary. The Stones — Auracite, the holy
-                relics of the Zodiac Braves legend — are the Church's
+                judge, and beneficiary. The Stones (Auracite, the holy
+                relics of the Zodiac Braves legend) are the Church's
                 spiritual currency.
               </p>
               <p>The Stones are demons.</p>
@@ -515,8 +512,8 @@ export default function App() {
               <p>
                 The first stone is dropped at home. His brother Dycedarg,
                 patriarch of the Beoulve house, has been moving the war
-                for private advancement — abducting a princess, murdering
-                allies, treating the family name as a lever. The house
+                for private advancement (abducting a princess, murdering
+                allies, treating the family name as a lever). The house
                 Ramza grew up believing was honorable is a chess piece in
                 a private campaign. He leaves.
               </p>
@@ -533,9 +530,9 @@ export default function App() {
               </p>
               <DialogueBox label="RAMZA" body={RAMZA_WIEGRAF} />
               <p>
-                The third stone is the saint. Saint Ajora — the messianic
+                The third stone is the saint. Saint Ajora (the messianic
                 figure the entire faith is built around, the man who
-                supposedly defeated the Lucavi a millennium ago — was a
+                supposedly defeated the Lucavi a millennium ago) was a
                 Lucavi himself. The religion was always upside down. The
                 thing it pretends to fight is the thing that founded it.
                 There is no clean institution underneath the corrupt one.
@@ -567,7 +564,7 @@ export default function App() {
               <DialogueBox label="CID" body={CID_THUNDER_GOD} />
               <p>
                 The other answer is Delita. He grew up beside Ramza,
-                watched the same war, learned the same lessons — and
+                watched the same war, learned the same lessons, and
                 concluded that the mechanism is the only operative
                 reality and the only sane path is to use it. He uses the
                 war. He uses the princess. He uses the Church. By the end
@@ -584,7 +581,7 @@ export default function App() {
                 alone, on the throne, having achieved the mechanism's
                 full reward. The game cuts to a chronicler asking the
                 void: <em>Tell me, Ramza… what did you fight for?</em>{' '}
-                Ramza does not answer because Ramza is gone — either
+                Ramza does not answer because Ramza is gone: either
                 dead, or escaped, or living anonymously in a town nobody
                 chronicles.
               </p>
@@ -592,7 +589,7 @@ export default function App() {
                 This is the post's hardest claim. The mechanism punishes
                 the refusers. Refusal does not produce historical
                 victory. It does not produce institutional reward. It
-                does not even produce a stable narrative — Ramza is
+                does not even produce a stable narrative: Ramza is
                 officially a heretic, a traitor, or a hero, depending on
                 which surviving manuscript you read. Refusal produces
                 only what Borgmann said focal practice produces: what you
@@ -647,14 +644,14 @@ export default function App() {
               <p>
                 Cortázar sharpens the picture in <em>Hopscotch.</em> The
                 protagonist, Horacio Oliveira, sits in a Paris flat where
-                the world keeps offering him the same things each morning —
+                the world keeps offering him the same things each morning:
                 the partner, the watch, the novel reopening at the same
                 fold in the curve of his glasses. The pattern accepts
                 itself. The cloud, he writes, "cunningly accepts its name
                 as cloud." Hope compresses into a small primate that
-                shivers on a tabletop. Cortázar's instruction to Horacio —
-                and to the reader who feels Horacio's predicament in his
-                own bones — is: break the primate's head. Push outward
+                shivers on a tabletop. Cortázar's instruction to Horacio
+                (and to the reader who feels Horacio's predicament in his
+                own bones) is: break the primate's head. Push outward
                 from the center of the room. Open a passage to the street
                 the pattern has never let you see.
               </p>
@@ -665,19 +662,19 @@ export default function App() {
               <p>This is the failure mode Borgmann does not address.</p>
               <p>
                 Focal practice has its own pathology. When the brushwork
-                becomes routine — when the daily winding becomes habit,
+                becomes routine (when the daily winding becomes habit,
                 when the daily tending of the horse becomes the indistinct
-                fact of mornings — the brusher is still being made by the
+                fact of mornings), the brusher is still being made by the
                 brushwork. But what is being made is the primate. The
                 maintenance has not stopped. The relation has gone. What
                 remains is the chain of obligation.
               </p>
               <p>
                 What saves the maintainer from the primate is what
-                Cortázar calls the moth — the small irruption on the
+                Cortázar calls the moth (the small irruption on the
                 pencil's edge, the unscheduled encounter, the thing that
                 wakes you to the artifact again as if you had not seen
-                it. Borgmann's focal practice depends on this without
+                it). Borgmann's focal practice depends on this without
                 saying so. The horse is focal because the horse is alive
                 and surprises you. The hearth is focal because the fire
                 moves. The watch is harder, because the watch is exactly
@@ -686,7 +683,7 @@ export default function App() {
               </p>
               <p>
                 The Magitek Knight, by the way, is not Horacio. The
-                Magitek Knight is not maintaining anything — the armor
+                Magitek Knight is not maintaining anything: the armor
                 maintains itself, the slave crown maintains the rider, no
                 relation exists. Horacio's failure is not the absence of
                 focal practice. It is focal practice that has lost its
@@ -707,13 +704,6 @@ export default function App() {
                 emergency, a new young pilot to take under his wing. He
                 recurs at the level of archetype, never at the level of
                 his own routine. The games keep giving him moths.
-              </p>
-              <p className="cfe-quiet-beat">
-                <em>
-                  the post is quiet here. the sprite layer has withdrawn.
-                  the chocobo has wandered off-screen. the esper is somewhere
-                  else.
-                </em>
               </p>
             </div>
           </section>
@@ -750,7 +740,7 @@ export default function App() {
                 MMO for over a decade. Cid Sophiar fixes the black car at
                 a desert garage in FFXV with his granddaughter Cindy
                 learning the trade beside him. In FFXVI the name itself
-                is the inheritance — a man called Cid dies, and his
+                is the inheritance: a man called Cid dies, and his
                 apprentice takes the name as a vow.
               </p>
               <p>
@@ -783,8 +773,8 @@ export default function App() {
                 Look at the medium. Each Final Fantasy resets Cid to a
                 new airship he has never built, a new emergency he has
                 never seen, a new young protagonist he has never
-                mentored. The repetition that would make him Horacio —
-                same Cid, same routine, same airship for forty years — is
+                mentored. The repetition that would make him Horacio
+                (same Cid, same routine, same airship for forty years) is
                 structurally impossible. The form requires a new moth
                 every game. Square has been giving him moths since the
                 8-bit era. He has been kept alive at the archetypal
@@ -798,7 +788,7 @@ export default function App() {
               <p>
                 Stewart Brand has been arguing for it in non-fictional
                 register for sixty years. Whole Earth Catalog was a Cid
-                object — a manual for people who maintain.{' '}
+                object (a manual for people who maintain).{' '}
                 <em>How Buildings Learn</em> is the Cid argument applied
                 to architecture: buildings are not commodities you finish
                 and ship; they are airships in slow motion, demanding
@@ -815,18 +805,15 @@ export default function App() {
                 Brand is the real-world Cid. Borgmann gave us the theory.
                 Cortázar gave us the warning. Brand is the engineer who
                 has been building the machine that lets the theory
-                survive the warning — the institution that requires its
+                survive the warning (the institution that requires its
                 maintainers to cycle, that hands the airship to a new
                 generation before the old one has time to forget the
-                moth.
+                moth).
               </p>
               <p>This is the answer the post has been walking toward.</p>
               <Mailbox letterId="long-now" />
               <p>Cid steps forward.</p>
               <DialogueBox label="CID" body={CID_BREAK_FOURTH_WALL} maxCols={64} />
-              <p className="cfe-quiet-beat">
-                <em>the chocobo is still here. the esper is still here.</em>
-              </p>
             </div>
           </section>
 
@@ -843,7 +830,7 @@ export default function App() {
               <p>
                 The alternative is the engineer's position. The most
                 articulate version of it is Stuart Russell's{' '}
-                <em>Human Compatible</em> — an argument that the alignment
+                <em>Human Compatible</em>, an argument that the alignment
                 problem is solvable if we design AI systems with three
                 structural commitments: the AI exists to satisfy human
                 preferences, it is initially uncertain what those
@@ -872,10 +859,10 @@ export default function App() {
                 artifacts that approximate care. It is that the moral
                 substance of the relation is not located in the artifact.
                 It is located in the practice. The horse is focal because
-                of what brushing the horse does to the brusher — what
-                kind of person you become through the years of brushwork.
+                of what brushing the horse does to the brusher (what
+                kind of person you become through the years of brushwork).
                 The hearth is focal because of what tending the fire does
-                to the tender. The watch is focal — when it is focal —
+                to the tender. The watch is focal (when it is focal)
                 because of what winding it does to the winder. Russell's
                 AI can be perfectly designed and the user can still treat
                 it as a device. The artifact's structure does not
@@ -912,7 +899,7 @@ export default function App() {
                 The argument is not against Russell. It is around him.
                 He is solving an important problem. He is solving it on
                 the wrong side of the relation. The interesting question
-                — the question this post has been asking — is on the
+                (the question this post has been asking) is on the
                 other side, where the brushwork lives.
               </p>
             </div>
@@ -935,7 +922,7 @@ export default function App() {
                 The question of where you want to be and what you want
                 to do has been answered. Not by the gaze. The gaze is a
                 small fact at the end of the day. The answer is what
-                came before the gaze — the brushing, the feeding, the
+                came before the gaze: the brushing, the feeding, the
                 cleaning, the years. The years made a man who was
                 capable of standing in a stall in the cold and
                 recognizing what was looking at him. The years were the
@@ -945,8 +932,8 @@ export default function App() {
                 This was the post's argument. The Final Fantasy chambers
                 were the long working-out. The Cortázar interlude was the
                 warning. The Cid chapter was the answer. The Russell
-                chapter was the foil. The horse passage we opened with —
-                the man with the sore hands, the liquid eye — was the
+                chapter was the foil. The horse passage we opened with
+                (the man with the sore hands, the liquid eye) was the
                 entire argument compressed into one paragraph that you
                 read before the post said anything else.
               </p>
@@ -954,14 +941,8 @@ export default function App() {
                 We are going to leave you with two things and then leave.
               </p>
 
-              <p className="cfe-coda-line">
-                <em>the chocobo is here.</em>
-              </p>
               <CodaChocobo />
 
-              <p className="cfe-coda-line">
-                <em>the esper is here.</em>
-              </p>
               <CodaEsper />
 
               <Mailbox letterId="rick-slot" />
