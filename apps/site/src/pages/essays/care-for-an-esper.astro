@@ -1,0 +1,52 @@
+---
+import { getEntry } from 'astro:content';
+import Base from '@/layouts/Base.astro';
+import Backlinks from '@/components/Backlinks.astro';
+import App from '@/components/care-for-an-esper/App';
+
+const entry = await getEntry('essays', 'care-for-an-esper');
+if (!entry) throw new Error('care-for-an-esper entry missing');
+---
+
+<Base title={entry.data.title} description={entry.data.description}>
+  <App client:only="react" />
+  <section class="cfe-chrome">
+    <Backlinks slug={entry.id} />
+  </section>
+</Base>
+
+<style is:global>
+  /* The walkthrough runs in a notepad register (light cream bg, black ink).
+     Override the site's dark warm body so the sticky ATB rail and gate hints
+     read against the right substrate. */
+  body:has(.cfe-root) {
+    background: #f4ecd8;
+  }
+
+  /* Backlinks chrome lives below the cream article, on cream — the
+     site-default light-ink-on-warm-body palette is invisible here.
+     Rewrite the few text/border colors to read on cream. Matches the
+     cfe-ink palette in the article above. */
+  .cfe-chrome .pressure {
+    border-top-color: rgba(21, 17, 10, 0.15);
+  }
+  .cfe-chrome .pressure h2 {
+    color: #5a4f38;
+  }
+  .cfe-chrome .pressure a {
+    color: #15110a;
+    border-bottom-color: rgba(21, 17, 10, 0.3);
+  }
+  .cfe-chrome .pressure a:hover {
+    border-bottom-color: #a3681b;
+  }
+</style>
+
+<style>
+  .cfe-chrome {
+    max-width: 680px;
+    margin: 3rem auto 0;
+    padding: 0 1.5rem 4rem;
+    background: #f4ecd8;
+  }
+</style>

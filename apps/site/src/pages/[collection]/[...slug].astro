@@ -14,13 +14,16 @@ export const getStaticPaths: GetStaticPaths = async () => {
     'primer',
     'invisible-ink',
   ]);
+  const bespokeEssays = new Set<string>(['care-for-an-esper']);
   const essays = await getCollection('essays');
   const experiments = await getCollection('experiments');
   return [
-    ...essays.map((entry) => ({
-      params: { collection: 'essays', slug: entry.id },
-      props: { entry },
-    })),
+    ...essays
+      .filter((entry) => !bespokeEssays.has(entry.id))
+      .map((entry) => ({
+        params: { collection: 'essays', slug: entry.id },
+        props: { entry },
+      })),
     ...experiments
       .filter((entry) => !bespokeExperiments.has(entry.id))
       .map((entry) => ({

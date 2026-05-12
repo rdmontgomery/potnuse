@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.9",
-    "@rdm/stego": "workspace:*",
     "@astrojs/mdx": "^5.0.3",
     "@astrojs/react": "^5.0.3",
+    "@rdm/stego": "workspace:*",
     "@types/d3": "^7.4.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

@@ -51,7 +51,14 @@ const displayTitle =
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@300..800&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400..900;1,400..900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&display=swap"
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/JetBrainsMono-VariableFont.woff2"
+      crossorigin
     />
   </head>
   <body>
@@ -205,6 +212,18 @@ const displayTitle =
     </script>
 
     <style is:global>
+      /* Self-hosted variable font — Google's CDN ships a Latin-only subset
+         that drops the U+2500 Box Drawing block and U+2580 Block Elements,
+         which the care-for-an-esper masthead and dialog boxes rely on. */
+      @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 800;
+        src: url('/fonts/JetBrainsMono-VariableFont.woff2')
+          format('woff2-variations');
+      }
+
       :root {
         --font-crimson: 'Crimson Pro', Georgia, 'Iowan Old Style', serif;
         --font-jetbrains: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;

@@ -1,0 +1,727 @@
+/* care-for-an-esper (gamefaqs register, 1998, mountain-dew-stained).
+   Cream paper, near-black ink, monospace from masthead to coda. */
+
+.cfe-root {
+  --cfe-bg: #f4ecd2;
+  --cfe-bg-deep: #ebe1c0;
+  --cfe-ink: #15110a;
+  --cfe-ink-dim: #5a4f38;
+  --cfe-ink-muted: #8d7f63;
+  --cfe-rule: #b9a772;
+  --cfe-accent: #a3681b;
+  --cfe-chocobo-warm: #d99421;
+
+  background: var(--cfe-bg);
+  color: var(--cfe-ink);
+  font-family: var(--font-jetbrains, ui-monospace, monospace);
+  font-size: 15px;
+  line-height: 1.55;
+  min-height: 100vh;
+  padding: 0 0 6rem;
+  /* Belt-and-suspenders: keep ASCII art that overruns by a fraction of a
+     pixel from triggering page-level horizontal scroll. */
+  overflow-x: clip;
+
+  background-image: radial-gradient(
+    rgba(21, 17, 10, 0.04) 1px,
+    transparent 1px
+  );
+  background-size: 3px 3px;
+}
+
+/* Page width: left-aligned column like a printed FAQ.
+   76 chars at body font feels right for prose; the masthead pre overflows
+   horizontally only on extreme-narrow viewports. */
+.cfe-article {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 1.6rem 1rem 0;
+  /* Sprite layer is absolutely positioned within the article, so
+     sprites walk through the column as the reader scrolls. */
+  position: relative;
+}
+@media (min-width: 720px) {
+  .cfe-article {
+    padding: 2.5rem 1.5rem 0;
+  }
+}
+
+/* ─────────── Masthead ─────────── */
+
+.cfe-masthead {
+  margin: 0 0 2rem;
+}
+
+.cfe-banner {
+  font-family: inherit;
+  /* Initial size for the brief moment before useFit measures the parent
+     and writes a fitted font-size as inline style. */
+  font-size: 0.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+  margin: 0 0 1.5rem;
+  white-space: pre;
+  color: var(--cfe-ink);
+  text-align: left;
+}
+
+.cfe-meta,
+.cfe-copyright,
+.cfe-epigraph-block {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 2.4vw, 0.85rem);
+  line-height: 1.55;
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+  color: var(--cfe-ink);
+}
+
+.cfe-meta {
+  color: var(--cfe-ink);
+}
+
+.cfe-copyright {
+  color: var(--cfe-ink-dim);
+  margin-top: 1.6rem;
+  font-size: clamp(0.65rem, 2.3vw, 0.78rem);
+}
+
+.cfe-epigraph-block {
+  margin-top: 2rem;
+  color: var(--cfe-ink);
+  font-style: normal;
+  /* Now a <div> of <p>s instead of a <pre>, so override the pre-wrap
+     inherited from the shared .cfe-meta/.cfe-copyright/.cfe-epigraph-block
+     rule above. The cite line is right-aligned via CSS rather than padded
+     into place with spaces. */
+  white-space: normal;
+}
+.cfe-epigraph-block p {
+  margin: 0;
+}
+.cfe-epigraph-block p + p {
+  margin-top: 0.4em;
+  text-align: right;
+}
+
+/* ─────────── TOC ─────────── */
+
+.cfe-toc {
+  font-family: inherit;
+  /* useFit overwrites this on mount. */
+  font-size: 0.7rem;
+  line-height: 1.55;
+  white-space: pre;
+  /* Shrink-wrap to content width so a parent-wide block doesn't leave
+     trailing slack on either side; margin: 0 auto 3rem 0 sits flush
+     left inside the article column. */
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  color: var(--cfe-ink);
+}
+
+/* ─────────── Section header ─────────── */
+
+.cfe-section-header {
+  font-family: inherit;
+  font-size: clamp(0.7rem, 2.4vw, 0.88rem);
+  line-height: 1.4;
+  white-space: pre;
+  margin: 3rem 0 1.5rem;
+  /* margin-left: auto; */
+  /* margin-right: auto; */
+  color: var(--cfe-ink);
+  font-weight: 700;
+}
+@media (min-width: 720px) {
+  /* useFit clamps the font at 14px, so on wide viewports the 64-col rule
+     no longer fills the article column. Shrink the pre to its content
+     and auto-margin it so the whole bar centers as a unit (the label's
+     internal lead-padding still keeps it aligned under the rule). */
+  .cfe-section-header {
+    width: fit-content;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.cfe-scene-break {
+  text-align: center;
+  letter-spacing: 0.4em;
+  color: var(--cfe-ink-muted);
+  margin: 3rem 0;
+  font-size: 0.85rem;
+  white-space: pre;
+}
+
+/* ─────────── Body prose ─────────── */
+
+.cfe-body {
+  padding-left: 1.5ch;
+}
+@media (min-width: 720px) {
+  /* Desktop has slack in the article column for centering, so drop the
+     walkthrough indent and cap the body at the paragraph max-width with
+     auto margins. This puts paragraphs, dialogue boxes, mailboxes, and
+     letters on a single centered column axis instead of leaving each
+     element to decide its own centering. */
+  .cfe-body {
+    padding-left: 0;
+    max-width: 72ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.cfe-body p {
+  margin: 0 0 1.4em;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
+  line-height: 1.65;
+  max-width: 72ch;
+}
+.cfe-body em {
+  font-style: italic;
+}
+
+.cfe-epigraph {
+  margin: 0 0 1.4em;
+  padding-left: 0;
+  border: 0;
+  font-style: normal;
+}
+.cfe-epigraph p {
+  color: var(--cfe-ink-dim);
+}
+
+/* Cold-open citation line beneath the Borgmann epigraph. */
+.cfe-epigraph-cite {
+  display: block;
+  margin-top: 1.2em;
+  font-size: 0.82em;
+  color: var(--cfe-ink-muted);
+  font-style: normal;
+  letter-spacing: 0;
+}
+
+/* Section reveal (gentle fade). */
+.cfe-section {
+  animation: cfe-fade-in 0.6s ease-out;
+}
+@keyframes cfe-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────────── Esper cameo ─────────── */
+/* GIF magicite (and chocobo, in the pair variant) with an italic
+   caption. The esper breathes continuously and flares when an
+   esper-bump letter opens (see the cfe-esper-* keyframes below).
+   The chocobo stays on a static filter; its life comes from the
+   GIF-speed swap (chocoboGifSrcFor) driven by engagement count. */
+
+.cfe-esper-cameo {
+  margin: 1.6em 0 0.6em;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  font-style: italic;
+  color: var(--cfe-ink);
+  text-align: center;
+}
+.cfe-esper-cameo figcaption {
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+}
+.cfe-esper-cameo-pair {
+  gap: 1.4em;
+}
+.cfe-esper-cameo-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4em;
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+  text-align: center;
+}
+
+.cfe-esper-sprite-host {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.cfe-esper-sprite,
+.cfe-chocobo-sprite {
+  image-rendering: pixelated;
+}
+
+.cfe-chocobo-sprite {
+  transition:
+    filter 1.4s ease,
+    opacity 1.4s ease;
+}
+
+/* Register the breath/flare endpoints as <number> properties so the
+   browser interpolates them across keyframes. Without @property, var()
+   substitution into filter()/transform() can resolve as token-stream and
+   silently skip interpolation in some configurations. */
+@property --cfe-breath-low-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.5;
+}
+@property --cfe-breath-high-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.9;
+}
+@property --cfe-breath-low-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.92;
+}
+@property --cfe-breath-high-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.0;
+}
+@property --cfe-flare-peak-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.2;
+}
+@property --cfe-flare-peak-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1.1;
+}
+@property --cfe-flare-rest-sat {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.8;
+}
+@property --cfe-flare-rest-bright {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0.95;
+}
+
+/* Breathing runs the keyframe continuously. Endpoints come from React
+   as bare numbers; the keyframes do filter: saturate(var(...))
+   brightness(var(...)), no nested calc, so the browser can interpolate
+   filter cleanly. A subtle scale pulse rides alongside so the life is
+   not contingent on color reading well on small sprites. */
+.cfe-esper-sprite {
+  transition: opacity 1.4s ease;
+  animation: cfe-esper-breathe 6s ease-in-out infinite;
+  transform-origin: center bottom;
+  will-change: filter, transform;
+}
+
+/* Flare overlay sits absolute over the base. Remounted via React key on
+   each esper-bump so the keyframe re-runs cleanly. fill-mode forwards
+   parks it invisible between flares. */
+.cfe-esper-flare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  image-rendering: pixelated;
+  opacity: 0;
+  animation: cfe-esper-flare 1.2s ease-out forwards;
+  will-change: filter, opacity;
+}
+
+@keyframes cfe-esper-breathe {
+  0%, 100% {
+    filter:
+      saturate(var(--cfe-breath-low-sat))
+      brightness(var(--cfe-breath-low-bright));
+    transform: scale(0.96);
+  }
+  50% {
+    filter:
+      saturate(var(--cfe-breath-high-sat))
+      brightness(var(--cfe-breath-high-bright));
+    transform: scale(1.04);
+  }
+}
+
+@keyframes cfe-esper-flare {
+  0% {
+    opacity: 0;
+    filter:
+      saturate(var(--cfe-flare-peak-sat))
+      brightness(var(--cfe-flare-peak-bright));
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    filter:
+      saturate(var(--cfe-flare-rest-sat))
+      brightness(var(--cfe-flare-rest-bright));
+  }
+}
+
+/* ─────────── §7 denser monospace ─────────── */
+/* Per the spec, when the sprite layer withdraws the prose tightens.
+   Reads as the form 'leaning forward' (closer to the page, less air). */
+
+.cfe-body-dense p {
+  line-height: 1.5;
+  margin-bottom: 1em;
+}
+
+/* ─────────── §10 coda sprites ─────────── */
+/* The visual carries the state; no caption frames them. */
+
+.cfe-coda-sprite {
+  margin: 0.6em 0 1.6em;
+  display: flex;
+  justify-content: center;
+}
+.cfe-coda-sprite img {
+  image-rendering: pixelated;
+  transition:
+    filter 1.4s ease,
+    opacity 1.4s ease;
+}
+
+.cfe-section-coda .cfe-dialogue {
+  margin: 2.4em auto 1em;
+}
+
+/* ─────────── Dialogue boxes ─────────── */
+
+.cfe-dialogue {
+  font-family: inherit;
+  font-size: clamp(0.78rem, 2.5vw, 0.9rem);
+  line-height: 1.4;
+  /* Auto margins center the box (which sizes to its own content width)
+     within the article column. */
+  margin: 1.6em auto 0.6em;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  white-space: pre;
+  color: var(--cfe-ink);
+  letter-spacing: 0;
+}
+
+/* ─────────── Chocobo portrait ─────────── */
+/* Walking GIF above the §2 chocobo dialogue. Centers in the column
+   so the speech bubble feels addressed by the bird, not appended. */
+
+.cfe-chocobo-portrait {
+  display: flex;
+  justify-content: center;
+  margin: 0.4em 0 0.2em;
+}
+.cfe-chocobo-portrait img {
+  image-rendering: pixelated;
+}
+
+/* ─────────── Bracketed inline actions ─────────── */
+/* Gestures that fit in the prose grid. The bracketed glyphs read as
+   ASCII-walkthrough notation; the whole bracket is the tap target.
+   min-height/min-width hit the 44×44 minimum. */
+
+.cfe-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem 1rem;
+  margin: 0.8em 0 0.4em;
+}
+
+.cfe-bracket {
+  font: inherit;
+  font-size: clamp(0.82rem, 2.6vw, 0.92rem);
+  line-height: 1.3;
+  background: transparent;
+  border: 0;
+  padding: 0.55em 0.6em;
+  margin: 0;
+  color: var(--cfe-ink);
+  cursor: pointer;
+  white-space: pre;
+  letter-spacing: 0;
+  min-height: 44px;
+  min-width: 44px;
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  border-radius: 0;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+.cfe-bracket:hover:not(:disabled),
+.cfe-bracket:focus-visible:not(:disabled) {
+  background: var(--cfe-ink);
+  color: var(--cfe-bg);
+  outline: none;
+}
+.cfe-bracket:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.cfe-bracket-feed.is-holding {
+  background: rgba(217, 148, 33, 0.18);
+  color: var(--cfe-accent);
+}
+.cfe-bracket-feed.is-done {
+  color: var(--cfe-chocobo-warm);
+  opacity: 1;
+}
+
+/* ─────────── Letters ─────────── */
+/* A letter is a folded scrap of paper that slides out when a
+   wandering sprite is dragged onto a mailbox (or, for the kweh
+   letter, when the chocobo is fed her gysahl greens).
+   Top + bottom rules carry the from / sign-off in muted ink. The
+   body uses normal HTML flow so blockquotes + italics read as
+   prose. The whole aside slides in on first mount. */
+
+.cfe-letter {
+  margin: 1.6em auto;
+  max-width: 56ch;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.018);
+  border: 0;
+  position: relative;
+}
+.cfe-letter::before,
+.cfe-letter::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--cfe-rule) 0 6px,
+    transparent 6px 10px
+  );
+}
+
+.cfe-letter-top,
+.cfe-letter-bottom {
+  font-size: clamp(0.72rem, 2.2vw, 0.82rem);
+  color: var(--cfe-ink-muted);
+  letter-spacing: 0.04em;
+  padding: 0.55em 1.2em;
+  font-style: italic;
+}
+.cfe-letter-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+}
+.cfe-letter-bottom {
+  text-align: right;
+}
+.cfe-letter-close {
+  font: inherit;
+  font-style: normal;
+  background: transparent;
+  border: 0;
+  color: var(--cfe-ink-muted);
+  cursor: pointer;
+  padding: 0.2em 0.4em;
+  border-radius: 0;
+  letter-spacing: 0;
+  transition: color 0.12s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cfe-letter-close:hover,
+.cfe-letter-close:focus-visible {
+  color: var(--cfe-accent);
+  outline: none;
+}
+.cfe-letter-meta-label {
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85em;
+  color: var(--cfe-ink-dim);
+  margin-right: 0.35em;
+}
+.cfe-letter-from {
+  color: var(--cfe-ink);
+}
+
+.cfe-letter-body {
+  padding: 0.6em 1.2em 1.2em;
+  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
+  line-height: 1.55;
+  color: var(--cfe-ink);
+}
+.cfe-letter-body p {
+  margin: 0 0 0.9em;
+}
+.cfe-letter-body p:last-child {
+  margin-bottom: 0;
+}
+.cfe-letter-re {
+  color: var(--cfe-ink-dim);
+  font-size: 0.92em;
+  margin-bottom: 1.1em !important;
+}
+.cfe-letter-body blockquote {
+  margin: 0.9em 0;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 2px solid var(--cfe-rule);
+  font-style: italic;
+  color: var(--cfe-ink-dim);
+}
+.cfe-letter-body blockquote p {
+  margin: 0;
+}
+.cfe-letter-pre {
+  font-family: inherit;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: var(--cfe-ink-dim);
+  margin: 0.9em 0;
+  padding: 0.4em 0 0.4em 1em;
+  border-left: 2px solid var(--cfe-rule);
+  white-space: pre;
+  letter-spacing: 0;
+}
+
+/* ─────────── Mailboxes ─────────── */
+/* Inline drop-target. Reads as a small ASCII glyph between
+   paragraphs (discoverable without being loud). Hover and
+   drag-target states intensify the contrast. Once opened, the
+   letter slides in below and the mailbox shows its open state. */
+
+.cfe-mailbox-wrap {
+  margin: 1.6em 0;
+  text-align: center;
+}
+.cfe-mailbox {
+  display: inline-block;
+  font-size: clamp(0.78rem, 2.4vw, 0.88rem);
+  color: var(--cfe-ink-muted);
+  letter-spacing: 0.08em;
+  padding: 0.45em 0.9em;
+  border: 1px dashed transparent;
+  border-radius: 0;
+  cursor: default;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+  user-select: none;
+}
+.cfe-mailbox:not(.is-open):hover {
+  color: var(--cfe-accent);
+  border-color: var(--cfe-rule);
+}
+.cfe-mailbox.is-drop-target {
+  color: var(--cfe-accent);
+  border-color: var(--cfe-accent);
+  background: rgba(217, 148, 33, 0.08);
+}
+.cfe-mailbox.is-open {
+  color: var(--cfe-chocobo-warm);
+  border-color: var(--cfe-rule);
+  border-style: solid;
+}
+
+/* ─────────── Wandering sprites ─────────── */
+/* Each active sprite is a viewport-fixed <img> with the walk-cycle
+   GIF as src. The rAF loop in SpriteManager writes transforms
+   directly; React only re-renders when the live id set changes. */
+
+.cfe-sprite-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.cfe-sprite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  image-rendering: pixelated;
+  will-change: transform;
+  transform-origin: center center;
+}
+.cfe-sprite:active {
+  cursor: grabbing;
+}
+
+/* Reduced motion: hide the wandering layer entirely. Reader still
+   gets the page and the letters; just no walking sprites. */
+@media (prefers-reduced-motion: reduce) {
+  .cfe-sprite-layer {
+    display: none;
+  }
+}
+
+/* ─────────── Spoiler ───────────
+   Inline black-bar redaction. Tap (or Enter / Space) to reveal. The bar
+   inherits its background-color as the foreground so the text is fully
+   masked but selection/highlight still works for readers who want it. */
+
+.cfe-spoiler {
+  background: var(--cfe-ink);
+  color: var(--cfe-ink);
+  cursor: pointer;
+  border-radius: 1px;
+  padding: 0 0.15em;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cfe-spoiler:focus-visible {
+  outline: 2px solid var(--cfe-accent);
+  outline-offset: 2px;
+}
+.cfe-spoiler-on {
+  background: transparent;
+  color: var(--cfe-ink);
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.cfe-letter-enter {
+  animation: cfe-letter-slide 0.7s ease-out both;
+}
+@keyframes cfe-letter-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.96);
+    transform-origin: top center;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
