@@ -19,7 +19,6 @@ export type LetterId =
   | 'catalog'
   | 'pace-layers'
   | 'pollendina'
-  | 'castorp'
   | 'odell'
   | 'quentin-watch'
   | 'hearth'
@@ -77,9 +76,7 @@ export const LETTERS: Letter[] = [
         <p>
           That's the opening line of the{' '}
           <a href="https://wholeearth.info/" target="_blank" rel="noopener">Whole Earth Catalog</a>
-          , Fall 1968.{' '}
-          <a href="https://podcasts.apple.com/us/podcast/stewart-brand-silicon-valleys-favorite-prophet-on-lifes/id1548604447?i=1000763393453" target="_blank" rel="noopener">Stewart Brand</a>
-          {' '}wrote it at twenty-nine. Underneath the line, in smaller type:{' '}
+          , Fall 1968. Stewart Brand wrote it at twenty-nine. Underneath the line, in smaller type:{' '}
           <em>
             a realm of intimate, personal power is developing (power of
             the individual to conduct his own education, find his own
@@ -152,40 +149,6 @@ STUFF       : daily`}
       </>
     ),
     signoff: '...zup.',
-    bump: { who: 'esper', delta: 0.04 },
-  },
-  {
-    id: 'castorp',
-    carrier: 'mog',
-    from: 'a moogle, slow today',
-    re: 'Mann, Magic Mountain',
-    body: (
-      <>
-        <p>
-          Hans Castorp comes to Davos for three weeks and stays seven
-          years.{' '}
-          <em>
-            <a href="https://www.goodreads.com/book/show/88077.The_Magic_Mountain" target="_blank" rel="noopener">The Magic Mountain</a>
-          </em>{' '}
-          keeps changing time scales on you: chapters that span an
-          afternoon, chapters that span seasons, a chapter (<em>By the
-          Ocean of Time</em>) that just sits in the dilation. Mann is
-          doing on the page what the mountain does to Castorp: the
-          longer you stay, the less the clock means.
-        </p>
-        <blockquote>
-          Vacuity, monotony, have, indeed, this insidious quality, that
-          they wear out, but from out their own being are powerless to
-          make new. Once content has been finally exhausted, monotony is
-          the only habit from which we can truly learn.
-        </blockquote>
-        <p>
-          The reader who comes back to this post tomorrow will find its
-          clock has slowed.
-        </p>
-      </>
-    ),
-    signoff: 'kupo, kupo.',
     bump: { who: 'esper', delta: 0.04 },
   },
   {
@@ -333,15 +296,7 @@ STUFF       : daily`}
     re: 'something personal',
     body: (
       <>
-        <p>
-          <em>
-            [ Rick, this is your slot. A Stevie line about Hopscotch. A
-            specific airship from your kid's playthrough. Something about
-            the cabin or the horse or your dad or the stove. The letter
-            that is yours, not mine. Anywhere from three sentences to
-            three paragraphs. ]
-          </em>
-        </p>
+        <p>when you sing out loud, the world sings back.</p>
       </>
     ),
     signoff: 'kupo. some letters are not from moogles.',

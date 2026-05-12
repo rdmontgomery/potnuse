@@ -69,8 +69,9 @@ export default function App() {
           <SectionHeader ordinal="I" title="The Liquid Eye" />
             <div className="cfe-body">
               <p>
-                Stewart Brand reached for that passage on Ezra Klein recently
-                to make a particular move. He wanted to say that intelligent
+                Stewart Brand reached for that passage on{' '}
+                <a href="https://podcasts.apple.com/us/podcast/stewart-brand-silicon-valleys-favorite-prophet-on-lifes/id1548604447?i=1000763393453" target="_blank" rel="noopener">Ezra Klein</a>
+                {' '}recently to make a particular move. He wanted to say that intelligent
                 machines could be designed to receive care the way Borgmann's
                 horse receives care (that the maintenance loop, properly
                 built, deepens us). He didn't dwell. Brand never does. He cited
@@ -90,7 +91,7 @@ export default function App() {
                 such that nothing requires it. The horse demands. The
                 appliance does not. The horse refuses to disappear into the
                 function it provides (that is the <em>focal</em> in{' '}
-                <em>focal thing</em>): the thing that draws practice around
+                <em>focal thing</em>). It is the thing that draws practice around
                 itself, that gathers, that resists the device paradigm's
                 promise of commodity-without-burden. Borgmann is naming a
                 distinction the smooth machinery of contemporary technology
@@ -116,7 +117,7 @@ export default function App() {
               </p>
               <Mailbox letterId="catalog" />
               <p>
-                Your guide is Cid. Not any specific Cid (the recurring one).
+                Your guide is Cid. Not any specific Cid, but the recurring one.
                 The engineer who shows up in every installment, names his
                 airship, repairs it through the night, swears at it
                 affectionately, and at some point in every game saves the
@@ -468,7 +469,7 @@ export default function App() {
                 out to be a reactor.
               </p>
               <p>
-                This is the move. Chapter 6 will show you what it looks
+                This is the move. Chapter VI will show you what it looks
                 like when the temple is also selling the pilgrimage as
                 virtue, and the parasites in the relics as sanctification.
               </p>
@@ -656,8 +657,10 @@ export default function App() {
                 the pattern has never let you see.
               </p>
               <p>
-                Cortázar is not describing a way to live. He is describing
-                a way to die slowly, and warning us against it.
+                Cortázar is warning us against dying slowly. He is also
+                describing a way to live: by paying attention to the moth.
+                The broken primate's head, the push past the center of the
+                room, the passage opened to the street are the irruption.
               </p>
               <p>This is the failure mode Borgmann does not address.</p>
               <p>
@@ -696,7 +699,6 @@ export default function App() {
                 the glass.
               </p>
               <Mailbox letterId="moth" />
-              <Mailbox letterId="castorp" />
               <p>
                 Chapter 8 will return to Cid. Notice, when we get there,
                 that the recurring Cid has never been the same Cid twice.
@@ -722,10 +724,10 @@ export default function App() {
                 not love any other way. Cidolfus Orlandeau, the Thunder
                 God, was the strongest swordsman in Ivalice and joined a
                 teenager named Ramza when he saw what the Church was
-                doing with the Stones. Cid Pollendina led the Al Bhed, a
-                people who refused Yevon's prohibition on machina and
-                kept building airships in the desert because someone had
-                to remember how.
+                doing with the Stones. Cid, leader of the Al Bhed,
+                refused Yevon's prohibition on machina and kept building
+                airships in the desert because someone had to remember
+                how.
               </p>
               <p>
                 These are the four we walked through. There are more. Cid
@@ -804,11 +806,11 @@ export default function App() {
               <p>
                 Brand is the real-world Cid. Borgmann gave us the theory.
                 Cortázar gave us the warning. Brand is the engineer who
-                has been building the machine that lets the theory
-                survive the warning (the institution that requires its
-                maintainers to cycle, that hands the airship to a new
+                has been building the machine (the institution that
+                requires its maintainers to cycle) that lets the theory
+                survive the warning, that hands the airship to a new
                 generation before the old one has time to forget the
-                moth).
+                moth.
               </p>
               <p>This is the answer the post has been walking toward.</p>
               <Mailbox letterId="long-now" />
