@@ -27,7 +27,7 @@ const META = String.raw`
    [contact]  rick.montgomery@gmail.com
   [platform]  rdmontgomery.com
    [updated]  2026-05-12
-   [version]  v1 (seedling)
+   [version]  v1 (germinating)
 `;
 
 // No hard newlines inside the paragraphs (CSS reflow handles the wrap so
