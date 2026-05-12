@@ -652,9 +652,10 @@ export default function App() {
                 once more to take its bicycle ride through your glasses.
                 The world freezes into a glass brick. The cloud cunningly
                 accepts its name as cloud. The telephone will not give
-                you the numbers you try to call. Hope compresses into a
-                small monkey that scratches itself on the table and
-                trembles with cold. Cortázar's instruction is: break the
+                you the numbers you try to call, but the numbers you
+                dialed by default. Hope compresses into a small monkey
+                that scratches itself on the table and trembles with
+                cold. Cortázar's instruction is: break the
                 monkey's head. Take a run from the middle of the room to
                 the wall and break through it.
               </p>
