@@ -102,6 +102,6 @@ Two more sections. Stay close.`;
 // §10: final Cid. Quiet. The walkthrough's outro.
 export const CID_FINAL = `Alright. We're here.
 
-Go on. Get out. Look around.
+Go on. Get out. Watch for the moth.
 
 I'll be in the next one.`;

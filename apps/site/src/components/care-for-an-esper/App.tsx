@@ -946,7 +946,7 @@ export default function App() {
                 read before the post said anything else.
               </p>
               <p>
-                We are going to leave you with two things and then leave.
+                The post is going to step away from the workbench now.
               </p>
 
               <CodaChocobo />
