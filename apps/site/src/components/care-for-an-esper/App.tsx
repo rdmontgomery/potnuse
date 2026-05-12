@@ -620,13 +620,15 @@ export default function App() {
               </p>
               <p>
                 Cortázar wrote a small piece called <em>Preamble to the
-                Instructions on How to Wind a Watch.</em> When someone gives
-                you a watch, they have not given you a watch. They have
-                given you a chain of obligation, a small machine of hours,
-                an artifact that will require you every day for the rest of
-                your life. You will wind it. You will sleep beside it. You
-                will hand it down to your son. You did not get a watch. The
-                watch got you.
+                Instructions on How to Wind a Watch.</em> It sits at the
+                front of <em>Cronopios and Famas</em>, a book of
+                instructions for living. When someone gives you a watch,
+                Cortázar writes, they have not given you a watch. They
+                have given you a chain of obligation, a small machine of
+                hours, an artifact that will require you every day for
+                the rest of your life. You will wind it. You will sleep
+                beside it. You will hand it down to your son. You did
+                not get a watch. The watch got you.
               </p>
               <p>This is Borgmann's horse seen from the other side of the room.</p>
               <p>
@@ -643,24 +645,28 @@ export default function App() {
               </p>
               <Mailbox letterId="quentin-watch" />
               <p>
-                Cortázar sharpens the picture in <em>Hopscotch.</em> The
-                protagonist, Horacio Oliveira, sits in a Paris flat where
-                the world keeps offering him the same things each morning:
-                the partner, the watch, the novel reopening at the same
-                fold in the curve of his glasses. The pattern accepts
-                itself. The cloud, he writes, "cunningly accepts its name
-                as cloud." Hope compresses into a small primate that
-                shivers on a tabletop. Cortázar's instruction to Horacio
-                (and to the reader who feels Horacio's predicament in his
-                own bones) is: break the primate's head. Push outward
-                from the center of the room. Open a passage to the street
-                the pattern has never let you see.
+                The watch piece is the curtain. <em>Cronopios and
+                Famas</em> opens proper with a longer instruction. It is
+                the same morning again. The same woman beside you, the
+                same watch, the novel lying open on the table starting
+                once more to take its bicycle ride through your glasses.
+                The world freezes into a glass brick. The cloud cunningly
+                accepts its name as cloud. The telephone will not give
+                you the numbers you try to call. Hope compresses into a
+                small monkey that scratches itself on the table and
+                trembles with cold. Cortázar's instruction is: break the
+                monkey's head. Take a run from the middle of the room to
+                the wall and break through it.
               </p>
               <p>
-                Cortázar is warning us against dying slowly. He is also
-                describing a way to live: by paying attention to the moth.
-                The broken primate's head, the push past the center of the
-                room, the passage opened to the street are the irruption.
+                This is the warning against dying slowly. It is also the
+                prescription for living. The broken monkey's head, the
+                run through the wall, are the irruption. A moth lands on
+                the edge of a pencil and the glass brick reverberates,
+                and all is not lost. The street begins downstairs, in
+                the wilderness that can tumble upon you like a magnolia
+                any minute, where the faces will come to life when you
+                look at them.
               </p>
               <p>This is the failure mode Borgmann does not address.</p>
               <p>
@@ -668,39 +674,37 @@ export default function App() {
                 becomes routine (when the daily winding becomes habit,
                 when the daily tending of the horse becomes the indistinct
                 fact of mornings), the brusher is still being made by the
-                brushwork. But what is being made is the primate. The
+                brushwork. But what is being made is the monkey. The
                 maintenance has not stopped. The relation has gone. What
                 remains is the chain of obligation.
               </p>
               <p>
-                What saves the maintainer from the primate is what
-                Cortázar calls the moth (the small irruption on the
-                pencil's edge, the unscheduled encounter, the thing that
-                wakes you to the artifact again as if you had not seen
-                it). Borgmann's focal practice depends on this without
-                saying so. The horse is focal because the horse is alive
-                and surprises you. The hearth is focal because the fire
-                moves. The watch is harder, because the watch is exactly
-                what does not surprise. The watch was Cortázar's example
-                for a reason.
+                What saves the maintainer from the monkey is the moth:
+                the small irruption on the pencil's edge that makes the
+                glass brick reverberate. Borgmann's focal practice
+                depends on it without saying so. The horse is focal
+                because the horse is alive and surprises you. The hearth
+                is focal because the fire moves. The watch is harder,
+                because the watch is exactly what does not surprise. The
+                watch was Cortázar's example for a reason.
               </p>
               <p>
-                The Magitek Knight, by the way, is not Horacio. The
-                Magitek Knight is not maintaining anything: the armor
-                maintains itself, the slave crown maintains the rider, no
-                relation exists. Horacio's failure is not the absence of
-                focal practice. It is focal practice that has lost its
-                moth: the engineer who has polished the same airship for
-                forty years and stopped seeing it, the priest who has lit
-                the same candle for forty years and forgotten what the
-                candle was for, the watch-winder who has wound the watch
-                for forty years and become its instrument. Cortázar does
+                The Magitek Knight, by the way, is not Cortázar's
+                subject. The Magitek Knight is not maintaining anything:
+                the armor maintains itself, the slave crown maintains
+                the rider, no relation exists. Cortázar's subject is
+                the focal practice that has lost its moth: the engineer
+                who has polished the same airship for forty years and
+                stopped seeing it, the priest who has lit the same
+                candle for forty years and forgotten what the candle
+                was for, the watch-winder who has wound the watch for
+                forty years and become its instrument. Cortázar does
                 not absolve any of them. He is shouting at them through
-                the glass.
+                the glass brick.
               </p>
               <Mailbox letterId="moth" />
               <p>
-                Chapter 8 will return to Cid. Notice, when we get there,
+                Chapter VIII will return to Cid. Notice, when we get there,
                 that the recurring Cid has never been the same Cid twice.
                 Each game gives him a new airship to invent, a new
                 emergency, a new young pilot to take under his wing. He
@@ -750,7 +754,7 @@ export default function App() {
                 Doctor Cid Bunansa, in FFXII, let his maintenance project
                 consume him. He stopped tending the artifacts and started
                 serving them. He became their instrument. He became
-                Horacio with a physicist's vocabulary, and the game made
+                the monkey with a physicist's vocabulary, and the game made
                 him a villain and killed him for it. The exception proves
                 the rule. Square knows what Cid becomes if he stops
                 getting moths. Most of the time, they remember.
@@ -769,13 +773,13 @@ export default function App() {
               <p>
                 That structural position has a name now, after seven
                 chapters of working it out. Cid is the maintainer who
-                never becomes Horacio.
+                never becomes the monkey.
               </p>
               <p>
                 Look at the medium. Each Final Fantasy resets Cid to a
                 new airship he has never built, a new emergency he has
                 never seen, a new young protagonist he has never
-                mentored. The repetition that would make him Horacio
+                mentored. The repetition that would make him the monkey
                 (same Cid, same routine, same airship for forty years) is
                 structurally impossible. The form requires a new moth
                 every game. Square has been giving him moths since the
@@ -800,7 +804,7 @@ export default function App() {
                 the Texas mountain is an artifact engineered to require a
                 new maintainer every generation, forever, with the
                 maintenance-relation passing down a chain that no single
-                Horacio can ossify because no single Horacio gets to live
+                monkey can ossify because no single monkey gets to live
                 ten thousand years.
               </p>
               <p>

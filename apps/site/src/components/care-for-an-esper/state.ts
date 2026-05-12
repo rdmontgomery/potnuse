@@ -6,7 +6,7 @@ import { LETTERS_BY_ID, type LetterId } from './letters';
 //     chocobo. A focal gesture; bumps chocobo vibrancy and, by
 //     extension, opens the kweh letter inline. The post's tutorial.
 //   - `letter:<id>` : a mailbox dropped its home letter. Each opens a
-//     vibrancy bump and a Hopscotch-fragment payload.
+//     vibrancy bump and a Cronopios-fragment payload.
 //
 // Persisted across visits via localStorage so a returning reader's
 // vibrancy survives. The currently-open mailbox state is *not*

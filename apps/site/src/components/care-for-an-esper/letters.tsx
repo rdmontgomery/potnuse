@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
-// The 10 letters scattered across the post. Each one a discovery the
-// linear post does not contain: a Hopscotch / Hotel Chevalier
+// The letters scattered across the post. Each one a discovery the
+// linear post does not contain: a Cronopios / Hotel Chevalier
 // fragment, available only to the active reader who notices a
 // mailbox between paragraphs and drags a wandering sprite onto it.
 //
@@ -45,18 +45,17 @@ export const LETTERS: Letter[] = [
     body: (
       <>
         <blockquote>
-          Yes, but who will cure us of the dull fire, the colorless fire
-          that at nightfall runs along the Rue de la Huchette, emerging
-          from the crumbling doorways, from the little entryways, of the
-          imageless fire that licks the stones and lies in wait in
-          doorways? How shall we cleanse ourselves of the sweet burning
-          that comes after, that nests in us forever allied with time and
-          memory, with sticky things that hold us here on this side?
+          And if suddenly a moth lands on the edge of a pencil and
+          flutters there like an ash-colored flame, look at it, I am
+          looking at it, I am touching its tiny heart and I hear it,
+          that moth reverberates in the pie dough of frozen glass, all
+          is not lost.
         </blockquote>
         <p>
           <em>
-            <a href="https://www.goodreads.com/book/show/53413.Hopscotch" target="_blank" rel="noopener">Hopscotch</a>
-          </em>, Julio Cortázar, ch. 73, transl. Gregory Rabassa.
+            <a href="https://www.goodreads.com/book/show/12059.Cronopios_and_Famas" target="_blank" rel="noopener">Cronopios and Famas</a>
+          </em>, Julio Cortázar, "Instruction Manual," transl. Paul
+          Blackburn.
         </p>
       </>
     ),
