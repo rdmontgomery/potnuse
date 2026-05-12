@@ -38,7 +38,7 @@ const COPYRIGHT = String.raw`
 
 const EPIGRAPH_QUOTE =
   '"the engine needs you more than you need it. most folks have it backwards their whole lives."';
-const EPIGRAPH_CITE = '(cid)';
+const EPIGRAPH_CITE = '— cid';
 
 export function Masthead() {
   const bannerRef = useRef<HTMLPreElement>(null);
