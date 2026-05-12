@@ -662,9 +662,12 @@ export default function App() {
               <p>
                 This is the warning against dying slowly. It is also the
                 prescription for living. The broken monkey's head, the
-                run through the wall, are the irruption. A moth lands on
-                the edge of a pencil and the glass brick reverberates,
-                and all is not lost. The street begins downstairs, in
+                run through the wall, are the irruption.{' '}
+                <em>
+                  A moth lands on the edge of a pencil and the glass
+                  brick reverberates, and all is not lost.
+                </em>
+                {' '}The street begins downstairs, in
                 the wilderness that can tumble upon you like a magnolia
                 any minute, where the faces will come to life when you
                 look at them.
@@ -680,10 +683,8 @@ export default function App() {
                 remains is the chain of obligation.
               </p>
               <p>
-                What saves the maintainer from the monkey is the moth:
-                the small irruption on the pencil's edge that makes the
-                glass brick reverberate. Borgmann's focal practice
-                depends on it without saying so. The horse is focal
+                What saves the maintainer from the monkey is the moth.
+                Borgmann's focal practice depends on it without saying so. The horse is focal
                 because the horse is alive and surprises you. The hearth
                 is focal because the fire moves. The watch is harder,
                 because the watch is exactly what does not surprise. The
