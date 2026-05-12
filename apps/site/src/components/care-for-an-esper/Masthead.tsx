@@ -24,10 +24,9 @@ const BANNER = String.raw`
 const META = String.raw`
   [director]  rick montgomery
     [writer]  claude
-   [contact]  rdmontgomery.com
-   [release]  potnuse (essay)
-  [platform]  post / web / cloudflare pages
-   [updated]  2026-05-07
+   [contact]  rick.montgomery@gmail.com
+  [platform]  rdmontgomery.com
+   [updated]  2026-05-12
    [version]  v1 (seedling)
 `;
 
