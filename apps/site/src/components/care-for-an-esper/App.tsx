@@ -940,10 +940,9 @@ export default function App() {
                 This was the post's argument. The Final Fantasy chambers
                 were the long working-out. The Cortázar interlude was the
                 warning. The Cid chapter was the answer. The Russell
-                chapter was the foil. The horse passage we opened with
-                (the man with the sore hands, the liquid eye) was the
-                entire argument compressed into one paragraph that you
-                read before the post said anything else.
+                chapter was the foil. Borgmann's horse was the entire
+                argument compressed into one paragraph that you read
+                before the post said anything else.
               </p>
               <p>
                 The post is going to step away from the workbench now.
