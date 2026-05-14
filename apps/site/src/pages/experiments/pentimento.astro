@@ -58,8 +58,9 @@ const maxTier = song.tierLabels.length - 1;
 </Base>
 
 <script>
+  import * as Tone from 'tone';
   import { CC_RIDER } from '@/lib/pentimento/song';
-  import { engrave } from '@/lib/pentimento/engrave';
+  import { engrave, type BarLayout } from '@/lib/pentimento/engrave';
   import {
     loadAudio,
     setupSong,
@@ -70,6 +71,8 @@ const maxTier = song.tierLabels.length - 1;
 
   const song = CC_RIDER;
   let currentTier = 1;
+  let barLayout: BarLayout[] = [];
+  let playhead: SVGLineElement | null = null;
 
   const staffEl = document.getElementById('staff') as HTMLDivElement;
   const slider = document.getElementById('slider') as HTMLInputElement;
@@ -78,14 +81,61 @@ const maxTier = song.tierLabels.length - 1;
   const pauseBtn = document.getElementById('pause') as HTMLButtonElement;
   const stopBtn = document.getElementById('stop') as HTMLButtonElement;
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function attachPlayhead(svg: SVGSVGElement | null): SVGLineElement | null {
+    if (!svg) return null;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('stroke', '#e8a838');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0');
+    line.style.pointerEvents = 'none';
+    svg.appendChild(line);
+    return line;
+  }
+
   function applyTier(t: number) {
     currentTier = t;
     tierLabel.textContent = song.tierLabels[t];
-    engrave(staffEl, song, t);
+    const result = engrave(staffEl, song, t);
+    barLayout = result.bars;
+    playhead = attachPlayhead(result.svg);
   }
 
   applyTier(currentTier);
   setupSong(song, () => currentTier);
+
+  // Playhead rAF loop. Reads Transport.position (which wraps when the
+  // transport loops) and maps it onto the bar layout returned by engrave.
+  function tickPlayhead() {
+    requestAnimationFrame(tickPlayhead);
+    if (!playhead || barLayout.length === 0) return;
+    const transport = Tone.getTransport();
+    if (transport.state === 'stopped') {
+      playhead.setAttribute('opacity', '0');
+      return;
+    }
+    const pos = String(transport.position);
+    const parts = pos.split(':');
+    const bar = Number(parts[0]);
+    const beat = Number(parts[1]);
+    const sx = Number(parts[2]);
+    const sixteenths = bar * 16 + beat * 4 + sx;
+    const songLen = song.bars * 16;
+    const inSong = ((sixteenths % songLen) + songLen) % songLen;
+    const barIdx = Math.floor(inSong / 16);
+    const frac = (inSong - barIdx * 16) / 16;
+    const layout = barLayout[barIdx];
+    if (!layout) return;
+    const x = layout.notesX + frac * layout.notesWidth;
+    playhead.setAttribute('x1', String(x));
+    playhead.setAttribute('x2', String(x));
+    playhead.setAttribute('y1', String(layout.yTop));
+    playhead.setAttribute('y2', String(layout.yBottom));
+    playhead.setAttribute('opacity', transport.state === 'paused' ? '0.45' : '0.9');
+  }
+  requestAnimationFrame(tickPlayhead);
 
   slider.addEventListener('input', (e) => {
     const t = Number((e.target as HTMLInputElement).value);
@@ -122,18 +172,19 @@ const maxTier = song.tierLabels.length - 1;
     font-size: 1rem;
   }
 
+  /* Sheet-music card: warm-white paper sitting on the dark page. */
   .card {
-    background: var(--bg-card);
+    background: #f5efe0;
     border: 1px solid var(--border);
     border-radius: 3px;
-    padding: 0.5rem 0;
+    padding: 0.75rem 0 0.5rem;
     overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   }
   .staff {
-    color: var(--text);
+    color: #1f1408;
     min-width: min-content;
   }
-  /* VexFlow strokes/fills use currentColor via setStrokeStyle. */
   .staff :global(svg) {
     display: block;
     margin: 0 auto;

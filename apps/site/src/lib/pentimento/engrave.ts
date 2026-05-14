@@ -10,17 +10,21 @@ import {
 } from 'vexflow';
 import type { Song, PNote, Tier } from './types';
 
-// Layout constants. The grand staff is rendered as a series of 4-bar systems
-// stacked vertically. VexFlow draws in pixel coords; the SVG is wrapped in a
-// container that we scale via CSS.
+// Layout constants. The grand staff renders as 4-bar systems stacked
+// vertically. VexFlow draws in pixel coords; CSS scales the wrapping div.
 const BARS_PER_SYSTEM = 4;
 const BAR_WIDTH = 170;
 const CLEF_WIDTH = 70;
 const SYSTEM_HEIGHT = 200;
 const PAD_X = 16;
 const PAD_Y = 24;
-const TREBLE_OFFSET = 0;
 const BASS_OFFSET = 90;
+
+// Paper-style ink. Solid is near-black with a warm tint; ghost is the same
+// at low alpha, drawn underneath the active tier so the next layer of
+// complexity is faintly visible — the pentimento.
+const SOLID_INK = '#1f1408';
+const GHOST_INK = 'rgba(31, 20, 8, 0.22)';
 
 // Duration: sixteenth-note steps -> VexFlow duration code.
 const DUR_CODE: Record<number, string> = {
@@ -31,9 +35,6 @@ const DUR_CODE: Record<number, string> = {
   1: '16',
 };
 
-// Decompose an arbitrary sixteenth-step duration into a sequence of legal
-// note/rest durations using a greedy largest-first walk. Returns the list of
-// sixteenth-step lengths to emit in order.
 function decompose(sixteenths: number): number[] {
   const out: number[] = [];
   let remaining = sixteenths;
@@ -47,104 +48,109 @@ function decompose(sixteenths: number): number[] {
   return out;
 }
 
-// Determine the stave a note belongs to, by pitch register. Bass voice always
-// goes on the bass stave; lead voice goes on the treble stave.
-function staveFor(voice: 'bass' | 'lead'): 'treble' | 'bass' {
-  return voice === 'bass' ? 'bass' : 'treble';
+interface BarMaterial {
+  tickables: StaveNote[];
+  beams: Beam[];
 }
 
-// Build the tickables for a single bar's voice. Fills gaps with rests so the
-// voice satisfies VexFlow's strict-tick requirement.
-function buildBarTickables(
+// Build the tickables for one bar's voice, plus the beam groups. Eighth and
+// sixteenth notes get beamed when they share a beat (avoids cross-beat beams
+// that read badly).
+function buildBarMaterial(
   notes: PNote[],
   barStart: number,
   clef: 'treble' | 'bass',
-): StaveNote[] {
+): BarMaterial {
   const sorted = [...notes].sort((a, b) => a.step - b.step);
-  const out: StaveNote[] = [];
+  const tickables: StaveNote[] = [];
+  const positions: number[] = [];
   let pos = 0;
 
-  const pushRest = (steps: number) => {
+  const push = (pitch: string | null, steps: number) => {
     for (const s of decompose(steps)) {
       const code = DUR_CODE[s];
-      // Rest keys: middle-line rests look right on both clefs.
-      const restKey = clef === 'treble' ? 'b/4' : 'd/3';
-      out.push(new StaveNote({ keys: [restKey], duration: code + 'r', clef }));
-    }
-  };
-
-  const pushNote = (pitch: string, steps: number) => {
-    for (const s of decompose(steps)) {
-      const code = DUR_CODE[s];
-      out.push(new StaveNote({ keys: [pitch], duration: code, clef }));
+      const isRest = pitch === null;
+      const keys = isRest ? [clef === 'treble' ? 'b/4' : 'd/3'] : [pitch];
+      tickables.push(
+        new StaveNote({ keys, duration: isRest ? code + 'r' : code, clef }),
+      );
+      positions.push(pos);
+      pos += s;
     }
   };
 
   for (const n of sorted) {
     const offset = n.step - barStart;
-    if (offset > pos) pushRest(offset - pos);
-    pushNote(n.pitch, n.dur);
-    pos = offset + n.dur;
+    if (offset > pos) push(null, offset - pos);
+    push(n.pitch, n.dur);
   }
-  if (pos < 16) pushRest(16 - pos);
-  return out;
-}
+  if (pos < 16) push(null, 16 - pos);
 
-// Group notes that should be beamed together. We beam consecutive eighths or
-// sixteenths within a beat (4 sixteenths). Notes spanning beat boundaries break
-// the beam group.
-function autoBeam(notes: StaveNote[]): Beam[] {
   const beams: Beam[] = [];
   let group: StaveNote[] = [];
+  let groupBeat = -1;
   const flush = () => {
     if (group.length >= 2) beams.push(new Beam(group));
     group = [];
   };
-  for (const n of notes) {
-    const d = n.getDuration();
-    if (d === '8' || d === '16') {
-      group.push(n);
+  for (let i = 0; i < tickables.length; i++) {
+    const t = tickables[i];
+    const d = t.getDuration();
+    const beamable = !t.isRest() && (d === '8' || d === '16');
+    const beat = Math.floor(positions[i] / 4);
+    if (beamable) {
+      if (beat !== groupBeat) {
+        flush();
+        groupBeat = beat;
+      }
+      group.push(t);
     } else {
       flush();
+      groupBeat = -1;
     }
   }
   flush();
-  return beams;
+
+  return { tickables, beams };
+}
+
+export interface BarLayout {
+  bar: number;
+  notesX: number;
+  notesWidth: number;
+  yTop: number;
+  yBottom: number;
 }
 
 export interface EngraveResult {
   width: number;
   height: number;
+  bars: BarLayout[];
+  svg: SVGSVGElement | null;
 }
 
-// Engrave the active tier of the song into the container element. Clears any
-// prior contents.
-export function engrave(
-  container: HTMLDivElement,
-  song: Song,
+interface DrawContext {
+  ctx: ReturnType<Renderer['getContext']>;
+  song: Song;
+  systems: number;
+}
+
+// Draw a single tier — staves and notes — into the active VexFlow context.
+// `drawStaff` flag controls whether the staff lines/clefs/timesigs are drawn;
+// the ghost pass sets it false so it doesn't double up the lines that the
+// solid pass will draw on top.
+function drawTier(
+  dc: DrawContext,
   tier: Tier,
-): EngraveResult {
-  // Clean slate every call — re-engraves when the tier changes.
-  container.innerHTML = '';
-
-  const systems = Math.ceil(song.bars / BARS_PER_SYSTEM);
-  const systemWidth = CLEF_WIDTH + BARS_PER_SYSTEM * BAR_WIDTH;
-  const width = PAD_X * 2 + systemWidth;
-  const height = PAD_Y * 2 + systems * SYSTEM_HEIGHT;
-
-  const renderer = new Renderer(container, Renderer.Backends.SVG);
-  renderer.resize(width, height);
-  const ctx = renderer.getContext();
-  // Paint with the site's foreground color. VexFlow doesn't pull from CSS vars,
-  // so we read the computed color from the container.
-  const inkColor =
-    getComputedStyle(container).getPropertyValue('color').trim() || '#f0e6d2';
-  ctx.setStrokeStyle(inkColor);
-  ctx.setFillStyle(inkColor);
+  drawStaff: boolean,
+  collectLayout: boolean,
+): BarLayout[] {
+  const { ctx, song, systems } = dc;
+  const layout: BarLayout[] = [];
 
   for (let s = 0; s < systems; s++) {
     const yTop = PAD_Y + s * SYSTEM_HEIGHT;
-    const yTreble = yTop + TREBLE_OFFSET;
+    const yTreble = yTop;
     const yBass = yTop + BASS_OFFSET;
 
     let x = PAD_X;
@@ -171,24 +177,31 @@ export function engrave(
         }
       }
 
-      treble.setContext(ctx).draw();
-      bass.setContext(ctx).draw();
+      if (drawStaff) {
+        treble.setContext(ctx).draw();
+        bass.setContext(ctx).draw();
+      } else {
+        // Voices need the stave bound to a context for measurement, even if we
+        // don't paint the staff lines.
+        treble.setContext(ctx);
+        bass.setContext(ctx);
+      }
 
       const barStart = barIndex * 16;
-      const leadNotesInBar = song.notes.filter(
+      const leadNotes = song.notes.filter(
         (n) => n.voice === 'lead' && n.tier === tier && n.step >= barStart && n.step < barStart + 16,
       );
-      const bassNotesInBar = song.notes.filter(
+      const bassNotes = song.notes.filter(
         (n) => n.voice === 'bass' && n.tier === tier && n.step >= barStart && n.step < barStart + 16,
       );
 
-      const trebleTickables = buildBarTickables(leadNotesInBar, barStart, 'treble');
-      const bassTickables = buildBarTickables(bassNotesInBar, barStart, 'bass');
+      const trebleMat = buildBarMaterial(leadNotes, barStart, 'treble');
+      const bassMat = buildBarMaterial(bassNotes, barStart, 'bass');
 
       const trebleVoice = new Voice({ numBeats: 4, beatValue: 4 });
-      trebleVoice.addTickables(trebleTickables);
+      trebleVoice.addTickables(trebleMat.tickables);
       const bassVoice = new Voice({ numBeats: 4, beatValue: 4 });
-      bassVoice.addTickables(bassTickables);
+      bassVoice.addTickables(bassMat.tickables);
 
       Accidental.applyAccidentals([trebleVoice], 'C');
       Accidental.applyAccidentals([bassVoice], 'C');
@@ -197,13 +210,20 @@ export function engrave(
       formatter.joinVoices([trebleVoice]).format([trebleVoice], w - 30);
       formatter.joinVoices([bassVoice]).format([bassVoice], w - 30);
 
-      const trebleBeams = autoBeam(trebleTickables);
-      const bassBeams = autoBeam(bassTickables);
-
       trebleVoice.draw(ctx, treble);
       bassVoice.draw(ctx, bass);
-      for (const beam of trebleBeams) beam.setContext(ctx).draw();
-      for (const beam of bassBeams) beam.setContext(ctx).draw();
+      for (const beam of trebleMat.beams) beam.setContext(ctx).draw();
+      for (const beam of bassMat.beams) beam.setContext(ctx).draw();
+
+      if (collectLayout) {
+        layout.push({
+          bar: barIndex,
+          notesX: treble.getNoteStartX(),
+          notesWidth: treble.getNoteEndX() - treble.getNoteStartX(),
+          yTop: treble.getYForLine(0) - 4,
+          yBottom: bass.getYForLine(4) + 4,
+        });
+      }
 
       if (isSystemStart) {
         firstTreble = treble;
@@ -215,23 +235,55 @@ export function engrave(
       x += w;
     }
 
-    if (firstTreble && firstBass) {
-      new StaveConnector(firstTreble, firstBass)
-        .setType('brace')
-        .setContext(ctx)
-        .draw();
-      new StaveConnector(firstTreble, firstBass)
-        .setType('singleLeft')
-        .setContext(ctx)
-        .draw();
+    if (drawStaff && firstTreble && firstBass) {
+      new StaveConnector(firstTreble, firstBass).setType('brace').setContext(ctx).draw();
+      new StaveConnector(firstTreble, firstBass).setType('singleLeft').setContext(ctx).draw();
     }
-    if (lastTreble && lastBass) {
-      new StaveConnector(lastTreble, lastBass)
-        .setType('singleRight')
-        .setContext(ctx)
-        .draw();
+    if (drawStaff && lastTreble && lastBass) {
+      new StaveConnector(lastTreble, lastBass).setType('singleRight').setContext(ctx).draw();
     }
   }
 
-  return { width, height };
+  return layout;
+}
+
+// Engrave the active tier into the container. If `showGhosts` and a higher
+// tier exists, that tier renders first in pale ink so its extra notes peek
+// through underneath — the pentimento.
+export function engrave(
+  container: HTMLDivElement,
+  song: Song,
+  tier: Tier,
+  options?: { showGhosts?: boolean },
+): EngraveResult {
+  container.innerHTML = '';
+  const showGhosts = options?.showGhosts ?? true;
+  const numTiers = song.tierLabels.length;
+
+  const systems = Math.ceil(song.bars / BARS_PER_SYSTEM);
+  const systemWidth = CLEF_WIDTH + BARS_PER_SYSTEM * BAR_WIDTH;
+  const width = PAD_X * 2 + systemWidth;
+  const height = PAD_Y * 2 + systems * SYSTEM_HEIGHT;
+
+  const renderer = new Renderer(container, Renderer.Backends.SVG);
+  renderer.resize(width, height);
+  const ctx = renderer.getContext();
+  const dc: DrawContext = { ctx, song, systems };
+
+  // Ghost pass: render tier+1's notes in pale ink, with no staff lines so the
+  // solid pass's lines don't double up.
+  if (showGhosts && tier + 1 < numTiers) {
+    ctx.setFillStyle(GHOST_INK);
+    ctx.setStrokeStyle(GHOST_INK);
+    drawTier(dc, tier + 1, false, false);
+  }
+
+  // Solid pass: full staff + active-tier notes in dark ink, on top of any
+  // ghost notes that peeked through.
+  ctx.setFillStyle(SOLID_INK);
+  ctx.setStrokeStyle(SOLID_INK);
+  const layout = drawTier(dc, tier, true, true);
+
+  const svg = container.querySelector('svg');
+  return { width, height, bars: layout, svg: svg as SVGSVGElement | null };
 }

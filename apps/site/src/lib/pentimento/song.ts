@@ -73,57 +73,58 @@ const GUIDE: Record<string, string> = {
   G: 'b/4',
 };
 
-// The head melody — authored, not generated. Steps are absolute sixteenth-
-// offsets from song start. Bars 3, 4, 7, 8 leave space for the response in
-// the call-and-response structure; bar 11 holds and then rests; bar 12 is the
-// turnaround.
+// The head melody — Broonzy-flavored phrasing: a long held call on beat 2 of
+// each opening bar, descending blue-note response, and a high reach in the
+// third phrase. Bars 3, 4, 7, 8 leave the response space; bar 11 lands and
+// rests; bar 12 walks a descending turnaround.
 const HEAD: Omit<PNote, 'voice' | 'tier'>[] = [
-  // Bar 1 (C) — "See, see ri-der" call
-  { pitch: 'g/4', step: 0,  dur: 4 },
-  { pitch: 'g/4', step: 4,  dur: 4 },
-  { pitch: 'eb/4', step: 8,  dur: 4 },
-  { pitch: 'd/4', step: 12, dur: 4 },
+  // Bar 1 (C) — "see SEEEE ri-der"
+  { pitch: 'g/4',  step: 0,  dur: 4 },   // see
+  { pitch: 'g/4',  step: 4,  dur: 8 },   // SEEEEE (held half)
+  { pitch: 'eb/4', step: 12, dur: 2 },   // ri (blue 3rd)
+  { pitch: 'd/4',  step: 14, dur: 2 },   // der
   // Bar 2 (C) — "see what you done done"
-  { pitch: 'c/4', step: 16, dur: 2 },
-  { pitch: 'c/4', step: 18, dur: 2 },
-  { pitch: 'eb/4', step: 20, dur: 4 },
-  { pitch: 'd/4', step: 24, dur: 4 },
-  { pitch: 'c/4', step: 28, dur: 4 },
-  // Bar 3 (C) — held resolution
-  { pitch: 'c/4', step: 32, dur: 16 },
-  // Bar 4 (C) — rest (call-and-response gap)
-  // Bar 5 (F) — "made me love you"
-  { pitch: 'a/4', step: 64, dur: 4 },
-  { pitch: 'a/4', step: 68, dur: 4 },
-  { pitch: 'f/4', step: 72, dur: 4 },
-  { pitch: 'eb/4', step: 76, dur: 4 },
+  { pitch: 'c/4',  step: 16, dur: 4 },   // see
+  { pitch: 'eb/4', step: 20, dur: 2 },   // what (blue)
+  { pitch: 'd/4',  step: 22, dur: 2 },   // you
+  { pitch: 'c/4',  step: 24, dur: 4 },   // done
+  { pitch: 'bb/3', step: 28, dur: 4 },   // done (drop to b7)
+  // Bar 3 (C) — held response
+  { pitch: 'c/4',  step: 32, dur: 16 },
+  // Bar 4 (C) — rest
+
+  // Bar 5 (F) — "MADE MEEE love you"
+  { pitch: 'a/4',  step: 64, dur: 4 },   // MADE
+  { pitch: 'a/4',  step: 68, dur: 8 },   // MEEEE held
+  { pitch: 'f/4',  step: 76, dur: 2 },   // love
+  { pitch: 'eb/4', step: 78, dur: 2 },   // you (b7 of F, blue)
   // Bar 6 (F) — "now your gal done come"
-  { pitch: 'f/4', step: 80, dur: 2 },
-  { pitch: 'f/4', step: 82, dur: 2 },
-  { pitch: 'eb/4', step: 84, dur: 4 },
-  { pitch: 'd/4', step: 88, dur: 4 },
-  { pitch: 'c/4', step: 92, dur: 4 },
-  // Bar 7 (C) — held resolution
-  { pitch: 'c/4', step: 96, dur: 16 },
+  { pitch: 'f/4',  step: 80, dur: 4 },   // now
+  { pitch: 'a/4',  step: 84, dur: 2 },   // YOUR
+  { pitch: 'g/4',  step: 86, dur: 2 },   // gal
+  { pitch: 'f/4',  step: 88, dur: 4 },   // done
+  { pitch: 'c/4',  step: 92, dur: 4 },   // come
+  // Bar 7 (C) — held response
+  { pitch: 'c/4',  step: 96, dur: 16 },
   // Bar 8 (C) — rest
-  // Bar 9 (G) — "you're gonna miss your rider"
-  { pitch: 'd/5', step: 128, dur: 4 },
-  { pitch: 'b/4', step: 132, dur: 4 },
-  { pitch: 'a/4', step: 136, dur: 4 },
-  { pitch: 'g/4', step: 140, dur: 4 },
-  // Bar 10 (F) — "some sweet day"
-  { pitch: 'f/4', step: 144, dur: 4 },
-  { pitch: 'eb/4', step: 148, dur: 4 },
-  { pitch: 'd/4', step: 152, dur: 4 },
-  { pitch: 'c/4', step: 156, dur: 4 },
-  // Bar 11 (C) — land
-  { pitch: 'c/4', step: 160, dur: 8 },
-  // (Half rest for steps 168–175)
-  // Bar 12 (G) — turnaround pickup
-  { pitch: 'd/4', step: 176, dur: 4 },
-  { pitch: 'eb/4', step: 180, dur: 4 },
-  { pitch: 'd/4', step: 184, dur: 4 },
-  { pitch: 'b/3', step: 188, dur: 4 },
+
+  // Bar 9 (G) — "MISS YOUR ri-der" — high call
+  { pitch: 'd/5',  step: 128, dur: 4 },  // MISS
+  { pitch: 'd/5',  step: 132, dur: 4 },  // YOUR
+  { pitch: 'b/4',  step: 136, dur: 4 },  // ri
+  { pitch: 'g/4',  step: 140, dur: 4 },  // der
+  // Bar 10 (F) — "when you're gone"
+  { pitch: 'a/4',  step: 144, dur: 4 },  // when
+  { pitch: 'g/4',  step: 148, dur: 4 },  // you're
+  { pitch: 'f/4',  step: 152, dur: 4 },  // gone
+  { pitch: 'eb/4', step: 156, dur: 4 },  // (blue ornament)
+  // Bar 11 (C) — land + rest
+  { pitch: 'c/4',  step: 160, dur: 8 },
+  // Bar 12 (G) — descending turnaround back into bar 1
+  { pitch: 'g/4',  step: 176, dur: 4 },
+  { pitch: 'f/4',  step: 180, dur: 4 },
+  { pitch: 'e/4',  step: 184, dur: 4 },
+  { pitch: 'd/4',  step: 188, dur: 4 },
 ];
 
 // Tier-2 ornaments — added on top of the head. Each pair of held quarter
@@ -267,7 +268,7 @@ function buildComp(): PChord[] {
 
 export const CC_RIDER: Song = {
   title: 'C.C. Rider',
-  bpm: 88,
+  bpm: 72,
   beatsPerBar: 4,
   bars: 12,
   notes: [...buildBass(), ...buildLead()],
