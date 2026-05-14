@@ -108,15 +108,6 @@ export default function PigletDraw() {
   const [stamp, setStamp] = useState<Stamp>('heart');
   const [brushSize, setBrushSize] = useState<number>(18);
   const [sparkles, setSparkles] = useState<SparkleEl[]>([]);
-  const [debug, setDebug] = useState({
-    taps: 0,
-    lastX: 0,
-    lastY: 0,
-    cssW: 0,
-    cssH: 0,
-    intW: 0,
-    intH: 0,
-  });
 
   const drawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
@@ -165,13 +156,6 @@ export default function PigletDraw() {
       if (prev.width > 0 && prev.height > 0) {
         ctx.drawImage(prev, 0, 0, rect.width, rect.height);
       }
-      setDebug((d) => ({
-        ...d,
-        cssW: Math.round(rect.width),
-        cssH: Math.round(rect.height),
-        intW: canvas.width,
-        intH: canvas.height,
-      }));
     };
 
     resize();
@@ -266,12 +250,6 @@ export default function PigletDraw() {
       drawingRef.current = true;
       const pos = getPos(e.clientX, e.clientY);
       lastRef.current = pos;
-      setDebug((d) => ({
-        ...d,
-        taps: d.taps + 1,
-        lastX: Math.round(pos.x),
-        lastY: Math.round(pos.y),
-      }));
       const t = toolRef.current;
       if (t === 'brush') drawDot(pos);
       else if (t === 'stamp') placeStamp(pos);
@@ -557,29 +535,6 @@ export default function PigletDraw() {
             </svg>
           </span>
         ))}
-        <div
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            padding: '6px 10px',
-            background: 'rgba(255,255,255,0.85)',
-            border: '1px solid #f48ba0',
-            borderRadius: 8,
-            fontSize: 12,
-            fontFamily: 'ui-monospace, monospace',
-            color: '#3a2030',
-            pointerEvents: 'none',
-            lineHeight: 1.4,
-          }}
-        >
-          <div>
-            taps: <b>{debug.taps}</b> @ {debug.lastX},{debug.lastY}
-          </div>
-          <div>
-            css: {debug.cssW}×{debug.cssH} · canvas: {debug.intW}×{debug.intH}
-          </div>
-        </div>
       </div>
     </div>
   );
