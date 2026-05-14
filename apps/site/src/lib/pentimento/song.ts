@@ -230,8 +230,16 @@ function buildLead(): PNote[] {
   for (const n of HEAD) out.push({ ...n, voice: 'lead', tier: 2 });
   for (const n of TIER2_EXTRA) out.push({ ...n, voice: 'lead', tier: 2 });
 
-  // Tier 3 — head + improv fills.
-  for (const n of HEAD) out.push({ ...n, voice: 'lead', tier: 3 });
+  // Tier 3 — head + improv fills. The held whole-note response in bars 3 and
+  // 7 is replaced by a descending fill, so we drop those head notes (they'd
+  // overlap with the fills and break the voice's tick total).
+  const TIER3_REPLACED_BARS = new Set([2, 6]);
+  for (const n of HEAD) {
+    const bar = Math.floor(n.step / 16);
+    if (!TIER3_REPLACED_BARS.has(bar)) {
+      out.push({ ...n, voice: 'lead', tier: 3 });
+    }
+  }
   for (const n of TIER3_FILLS) out.push({ ...n, voice: 'lead', tier: 3 });
 
   return out;

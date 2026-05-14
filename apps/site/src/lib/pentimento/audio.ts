@@ -7,7 +7,7 @@ import type { Song, Tier } from './types';
 // already triggered ring out normally.
 
 let piano: Tone.Sampler | null = null;
-let bass: Tone.MonoSynth | null = null;
+let bass: Tone.Synth | null = null;
 let scheduled: number[] = [];
 let getTier: () => Tier = () => 0;
 let loadPromise: Promise<void> | null = null;
@@ -35,20 +35,14 @@ export function loadAudio(): Promise<void> {
       release: 1,
     }).toDestination();
     piano.volume.value = -4;
-    bass = new Tone.MonoSynth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 0.005, decay: 0.25, sustain: 0.2, release: 0.5 },
-      filter: { Q: 1, type: 'lowpass', rolloff: -24 },
-      filterEnvelope: {
-        attack: 0.01,
-        decay: 0.3,
-        sustain: 0.1,
-        release: 0.5,
-        baseFrequency: 80,
-        octaves: 2.5,
-      },
+    // Tone.Synth (no filter envelope) — the MonoSynth's default lowpass was
+    // cutting the bass fundamentals below ~80Hz, so notes in octave 2 read as
+    // missing. Triangle wave at full level gives a clean, round bass tone.
+    bass = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.01, decay: 0.4, sustain: 0.5, release: 0.7 },
     }).toDestination();
-    bass.volume.value = -10;
+    bass.volume.value = -6;
     await Tone.loaded();
   })();
   return loadPromise;

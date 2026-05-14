@@ -18,7 +18,10 @@ const maxTier = song.tierLabels.length - 1;
     </header>
 
     <div class="card">
-      <div id="staff" class="staff"></div>
+      <div class="staff-wrap">
+        <div id="staff-ghost" class="staff staff-ghost" aria-hidden="true"></div>
+        <div id="staff" class="staff staff-solid"></div>
+      </div>
     </div>
 
     <div class="controls">
@@ -75,6 +78,7 @@ const maxTier = song.tierLabels.length - 1;
   let playhead: SVGLineElement | null = null;
 
   const staffEl = document.getElementById('staff') as HTMLDivElement;
+  const ghostEl = document.getElementById('staff-ghost') as HTMLDivElement;
   const slider = document.getElementById('slider') as HTMLInputElement;
   const tierLabel = document.getElementById('tier-label') as HTMLSpanElement;
   const playBtn = document.getElementById('play') as HTMLButtonElement;
@@ -99,6 +103,14 @@ const maxTier = song.tierLabels.length - 1;
     currentTier = t;
     tierLabel.textContent = song.tierLabels[t];
     try {
+      // Ghost layer: render the next tier underneath, in pale ink (via CSS
+      // opacity). Active-tier notes will paint on top and obscure overlapping
+      // ghost notes; ghost notes unique to the next tier peek through.
+      if (t + 1 < song.tierLabels.length) {
+        engrave(ghostEl, song, t + 1);
+      } else {
+        ghostEl.innerHTML = '';
+      }
       const result = engrave(staffEl, song, t);
       barLayout = result.bars;
       playhead = attachPlayhead(result.svg);
@@ -107,6 +119,7 @@ const maxTier = song.tierLabels.length - 1;
       staffEl.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
       staffEl.style.color = '#a83a2a';
       staffEl.style.padding = '1rem';
+      ghostEl.innerHTML = '';
       barLayout = [];
       playhead = null;
     }
@@ -190,6 +203,11 @@ const maxTier = song.tierLabels.length - 1;
     overflow-x: auto;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   }
+  .staff-wrap {
+    position: relative;
+    min-width: min-content;
+    margin: 0 auto;
+  }
   .staff {
     color: #1f1408;
     min-width: min-content;
@@ -197,6 +215,20 @@ const maxTier = song.tierLabels.length - 1;
   .staff :global(svg) {
     display: block;
     margin: 0 auto;
+  }
+  /* Ghost layer (next tier up) sits behind the active staff at low opacity —
+     where the active tier has rests, the next layer's notes peek through. */
+  .staff-ghost {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .staff-solid {
+    position: relative;
+    z-index: 2;
   }
 
   .controls {
