@@ -106,8 +106,17 @@ export default function PigletDraw() {
   const [tool, setTool] = useState<Tool>('brush');
   const [color, setColor] = useState<string>(COLORS[0]);
   const [stamp, setStamp] = useState<Stamp>('heart');
-  const [brushSize, setBrushSize] = useState<number>(12);
+  const [brushSize, setBrushSize] = useState<number>(18);
   const [sparkles, setSparkles] = useState<SparkleEl[]>([]);
+  const [debug, setDebug] = useState({
+    taps: 0,
+    lastX: 0,
+    lastY: 0,
+    cssW: 0,
+    cssH: 0,
+    intW: 0,
+    intH: 0,
+  });
 
   const drawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
@@ -156,6 +165,13 @@ export default function PigletDraw() {
       if (prev.width > 0 && prev.height > 0) {
         ctx.drawImage(prev, 0, 0, rect.width, rect.height);
       }
+      setDebug((d) => ({
+        ...d,
+        cssW: Math.round(rect.width),
+        cssH: Math.round(rect.height),
+        intW: canvas.width,
+        intH: canvas.height,
+      }));
     };
 
     resize();
@@ -241,32 +257,69 @@ export default function PigletDraw() {
     }, SPARKLE_LIFE_MS + 80);
   };
 
-  const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    drawingRef.current = true;
-    const pos = getPos(e.clientX, e.clientY);
-    lastRef.current = pos;
-    const t = toolRef.current;
-    if (t === 'brush') drawDot(pos);
-    else if (t === 'stamp') placeStamp(pos);
-    else if (t === 'sparkle') emitSparkles(pos, 8);
-  };
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
 
-  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!drawingRef.current) return;
-    const pos = getPos(e.clientX, e.clientY);
-    const t = toolRef.current;
-    if (t === 'brush' && lastRef.current) {
-      drawLine(lastRef.current, pos);
+    const down = (e: PointerEvent) => {
+      if (e.cancelable) e.preventDefault();
+      drawingRef.current = true;
+      const pos = getPos(e.clientX, e.clientY);
       lastRef.current = pos;
-    } else if (t === 'sparkle') {
-      emitSparkles(pos, 3);
-    }
-  };
+      setDebug((d) => ({
+        ...d,
+        taps: d.taps + 1,
+        lastX: Math.round(pos.x),
+        lastY: Math.round(pos.y),
+      }));
+      const t = toolRef.current;
+      if (t === 'brush') drawDot(pos);
+      else if (t === 'stamp') placeStamp(pos);
+      else if (t === 'sparkle') emitSparkles(pos, 8);
+    };
 
-  const onUp = () => {
-    drawingRef.current = false;
-    lastRef.current = null;
-  };
+    const move = (e: PointerEvent) => {
+      if (!drawingRef.current) return;
+      if (e.cancelable) e.preventDefault();
+      const pos = getPos(e.clientX, e.clientY);
+      const t = toolRef.current;
+      if (t === 'brush' && lastRef.current) {
+        drawLine(lastRef.current, pos);
+        lastRef.current = pos;
+      } else if (t === 'sparkle') {
+        emitSparkles(pos, 3);
+      }
+    };
+
+    const up = () => {
+      drawingRef.current = false;
+      lastRef.current = null;
+    };
+
+    const touchFallback = (e: TouchEvent) => {
+      if (e.cancelable) e.preventDefault();
+    };
+
+    wrap.addEventListener('pointerdown', down, { passive: false });
+    wrap.addEventListener('pointermove', move, { passive: false });
+    wrap.addEventListener('pointerup', up);
+    wrap.addEventListener('pointercancel', up);
+    wrap.addEventListener('pointerleave', up);
+    wrap.addEventListener('touchstart', touchFallback, { passive: false });
+    wrap.addEventListener('touchmove', touchFallback, { passive: false });
+    window.addEventListener('pointerup', up);
+
+    return () => {
+      wrap.removeEventListener('pointerdown', down);
+      wrap.removeEventListener('pointermove', move);
+      wrap.removeEventListener('pointerup', up);
+      wrap.removeEventListener('pointercancel', up);
+      wrap.removeEventListener('pointerleave', up);
+      wrap.removeEventListener('touchstart', touchFallback);
+      wrap.removeEventListener('touchmove', touchFallback);
+      window.removeEventListener('pointerup', up);
+    };
+  }, []);
 
   const clearAll = () => {
     const c = canvasRef.current;
@@ -456,11 +509,6 @@ export default function PigletDraw() {
 
       <div
         ref={wrapRef}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerCancel={onUp}
-        onPointerLeave={onUp}
         style={{
           flex: 1,
           position: 'relative',
@@ -509,6 +557,29 @@ export default function PigletDraw() {
             </svg>
           </span>
         ))}
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            padding: '6px 10px',
+            background: 'rgba(255,255,255,0.85)',
+            border: '1px solid #f48ba0',
+            borderRadius: 8,
+            fontSize: 12,
+            fontFamily: 'ui-monospace, monospace',
+            color: '#3a2030',
+            pointerEvents: 'none',
+            lineHeight: 1.4,
+          }}
+        >
+          <div>
+            taps: <b>{debug.taps}</b> @ {debug.lastX},{debug.lastY}
+          </div>
+          <div>
+            css: {debug.cssW}×{debug.cssH} · canvas: {debug.intW}×{debug.intH}
+          </div>
+        </div>
       </div>
     </div>
   );
