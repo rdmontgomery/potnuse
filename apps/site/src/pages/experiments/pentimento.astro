@@ -203,31 +203,30 @@ const maxTier = song.tierLabels.length - 1;
     overflow-x: auto;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
   }
+  /* Grid stacking: both children occupy the single grid cell, so they overlay
+     pixel-aligned. The ghost paints behind via low opacity; the solid sits on
+     top via z-index. */
   .staff-wrap {
-    position: relative;
+    display: grid;
+    grid-template-areas: 'stack';
     min-width: min-content;
     margin: 0 auto;
   }
   .staff {
+    grid-area: stack;
     color: #1f1408;
     min-width: min-content;
+    line-height: 0;
   }
   .staff :global(svg) {
     display: block;
     margin: 0 auto;
   }
-  /* Ghost layer (next tier up) sits behind the active staff at low opacity —
-     where the active tier has rests, the next layer's notes peek through. */
   .staff-ghost {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
     opacity: 0.22;
     pointer-events: none;
   }
   .staff-solid {
-    position: relative;
     z-index: 2;
   }
 

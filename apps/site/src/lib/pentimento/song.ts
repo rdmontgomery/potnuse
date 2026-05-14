@@ -127,18 +127,11 @@ const HEAD: Omit<PNote, 'voice' | 'tier'>[] = [
   { pitch: 'd/4',  step: 188, dur: 4 },
 ];
 
-// Tier-2 ornaments — added on top of the head. Each pair of held quarter
-// notes becomes a four-eighth-note grace pattern in selected bars.
-// We replace nothing — we just add ornament notes between head notes.
-// Authoring choice: gild the first beat of bars 1, 5, 9 with an eighth-note
-// pickup, and put a passing bb/3 in bar 6 to bend toward c.
-const TIER2_EXTRA: Omit<PNote, 'voice' | 'tier'>[] = [
-  // Bar 1 pickup grace before the second "see"
-  { pitch: 'a/4', step: 2,  dur: 2 },  // not actually replacing — overlaps with g/4 at step 0
-  // Actually instead, add 16th-note approach into bar 2 downbeat:
-  // Bar 2: a 16th approach right before the c/4 on beat 1
-  // We'll skip that; keep TIER2_EXTRA simple.
-];
+// Tier-2 lead ornaments could go here. Empty for now — the "standard" tier
+// reuses the head melody as authored, paired with walking bass and dom7 stabs.
+// Any ornament added here must occupy a hole in the head's rhythm (a rest);
+// adding a note inside an existing head note overflows the bar's tick total.
+const TIER2_EXTRA: Omit<PNote, 'voice' | 'tier'>[] = [];
 
 // Tier-3 fills — improv fills in the call-and-response gap bars (3, 4, 7, 8)
 // and a few extra ornaments. Each fill is a quick eighth-note descending blues
