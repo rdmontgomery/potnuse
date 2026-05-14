@@ -20,11 +20,7 @@ const PAD_X = 16;
 const PAD_Y = 24;
 const BASS_OFFSET = 90;
 
-// Paper-style ink. Solid is near-black with a warm tint; ghost is the same
-// at low alpha, drawn underneath the active tier so the next layer of
-// complexity is faintly visible — the pentimento.
 const SOLID_INK = '#1f1408';
-const GHOST_INK = 'rgba(31, 20, 8, 0.22)';
 
 // Duration: sixteenth-note steps -> VexFlow duration code.
 const DUR_CODE: Record<number, string> = {
@@ -53,9 +49,8 @@ interface BarMaterial {
   beams: Beam[];
 }
 
-// Build the tickables for one bar's voice, plus the beam groups. Eighth and
-// sixteenth notes get beamed when they share a beat (avoids cross-beat beams
-// that read badly).
+// Build tickables for one bar's voice, plus beam groups. Eighths and
+// sixteenths beam together when they share a beat; beams break at beat lines.
 function buildBarMaterial(
   notes: PNote[],
   barStart: number,
@@ -66,7 +61,7 @@ function buildBarMaterial(
   const positions: number[] = [];
   let pos = 0;
 
-  const push = (pitch: string | null, steps: number) => {
+  const pushUnit = (pitch: string | null, steps: number) => {
     for (const s of decompose(steps)) {
       const code = DUR_CODE[s];
       const isRest = pitch === null;
@@ -81,10 +76,10 @@ function buildBarMaterial(
 
   for (const n of sorted) {
     const offset = n.step - barStart;
-    if (offset > pos) push(null, offset - pos);
-    push(n.pitch, n.dur);
+    if (offset > pos) pushUnit(null, offset - pos);
+    pushUnit(n.pitch, n.dur);
   }
-  if (pos < 16) push(null, 16 - pos);
+  if (pos < 16) pushUnit(null, 16 - pos);
 
   const beams: Beam[] = [];
   let group: StaveNote[] = [];
@@ -129,28 +124,30 @@ export interface EngraveResult {
   svg: SVGSVGElement | null;
 }
 
-interface DrawContext {
-  ctx: ReturnType<Renderer['getContext']>;
-  song: Song;
-  systems: number;
-}
-
-// Draw a single tier — staves and notes — into the active VexFlow context.
-// `drawStaff` flag controls whether the staff lines/clefs/timesigs are drawn;
-// the ghost pass sets it false so it doesn't double up the lines that the
-// solid pass will draw on top.
-function drawTier(
-  dc: DrawContext,
+// Engrave the active tier into the container. Single-pass: dark ink, full
+// grand staff, beams, brace + system barlines.
+export function engrave(
+  container: HTMLDivElement,
+  song: Song,
   tier: Tier,
-  drawStaff: boolean,
-  collectLayout: boolean,
-): BarLayout[] {
-  const { ctx, song, systems } = dc;
+): EngraveResult {
+  container.innerHTML = '';
+
+  const systems = Math.ceil(song.bars / BARS_PER_SYSTEM);
+  const systemWidth = CLEF_WIDTH + BARS_PER_SYSTEM * BAR_WIDTH;
+  const width = PAD_X * 2 + systemWidth;
+  const height = PAD_Y * 2 + systems * SYSTEM_HEIGHT;
+
+  const renderer = new Renderer(container, Renderer.Backends.SVG);
+  renderer.resize(width, height);
+  const ctx = renderer.getContext();
+  ctx.setFillStyle(SOLID_INK);
+  ctx.setStrokeStyle(SOLID_INK);
+
   const layout: BarLayout[] = [];
 
   for (let s = 0; s < systems; s++) {
     const yTop = PAD_Y + s * SYSTEM_HEIGHT;
-    const yTreble = yTop;
     const yBass = yTop + BASS_OFFSET;
 
     let x = PAD_X;
@@ -166,7 +163,7 @@ function drawTier(
       const isSystemStart = b === 0;
       const w = isSystemStart ? BAR_WIDTH + CLEF_WIDTH : BAR_WIDTH;
 
-      const treble = new Stave(x, yTreble, w);
+      const treble = new Stave(x, yTop, w);
       const bass = new Stave(x, yBass, w);
       if (isSystemStart) {
         treble.addClef('treble');
@@ -177,15 +174,8 @@ function drawTier(
         }
       }
 
-      if (drawStaff) {
-        treble.setContext(ctx).draw();
-        bass.setContext(ctx).draw();
-      } else {
-        // Voices need the stave bound to a context for measurement, even if we
-        // don't paint the staff lines.
-        treble.setContext(ctx);
-        bass.setContext(ctx);
-      }
+      treble.setContext(ctx).draw();
+      bass.setContext(ctx).draw();
 
       const barStart = barIndex * 16;
       const leadNotes = song.notes.filter(
@@ -215,15 +205,13 @@ function drawTier(
       for (const beam of trebleMat.beams) beam.setContext(ctx).draw();
       for (const beam of bassMat.beams) beam.setContext(ctx).draw();
 
-      if (collectLayout) {
-        layout.push({
-          bar: barIndex,
-          notesX: treble.getNoteStartX(),
-          notesWidth: treble.getNoteEndX() - treble.getNoteStartX(),
-          yTop: treble.getYForLine(0) - 4,
-          yBottom: bass.getYForLine(4) + 4,
-        });
-      }
+      layout.push({
+        bar: barIndex,
+        notesX: treble.getNoteStartX(),
+        notesWidth: treble.getNoteEndX() - treble.getNoteStartX(),
+        yTop: treble.getYForLine(0) - 4,
+        yBottom: bass.getYForLine(4) + 4,
+      });
 
       if (isSystemStart) {
         firstTreble = treble;
@@ -235,54 +223,14 @@ function drawTier(
       x += w;
     }
 
-    if (drawStaff && firstTreble && firstBass) {
+    if (firstTreble && firstBass) {
       new StaveConnector(firstTreble, firstBass).setType('brace').setContext(ctx).draw();
       new StaveConnector(firstTreble, firstBass).setType('singleLeft').setContext(ctx).draw();
     }
-    if (drawStaff && lastTreble && lastBass) {
+    if (lastTreble && lastBass) {
       new StaveConnector(lastTreble, lastBass).setType('singleRight').setContext(ctx).draw();
     }
   }
-
-  return layout;
-}
-
-// Engrave the active tier into the container. If `showGhosts` and a higher
-// tier exists, that tier renders first in pale ink so its extra notes peek
-// through underneath — the pentimento.
-export function engrave(
-  container: HTMLDivElement,
-  song: Song,
-  tier: Tier,
-  options?: { showGhosts?: boolean },
-): EngraveResult {
-  container.innerHTML = '';
-  const showGhosts = options?.showGhosts ?? true;
-  const numTiers = song.tierLabels.length;
-
-  const systems = Math.ceil(song.bars / BARS_PER_SYSTEM);
-  const systemWidth = CLEF_WIDTH + BARS_PER_SYSTEM * BAR_WIDTH;
-  const width = PAD_X * 2 + systemWidth;
-  const height = PAD_Y * 2 + systems * SYSTEM_HEIGHT;
-
-  const renderer = new Renderer(container, Renderer.Backends.SVG);
-  renderer.resize(width, height);
-  const ctx = renderer.getContext();
-  const dc: DrawContext = { ctx, song, systems };
-
-  // Ghost pass: render tier+1's notes in pale ink, with no staff lines so the
-  // solid pass's lines don't double up.
-  if (showGhosts && tier + 1 < numTiers) {
-    ctx.setFillStyle(GHOST_INK);
-    ctx.setStrokeStyle(GHOST_INK);
-    drawTier(dc, tier + 1, false, false);
-  }
-
-  // Solid pass: full staff + active-tier notes in dark ink, on top of any
-  // ghost notes that peeked through.
-  ctx.setFillStyle(SOLID_INK);
-  ctx.setStrokeStyle(SOLID_INK);
-  const layout = drawTier(dc, tier, true, true);
 
   const svg = container.querySelector('svg');
   return { width, height, bars: layout, svg: svg as SVGSVGElement | null };

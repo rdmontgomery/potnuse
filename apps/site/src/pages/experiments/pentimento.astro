@@ -98,9 +98,18 @@ const maxTier = song.tierLabels.length - 1;
   function applyTier(t: number) {
     currentTier = t;
     tierLabel.textContent = song.tierLabels[t];
-    const result = engrave(staffEl, song, t);
-    barLayout = result.bars;
-    playhead = attachPlayhead(result.svg);
+    try {
+      const result = engrave(staffEl, song, t);
+      barLayout = result.bars;
+      playhead = attachPlayhead(result.svg);
+    } catch (err) {
+      console.error('engrave failed', err);
+      staffEl.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
+      staffEl.style.color = '#a83a2a';
+      staffEl.style.padding = '1rem';
+      barLayout = [];
+      playhead = null;
+    }
   }
 
   applyTier(currentTier);
