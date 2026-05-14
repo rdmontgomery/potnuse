@@ -3,14 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 type Tool = 'brush' | 'stamp' | 'sparkle';
 type Stamp = 'heart' | 'star' | 'circle' | 'square';
 
-interface Particle {
+interface SparkleEl {
+  id: number;
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  life: number;
   size: number;
   color: string;
+  rotate: number;
+  drift: number;
 }
 
 const COLORS = [
@@ -30,7 +30,6 @@ const STAMPS: Stamp[] = ['heart', 'star', 'circle', 'square'];
 
 const PIGLET_SVG =
   "<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110' viewBox='0 0 110 110'>" +
-  "<g transform='translate(0,0)'>" +
   "<path d='M30 38 L36 22 L46 38 Z' fill='%23f48ba0'/>" +
   "<path d='M80 38 L74 22 L64 38 Z' fill='%23f48ba0'/>" +
   "<circle cx='55' cy='58' r='30' fill='%23f8b8c8'/>" +
@@ -43,7 +42,7 @@ const PIGLET_SVG =
   "<circle cx='66' cy='52' r='3' fill='%233a2030'/>" +
   "<circle cx='45' cy='51' r='1' fill='%23ffffff'/>" +
   "<circle cx='67' cy='51' r='1' fill='%23ffffff'/>" +
-  "</g></svg>";
+  '</svg>';
 
 const PIGLET_BG = `url("data:image/svg+xml;utf8,${PIGLET_SVG}")`;
 
@@ -93,42 +92,25 @@ function drawStamp(
   ctx.restore();
 }
 
-function drawSparkle(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  size: number,
-) {
-  ctx.beginPath();
-  for (let i = 0; i < 8; i++) {
-    const angle = (i * Math.PI) / 4;
-    const r = i % 2 === 0 ? size : size / 3;
-    const px = x + Math.cos(angle) * r;
-    const py = y + Math.sin(angle) * r;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fill();
-}
-
 function randomColor() {
   return COLORS[Math.floor(Math.random() * (COLORS.length - 1))];
 }
 
+let sparkleIdCounter = 0;
+const SPARKLE_LIFE_MS = 1200;
+
 export default function PigletDraw() {
-  const drawRef = useRef<HTMLCanvasElement>(null);
-  const sparkleRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const [tool, setTool] = useState<Tool>('brush');
   const [color, setColor] = useState<string>(COLORS[0]);
   const [stamp, setStamp] = useState<Stamp>('heart');
-  const [brushSize, setBrushSize] = useState<number>(10);
+  const [brushSize, setBrushSize] = useState<number>(12);
+  const [sparkles, setSparkles] = useState<SparkleEl[]>([]);
 
   const drawingRef = useRef(false);
-  const lastPosRef = useRef<{ x: number; y: number } | null>(null);
-  const particlesRef = useRef<Particle[]>([]);
+  const lastRef = useRef<{ x: number; y: number } | null>(null);
   const toolRef = useRef(tool);
   const colorRef = useRef(color);
   const stampRef = useRef(stamp);
@@ -148,151 +130,152 @@ export default function PigletDraw() {
   }, [brushSize]);
 
   useEffect(() => {
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    if (!wrap || !canvas) return;
+
     const resize = () => {
-      const wrap = wrapRef.current;
-      if (!wrap) return;
       const rect = wrap.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
       const dpr = window.devicePixelRatio || 1;
-      [drawRef, sparkleRef].forEach((ref) => {
-        const c = ref.current;
-        if (!c) return;
-        const prev = document.createElement('canvas');
-        prev.width = c.width;
-        prev.height = c.height;
-        const pctx = prev.getContext('2d');
-        if (pctx && c.width > 0) pctx.drawImage(c, 0, 0);
 
-        c.width = Math.floor(rect.width * dpr);
-        c.height = Math.floor(rect.height * dpr);
-        c.style.width = rect.width + 'px';
-        c.style.height = rect.height + 'px';
-        const ctx = c.getContext('2d');
-        if (ctx) {
-          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-          if (prev.width > 0 && ref === drawRef) {
-            ctx.drawImage(prev, 0, 0, rect.width, rect.height);
-          }
-        }
-      });
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      const c = sparkleRef.current;
-      if (c) {
-        const ctx = c.getContext('2d');
-        if (ctx) {
-          const dpr = window.devicePixelRatio || 1;
-          ctx.clearRect(0, 0, c.width / dpr, c.height / dpr);
-          const alive: Particle[] = [];
-          for (const p of particlesRef.current) {
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.08;
-            p.life -= 0.018;
-            if (p.life > 0) {
-              ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
-              ctx.fillStyle = p.color;
-              drawSparkle(ctx, p.x, p.y, p.size * Math.max(0.3, p.life));
-              alive.push(p);
-            }
-          }
-          ctx.globalAlpha = 1;
-          particlesRef.current = alive;
-        }
+      const prev = document.createElement('canvas');
+      prev.width = canvas.width;
+      prev.height = canvas.height;
+      if (canvas.width > 0 && canvas.height > 0) {
+        prev.getContext('2d')!.drawImage(canvas, 0, 0);
       }
-      raf = requestAnimationFrame(tick);
+
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      const ctx = canvas.getContext('2d')!;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (prev.width > 0 && prev.height > 0) {
+        ctx.drawImage(prev, 0, 0, rect.width, rect.height);
+      }
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+
+    resize();
+    const ro =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(resize)
+        : null;
+    ro?.observe(wrap);
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', resize);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('orientationchange', resize);
+    };
   }, []);
 
-  const emitSparkles = (x: number, y: number) => {
-    const count = 6;
+
+  const getPos = (clientX: number, clientY: number) => {
+    const c = canvasRef.current!;
+    const rect = c.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  };
+
+  const drawDot = (pos: { x: number; y: number }) => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const c = colorRef.current === RAINBOW ? randomColor() : colorRef.current;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, brushSizeRef.current / 2, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  const drawLine = (
+    from: { x: number; y: number },
+    to: { x: number; y: number },
+  ) => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const c = colorRef.current === RAINBOW ? randomColor() : colorRef.current;
+    ctx.strokeStyle = c;
+    ctx.lineWidth = brushSizeRef.current;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  };
+
+  const placeStamp = (pos: { x: number; y: number }) => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (!ctx) return;
+    const c = colorRef.current === RAINBOW ? randomColor() : colorRef.current;
+    drawStamp(ctx, stampRef.current, pos.x, pos.y, 36, c);
+  };
+
+  const emitSparkles = (pos: { x: number; y: number }, count = 4) => {
     const useRainbow = colorRef.current === RAINBOW;
+    const next: SparkleEl[] = [];
+    const ids: number[] = [];
     for (let i = 0; i < count; i++) {
-      particlesRef.current.push({
-        x: x + (Math.random() - 0.5) * 8,
-        y: y + (Math.random() - 0.5) * 8,
-        vx: (Math.random() - 0.5) * 3,
-        vy: (Math.random() - 0.5) * 3 - 1,
-        life: 0.9 + Math.random() * 0.4,
-        size: 6 + Math.random() * 7,
+      sparkleIdCounter += 1;
+      ids.push(sparkleIdCounter);
+      next.push({
+        id: sparkleIdCounter,
+        x: pos.x + (Math.random() - 0.5) * 24,
+        y: pos.y + (Math.random() - 0.5) * 24,
+        size: 18 + Math.random() * 18,
         color: useRainbow ? randomColor() : colorRef.current,
+        rotate: Math.random() * 360,
+        drift: (Math.random() - 0.5) * 40,
       });
     }
+    setSparkles((prev) => {
+      const trimmed = prev.length > 200 ? prev.slice(prev.length - 200) : prev;
+      return [...trimmed, ...next];
+    });
+    setTimeout(() => {
+      const drop = new Set(ids);
+      setSparkles((prev) => prev.filter((s) => !drop.has(s.id)));
+    }, SPARKLE_LIFE_MS + 80);
   };
 
-  const getPos = (e: React.PointerEvent) => {
-    const c = drawRef.current!;
-    const rect = c.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    (e.target as Element).setPointerCapture?.(e.pointerId);
+  const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
     drawingRef.current = true;
-    const pos = getPos(e);
+    const pos = getPos(e.clientX, e.clientY);
+    lastRef.current = pos;
     const t = toolRef.current;
-    if (t === 'brush') {
-      lastPosRef.current = pos;
-      const ctx = drawRef.current!.getContext('2d')!;
-      const c =
-        colorRef.current === RAINBOW ? randomColor() : colorRef.current;
-      ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, brushSizeRef.current / 2, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (t === 'stamp') {
-      const ctx = drawRef.current!.getContext('2d')!;
-      const c =
-        colorRef.current === RAINBOW ? randomColor() : colorRef.current;
-      drawStamp(ctx, stampRef.current, pos.x, pos.y, 32, c);
-    } else if (t === 'sparkle') {
-      emitSparkles(pos.x, pos.y);
-    }
+    if (t === 'brush') drawDot(pos);
+    else if (t === 'stamp') placeStamp(pos);
+    else if (t === 'sparkle') emitSparkles(pos, 8);
   };
 
-  const onPointerMove = (e: React.PointerEvent) => {
+  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!drawingRef.current) return;
-    const pos = getPos(e);
+    const pos = getPos(e.clientX, e.clientY);
     const t = toolRef.current;
-    if (t === 'brush' && lastPosRef.current) {
-      const ctx = drawRef.current!.getContext('2d')!;
-      const c =
-        colorRef.current === RAINBOW ? randomColor() : colorRef.current;
-      ctx.strokeStyle = c;
-      ctx.lineWidth = brushSizeRef.current;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      lastPosRef.current = pos;
+    if (t === 'brush' && lastRef.current) {
+      drawLine(lastRef.current, pos);
+      lastRef.current = pos;
     } else if (t === 'sparkle') {
-      emitSparkles(pos.x, pos.y);
+      emitSparkles(pos, 3);
     }
   };
 
-  const onPointerUp = () => {
+  const onUp = () => {
     drawingRef.current = false;
-    lastPosRef.current = null;
+    lastRef.current = null;
   };
 
   const clearAll = () => {
-    const c = drawRef.current;
+    const c = canvasRef.current;
     if (!c) return;
     const ctx = c.getContext('2d');
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, c.width / dpr, c.height / dpr);
-    particlesRef.current = [];
+    setSparkles([]);
   };
 
   const toolBtn = (id: Tool, label: string) => {
@@ -310,9 +293,7 @@ export default function PigletDraw() {
           background: active ? '#fff0f5' : '#ffffff',
           color: '#3a2030',
           cursor: 'pointer',
-          boxShadow: active
-            ? '0 4px 0 #d6336c'
-            : '0 4px 0 #c79bb0',
+          boxShadow: active ? '0 4px 0 #d6336c' : '0 4px 0 #c79bb0',
           transform: active ? 'translateY(2px)' : 'translateY(0)',
           minWidth: 110,
         }}
@@ -335,14 +316,27 @@ export default function PigletDraw() {
         overflow: 'hidden',
       }}
     >
+      <style>{`
+        @keyframes mietteSparkle {
+          0% { transform: translate(-50%, -50%) rotate(var(--r)) scale(0.4); opacity: 0; }
+          15% { opacity: 1; }
+          100% { transform: translate(calc(-50% + var(--dx)), calc(-50% - 60px)) rotate(calc(var(--r) + 180deg)) scale(1); opacity: 0; }
+        }
+        .miette-sparkle {
+          position: absolute;
+          pointer-events: none;
+          animation: mietteSparkle ${SPARKLE_LIFE_MS}ms ease-out forwards;
+          will-change: transform, opacity;
+        }
+      `}</style>
+
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: 10,
           padding: '10px 14px',
-          background:
-            'linear-gradient(180deg, #ffd8e4 0%, #ffc1d4 100%)',
+          background: 'linear-gradient(180deg, #ffd8e4 0%, #ffc1d4 100%)',
           borderBottom: '3px solid #f48ba0',
           alignItems: 'center',
         }}
@@ -365,9 +359,7 @@ export default function PigletDraw() {
                 borderRadius: '50%',
                 background: c,
                 border:
-                  color === c
-                    ? '4px solid #3a2030'
-                    : '2px solid #ffffff',
+                  color === c ? '4px solid #3a2030' : '2px solid #ffffff',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 cursor: 'pointer',
                 padding: 0,
@@ -406,9 +398,7 @@ export default function PigletDraw() {
                   fontWeight: 700,
                   borderRadius: 10,
                   border:
-                    stamp === s
-                      ? '3px solid #d6336c'
-                      : '2px solid #ffffff',
+                    stamp === s ? '3px solid #d6336c' : '2px solid #ffffff',
                   background: stamp === s ? '#fff0f5' : '#ffffff',
                   color: '#3a2030',
                   cursor: 'pointer',
@@ -435,7 +425,7 @@ export default function PigletDraw() {
             <input
               type="range"
               min={2}
-              max={40}
+              max={50}
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
             />
@@ -466,6 +456,11 @@ export default function PigletDraw() {
 
       <div
         ref={wrapRef}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        onPointerLeave={onUp}
         style={{
           flex: 1,
           position: 'relative',
@@ -474,30 +469,46 @@ export default function PigletDraw() {
           backgroundSize: '110px 110px',
           backgroundColor: '#fff8fa',
           touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          cursor: 'crosshair',
+          overflow: 'hidden',
         }}
       >
         <canvas
-          ref={drawRef}
+          ref={canvasRef}
           style={{
             position: 'absolute',
             inset: 0,
-            touchAction: 'none',
+            display: 'block',
+            pointerEvents: 'none',
           }}
         />
-        <canvas
-          ref={sparkleRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerUp}
-          onPointerLeave={onPointerUp}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            touchAction: 'none',
-            cursor: 'crosshair',
-          }}
-        />
+        {sparkles.map((s) => (
+          <span
+            key={s.id}
+            className="miette-sparkle"
+            style={
+              {
+                left: s.x,
+                top: s.y,
+                width: s.size,
+                height: s.size,
+                ['--r' as never]: `${s.rotate}deg`,
+                ['--dx' as never]: `${s.drift}px`,
+              } as React.CSSProperties
+            }
+          >
+            <svg viewBox="-10 -10 20 20" width="100%" height="100%">
+              <polygon
+                points="0,-10 2.5,-2.5 10,0 2.5,2.5 0,10 -2.5,2.5 -10,0 -2.5,-2.5"
+                fill={s.color}
+                stroke="#ffffffaa"
+                strokeWidth="0.6"
+              />
+            </svg>
+          </span>
+        ))}
       </div>
     </div>
   );
