@@ -1,0 +1,161 @@
+---
+// Placeholder for the curriculum's spine: a persistent staff that rebinds to
+// the current section's example as the user scrolls. Step-1 scaffold renders a
+// static SVG mock at the right footprint so we can verify scroll perf before
+// porting the real VexFlow engraver. Replaced in build-order step 2.
+---
+
+<aside class="staff-spine" aria-label="persistent staff (placeholder)">
+  <div class="spine-card">
+    <div class="spine-label">BWV 269 — Aus meines Herzens Grunde</div>
+    <svg
+      class="spine-svg"
+      viewBox="0 0 360 96"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+    >
+      <g stroke="#1f1408" stroke-width="1" fill="none">
+        <line x1="8" y1="20" x2="352" y2="20" />
+        <line x1="8" y1="28" x2="352" y2="28" />
+        <line x1="8" y1="36" x2="352" y2="36" />
+        <line x1="8" y1="44" x2="352" y2="44" />
+        <line x1="8" y1="52" x2="352" y2="52" />
+      </g>
+      <text
+        x="14"
+        y="46"
+        font-family="serif"
+        font-style="italic"
+        font-size="22"
+        fill="#1f1408"
+        >&#x1D11E;</text
+      >
+      <line
+        x1="96"
+        y1="20"
+        x2="96"
+        y2="52"
+        stroke="#1f1408"
+        stroke-width="0.6"
+      />
+      <line
+        x1="184"
+        y1="20"
+        x2="184"
+        y2="52"
+        stroke="#1f1408"
+        stroke-width="0.6"
+      />
+      <line
+        x1="272"
+        y1="20"
+        x2="272"
+        y2="52"
+        stroke="#1f1408"
+        stroke-width="0.6"
+      />
+      <line
+        x1="352"
+        y1="20"
+        x2="352"
+        y2="52"
+        stroke="#1f1408"
+        stroke-width="0.6"
+      />
+      <text
+        x="180"
+        y="80"
+        font-family="ui-monospace, monospace"
+        font-size="8"
+        fill="#6b5d48"
+        text-anchor="middle">staff renders here</text
+      >
+    </svg>
+    <input
+      type="range"
+      class="spine-slider"
+      min="0"
+      max="3"
+      step="1"
+      value="1"
+      aria-label="reduction depth (placeholder)"
+      disabled
+    />
+    <div class="spine-ticks">
+      <span>ursatz</span>
+      <span>background</span>
+      <span>middle</span>
+      <span>foreground</span>
+    </div>
+  </div>
+</aside>
+
+<style>
+  /* The wrapper just provides breathing room around the card. The page
+     decides where to put it sticky — sticky's containing block has to be
+     tall enough to give the staff somewhere to stick, which is the grid
+     container, not this aside. */
+  .staff-spine {
+    padding: 0.5rem 0;
+  }
+  .spine-card {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem 0.75rem 0.6rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .spine-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6b5d48;
+  }
+  .spine-svg {
+    width: 100%;
+    height: auto;
+    max-height: 96px;
+    display: block;
+  }
+  .spine-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #c8b896;
+    border-radius: 2px;
+    outline: none;
+    opacity: 0.6;
+  }
+  .spine-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: not-allowed;
+    border: 2px solid #f5efe0;
+  }
+  .spine-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: not-allowed;
+    border: 2px solid #f5efe0;
+  }
+  .spine-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-jetbrains);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b5d48;
+  }
+</style>
