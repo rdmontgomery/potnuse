@@ -378,22 +378,30 @@ export default function PigletDraw() {
           {toolBtn('sparkle', 'Sparkles')}
         </div>
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 4,
+            alignItems: 'center',
+          }}
+        >
           {COLORS.map((c) => (
             <button
               key={c}
               onClick={() => setColor(c)}
               aria-label={`color ${c}`}
               style={{
-                width: 34,
-                height: 34,
+                width: 28,
+                height: 28,
                 borderRadius: '50%',
                 background: c,
                 border:
-                  color === c ? '4px solid #3a2030' : '2px solid #ffffff',
+                  color === c ? '3px solid #3a2030' : '2px solid #ffffff',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                 cursor: 'pointer',
                 padding: 0,
+                flexShrink: 0,
               }}
             />
           ))}
@@ -401,18 +409,19 @@ export default function PigletDraw() {
             onClick={() => setColor(RAINBOW)}
             aria-label="rainbow"
             style={{
-              width: 34,
-              height: 34,
+              width: 28,
+              height: 28,
               borderRadius: '50%',
               background:
                 'conic-gradient(#e91e63,#ff9800,#ffeb3b,#8bc34a,#00bcd4,#3f51b5,#9c27b0,#e91e63)',
               border:
                 color === RAINBOW
-                  ? '4px solid #3a2030'
+                  ? '3px solid #3a2030'
                   : '2px solid #ffffff',
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
               cursor: 'pointer',
               padding: 0,
+              flexShrink: 0,
             }}
           />
         </div>
