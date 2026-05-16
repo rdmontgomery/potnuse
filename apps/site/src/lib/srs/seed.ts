@@ -95,7 +95,53 @@ const MODULE_1_CARD_DEFS = [
 
 export type ModuleOneCardId = (typeof MODULE_1_CARD_DEFS)[number]['id'];
 
-const ALL_CARD_DEFS = [...MODULE_0_CARD_DEFS, ...MODULE_1_CARD_DEFS];
+// Module 2: Intervals and Generators. Both prompts probe the
+// gcd(N, 12) → orbit-size correspondence — the central fact of the
+// module. Multiple choice keeps the answer space tight so the prompt
+// reads as a quick recall, not a free-form puzzle.
+const MODULE_2_CARD_DEFS = [
+  {
+    id: 'm2.generators',
+    moduleId: 2,
+    concept: 'generators-of-z12' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Which of the following is the complete set of generators of Z 12 (the intervals that visit every pitch class)?',
+      choices: [
+        '{2, 4, 6, 8, 10}',
+        '{1, 5, 7, 11}',
+        '{3, 6, 9}',
+        '{0, 4, 8}',
+      ],
+      correctIndex: 1,
+      explanation:
+        'The generators are the intervals coprime to 12: gcd(N, 12) = 1 holds exactly for N ∈ {1, 5, 7, 11}.',
+    },
+  },
+  {
+    id: 'm2.orbit-of-3',
+    moduleId: 2,
+    concept: 'orbit-size' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Step by 3 semitones repeatedly from any starting pitch class. How many distinct pcs does the orbit visit before returning to start?',
+      choices: ['3', '4', '6', '12'],
+      correctIndex: 1,
+      explanation:
+        'Orbit size = 12 / gcd(3, 12) = 12 / 3 = 4. The orbit is a diminished seventh.',
+    },
+  },
+] as const;
+
+export type ModuleTwoCardId = (typeof MODULE_2_CARD_DEFS)[number]['id'];
+
+const ALL_CARD_DEFS = [
+  ...MODULE_0_CARD_DEFS,
+  ...MODULE_1_CARD_DEFS,
+  ...MODULE_2_CARD_DEFS,
+];
 
 function defsToCards(
   defs: readonly (typeof ALL_CARD_DEFS)[number][],
@@ -114,6 +160,10 @@ export function freshModuleZeroCards(now: Date = new Date()): Card[] {
 
 export function freshModuleOneCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_1_CARD_DEFS, now);
+}
+
+export function freshModuleTwoCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_2_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure

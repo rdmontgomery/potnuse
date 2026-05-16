@@ -4,6 +4,7 @@ import ModuleSection from '@/components/curriculum/ModuleSection.astro';
 import PersistentStaff from '@/components/curriculum/PersistentStaff.astro';
 import Module0 from '@/components/curriculum/Module0.astro';
 import Module1 from '@/components/curriculum/Module1.astro';
+import Module2 from '@/components/curriculum/Module2.astro';
 
 // The spine of the curriculum: twelve modules from Z_12 to active matter.
 // Order is firm; pace is the user's. Module 0 is the only one with content in
@@ -106,6 +107,13 @@ const MODULES = [
               return (
                 <ModuleSection index={i} title={m.title} kicker={m.kicker}>
                   <Module1 />
+                </ModuleSection>
+              );
+            }
+            if (i === 2) {
+              return (
+                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                  <Module2 />
                 </ModuleSection>
               );
             }

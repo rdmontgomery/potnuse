@@ -37,6 +37,12 @@ export interface Z12ClockProps {
   // selected pcs. Off by default so the clock reads cleanly when only one
   // pc is lit.
   showChord?: boolean;
+  // Draw lines through pcs in a specified order rather than pc-sorted.
+  // Used by Module 2 to visualize the orbit of an interval — pass the
+  // sequence [0, N, 2N, …] mod 12 to draw the star polygon. Renders as
+  // an open polyline; repeat the first pc at the end to close the loop.
+  // Takes priority over showChord when both are set.
+  polygonPath?: readonly PitchClass[];
   // Draw a dashed line through axisPc and its antipode. Used to visualize the
   // axis of inversion for the reflect operation.
   showAxis?: boolean;
@@ -55,6 +61,7 @@ export default function Z12Clock({
   onPcClick,
   onRotateStep,
   showChord = false,
+  polygonPath,
   showAxis = false,
   axisPc = 0,
   labels = 'numbers',
@@ -157,6 +164,19 @@ export default function Z12Clock({
     return pts.join(' ');
   }, [showChord, selected, cx, cy, r]);
 
+  // Caller-ordered polyline. Used by orbit visualizations where the path
+  // through pcs is not pc-sort order. Renders as polyline (open) so the
+  // caller can append the start pc to close the loop only when desired.
+  const orbitPoints = useMemo(() => {
+    if (!polygonPath || polygonPath.length < 2) return null;
+    return polygonPath
+      .map((pc) => {
+        const p = POSITIONS[mod12(pc)];
+        return `${(cx + r * p.x).toFixed(2)},${(cy + r * p.y).toFixed(2)}`;
+      })
+      .join(' ');
+  }, [polygonPath, cx, cy, r]);
+
   const axisLine = useMemo(() => {
     if (!showAxis) return null;
     const a = POSITIONS[mod12(axisPc)];
@@ -204,13 +224,24 @@ export default function Z12Clock({
         />
       )}
 
-      {chordPoints && (
+      {chordPoints && !orbitPoints && (
         <polygon
           points={chordPoints}
           fill="#e8a838"
           fillOpacity={0.18}
           stroke="#b87a1e"
           strokeWidth={1.2}
+        />
+      )}
+
+      {orbitPoints && (
+        <polyline
+          points={orbitPoints}
+          fill="none"
+          stroke="#b87a1e"
+          strokeWidth={1.4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       )}
 

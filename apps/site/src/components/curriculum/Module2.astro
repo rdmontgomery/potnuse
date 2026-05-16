@@ -1,0 +1,365 @@
+---
+// Module 2: Intervals and Generators. Same five-block rhythm. Behold
+// animates the cycle of fifths drawing itself, Derive lets the listener
+// flip through intervals 1-11 and watch gcd land different shapes,
+// Operate makes the orbit audible by building it on the piano one note
+// at a time.
+import Module2Behold from './Module2Behold';
+import Module2Derive from './Module2Derive';
+import Module2Operate from './Module2Operate';
+import Module2Prompts from './Module2Prompts';
+---
+
+<div class="m2">
+  <section class="m2-block">
+    <p class="m2-eyebrow">behold</p>
+    <p>
+      Start on C. Step up by seven semitones — a perfect fifth — and you
+      land on G. Step again: D. Again: A. Twelve steps later, you have
+      visited every pitch class and the line closes back on itself. The
+      cycle of fifths isn't a notational convention; it's what happens
+      when you let an interval generate its own subgroup of Z<sub>12</sub>.
+    </p>
+    <Module2Behold client:visible />
+  </section>
+
+  <section class="m2-block">
+    <p class="m2-eyebrow">derive</p>
+    <p>
+      The interval N generates a cyclic subgroup whose size is{' '}
+      <code>12 / gcd(N, 12)</code>. When gcd is 1, the orbit is all of
+      Z<sub>12</sub> — N is a generator. When gcd is bigger than 1, the
+      orbit is a proper subset whose <em>shape</em> is one of the
+      symmetric chord types: whole-tone, diminished seventh, augmented
+      triad, tritone pair. Pick any interval and watch.
+    </p>
+    <Module2Derive client:visible />
+  </section>
+
+  <section class="m2-block">
+    <p class="m2-eyebrow">operate</p>
+    <p>
+      Now hear it. Pick an interval; press <strong>build the orbit</strong>;
+      the piano stacks the orbit's pcs one at a time, each note
+      sustained. Step 4 lands on an augmented triad. Step 3 on a
+      diminished seventh. Step 2 on the whole-tone scale. Step 7 piles
+      up every pitch class.
+    </p>
+    <Module2Operate client:visible />
+  </section>
+
+  <section class="m2-block">
+    <p class="m2-eyebrow">prompt</p>
+    <p class="m2-prompt-intro">
+      Two cards on gcd and orbit size. Same "unsure" rule — it brings the
+      card back around sooner.
+    </p>
+    <Module2Prompts client:visible />
+  </section>
+
+  <section class="m2-block m2-bridge">
+    <p class="m2-eyebrow">bridge</p>
+    <p>
+      Generators give us chords by repetition; gcd dictates the shape.
+      But the <em>diatonic</em> scale — seven notes from twelve — isn't
+      a single orbit. Where does it come from? Next: scales as subsets,
+      with one specific subset standing out as the maximally even
+      seven-note set.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 2 chrome. Mirrors Modules 0 + 1; rules live next to those so
+     the page-wide style remains uniform without any cross-module
+     imports. */
+  .m2 {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .m2-block {
+    color: var(--text);
+  }
+  .m2-eyebrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+  }
+  .m2 p {
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 1rem;
+  }
+  .m2 p em {
+    font-style: italic;
+  }
+  .m2 p strong {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .m2 code {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85em;
+    color: var(--accent-dim);
+    background: var(--bg-card);
+    padding: 0.05em 0.4em;
+    border-radius: 2px;
+  }
+  .m2-bridge p {
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+  .m2-prompt-intro {
+    font-size: 0.95rem !important;
+    color: var(--text-dim) !important;
+  }
+
+  /* Behold ---------------------------------------------------------------- */
+  .m2-behold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    max-width: 320px;
+    margin: 0 auto;
+    transition: border-color 0.3s ease;
+  }
+  .m2-behold:hover,
+  .m2-behold:focus-visible {
+    border-color: var(--accent-dim);
+    outline: none;
+  }
+  .m2-behold-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    max-width: 36ch;
+  }
+  .m2-behold-caption strong {
+    font-family: var(--font-jetbrains);
+    font-size: 0.95rem;
+    color: var(--accent);
+  }
+
+  /* Interval picker — shared by Derive + Operate ----------------------- */
+  .m2-interval-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+  }
+  .m2-interval-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m2-interval-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m2-interval-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 2.6rem;
+    padding: 0.35rem 0.4rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-jetbrains);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m2-interval-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m2-interval-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m2-interval-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m2-interval-n {
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .m2-interval-name {
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .m2-interval-btn.active .m2-interval-name {
+    color: var(--bg);
+    opacity: 0.85;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m2-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m2-derive-stats {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m2-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .m2-stat-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m2-stat-value {
+    font-family: var(--font-jetbrains);
+    font-size: 1rem;
+    color: var(--accent);
+  }
+  .m2-stat-shape {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.05rem;
+  }
+  .m2-derive-caption {
+    text-align: center;
+    margin: 0 !important;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem !important;
+    letter-spacing: 0.04em;
+    color: var(--text-dim) !important;
+    line-height: 1.5 !important;
+  }
+  .m2-derive-close {
+    color: var(--accent);
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m2-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m2-operate-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .m2-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .m2-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m2-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m2-operate-release {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m2-operate-release:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .m2-operate-release:disabled {
+    cursor: default;
+    opacity: 0.4;
+  }
+  .m2-operate-caption {
+    font-size: 0.9rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 42ch;
+    line-height: 1.5 !important;
+  }
+  .m2-operate-caption strong {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* Prompts list — uses the same .prompt chrome as Module 0. */
+  .m2-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>
