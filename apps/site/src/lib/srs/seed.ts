@@ -276,6 +276,55 @@ const MODULE_5_CARD_DEFS = [
 
 export type ModuleFiveCardId = (typeof MODULE_5_CARD_DEFS)[number]['id'];
 
+// Module 6: Chromatic Harmony.
+const MODULE_6_CARD_DEFS = [
+  {
+    id: 'm6.v-of-v-meaning',
+    moduleId: 6,
+    concept: 'secondary-dominants' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In C major, what does the chord notation V/V refer to?',
+      choices: [
+        'The fifth scale degree of the fifth scale degree (B major)',
+        'The dominant of the dominant — D major, resolving to G',
+        'G major in second inversion',
+        'A secondary tonic on A minor',
+      ],
+      correctIndex: 1,
+      explanation:
+        'V/V reads "the dominant of V." In C major: V is G, and the dominant of G is D major (D F♯ A). It tonicizes V before V resolves to I.',
+    },
+  },
+  {
+    id: 'm6.identify-bVI',
+    moduleId: 6,
+    concept: 'modal-mixture' as const,
+    prompt: {
+      kind: 'identify-by-ear' as const,
+      question:
+        'Listen to this chord. Which borrowed chord in C major did you hear?',
+      audio: {
+        kind: 'chord' as const,
+        midi: [68, 72, 75], // A♭ major triad — ♭VI in C
+        sustain: 1.6,
+      },
+      choices: [
+        '♭III (E♭ major)',
+        '♭VI (A♭ major)',
+        '♭VII (B♭ major)',
+        'iv (F minor)',
+      ],
+      correctIndex: 1,
+      explanation:
+        '♭VI — A♭ major. Borrowed from C minor (which has the notes A♭, C, E♭ in its scale). Familiar from sudden-color moments in pop and classical alike.',
+    },
+  },
+] as const;
+
+export type ModuleSixCardId = (typeof MODULE_6_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -283,6 +332,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_3_CARD_DEFS,
   ...MODULE_4_CARD_DEFS,
   ...MODULE_5_CARD_DEFS,
+  ...MODULE_6_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -318,6 +368,10 @@ export function freshModuleFourCards(now: Date = new Date()): Card[] {
 
 export function freshModuleFiveCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_5_CARD_DEFS, now);
+}
+
+export function freshModuleSixCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_6_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
