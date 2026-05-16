@@ -107,11 +107,11 @@ const maxTier = song.tierLabels.length - 1;
       // opacity). Active-tier notes will paint on top and obscure overlapping
       // ghost notes; ghost notes unique to the next tier peek through.
       if (t + 1 < song.tierLabels.length) {
-        engrave(ghostEl, song, t + 1);
+        engrave(ghostEl, song, { tier: t + 1 });
       } else {
         ghostEl.innerHTML = '';
       }
-      const result = engrave(staffEl, song, t);
+      const result = engrave(staffEl, song, { tier: t });
       barLayout = result.bars;
       playhead = attachPlayhead(result.svg);
     } catch (err) {

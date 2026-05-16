@@ -1,125 +1,143 @@
 ---
-// Placeholder for the curriculum's spine: a persistent staff that rebinds to
-// the current section's example as the user scrolls. Step-1 scaffold renders a
-// static SVG mock at the right footprint so we can verify scroll perf before
-// porting the real VexFlow engraver. Replaced in build-order step 2.
+// The curriculum's spine. Renders the current section's example as a compact
+// grand-staff window with a slider that mutates the underlying reduction.
+//
+// For now the example is C.C. Rider (the only song the pentimento engine
+// knows about) and the slider runs the song's bones→virtuoso tiers. The
+// schenker-proper labels appear once Module 11 actually reduces a chorale;
+// until then the slider is the existing pentimento mechanic, scaled down.
 ---
 
-<aside class="staff-spine" aria-label="persistent staff (placeholder)">
+<aside class="staff-spine" aria-label="reduction spine">
   <div class="spine-card">
-    <div class="spine-label">BWV 269 — Aus meines Herzens Grunde</div>
-    <svg
-      class="spine-svg"
-      viewBox="0 0 360 96"
-      preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
-    >
-      <g stroke="#1f1408" stroke-width="1" fill="none">
-        <line x1="8" y1="20" x2="352" y2="20" />
-        <line x1="8" y1="28" x2="352" y2="28" />
-        <line x1="8" y1="36" x2="352" y2="36" />
-        <line x1="8" y1="44" x2="352" y2="44" />
-        <line x1="8" y1="52" x2="352" y2="52" />
-      </g>
-      <text
-        x="14"
-        y="46"
-        font-family="serif"
-        font-style="italic"
-        font-size="22"
-        fill="#1f1408"
-        >&#x1D11E;</text
-      >
-      <line
-        x1="96"
-        y1="20"
-        x2="96"
-        y2="52"
-        stroke="#1f1408"
-        stroke-width="0.6"
-      />
-      <line
-        x1="184"
-        y1="20"
-        x2="184"
-        y2="52"
-        stroke="#1f1408"
-        stroke-width="0.6"
-      />
-      <line
-        x1="272"
-        y1="20"
-        x2="272"
-        y2="52"
-        stroke="#1f1408"
-        stroke-width="0.6"
-      />
-      <line
-        x1="352"
-        y1="20"
-        x2="352"
-        y2="52"
-        stroke="#1f1408"
-        stroke-width="0.6"
-      />
-      <text
-        x="180"
-        y="80"
-        font-family="ui-monospace, monospace"
-        font-size="8"
-        fill="#6b5d48"
-        text-anchor="middle">staff renders here</text
-      >
-    </svg>
+    <div class="spine-head">
+      <span class="spine-label">spine</span>
+      <span class="spine-tier" id="spine-tier-label">head</span>
+    </div>
+    <div class="spine-staff-wrap">
+      <div id="spine-staff-ghost" class="spine-staff spine-staff-ghost" aria-hidden="true"></div>
+      <div id="spine-staff" class="spine-staff spine-staff-solid"></div>
+    </div>
     <input
       type="range"
+      id="spine-slider"
       class="spine-slider"
       min="0"
       max="3"
       step="1"
       value="1"
-      aria-label="reduction depth (placeholder)"
-      disabled
+      aria-label="reduction depth"
     />
     <div class="spine-ticks">
-      <span>ursatz</span>
-      <span>background</span>
-      <span>middle</span>
-      <span>foreground</span>
+      <span>bones</span>
+      <span>head</span>
+      <span>standard</span>
+      <span>virtuoso</span>
     </div>
   </div>
 </aside>
 
+<script>
+  import { CC_RIDER } from '@/lib/pentimento/song';
+  import { engrave } from '@/lib/pentimento/engrave';
+
+  const song = CC_RIDER;
+  const staffEl = document.getElementById('spine-staff') as HTMLDivElement | null;
+  const ghostEl = document.getElementById('spine-staff-ghost') as HTMLDivElement | null;
+  const slider = document.getElementById('spine-slider') as HTMLInputElement | null;
+  const tierLabel = document.getElementById('spine-tier-label') as HTMLSpanElement | null;
+
+  if (!staffEl || !ghostEl || !slider || !tierLabel) {
+    // Page didn't mount the spine — bail rather than throw.
+  } else {
+    // Window onto the first phrase of the song. Four bars fit one compact
+    // system; later modules will rebind this to the current section's example.
+    const WINDOW = { start: 0, count: 4 } as const;
+
+    function applyTier(t: number) {
+      tierLabel!.textContent = song.tierLabels[t];
+      try {
+        if (t + 1 < song.tierLabels.length) {
+          engrave(ghostEl!, song, {
+            tier: t + 1,
+            compact: true,
+            window: WINDOW,
+          });
+        } else {
+          ghostEl!.innerHTML = '';
+        }
+        engrave(staffEl!, song, { tier: t, compact: true, window: WINDOW });
+      } catch (err) {
+        console.error('spine engrave failed', err);
+        staffEl!.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
+        ghostEl!.innerHTML = '';
+      }
+    }
+
+    applyTier(Number(slider.value));
+    slider.addEventListener('input', (e) => {
+      applyTier(Number((e.target as HTMLInputElement).value));
+    });
+  }
+</script>
+
 <style>
-  /* The wrapper just provides breathing room around the card. The page
-     decides where to put it sticky — sticky's containing block has to be
-     tall enough to give the staff somewhere to stick, which is the grid
-     container, not this aside. */
   .staff-spine {
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
   }
   .spine-card {
     background: #f5efe0;
     border: 1px solid var(--border);
     border-radius: 3px;
-    padding: 0.5rem 0.75rem 0.6rem;
+    padding: 0.55rem 0.65rem 0.6rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
+  }
+  .spine-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
   .spine-label {
     font-family: var(--font-jetbrains);
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.16em;
     color: #6b5d48;
   }
-  .spine-svg {
-    width: 100%;
-    height: auto;
-    max-height: 96px;
+  .spine-tier {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #8a6b1e;
+  }
+  /* Ghost layer sits in a grid cell underneath the solid staff so the next
+     tier's extra notes peek through at low opacity. */
+  .spine-staff-wrap {
+    display: grid;
+    grid-template-areas: 'stack';
+    min-width: min-content;
+    overflow-x: auto;
+  }
+  .spine-staff {
+    grid-area: stack;
+    color: #1f1408;
+    line-height: 0;
+    min-width: min-content;
+  }
+  .spine-staff :global(svg) {
     display: block;
+    margin: 0 auto;
+  }
+  .spine-staff-ghost {
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .spine-staff-solid {
+    z-index: 2;
   }
   .spine-slider {
     -webkit-appearance: none;
@@ -129,7 +147,7 @@
     background: #c8b896;
     border-radius: 2px;
     outline: none;
-    opacity: 0.6;
+    margin: 0.4rem 0 0;
   }
   .spine-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -138,16 +156,18 @@
     height: 16px;
     border-radius: 50%;
     background: var(--accent);
-    cursor: not-allowed;
+    cursor: pointer;
     border: 2px solid #f5efe0;
+    box-shadow: 0 0 0 1px var(--accent);
   }
   .spine-slider::-moz-range-thumb {
     width: 16px;
     height: 16px;
     border-radius: 50%;
     background: var(--accent);
-    cursor: not-allowed;
+    cursor: pointer;
     border: 2px solid #f5efe0;
+    box-shadow: 0 0 0 1px var(--accent);
   }
   .spine-ticks {
     display: flex;

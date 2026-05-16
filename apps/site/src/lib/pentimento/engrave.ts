@@ -12,13 +12,29 @@ import type { Song, PNote, Tier } from './types';
 
 // Layout constants. The grand staff renders as 4-bar systems stacked
 // vertically. VexFlow draws in pixel coords; CSS scales the wrapping div.
-const BARS_PER_SYSTEM = 4;
-const BAR_WIDTH = 170;
-const CLEF_WIDTH = 70;
-const SYSTEM_HEIGHT = 200;
-const PAD_X = 16;
-const PAD_Y = 24;
-const BASS_OFFSET = 90;
+// Compact mode shrinks every dimension so the staff fits in the curriculum
+// spine column. Same engraver, two scales.
+const FULL_LAYOUT = {
+  barsPerSystem: 4,
+  barWidth: 170,
+  clefWidth: 70,
+  systemHeight: 200,
+  padX: 16,
+  padY: 24,
+  bassOffset: 90,
+  formatPad: 30,
+} as const;
+
+const COMPACT_LAYOUT = {
+  barsPerSystem: 4,
+  barWidth: 62,
+  clefWidth: 30,
+  systemHeight: 110,
+  padX: 8,
+  padY: 8,
+  bassOffset: 50,
+  formatPad: 14,
+} as const;
 
 const SOLID_INK = '#1f1408';
 
@@ -124,19 +140,38 @@ export interface EngraveResult {
   svg: SVGSVGElement | null;
 }
 
+export interface EngraveOptions {
+  tier: Tier;
+  // Render at the smaller, spine-friendly scale.
+  compact?: boolean;
+  // Only render a window of bars instead of the full song. Bars outside the
+  // window aren't drawn, but the song's note onsets are still keyed off the
+  // bar index, so this is purely a viewport.
+  window?: { start: number; count: number };
+}
+
 // Engrave the active tier into the container. Single-pass: dark ink, full
-// grand staff, beams, brace + system barlines.
+// grand staff, beams, brace + system barlines. Compact + windowed when the
+// curriculum spine asks for it.
 export function engrave(
   container: HTMLDivElement,
   song: Song,
-  tier: Tier,
+  options: EngraveOptions,
 ): EngraveResult {
   container.innerHTML = '';
 
-  const systems = Math.ceil(song.bars / BARS_PER_SYSTEM);
-  const systemWidth = CLEF_WIDTH + BARS_PER_SYSTEM * BAR_WIDTH;
-  const width = PAD_X * 2 + systemWidth;
-  const height = PAD_Y * 2 + systems * SYSTEM_HEIGHT;
+  const { tier } = options;
+  const L = options.compact ? COMPACT_LAYOUT : FULL_LAYOUT;
+
+  const windowStart = options.window?.start ?? 0;
+  const windowCount = options.window?.count ?? song.bars;
+  const lastBar = Math.min(song.bars, windowStart + windowCount);
+  const visibleBars = Math.max(0, lastBar - windowStart);
+
+  const systems = Math.ceil(visibleBars / L.barsPerSystem);
+  const systemWidth = L.clefWidth + L.barsPerSystem * L.barWidth;
+  const width = L.padX * 2 + systemWidth;
+  const height = L.padY * 2 + systems * L.systemHeight;
 
   const renderer = new Renderer(container, Renderer.Backends.SVG);
   renderer.resize(width, height);
@@ -147,21 +182,21 @@ export function engrave(
   const layout: BarLayout[] = [];
 
   for (let s = 0; s < systems; s++) {
-    const yTop = PAD_Y + s * SYSTEM_HEIGHT;
-    const yBass = yTop + BASS_OFFSET;
+    const yTop = L.padY + s * L.systemHeight;
+    const yBass = yTop + L.bassOffset;
 
-    let x = PAD_X;
+    let x = L.padX;
     let firstTreble: Stave | null = null;
     let firstBass: Stave | null = null;
     let lastTreble: Stave | null = null;
     let lastBass: Stave | null = null;
 
-    for (let b = 0; b < BARS_PER_SYSTEM; b++) {
-      const barIndex = s * BARS_PER_SYSTEM + b;
-      if (barIndex >= song.bars) break;
+    for (let b = 0; b < L.barsPerSystem; b++) {
+      const barIndex = windowStart + s * L.barsPerSystem + b;
+      if (barIndex >= lastBar) break;
 
       const isSystemStart = b === 0;
-      const w = isSystemStart ? BAR_WIDTH + CLEF_WIDTH : BAR_WIDTH;
+      const w = isSystemStart ? L.barWidth + L.clefWidth : L.barWidth;
 
       const treble = new Stave(x, yTop, w);
       const bass = new Stave(x, yBass, w);
@@ -197,8 +232,8 @@ export function engrave(
       Accidental.applyAccidentals([bassVoice], 'C');
 
       const formatter = new Formatter();
-      formatter.joinVoices([trebleVoice]).format([trebleVoice], w - 30);
-      formatter.joinVoices([bassVoice]).format([bassVoice], w - 30);
+      formatter.joinVoices([trebleVoice]).format([trebleVoice], w - L.formatPad);
+      formatter.joinVoices([bassVoice]).format([bassVoice], w - L.formatPad);
 
       trebleVoice.draw(ctx, treble);
       bassVoice.draw(ctx, bass);
