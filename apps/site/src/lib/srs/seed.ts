@@ -485,6 +485,50 @@ const MODULE_10_CARD_DEFS = [
 
 export type ModuleTenCardId = (typeof MODULE_10_CARD_DEFS)[number]['id'];
 
+// Module 11: Music as Active Matter.
+const MODULE_11_CARD_DEFS = [
+  {
+    id: 'm11.order-parameter',
+    moduleId: 11,
+    concept: 'order-parameter' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In the active-matter view of tonality, what does the "order parameter" correspond to?',
+      choices: [
+        'The tempo of the piece',
+        'The inferred-key vector — which tonic the system is locked onto',
+        'The harmonic rhythm',
+        'The dynamic range',
+      ],
+      correctIndex: 1,
+      explanation:
+        'The order parameter is the system\'s direction in tonic-space. When the key inference is sharp, the parameter has large magnitude; when it\'s ambiguous, the magnitude shrinks and the direction wobbles.',
+    },
+  },
+  {
+    id: 'm11.modulation-as-phase',
+    moduleId: 11,
+    concept: 'phase-transition' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In this framing, what is modulation analogous to?',
+      choices: [
+        'Adiabatic cooling',
+        'A phase transition — the order parameter rotating to a new ground state',
+        'Brownian motion',
+        'Thermal equilibration',
+      ],
+      correctIndex: 1,
+      explanation:
+        'A phase transition. The system was locked onto one tonic; a sequence of out-of-key notes drives it across a critical region; it relaxes to a new tonic. Same dynamics as a magnet flipping or water boiling — different ground states, mediated by driving the system through a critical point.',
+    },
+  },
+] as const;
+
+export type ModuleElevenCardId = (typeof MODULE_11_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -497,6 +541,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_8_CARD_DEFS,
   ...MODULE_9_CARD_DEFS,
   ...MODULE_10_CARD_DEFS,
+  ...MODULE_11_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -552,6 +597,10 @@ export function freshModuleNineCards(now: Date = new Date()): Card[] {
 
 export function freshModuleTenCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_10_CARD_DEFS, now);
+}
+
+export function freshModuleElevenCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_11_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure

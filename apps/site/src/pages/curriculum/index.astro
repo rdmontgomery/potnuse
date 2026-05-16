@@ -13,6 +13,7 @@ import Module7 from '@/components/curriculum/Module7.astro';
 import Module8 from '@/components/curriculum/Module8.astro';
 import Module9 from '@/components/curriculum/Module9.astro';
 import Module10 from '@/components/curriculum/Module10.astro';
+import Module11 from '@/components/curriculum/Module11.astro';
 
 // The spine of the curriculum: twelve modules from Z_12 to active matter.
 // Order is firm; pace is the user's. Module 0 is the only one with content in
@@ -196,6 +197,13 @@ const MODULES = [
               return (
                 <ModuleSection {...props}>
                   <Module10 />
+                </ModuleSection>
+              );
+            }
+            if (i === 11) {
+              return (
+                <ModuleSection {...props}>
+                  <Module11 />
                 </ModuleSection>
               );
             }
