@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import {
   ClickOnClockInstrument,
   FreeformPcInstrument,
+  IdentifyByEarInstrument,
   MultipleChoiceInstrument,
   type InstrumentProps,
 } from './instruments';
@@ -18,6 +19,7 @@ export const INSTRUMENTS: Record<PromptKind, ComponentType<InstrumentProps>> = {
   'click-on-clock': ClickOnClockInstrument,
   'freeform-pc-in-key': FreeformPcInstrument,
   'multiple-choice': MultipleChoiceInstrument,
+  'identify-by-ear': IdentifyByEarInstrument,
 };
 
 export function instrumentFor(

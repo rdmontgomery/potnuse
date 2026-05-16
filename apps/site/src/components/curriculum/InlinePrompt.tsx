@@ -81,6 +81,8 @@ function tagFor(card: Card): string {
       return 'freeform';
     case 'multiple-choice':
       return 'multiple choice';
+    case 'identify-by-ear':
+      return 'identify by ear';
   }
 }
 

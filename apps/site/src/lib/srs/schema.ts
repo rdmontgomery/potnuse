@@ -37,6 +37,24 @@ export type Prompt =
       // Optional one-line elaboration on the correct answer, surfaced
       // after the user picks something.
       explanation?: string;
+    }
+  | {
+      kind: 'identify-by-ear';
+      question: string;
+      // Audio payload. 'chord' plays all midi notes simultaneously;
+      // 'sequence' plays them one at a time with noteDuration spacing
+      // (defaults to 0.4s).
+      audio: {
+        kind: 'chord' | 'sequence';
+        midi: readonly number[];
+        noteDuration?: number;
+        // Sustain per note in seconds. For chords this also serves
+        // as the chord's hold time. Defaults to noteDuration + 0.1.
+        sustain?: number;
+      };
+      choices: readonly string[];
+      correctIndex: number;
+      explanation?: string;
     };
 
 export type Verdict = 'correct' | 'wrong' | 'unsure';

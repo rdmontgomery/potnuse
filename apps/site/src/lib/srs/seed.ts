@@ -168,6 +168,24 @@ const MODULE_3_CARD_DEFS = [
         'Two — the 3→4 step (E→F in C major) and the 7→8 step (B→C). The other five gaps are whole steps. That distribution is what makes diatonic the maximally even 7-subset of Z 12.',
     },
   },
+  {
+    id: 'm3.identify-dorian',
+    moduleId: 3,
+    concept: 'mode-by-ear' as const,
+    prompt: {
+      kind: 'identify-by-ear' as const,
+      question: 'Listen to the ascending scale and identify the mode.',
+      audio: {
+        kind: 'sequence' as const,
+        midi: [62, 64, 65, 67, 69, 71, 72, 74], // D Dorian
+        noteDuration: 0.38,
+      },
+      choices: ['Ionian (major)', 'Dorian', 'Phrygian', 'Lydian'],
+      correctIndex: 1,
+      explanation:
+        'Dorian — the second mode of major. D Dorian uses the same pitches as C major but starts on D. Listen for the minor third (D→F) alongside the major sixth (D→B): a darker root with one bright note overhead is the Dorian signature.',
+    },
+  },
 ] as const;
 
 export type ModuleThreeCardId = (typeof MODULE_3_CARD_DEFS)[number]['id'];
@@ -200,6 +218,24 @@ const MODULE_4_CARD_DEFS = [
       correctIndex: 2,
       explanation:
         'Diminished. B–D is a minor third; D–F is also a minor third; B–F is a tritone. The vii° is the only diminished triad in a major key.',
+    },
+  },
+  {
+    id: 'm4.identify-quality',
+    moduleId: 4,
+    concept: 'chord-quality-by-ear' as const,
+    prompt: {
+      kind: 'identify-by-ear' as const,
+      question: 'Listen to the chord. Which quality is it?',
+      audio: {
+        kind: 'chord' as const,
+        midi: [60, 63, 67], // C minor
+        sustain: 1.4,
+      },
+      choices: ['major', 'minor', 'diminished', 'augmented'],
+      correctIndex: 1,
+      explanation:
+        'Minor. Root, minor third, perfect fifth. The only difference between this and C major is one semitone on the third — but the affect is different in a way the ear hears immediately.',
     },
   },
 ] as const;
