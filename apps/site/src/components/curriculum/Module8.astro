@@ -1,6 +1,7 @@
 ---
 import Module8Behold from './Module8Behold';
 import Module8Derive from './Module8Derive';
+import Module8Orbifold from './Module8Orbifold';
 import Module8Operate from './Module8Operate';
 import Module8Prompts from './Module8Prompts';
 ---
@@ -31,6 +32,20 @@ import Module8Prompts from './Module8Prompts';
       already telling you about the orbifold's edges.
     </p>
     <Module8Derive client:visible />
+  </section>
+
+  <section class="m-block m8-block">
+    <p class="m-eyebrow">geometry</p>
+    <p>
+      Now the picture instead of the table. The space of unordered
+      two-note chords (dyads) is a <em>Möbius strip</em> — Tymoczko's
+      cleanest example, with the diagonal as the unison wall where
+      both voices coincide. Pick two dyads; the line between them is
+      the voice leading. If the optimal assignment crosses voices,
+      the path doesn't go through the wall — it <em>reflects</em>
+      off it. That reflection is what makes the orbifold curved.
+    </p>
+    <Module8Orbifold client:visible />
   </section>
 
   <section class="m-block m8-block">
@@ -218,6 +233,135 @@ import Module8Prompts from './Module8Prompts';
   .m8-picker-btn:disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  /* Orbifold ----------------------------------------------------------- */
+  .m8-orbifold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+  }
+  .m8-orbifold svg {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    max-width: 100%;
+    height: auto;
+  }
+  .m8-orb-pickers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+    width: 100%;
+    max-width: 540px;
+  }
+  .m8-orb-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.55rem 0.65rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+  .m8-orb-picker-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m8-orb-voice {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .m8-orb-voice-tag {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    width: 1.6rem;
+    flex-shrink: 0;
+  }
+  .m8-orb-pc-row {
+    display: flex;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+  }
+  .m8-orb-pc {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    min-width: 1.7rem;
+    padding: 0.2rem 0.3rem;
+    background: var(--bg);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m8-orb-pc:hover:not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m8-orb-pc.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m8-orb-readout {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    padding: 0.4rem 0.85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+  }
+  .m8-orb-kind {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .m8-orb-kind-parallel {
+    color: var(--text-dim);
+  }
+  .m8-orb-kind-crossed {
+    color: var(--accent);
+  }
+  .m8-orb-cost {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+  .m8-orb-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 50ch;
+  }
+  .m8-orb-caption em {
+    color: var(--accent);
+  }
+  .m8-orb-caption-aside {
+    font-size: 0.8rem !important;
+    color: var(--text-muted) !important;
+    font-style: italic;
+  }
+
+  @media (max-width: 540px) {
+    .m8-orb-pickers {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Operate play button ------------------------------------------------ */
