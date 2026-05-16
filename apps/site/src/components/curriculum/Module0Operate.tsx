@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Tone from 'tone';
-import { BWV269 } from '@/lib/music/bwv269';
+import { CHORALE_PHRASE } from '@/lib/music/chorale-phrase';
 import { engrave, type BarLayout } from '@/lib/pentimento/engrave';
 import {
   mod12,
@@ -114,7 +114,7 @@ export default function Module0Operate() {
 
   const keySig = KEY_SIG_BY_T[String(t)] ?? 'C';
   const transposed = useMemo(
-    () => transposeSong(BWV269, t, lettersForKey(keySig)),
+    () => transposeSong(CHORALE_PHRASE, t, lettersForKey(keySig)),
     [t, keySig],
   );
 

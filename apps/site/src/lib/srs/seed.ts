@@ -1,6 +1,6 @@
 import type { Card } from './schema';
 import { newScheduling } from './scheduler';
-import { BWV269 } from '@/lib/music/bwv269';
+import { CHORALE_PHRASE } from '@/lib/music/chorale-phrase';
 import {
   pitchClassOf,
   transposeSet,
@@ -12,7 +12,7 @@ import type { PNote } from '@/lib/pentimento/types';
 // click-on-clock card asks the user to transpose these by +3.
 const SOPRANO_PCS: readonly PitchClass[] = (() => {
   const set = new Set<PitchClass>();
-  for (const n of BWV269.notes as PNote[]) {
+  for (const n of CHORALE_PHRASE.notes as PNote[]) {
     if (n.voice === 'lead') set.add(pitchClassOf(n.pitch));
   }
   return [...set].sort((a, b) => a - b);
