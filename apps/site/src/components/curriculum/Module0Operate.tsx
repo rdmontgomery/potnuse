@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import * as Tone from 'tone';
 import { BWV269 } from '@/lib/music/bwv269';
 import { engrave } from '@/lib/pentimento/engrave';
 import {
   mod12,
   pcName,
   pitchClassOf,
-  transpose,
   type PitchClass,
 } from '@/lib/music/pitchClass';
+import { getPiano, stepsToSeconds, toTonePitch } from '@/lib/music/audio';
 import Z12Clock from './Z12Clock';
 import type { PNote, Song } from '@/lib/pentimento/types';
 
@@ -59,6 +60,10 @@ function transposeSong(song: Song, n: number): Song {
 export default function Module0Operate() {
   const staffRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(0);
+  const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing'>(
+    'idle',
+  );
+  const playEndRef = useRef<number | null>(null);
 
   const transposed = useMemo(() => transposeSong(BWV269, t), [t]);
 
@@ -77,6 +82,46 @@ export default function Module0Operate() {
     }
   }, [transposed]);
 
+  // Cancel any pending end-of-playback timer if the component unmounts mid-
+  // phrase. The sampler itself is module-scoped; we don't tear it down.
+  useEffect(() => {
+    return () => {
+      if (playEndRef.current != null) {
+        window.clearTimeout(playEndRef.current);
+        playEndRef.current = null;
+      }
+    };
+  }, []);
+
+  const play = async () => {
+    if (audioState !== 'idle') return;
+    setAudioState('loading');
+    let piano: Tone.Sampler;
+    try {
+      piano = await getPiano();
+    } catch (err) {
+      console.error('module 0 audio load failed', err);
+      setAudioState('idle');
+      return;
+    }
+    const bpm = transposed.bpm;
+    const start = Tone.now() + 0.05;
+    let lastEnd = start;
+    for (const note of transposed.notes) {
+      const onset = start + stepsToSeconds(note.step, bpm);
+      const dur = stepsToSeconds(note.dur, bpm);
+      const velocity = note.voice === 'bass' ? 0.55 : 0.82;
+      piano.triggerAttackRelease(toTonePitch(note.pitch), dur, onset, velocity);
+      lastEnd = Math.max(lastEnd, onset + dur);
+    }
+    setAudioState('playing');
+    const tailMs = (lastEnd - Tone.now()) * 1000 + 250;
+    playEndRef.current = window.setTimeout(() => {
+      setAudioState('idle');
+      playEndRef.current = null;
+    }, Math.max(500, tailMs));
+  };
+
   const keyPcs: PitchClass[] = MAJOR_SCALE.map((s) => mod12(s + t));
   const keyName = KEY_NAMES[mod12(t)];
 
@@ -88,10 +133,27 @@ export default function Module0Operate() {
 
       <div className="m0-operate-bottom">
         <div className="m0-operate-slider">
-          <label htmlFor="m0-transpose-slider" className="m0-operate-key">
-            <span className="m0-operate-keylabel">key</span>
-            <span className="m0-operate-keyname">{keyName} major</span>
-          </label>
+          <div className="m0-operate-keyrow">
+            <label htmlFor="m0-transpose-slider" className="m0-operate-key">
+              <span className="m0-operate-keylabel">key</span>
+              <span className="m0-operate-keyname">{keyName} major</span>
+            </label>
+            <button
+              type="button"
+              className={`m0-operate-play ${audioState}`}
+              onClick={play}
+              disabled={audioState !== 'idle'}
+              aria-label={
+                audioState === 'playing' ? 'phrase playing' : 'play phrase'
+              }
+            >
+              {audioState === 'idle'
+                ? 'play'
+                : audioState === 'loading'
+                  ? 'loading…'
+                  : 'playing'}
+            </button>
+          </div>
           <input
             id="m0-transpose-slider"
             type="range"
