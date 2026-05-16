@@ -1,0 +1,275 @@
+---
+import Module9Behold from './Module9Behold';
+import Module9Derive from './Module9Derive';
+import Module9Operate from './Module9Operate';
+import Module9Prompts from './Module9Prompts';
+---
+
+<div class="m m9">
+  <section class="m-block m9-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Listeners don't know the key in advance. They infer it from
+      the pitches they hear. Krumhansl ran probe-tone experiments in
+      the 1980s — play a key context, then ask "how well does each
+      pitch fit?" — and averaged the results into two vectors, one
+      per mode. The bars below are those averages: the empirical
+      tonal hierarchy.
+    </p>
+    <Module9Behold client:visible />
+  </section>
+
+  <section class="m-block m9-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      To infer a key from a passage: compute its <em>pc histogram</em>{' '}
+      (each pitch class weighted by total duration), then compute
+      Pearson correlation against all 24 probe-tone profiles. The
+      maximally-correlated (tonic, mode) is the inferred key. Here
+      the algorithm runs over the chorale's soprano line.
+    </p>
+    <Module9Derive client:visible />
+  </section>
+
+  <section class="m-block m9-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Build your own pc distribution. Tap pcs on the clock to add
+      weight; the model re-correlates live. With only three taps —{' '}
+      <code>0, 4, 7</code> — the model already picks out C major
+      decisively. Try contrarian sets and watch the second-place
+      contenders fight for the lead.
+    </p>
+    <Module9Operate client:visible />
+  </section>
+
+  <section class="m-block m9-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on the probe-tone profile and key-finding.
+    </p>
+    <Module9Prompts client:visible />
+  </section>
+
+  <section class="m-block m9-block m-bridge m9-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      Static key inference reads one frame of the music. But music
+      moves: tonal centers <em>drift</em> over time, modulating from
+      one key to another. The next module reaches deeper — beyond
+      surface chords to the structural skeleton.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 9 specific rules. */
+
+  .m9-behold,
+  .m9-derive,
+  .m9-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m9-behold {
+    cursor: pointer;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .m9-mode-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .m9-mode-name {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .m9-mode-sub {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+
+  /* Bar charts (Behold + Derive + Operate) ----------------------------- */
+  .m9-bars {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0.2rem;
+    align-items: end;
+    width: 100%;
+    height: 9rem;
+    padding-top: 0.5rem;
+  }
+  .m9-bars-small {
+    height: 5rem;
+  }
+  .m9-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  .m9-bar {
+    width: 100%;
+    background: var(--accent-dim);
+    border-radius: 1px 1px 0 0;
+    position: relative;
+    transition:
+      height 0.4s ease,
+      background 0.4s ease;
+    min-height: 2px;
+  }
+  .m9-bar.tonic {
+    background: var(--accent);
+  }
+  .m9-bar-value {
+    position: absolute;
+    top: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-jetbrains);
+    font-size: 0.55rem;
+    color: var(--text-muted);
+  }
+  .m9-bar-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+  .m9-behold-caption,
+  .m9-derive-caption,
+  .m9-operate-caption {
+    font-size: 0.92rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 44ch;
+  }
+  .m9-behold-caption em,
+  .m9-derive-caption em {
+    color: var(--accent);
+  }
+
+  /* Derive section labels --------------------------------------------- */
+  .m9-derive-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    width: 100%;
+    max-width: 480px;
+  }
+  .m9-derive-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m9-rank-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+  }
+  .m9-rank {
+    display: grid;
+    grid-template-columns: 2rem 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .m9-rank.top {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(232, 168, 56, 0.08);
+  }
+  .m9-rank-pos {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .m9-rank.top .m9-rank-pos {
+    color: var(--accent);
+  }
+  .m9-rank-corr {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .m9-rank.top .m9-rank-corr {
+    color: var(--accent);
+  }
+
+  /* Operate ------------------------------------------------------------ */
+  .m9-inferred {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.5rem 0.95rem;
+    background: rgba(232, 168, 56, 0.08);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+  }
+  .m9-inferred-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m9-inferred-key {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--accent);
+  }
+  .m9-inferred-corr {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .m9-operate-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .m9-operate-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.95rem;
+    cursor: pointer;
+  }
+  .m9-operate-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+</style>

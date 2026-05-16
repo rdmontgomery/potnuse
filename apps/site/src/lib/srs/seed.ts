@@ -402,6 +402,45 @@ const MODULE_8_CARD_DEFS = [
 
 export type ModuleEightCardId = (typeof MODULE_8_CARD_DEFS)[number]['id'];
 
+// Module 9: Statistical Tonality.
+const MODULE_9_CARD_DEFS = [
+  {
+    id: 'm9.top-degree',
+    moduleId: 9,
+    concept: 'probe-tone-profile' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In Krumhansl\'s major-key probe-tone profile, which scale degree gets the highest fit rating?',
+      choices: ['the dominant (5th)', 'the mediant (3rd)', 'the tonic (1st)', 'the leading tone (7th)'],
+      correctIndex: 2,
+      explanation:
+        'The tonic. Listeners rate it as fitting the key context best, by a wide margin. The dominant comes second, the mediant third — a hierarchy that closely tracks the diatonic functions Module 5 covered.',
+    },
+  },
+  {
+    id: 'm9.key-finding-method',
+    moduleId: 9,
+    concept: 'key-finding' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In the Krumhansl-Schmuckler key-finding algorithm, how is a passage\'s key inferred from its notes?',
+      choices: [
+        'By looking at the first and last notes',
+        'By correlating the passage\'s pc histogram against all 24 probe-tone profiles',
+        'By identifying the most-common chord',
+        'By detecting the lowest note as the tonic',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Correlation against all 24 profiles. The highest-correlated (tonic, mode) pair is the inferred key. The algorithm is statistical, not symbolic — it doesn\'t parse chords, only weighs pcs.',
+    },
+  },
+] as const;
+
+export type ModuleNineCardId = (typeof MODULE_9_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -412,6 +451,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_6_CARD_DEFS,
   ...MODULE_7_CARD_DEFS,
   ...MODULE_8_CARD_DEFS,
+  ...MODULE_9_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -459,6 +499,10 @@ export function freshModuleSevenCards(now: Date = new Date()): Card[] {
 
 export function freshModuleEightCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_8_CARD_DEFS, now);
+}
+
+export function freshModuleNineCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_9_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
