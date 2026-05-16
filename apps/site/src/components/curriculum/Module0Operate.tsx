@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Tone from 'tone';
 import { BWV269 } from '@/lib/music/bwv269';
-import { engrave } from '@/lib/pentimento/engrave';
+import { engrave, type BarLayout } from '@/lib/pentimento/engrave';
 import {
   mod12,
   pcName,
@@ -57,6 +57,8 @@ function transposeSong(song: Song, n: number): Song {
   };
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 export default function Module0Operate() {
   const staffRef = useRef<HTMLDivElement>(null);
   const [t, setT] = useState(0);
@@ -65,33 +67,94 @@ export default function Module0Operate() {
   );
   const playEndRef = useRef<number | null>(null);
 
+  // The playhead is a <line> attached to the engraved SVG after each
+  // engrave pass. We keep a ref so the rAF tick can update it without
+  // re-querying the DOM, and we stash the bar layout the engraver
+  // returned so the tick can map elapsed seconds to an x coordinate.
+  const playheadRef = useRef<SVGLineElement | null>(null);
+  const layoutRef = useRef<BarLayout[]>([]);
+  const playStartRef = useRef<number>(0);
+  const phraseEndRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+
   const transposed = useMemo(() => transposeSong(BWV269, t), [t]);
 
   useEffect(() => {
     const el = staffRef.current;
     if (!el) return;
     try {
-      engrave(el, transposed, {
+      const result = engrave(el, transposed, {
         tier: 0,
         compact: false,
         noteAnnotator: (n: PNote) => String(pitchClassOf(n.pitch)),
       });
+      layoutRef.current = result.bars;
+      if (result.svg) {
+        const line = document.createElementNS(SVG_NS, 'line');
+        line.setAttribute('stroke', '#e8a838');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('opacity', '0');
+        line.style.pointerEvents = 'none';
+        result.svg.appendChild(line);
+        playheadRef.current = line;
+      } else {
+        playheadRef.current = null;
+      }
     } catch (err) {
       console.error('module 0 engrave failed', err);
       el.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
+      layoutRef.current = [];
+      playheadRef.current = null;
     }
   }, [transposed]);
 
-  // Cancel any pending end-of-playback timer if the component unmounts mid-
-  // phrase. The sampler itself is module-scoped; we don't tear it down.
+  // Cancel any pending end-of-playback timer and rAF if the component
+  // unmounts mid-phrase. The sampler itself is module-scoped — leaving its
+  // already-scheduled triggers in flight is fine.
   useEffect(() => {
     return () => {
       if (playEndRef.current != null) {
         window.clearTimeout(playEndRef.current);
         playEndRef.current = null;
       }
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, []);
+
+  function tickPlayhead() {
+    const line = playheadRef.current;
+    const layout = layoutRef.current;
+    if (!line || layout.length === 0) {
+      rafRef.current = requestAnimationFrame(tickPlayhead);
+      return;
+    }
+    const now = Tone.now();
+    if (now >= phraseEndRef.current) {
+      line.setAttribute('opacity', '0');
+      rafRef.current = null;
+      return;
+    }
+    const elapsed = Math.max(0, now - playStartRef.current);
+    const sixteenths = (elapsed * transposed.bpm * 4) / 60;
+    const songLen = transposed.bars * 16;
+    const clamped = Math.max(0, Math.min(songLen - 0.0001, sixteenths));
+    const barIdx = Math.floor(clamped / 16);
+    const frac = (clamped - barIdx * 16) / 16;
+    const bar = layout[barIdx];
+    if (bar) {
+      const x = bar.notesX + frac * bar.notesWidth;
+      line.setAttribute('x1', String(x));
+      line.setAttribute('x2', String(x));
+      line.setAttribute('y1', String(bar.yTop));
+      line.setAttribute('y2', String(bar.yBottom));
+      line.setAttribute('opacity', '0.85');
+    }
+    rafRef.current = requestAnimationFrame(tickPlayhead);
+  }
 
   const play = async () => {
     if (audioState !== 'idle') return;
@@ -114,6 +177,16 @@ export default function Module0Operate() {
       piano.triggerAttackRelease(toTonePitch(note.pitch), dur, onset, velocity);
       lastEnd = Math.max(lastEnd, onset + dur);
     }
+
+    playStartRef.current = start;
+    // The phrase ends when the last bar finishes — not when the last note's
+    // release tail fades. Playhead disappears at the barline, audio decays
+    // naturally past it.
+    phraseEndRef.current =
+      start + stepsToSeconds(transposed.bars * 16, bpm);
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(tickPlayhead);
+
     setAudioState('playing');
     const tailMs = (lastEnd - Tone.now()) * 1000 + 250;
     playEndRef.current = window.setTimeout(() => {
@@ -124,6 +197,7 @@ export default function Module0Operate() {
 
   const keyPcs: PitchClass[] = MAJOR_SCALE.map((s) => mod12(s + t));
   const keyName = KEY_NAMES[mod12(t)];
+  const slidersDisabled = audioState === 'playing';
 
   return (
     <div className="m0-operate">
@@ -162,6 +236,7 @@ export default function Module0Operate() {
             step={1}
             value={t}
             onChange={(e) => setT(Number(e.target.value))}
+            disabled={slidersDisabled}
           />
           <div className="m0-operate-ticks">
             <span>−6</span>
