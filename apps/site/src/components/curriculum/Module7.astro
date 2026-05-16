@@ -1,0 +1,294 @@
+---
+import Module7Behold from './Module7Behold';
+import Module7Derive from './Module7Derive';
+import Module7Operate from './Module7Operate';
+import Module7Prompts from './Module7Prompts';
+---
+
+<div class="m m7">
+  <section class="m-block m7-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Forget keys for a moment. Consider just the twenty-four
+      consonant triads (twelve major, twelve minor) and ask: what's
+      the shortest path from any one to any other? Hugo Riemann's
+      answer is three rules — <strong>P</strong>, <strong>L</strong>,
+      <strong>R</strong> — each moving exactly one voice by a half or
+      whole step.
+    </p>
+    <Module7Behold client:visible />
+  </section>
+
+  <section class="m-block m7-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      <strong>P</strong> swaps major and minor on the same root.
+      <strong>L</strong> exchanges a major triad with the minor triad
+      a major third above (and vice versa), sharing two pitches.
+      <strong>R</strong> takes a major triad to its relative minor.
+      Each is an <em>involution</em> — apply twice and you're back
+      where you started.
+    </p>
+    <Module7Derive client:visible />
+  </section>
+
+  <section class="m-block m7-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      A PLR lab. Start on C major; tap P, L, or R to walk through
+      neighboring triads and hear each landing on the piano. The
+      chain shows your path; reset returns to C. Try{' '}
+      <code>P L P L P L</code> and notice that six moves return you
+      home — the hexatonic cycle, Liszt's favorite trick.
+    </p>
+    <Module7Operate client:visible />
+  </section>
+
+  <section class="m-block m7-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on PLR semantics.
+    </p>
+    <Module7Prompts client:visible />
+  </section>
+
+  <section class="m-block m7-block m-bridge m7-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      PLR moves discretely between consonant triads. But voice leading
+      lives in a continuous space — any pitch can slide by any amount.
+      The next module embeds chord-space directly as a geometry, where
+      the most efficient voice leadings are <em>geodesics</em>.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 7 specific rules. */
+
+  /* Behold ---------------------------------------------------------------- */
+  .m7-behold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+  .m7-behold-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  .m7-behold-name {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .m7-behold-op {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m7-behold-caption {
+    font-size: 0.92rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 40ch;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m7-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m7-derive-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    width: 100%;
+    max-width: 480px;
+  }
+  .m7-derive-control {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .m7-derive-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+    width: 5.5rem;
+  }
+  .m7-derive-buttons {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  .m7-pick {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.35rem 0.55rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m7-pick:hover:not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m7-pick.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m7-pick-op {
+    min-width: 2.5rem;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .m7-derive-pair {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m7-derive-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .m7-derive-name {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--accent);
+  }
+  .m7-derive-arrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+  .m7-derive-caption {
+    text-align: center;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    font-size: 0.92rem !important;
+    max-width: 48ch;
+    line-height: 1.55 !important;
+  }
+  .m7-derive-caption strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m7-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m7-op-row {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .m7-op-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.95rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 1.1rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m7-op-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .m7-op-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m7-op-reset {
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.55rem 0.95rem;
+  }
+  .m7-chain {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+  .m7-chain-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.82rem;
+  }
+  .m7-chain-op {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .m7-chain-name {
+    color: var(--text-dim);
+  }
+  .m7-chain-name.current {
+    color: var(--accent);
+  }
+  .m7-operate-caption {
+    font-size: 0.92rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 48ch;
+    line-height: 1.55 !important;
+  }
+</style>
