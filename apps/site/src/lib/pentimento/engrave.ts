@@ -5,6 +5,7 @@ import {
   Voice,
   Formatter,
   Accidental,
+  Annotation,
   StaveConnector,
   Beam,
 } from 'vexflow';
@@ -63,6 +64,11 @@ function decompose(sixteenths: number): number[] {
 interface BarMaterial {
   tickables: StaveNote[];
   beams: Beam[];
+  // For each tickable, the PNote it came from — or null if the tickable is a
+  // rest or part of a decomposed continuation. The first tickable of a multi-
+  // unit decomposition carries the source note; later tickables carry null,
+  // so that an annotator only labels the head of each logical note.
+  sources: (PNote | null)[];
 }
 
 // Build tickables for one bar's voice, plus beam groups. Eighths and
@@ -75,9 +81,11 @@ function buildBarMaterial(
   const sorted = [...notes].sort((a, b) => a.step - b.step);
   const tickables: StaveNote[] = [];
   const positions: number[] = [];
+  const sources: (PNote | null)[] = [];
   let pos = 0;
 
-  const pushUnit = (pitch: string | null, steps: number) => {
+  const pushUnit = (pitch: string | null, steps: number, source: PNote | null) => {
+    let isHead = source !== null;
     for (const s of decompose(steps)) {
       const code = DUR_CODE[s];
       const isRest = pitch === null;
@@ -86,16 +94,18 @@ function buildBarMaterial(
         new StaveNote({ keys, duration: isRest ? code + 'r' : code, clef }),
       );
       positions.push(pos);
+      sources.push(isHead ? source : null);
       pos += s;
+      isHead = false;
     }
   };
 
   for (const n of sorted) {
     const offset = n.step - barStart;
-    if (offset > pos) pushUnit(null, offset - pos);
-    pushUnit(n.pitch, n.dur);
+    if (offset > pos) pushUnit(null, offset - pos, null);
+    pushUnit(n.pitch, n.dur, n);
   }
-  if (pos < 16) pushUnit(null, 16 - pos);
+  if (pos < 16) pushUnit(null, 16 - pos, null);
 
   const beams: Beam[] = [];
   let group: StaveNote[] = [];
@@ -122,7 +132,7 @@ function buildBarMaterial(
   }
   flush();
 
-  return { tickables, beams };
+  return { tickables, beams, sources };
 }
 
 export interface BarLayout {
@@ -148,6 +158,11 @@ export interface EngraveOptions {
   // window aren't drawn, but the song's note onsets are still keyed off the
   // bar index, so this is purely a viewport.
   window?: { start: number; count: number };
+  // Per-note label printed above the staff. Returning null or undefined
+  // skips the annotation for that note. Only the first tickable of each
+  // logical PNote is annotated, so multi-unit notes (whole = h + h, etc.)
+  // get one label, not several.
+  noteAnnotator?: (n: PNote) => string | null | undefined;
 }
 
 // Engrave the active tier into the container. Single-pass: dark ink, full
@@ -222,6 +237,21 @@ export function engrave(
 
       const trebleMat = buildBarMaterial(leadNotes, barStart, 'treble');
       const bassMat = buildBarMaterial(bassNotes, barStart, 'bass');
+
+      if (options.noteAnnotator) {
+        for (const mat of [trebleMat, bassMat]) {
+          for (let i = 0; i < mat.tickables.length; i++) {
+            const src = mat.sources[i];
+            if (!src) continue;
+            const label = options.noteAnnotator(src);
+            if (label == null) continue;
+            const ann = new Annotation(label).setVerticalJustification(
+              Annotation.VerticalJustify.TOP,
+            );
+            mat.tickables[i].addModifier(ann, 0);
+          }
+        }
+      }
 
       const trebleVoice = new Voice({ numBeats: 4, beatValue: 4 });
       trebleVoice.addTickables(trebleMat.tickables);

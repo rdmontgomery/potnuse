@@ -1,0 +1,385 @@
+---
+// Module 0 content. Five blocks in the spec's order — Behold, Derive,
+// Operate, Prompt, Bridge — composed of React islands plus framing prose.
+//
+// Styles for the React-rendered DOM are dropped via :global() so the
+// component files stay focused on behavior.
+import KeyboardToClock from './KeyboardToClock';
+import Module0Derive from './Module0Derive';
+import Module0Operate from './Module0Operate';
+import Module0Prompts from './Module0Prompts';
+---
+
+<div class="m0">
+  <section class="m0-block m0-behold">
+    <p class="m0-eyebrow">behold</p>
+    <KeyboardToClock client:visible />
+    <p class="m0-caption">
+      Twelve pitches. Twelve positions. The keyboard you have lived your whole life inside rolls up into a clock.
+    </p>
+  </section>
+
+  <section class="m0-block">
+    <p class="m0-eyebrow">derive</p>
+    <p>
+      Pick a note on a piano. Now pick the note an octave above it. The two pitches are different — one rings lower, one rings higher — but you know they share something. That something is the <strong>pitch class</strong>: the equivalence class of pitches under octave shift. Every C, in every octave, is the same element of Z<sub>12</sub>. The clock is the quotient.
+    </p>
+    <p>
+      Click any three notes. Watch the chord polygon form. Pull <code>+1</code> and the chord rotates rigidly — that is transposition acting as a group element. Pull <code>reflect</code> and the chord mirrors across the C–F♯ axis. Inversion is negation in Z<sub>12</sub>; the axis makes it visible.
+    </p>
+    <Module0Derive client:visible />
+  </section>
+
+  <section class="m0-block">
+    <p class="m0-eyebrow">operate</p>
+    <p>
+      Four bars of a Bach-chorale-style phrase, in C. Each notehead is labeled with its pitch class — the integer in Z<sub>12</sub>. The slider underneath transposes the entire phrase. As it moves, the numbers above the noteheads cycle, the clock shifts to the new key, and the same pattern keeps its shape.
+    </p>
+    <Module0Operate client:visible />
+  </section>
+
+  <section class="m0-block">
+    <p class="m0-eyebrow">prompt</p>
+    <p class="m0-prompt-intro">
+      Two cards. The first one wants you to act on the clock; the second wants a word. Either way: if you are not sure, say so. Unsure is honest, and it brings the card back sooner.
+    </p>
+    <Module0Prompts client:visible />
+  </section>
+
+  <section class="m0-block m0-bridge">
+    <p class="m0-eyebrow">bridge</p>
+    <p>
+      These numbers tell us <em>where</em> the notes sit, but not <em>why</em> some combinations sound consonant. Next: the overtones.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 0 layout. The :global selector reaches into the React islands so
+     each component file can stay focused on behavior; centralizing the chrome
+     here keeps the curriculum-wide palette consistent. */
+
+  .m0 {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .m0-block {
+    color: var(--text);
+  }
+  .m0-eyebrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+  }
+  .m0 p {
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 1rem;
+  }
+  .m0 p em {
+    font-style: italic;
+  }
+  .m0 p strong {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .m0 code {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85em;
+    color: var(--accent-dim);
+    background: var(--bg-card);
+    padding: 0.05em 0.4em;
+    border-radius: 2px;
+  }
+  .m0-caption {
+    font-style: italic;
+    color: var(--text-dim);
+    text-align: center;
+    margin: 1rem auto 0 !important;
+    max-width: 36ch;
+    font-size: 0.98rem !important;
+  }
+  .m0-bridge p {
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+
+  /* Behold ----------------------------------------------------------------- */
+  .kbd-to-clock {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m0-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 1rem 0;
+    padding: 1rem 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m0-derive-row {
+    min-height: 1.6rem;
+    text-align: center;
+  }
+  .m0-derive-pcs {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+  }
+  .m0-derive-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m0-derive-controls button,
+  .prompt-actions button,
+  .prompt-input-row button {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: var(--bg-button);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.5rem 0.95rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .m0-derive-controls button:hover,
+  .prompt-actions button:hover,
+  .prompt-input-row button:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .m0-derive-controls .ghost,
+  .prompt-actions .ghost {
+    background: transparent;
+    color: var(--text-muted);
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m0-operate {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin: 1rem 0;
+  }
+  .m0-operate-staff-wrap {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.75rem 0.5rem 0.25rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  }
+  .m0-operate-staff {
+    color: #1f1408;
+    min-width: min-content;
+    line-height: 0;
+  }
+  .m0-operate-staff svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .m0-operate-bottom {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  @media (min-width: 640px) {
+    .m0-operate-bottom {
+      grid-template-columns: 1fr auto;
+    }
+  }
+  .m0-operate-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .m0-operate-key {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  .m0-operate-keylabel {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m0-operate-keyname {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .m0-operate-slider input[type='range'] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .m0-operate-slider input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .m0-operate-slider input[type='range']::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .m0-operate-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+  .m0-operate-clock {
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 240px;
+  }
+  .m0-operate-clock-caption {
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+    font-style: italic;
+    color: var(--text-dim);
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* Prompts --------------------------------------------------------------- */
+  .m0-prompt-intro {
+    font-size: 0.95rem !important;
+    color: var(--text-dim) !important;
+  }
+  .m0-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .prompt {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+  .prompt-q {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .prompt-q p {
+    margin: 0 !important;
+  }
+  .prompt-tag {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent-dim);
+  }
+  .prompt-hint {
+    font-size: 0.85rem !important;
+    color: var(--text-dim) !important;
+  }
+  .prompt-blank {
+    border-bottom: 1px dotted var(--text-muted);
+    padding: 0 0.5em;
+    color: var(--text-muted);
+  }
+  .prompt svg {
+    align-self: center;
+  }
+  .prompt-input-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .prompt-input-row input[type='text'] {
+    flex: 1 1 16rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-crimson);
+    font-size: 1rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 3px;
+    outline: none;
+  }
+  .prompt-input-row input[type='text']:focus {
+    border-color: var(--accent-dim);
+  }
+  .prompt-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .prompt-r {
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    font-style: italic;
+    padding: 0.5rem 0.75rem;
+    border-radius: 3px;
+  }
+  .prompt-r.correct {
+    color: var(--accent);
+    background: rgba(232, 168, 56, 0.08);
+    border-left: 2px solid var(--accent);
+  }
+  .prompt-r.wrong {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 2px solid var(--text-muted);
+  }
+  .prompt-r.unsure {
+    color: var(--text-dim);
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 2px solid var(--text-muted);
+  }
+</style>
