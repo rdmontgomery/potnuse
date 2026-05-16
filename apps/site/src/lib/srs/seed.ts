@@ -137,10 +137,46 @@ const MODULE_2_CARD_DEFS = [
 
 export type ModuleTwoCardId = (typeof MODULE_2_CARD_DEFS)[number]['id'];
 
+// Module 3: Scales as Subsets. Both prompts probe the mode-as-rotation
+// view of the diatonic scale.
+const MODULE_3_CARD_DEFS = [
+  {
+    id: 'm3.dorian-degree',
+    moduleId: 3,
+    concept: 'modes-as-rotation' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Dorian mode is built on which scale degree of its parent major scale?',
+      choices: ['1st (tonic)', '2nd', '3rd', '5th'],
+      correctIndex: 1,
+      explanation:
+        'Dorian is the second mode — built on the 2nd scale degree of major. C major\'s 2nd degree is D, so D Dorian uses the same seven pitches as C major.',
+    },
+  },
+  {
+    id: 'm3.gap-pattern',
+    moduleId: 3,
+    concept: 'diatonic-gaps' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'How many half-step gaps appear in the diatonic gap pattern (2-2-1-2-2-2-1)?',
+      choices: ['1', '2', '3', '5'],
+      correctIndex: 1,
+      explanation:
+        'Two — the 3→4 step (E→F in C major) and the 7→8 step (B→C). The other five gaps are whole steps. That distribution is what makes diatonic the maximally even 7-subset of Z 12.',
+    },
+  },
+] as const;
+
+export type ModuleThreeCardId = (typeof MODULE_3_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
   ...MODULE_2_CARD_DEFS,
+  ...MODULE_3_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -164,6 +200,10 @@ export function freshModuleOneCards(now: Date = new Date()): Card[] {
 
 export function freshModuleTwoCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_2_CARD_DEFS, now);
+}
+
+export function freshModuleThreeCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_3_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure

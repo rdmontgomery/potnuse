@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { freshModuleOneCards } from '@/lib/srs/seed';
+import { freshModuleThreeCards } from '@/lib/srs/seed';
 import { InlinePrompt } from './InlinePrompt';
 
-export default function Module1Prompts() {
-  const seeds = useMemo(() => freshModuleOneCards(), []);
+export default function Module3Prompts() {
+  const seeds = useMemo(() => freshModuleThreeCards(), []);
   return (
-    <div className="m1-prompts">
+    <div className="m3-prompts">
       {seeds.map((seed) => (
         <InlinePrompt key={seed.id} seed={seed} />
       ))}

@@ -1,0 +1,344 @@
+---
+// Module 3: Scales as Subsets. Five-block rhythm. Behold auto-rotates
+// through the seven modes of C major (same set, moving tonic); Derive
+// lets the listener freeze on any mode and inspect its rotated gap
+// pattern; Operate plays the scale from its proper tonic so the modal
+// color is audible.
+import Module3Behold from './Module3Behold';
+import Module3Derive from './Module3Derive';
+import Module3Operate from './Module3Operate';
+import Module3Prompts from './Module3Prompts';
+---
+
+<div class="m3">
+  <section class="m3-block">
+    <p class="m3-eyebrow">behold</p>
+    <p>
+      Seven of the twelve pitch classes. Spread around the clock as
+      evenly as seven things can be spread around twelve — five whole
+      steps and two half steps, in the pattern 2-2-1-2-2-2-1. That's
+      the diatonic scale. The tonic — the "home" pitch — rotates
+      through the seven scale degrees, and each rotation is a different
+      <em>mode</em>.
+    </p>
+    <Module3Behold client:visible />
+  </section>
+
+  <section class="m3-block">
+    <p class="m3-eyebrow">derive</p>
+    <p>
+      Pick any of the seven modes. The set of lit pitches doesn't
+      change — only which pitch wears the tonic ring. The gap pattern
+      under the clock shows the same multiset of gaps,{' '}
+      <code>{'{1, 1, 2, 2, 2, 2, 2}'}</code>, rotated. Where the half
+      steps fall relative to the tonic is what makes Lydian feel bright
+      and Phrygian feel dark.
+    </p>
+    <Module3Derive client:visible />
+  </section>
+
+  <section class="m3-block">
+    <p class="m3-eyebrow">operate</p>
+    <p>
+      Pick a mode and hear it. The piano walks the scale ascending
+      starting on the mode's own tonic — Dorian on D, Phrygian on E,
+      Lydian on F — but using only the white keys of C major. Same
+      seven pitches, seven anchors, seven moods.
+    </p>
+    <Module3Operate client:visible />
+  </section>
+
+  <section class="m3-block">
+    <p class="m3-eyebrow">prompt</p>
+    <p class="m3-prompt-intro">
+      Two cards on modes and gaps. Unsure brings the card around sooner.
+    </p>
+    <Module3Prompts client:visible />
+  </section>
+
+  <section class="m3-block m3-bridge">
+    <p class="m3-eyebrow">bridge</p>
+    <p>
+      A scale gives us seven landing pads. Stack alternating notes —
+      every other scale degree, a stride of three — and you get the
+      triads. Next: triads and Roman numerals.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 3 chrome. Same five-block scaffolding as 0/1/2. */
+  .m3 {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  .m3-block {
+    color: var(--text);
+  }
+  .m3-eyebrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+  }
+  .m3 p {
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 1rem;
+  }
+  .m3 p em {
+    font-style: italic;
+  }
+  .m3 p strong {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .m3 code {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85em;
+    color: var(--accent-dim);
+    background: var(--bg-card);
+    padding: 0.05em 0.4em;
+    border-radius: 2px;
+  }
+  .m3-bridge p {
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+  .m3-prompt-intro {
+    font-size: 0.95rem !important;
+    color: var(--text-dim) !important;
+  }
+
+  /* Behold ---------------------------------------------------------------- */
+  .m3-behold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 320px;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  .m3-behold:hover,
+  .m3-behold:focus-visible {
+    border-color: var(--accent-dim);
+    outline: none;
+  }
+  .m3-behold-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+  }
+  .m3-behold-tonic {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+  .m3-behold-mode {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .m3-behold-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    max-width: 36ch;
+  }
+
+  /* Mode picker — shared by Derive + Operate ---------------------------- */
+  .m3-mode-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+  }
+  .m3-mode-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m3-mode-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m3-mode-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 4.2rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-jetbrains);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m3-mode-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m3-mode-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m3-mode-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m3-mode-deg {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+  .m3-mode-btn.active .m3-mode-deg {
+    color: var(--bg);
+    opacity: 0.85;
+  }
+  .m3-mode-name {
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m3-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m3-gap-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m3-gap-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m3-gap-pattern {
+    display: flex;
+    gap: 0.3rem;
+  }
+  .m3-gap-cell {
+    width: 1.8rem;
+    height: 1.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-jetbrains);
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  .m3-gap-cell.m3-gap-half {
+    background: rgba(232, 168, 56, 0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .m3-derive-caption {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    max-width: 42ch;
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m3-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m3-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.45rem 1.2rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .m3-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m3-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m3-operate-caption {
+    font-size: 0.9rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 44ch;
+    line-height: 1.5 !important;
+  }
+
+  .m3-prompts {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+</style>

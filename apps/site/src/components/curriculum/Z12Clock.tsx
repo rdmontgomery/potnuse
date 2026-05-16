@@ -47,6 +47,9 @@ export interface Z12ClockProps {
   // axis of inversion for the reflect operation.
   showAxis?: boolean;
   axisPc?: PitchClass;
+  // Highlight one pc as the "tonic" / "root" with a thin outer ring.
+  // Independent of pcs — the tonic can be on or off as a selected dot.
+  tonicPc?: PitchClass;
   // What to print inside each dot. Numbers are the Z_12 element; letters are
   // the sharp-spelled note name; "both" stacks them.
   labels?: 'numbers' | 'letters' | 'both';
@@ -64,6 +67,7 @@ export default function Z12Clock({
   polygonPath,
   showAxis = false,
   axisPc = 0,
+  tonicPc,
   labels = 'numbers',
   size = 220,
   className,
@@ -247,6 +251,7 @@ export default function Z12Clock({
 
       {POSITIONS.map((p, i) => {
         const on = selected.has(i);
+        const isTonic = tonicPc !== undefined && mod12(tonicPc) === i;
         const x = cx + r * p.x;
         const y = cy + r * p.y;
         const number = String(i);
@@ -285,6 +290,14 @@ export default function Z12Clock({
             aria-pressed={clickable ? on : undefined}
             aria-label={clickable ? `pitch class ${i} (${letter})` : undefined}
           >
+            {isTonic && (
+              <circle
+                r={dotR + 4}
+                fill="none"
+                stroke="#b87a1e"
+                strokeWidth={1.4}
+              />
+            )}
             <circle
               r={dotR}
               fill={on ? '#e8a838' : '#fbf6e9'}
