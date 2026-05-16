@@ -24,11 +24,15 @@ export default function Module0Derive() {
     );
   };
 
-  const transposeBy = (n: number) => setPcs((prev) => transposeSet(prev, n));
+  // Drag-rotate fires per 30° step. Each step is a semitone of transposition;
+  // the chord moves rigidly because that's what transposeSet does on the
+  // pitch-class set.
+  const rotate = (step: number) =>
+    setPcs((prev) => transposeSet(prev, step).sort((a, b) => a - b));
 
   const reflect = () => {
     setAxisFlash(true);
-    setPcs((prev) => invertSet(prev, INVERSION_AXIS));
+    setPcs((prev) => invertSet(prev, INVERSION_AXIS).sort((a, b) => a - b));
     window.setTimeout(() => setAxisFlash(false), 1400);
   };
 
@@ -39,37 +43,25 @@ export default function Module0Derive() {
       <Z12Clock
         pcs={pcs}
         onPcClick={togglePc}
+        onRotateStep={rotate}
         showChord
         showAxis={axisFlash}
         axisPc={INVERSION_AXIS}
         labels="both"
         size={260}
-        ariaLabel="clickable pitch-class clock"
+        ariaLabel="interactive pitch-class clock — click to toggle, drag to rotate"
       />
+      <p className="m0-derive-hint">
+        click any dot to toggle · drag the wheel to rotate · reflect to invert
+      </p>
       <div className="m0-derive-row">
         <span className="m0-derive-pcs">
           {pcs.length === 0
-            ? 'click any pitch class on the clock'
-            : pcs
-                .map((p) => `${p}·${pcName(p)}`)
-                .join('  ')}
+            ? '(no pitch classes selected)'
+            : pcs.map((p) => `${p}·${pcName(p)}`).join('  ')}
         </span>
       </div>
       <div className="m0-derive-controls">
-        <button
-          type="button"
-          onClick={() => transposeBy(-1)}
-          aria-label="transpose down one semitone"
-        >
-          −1
-        </button>
-        <button
-          type="button"
-          onClick={() => transposeBy(1)}
-          aria-label="transpose up one semitone"
-        >
-          +1
-        </button>
         <button type="button" onClick={reflect}>
           reflect
         </button>

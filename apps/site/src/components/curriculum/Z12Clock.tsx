@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import {
   PITCH_NAMES,
   mod12,
@@ -17,13 +17,22 @@ const POSITIONS: { x: number; y: number }[] = Array.from(
   },
 );
 
+// Pixel distance threshold below which a pointerdown→up on a dot counts as a
+// click and above which it counts as the start of a drag. Anything between
+// the two is "drag" and the dot's click is suppressed.
+const CLICK_DRAG_PX = 6;
+
 export interface Z12ClockProps {
   // Highlighted pitch classes. Duplicates are tolerated; only their unique
   // mod-12 reductions affect the display.
   pcs?: readonly PitchClass[];
   // Click handler — receives the (mod 12) pc of whichever dot was clicked.
-  // Undefined makes the clock non-interactive.
+  // Undefined makes the dots non-interactive.
   onPcClick?: (pc: PitchClass) => void;
+  // Drag-rotate. Fires every time the drag crosses a 30° boundary, with the
+  // signed step (+1 clockwise, -1 counterclockwise). Caller transposes the
+  // pcs in response — the clock itself stays presentational.
+  onRotateStep?: (step: number) => void;
   // Draw the chord polygon — straight segments connecting consecutive
   // selected pcs. Off by default so the clock reads cleanly when only one
   // pc is lit.
@@ -44,6 +53,7 @@ export interface Z12ClockProps {
 export default function Z12Clock({
   pcs = [],
   onPcClick,
+  onRotateStep,
   showChord = false,
   showAxis = false,
   axisPc = 0,
@@ -56,12 +66,82 @@ export default function Z12Clock({
     () => new Set(pcs.map((pc) => mod12(pc))),
     [pcs],
   );
-  const interactive = Boolean(onPcClick);
+  const clickable = Boolean(onPcClick);
+  const draggable = Boolean(onRotateStep);
 
   const cx = size / 2;
   const cy = size / 2;
   const dotR = Math.max(11, Math.round(size * 0.075));
   const r = size / 2 - dotR - 6;
+
+  // SVG-level drag tracking. Center-relative angle gets converted to
+  // semitones (30° per pc) and the callback fires once per integer step.
+  const dragRef = useRef<{
+    startAngle: number;
+    cumulative: number;
+    pointerId: number;
+    movedFar: boolean;
+    startClientX: number;
+    startClientY: number;
+  } | null>(null);
+
+  function centerFromEvent(e: React.PointerEvent<SVGSVGElement>): {
+    cx: number;
+    cy: number;
+  } {
+    const rect = e.currentTarget.getBoundingClientRect();
+    return { cx: rect.left + rect.width / 2, cy: rect.top + rect.height / 2 };
+  }
+
+  const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!draggable) return;
+    const { cx: ecx, cy: ecy } = centerFromEvent(e);
+    dragRef.current = {
+      startAngle: Math.atan2(e.clientY - ecy, e.clientX - ecx),
+      cumulative: 0,
+      pointerId: e.pointerId,
+      movedFar: false,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const dx = e.clientX - d.startClientX;
+    const dy = e.clientY - d.startClientY;
+    if (!d.movedFar && Math.hypot(dx, dy) > CLICK_DRAG_PX) {
+      d.movedFar = true;
+    }
+    const { cx: ecx, cy: ecy } = centerFromEvent(e);
+    const a = Math.atan2(e.clientY - ecy, e.clientX - ecx);
+    let delta = a - d.startAngle;
+    if (delta > Math.PI) delta -= 2 * Math.PI;
+    if (delta < -Math.PI) delta += 2 * Math.PI;
+    const totalSemitones = Math.round((delta * 6) / Math.PI);
+    if (totalSemitones !== d.cumulative) {
+      const step = totalSemitones - d.cumulative;
+      d.cumulative = totalSemitones;
+      onRotateStep?.(step);
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (!d || d.pointerId !== e.pointerId) return;
+    dragRef.current = null;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+  };
+
+  function dotDragWasFar(): boolean {
+    return dragRef.current?.movedFar === true;
+  }
 
   // The chord polygon connects dots in pc-order, not click-order, so the
   // shape is a function of the pc-set rather than the user's input history.
@@ -96,6 +176,11 @@ export default function Z12Clock({
       height={size}
       viewBox={`0 0 ${size} ${size}`}
       className={className}
+      style={draggable ? { touchAction: 'none', cursor: 'grab' } : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
     >
       <circle
         cx={cx}
@@ -139,10 +224,23 @@ export default function Z12Clock({
           <g
             key={i}
             transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-            style={{ cursor: interactive ? 'pointer' : 'default' }}
-            onClick={interactive ? () => onPcClick!(i) : undefined}
+            style={{ cursor: clickable ? 'pointer' : 'default' }}
+            onClick={
+              clickable
+                ? (ev) => {
+                    // Suppress click if the SVG-level drag moved far enough
+                    // to count as a rotate gesture rather than a tap.
+                    if (dotDragWasFar()) {
+                      ev.preventDefault();
+                      ev.stopPropagation();
+                      return;
+                    }
+                    onPcClick!(i);
+                  }
+                : undefined
+            }
             onKeyDown={
-              interactive
+              clickable
                 ? (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
@@ -151,10 +249,10 @@ export default function Z12Clock({
                   }
                 : undefined
             }
-            tabIndex={interactive ? 0 : -1}
-            role={interactive ? 'button' : undefined}
-            aria-pressed={interactive ? on : undefined}
-            aria-label={interactive ? `pitch class ${i} (${letter})` : undefined}
+            tabIndex={clickable ? 0 : -1}
+            role={clickable ? 'button' : undefined}
+            aria-pressed={clickable ? on : undefined}
+            aria-label={clickable ? `pitch class ${i} (${letter})` : undefined}
           >
             <circle
               r={dotR}
@@ -171,6 +269,7 @@ export default function Z12Clock({
                   fontSize={Math.round(dotR * 0.7)}
                   fontWeight={on ? 700 : 500}
                   fill="#1f1408"
+                  style={{ pointerEvents: 'none' }}
                 >
                   {number}
                 </text>
@@ -181,6 +280,7 @@ export default function Z12Clock({
                   fontStyle="italic"
                   fontSize={Math.round(dotR * 0.55)}
                   fill="#6b5d48"
+                  style={{ pointerEvents: 'none' }}
                 >
                   {letter}
                 </text>
@@ -198,6 +298,7 @@ export default function Z12Clock({
                 fontSize={Math.round(dotR * 0.85)}
                 fontWeight={on ? 700 : 500}
                 fill="#1f1408"
+                style={{ pointerEvents: 'none' }}
               >
                 {labels === 'letters' ? letter : number}
               </text>
