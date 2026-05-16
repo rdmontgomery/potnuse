@@ -51,6 +51,16 @@ function useCard(seed: Card): {
     } catch (err) {
       console.error('save card', seed.id, err);
     }
+    // Tell the gate (and anyone else listening) that a Module 0 card just
+    // got a verdict. Stays a window event rather than a state lift because
+    // the gate is a sibling React island, not a parent.
+    try {
+      window.dispatchEvent(
+        new CustomEvent('m0-card-update', { detail: { id: seed.id } }),
+      );
+    } catch {
+      /* CustomEvent unavailable in some old browsers — fine to skip */
+    }
   };
 
   return { card, loading, submit };

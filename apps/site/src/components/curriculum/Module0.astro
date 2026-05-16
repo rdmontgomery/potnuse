@@ -8,6 +8,7 @@ import KeyboardToClock from './KeyboardToClock';
 import Module0Derive from './Module0Derive';
 import Module0Operate from './Module0Operate';
 import Module0Prompts from './Module0Prompts';
+import Module0Gate from './Module0Gate';
 ---
 
 <div class="m0">
@@ -45,6 +46,8 @@ import Module0Prompts from './Module0Prompts';
     </p>
     <Module0Prompts client:visible />
   </section>
+
+  <Module0Gate client:visible />
 
   <section class="m0-block m0-bridge">
     <p class="m0-eyebrow">bridge</p>
@@ -110,6 +113,78 @@ import Module0Prompts from './Module0Prompts';
     padding-left: 1rem;
     font-style: italic;
     color: var(--text-dim);
+  }
+
+  /* Checkpoint --------------------------------------------------------- */
+  .m0-checkpoint {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 0.95rem 1.1rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    margin: -1.5rem 0 0;
+  }
+  .m0-checkpoint p {
+    margin: 0 !important;
+    font-size: 0.92rem !important;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .m0-checkpoint strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .m0-checkpoint-counter {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--accent-dim);
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .m0-checkpoint-mark {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-jetbrains);
+    font-size: 0.9rem;
+    color: var(--bg);
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .m0-checkpoint.loading {
+    min-height: 3.5rem;
+    border-color: transparent;
+    background: transparent;
+  }
+  .m0-checkpoint.pending {
+    border-color: var(--accent-dim);
+  }
+
+  /* Soft gate — placeholder modules dim while Module 0 is pending. The
+     gate sets a class on document.body so we can reach across the
+     section boundary without lifting state out of React. */
+  body.m0-gate-active .placeholder {
+    color: var(--text-muted);
+  }
+  body.m0-gate-active section.module[data-module]:not([data-module='0']) {
+    opacity: 0.32;
+    filter: saturate(0.5);
+    transition:
+      opacity 0.6s ease,
+      filter 0.6s ease;
+  }
+  section.module[data-module] {
+    transition:
+      opacity 0.6s ease,
+      filter 0.6s ease;
   }
 
   /* Behold ----------------------------------------------------------------- */
