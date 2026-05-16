@@ -5,14 +5,13 @@ import {
   upsertCard,
 } from '@/lib/srs/store';
 import { applyVerdict, dueAt } from '@/lib/srs/scheduler';
-import { freshModuleZeroCards } from '@/lib/srs/seed';
+import { freshModuleOneCards } from '@/lib/srs/seed';
 import { instrumentFor } from '@/components/practice/InstrumentRegistry';
 import type { Card, Verdict } from '@/lib/srs/schema';
 
-// Inline prompts for Module 0. The instrument UI itself is shared with
-// /practice via the InstrumentRegistry; this file just adds the
-// persistence wrapper and the small "first encounter / due in Nd"
-// status badge above each prompt.
+// Inline prompts for Module 1. Same instrument/registry pattern as
+// Module 0; no gate sibling listening for updates so we don't need to
+// dispatch a window event.
 
 function useCard(seed: Card): {
   card: Card;
@@ -50,16 +49,6 @@ function useCard(seed: Card): {
       await upsertCard(next);
     } catch (err) {
       console.error('save card', seed.id, err);
-    }
-    // Tell the gate (and anyone else listening) that a Module 0 card just
-    // got a verdict. Stays a window event rather than a state lift because
-    // the gate is a sibling React island, not a parent.
-    try {
-      window.dispatchEvent(
-        new CustomEvent('m0-card-update', { detail: { id: seed.id } }),
-      );
-    } catch {
-      /* CustomEvent unavailable in some old browsers — fine to skip */
     }
   };
 
@@ -109,21 +98,16 @@ function InlinePrompt({ seed }: { seed: Card }) {
           </span>
         </div>
         <p>{card.prompt.question}</p>
-        {card.prompt.kind === 'click-on-clock' && card.prompt.hint && (
-          <p className="prompt-hint">{card.prompt.hint}</p>
-        )}
       </div>
       <Instrument card={card} onVerdict={submit} />
     </div>
   );
 }
 
-export default function Module0Prompts() {
-  // Seeds are pure data; one set per mount keeps card ids stable across
-  // re-renders without re-reading the store.
-  const seeds = useMemo(() => freshModuleZeroCards(), []);
+export default function Module1Prompts() {
+  const seeds = useMemo(() => freshModuleOneCards(), []);
   return (
-    <div className="m0-prompts">
+    <div className="m1-prompts">
       {seeds.map((seed) => (
         <InlinePrompt key={seed.id} seed={seed} />
       ))}

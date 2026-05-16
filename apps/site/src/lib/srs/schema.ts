@@ -26,6 +26,17 @@ export type Prompt =
       // Target pitch class in C major; matchesPcInC handles lenient parsing.
       expectedPc: PitchClass;
       placeholder?: string;
+    }
+  | {
+      kind: 'multiple-choice';
+      question: string;
+      // Mutually-exclusive labels shown as a button strip.
+      choices: readonly string[];
+      // Index into choices of the right answer.
+      correctIndex: number;
+      // Optional one-line elaboration on the correct answer, surfaced
+      // after the user picks something.
+      explanation?: string;
     };
 
 export type Verdict = 'correct' | 'wrong' | 'unsure';

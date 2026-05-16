@@ -3,6 +3,7 @@ import Base from '@/layouts/Base.astro';
 import ModuleSection from '@/components/curriculum/ModuleSection.astro';
 import PersistentStaff from '@/components/curriculum/PersistentStaff.astro';
 import Module0 from '@/components/curriculum/Module0.astro';
+import Module1 from '@/components/curriculum/Module1.astro';
 
 // The spine of the curriculum: twelve modules from Z_12 to active matter.
 // Order is firm; pace is the user's. Module 0 is the only one with content in
@@ -93,12 +94,22 @@ const MODULES = [
     <div class="layout">
       <main class="sections">
         {
-          MODULES.map((m, i) =>
-            i === 0 ? (
-              <ModuleSection index={i} title={m.title} kicker={m.kicker}>
-                <Module0 />
-              </ModuleSection>
-            ) : (
+          MODULES.map((m, i) => {
+            if (i === 0) {
+              return (
+                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                  <Module0 />
+                </ModuleSection>
+              );
+            }
+            if (i === 1) {
+              return (
+                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                  <Module1 />
+                </ModuleSection>
+              );
+            }
+            return (
               <ModuleSection index={i} title={m.title} kicker={m.kicker}>
                 <p class="placeholder">
                   Module {i} placeholder. Content lands here once the section
@@ -109,8 +120,8 @@ const MODULES = [
                   Operate, Prompt, Bridge.
                 </p>
               </ModuleSection>
-            ),
-          )
+            );
+          })
         }
       </main>
 

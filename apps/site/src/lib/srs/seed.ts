@@ -52,19 +52,81 @@ const MODULE_0_CARD_DEFS = [
 
 export type ModuleZeroCardId = (typeof MODULE_0_CARD_DEFS)[number]['id'];
 
-export function freshModuleZeroCards(now: Date = new Date()): Card[] {
-  return MODULE_0_CARD_DEFS.map((def) => ({
+// Module 1: Spectral Foundations. Both prompts lean on the overtone-series
+// content — Behold shows partials 1-8 of C2, Derive demonstrates that
+// partials 4-5-6 are always a major triad, Operate lets the user mute
+// individual partials. The two prompts check whether the listener took
+// home the chord-from-spectrum claim and the simple partial arithmetic.
+const MODULE_1_CARD_DEFS = [
+  {
+    id: 'm1.triad-from-partials',
+    moduleId: 1,
+    concept: 'overtone-triad' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Stack partials 4, 5, and 6 of any fundamental. What chord quality do you get?',
+      choices: [
+        'minor triad',
+        'major triad',
+        'diminished triad',
+        'dominant seventh',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Major triad. Partial 4 is the fundamental (two octaves up), 5 is the major third above it, 6 is the perfect fifth — the triad is a fact of the spectrum.',
+    },
+  },
+  {
+    id: 'm1.fifth-partial',
+    moduleId: 1,
+    concept: 'partial-arithmetic' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Which partial first introduces the major third of the fundamental?',
+      choices: ['3rd', '4th', '5th', '6th'],
+      correctIndex: 2,
+      explanation:
+        'The 5th partial. Frequency ratio 5:4 with the 4th partial — that\'s the just-intonation major third.',
+    },
+  },
+] as const;
+
+export type ModuleOneCardId = (typeof MODULE_1_CARD_DEFS)[number]['id'];
+
+const ALL_CARD_DEFS = [...MODULE_0_CARD_DEFS, ...MODULE_1_CARD_DEFS];
+
+function defsToCards(
+  defs: readonly (typeof ALL_CARD_DEFS)[number][],
+  now: Date,
+): Card[] {
+  return defs.map((def) => ({
     ...def,
     scheduling: newScheduling(now),
     createdAt: now.getTime(),
   }));
 }
 
+export function freshModuleZeroCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_0_CARD_DEFS, now);
+}
+
+export function freshModuleOneCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_1_CARD_DEFS, now);
+}
+
+// Every card the curriculum currently seeds. Used by /practice to make sure
+// the store has all known cards before pulling the due queue.
+export function freshAllCards(now: Date = new Date()): Card[] {
+  return defsToCards(ALL_CARD_DEFS, now);
+}
+
 // Look up a card definition by id without touching the store. Useful for
 // rendering /practice's instrument when the persisted card lacks the prompt
 // content (older write, fresh seed).
 export function getCardSeed(id: string): Card | undefined {
-  const def = MODULE_0_CARD_DEFS.find((d) => d.id === id);
+  const def = ALL_CARD_DEFS.find((d) => d.id === id);
   if (!def) return undefined;
   return {
     ...def,
@@ -73,4 +135,4 @@ export function getCardSeed(id: string): Card | undefined {
   };
 }
 
-export const ALL_SEED_CARD_IDS = MODULE_0_CARD_DEFS.map((d) => d.id);
+export const ALL_SEED_CARD_IDS = ALL_CARD_DEFS.map((d) => d.id);

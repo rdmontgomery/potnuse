@@ -50,6 +50,28 @@ export function toTonePitch(vex: string): string {
   return head[0].toUpperCase() + head.slice(1) + oct;
 }
 
+// Shared sine synth for Module 1's overtone audio. Polyphonic so a tap can
+// fire mid-tail of an earlier one; envelope kept soft so partials don't
+// click against each other.
+let _sine: Tone.PolySynth | null = null;
+let _sinePromise: Promise<Tone.PolySynth> | null = null;
+
+export async function getSineSynth(): Promise<Tone.PolySynth> {
+  if (_sine) return _sine;
+  if (_sinePromise) return _sinePromise;
+  _sinePromise = (async () => {
+    await Tone.start();
+    const synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 0.02, decay: 0.15, sustain: 0.55, release: 0.55 },
+    }).toDestination();
+    synth.volume.value = -14;
+    _sine = synth;
+    return synth;
+  })();
+  return _sinePromise;
+}
+
 // Sixteenth-step duration -> seconds at the given bpm.
 export function stepsToSeconds(steps: number, bpm: number): number {
   return (steps * 60) / (bpm * 4);

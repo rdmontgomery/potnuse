@@ -6,7 +6,7 @@ import {
   upsertCard,
 } from '@/lib/srs/store';
 import { applyVerdict, dueAt } from '@/lib/srs/scheduler';
-import { freshModuleZeroCards } from '@/lib/srs/seed';
+import { freshAllCards } from '@/lib/srs/seed';
 import { instrumentFor } from './InstrumentRegistry';
 import type { Card, Verdict } from '@/lib/srs/schema';
 
@@ -27,11 +27,12 @@ export default function PracticeRunner() {
 
     async function load() {
       try {
-        // Seed Module 0's cards if the store is fresh — keeps /practice
-        // useful even for a user who hasn't visited /curriculum yet.
+        // Seed every known module's cards if the store is missing them —
+        // keeps /practice useful even for a user who hasn't visited
+        // /curriculum yet.
         const existing = await getAllCards();
         const have = new Set(existing.map((c) => c.id));
-        for (const seed of freshModuleZeroCards()) {
+        for (const seed of freshAllCards()) {
           if (!have.has(seed.id)) {
             await upsertCard(seed);
           }

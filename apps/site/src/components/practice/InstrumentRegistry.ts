@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 import {
   ClickOnClockInstrument,
   FreeformPcInstrument,
+  MultipleChoiceInstrument,
   type InstrumentProps,
 } from './instruments';
 import type { Card } from '@/lib/srs/schema';
@@ -16,6 +17,7 @@ export type PromptKind = Card['prompt']['kind'];
 export const INSTRUMENTS: Record<PromptKind, ComponentType<InstrumentProps>> = {
   'click-on-clock': ClickOnClockInstrument,
   'freeform-pc-in-key': FreeformPcInstrument,
+  'multiple-choice': MultipleChoiceInstrument,
 };
 
 export function instrumentFor(

@@ -152,6 +152,80 @@ export function FreeformPcInstrument({ card, onVerdict }: InstrumentProps) {
   );
 }
 
+export function MultipleChoiceInstrument({
+  card,
+  onVerdict,
+}: InstrumentProps) {
+  if (card.prompt.kind !== 'multiple-choice') {
+    throw new Error('MultipleChoiceInstrument needs a multiple-choice card');
+  }
+  const { choices, correctIndex, explanation } = card.prompt;
+  const [picked, setPicked] = useState<number | null>(null);
+  const [verdict, setVerdict] = useState<Verdict | null>(null);
+
+  const pick = (i: number) => {
+    if (verdict === 'correct') return;
+    setPicked(i);
+    const v: Verdict = i === correctIndex ? 'correct' : 'wrong';
+    setVerdict(v);
+    onVerdict(v);
+  };
+
+  const unsure = () => {
+    setVerdict('unsure');
+    onVerdict('unsure');
+  };
+
+  return (
+    <div className="instrument multiple-choice-instrument">
+      <div className="mc-choices" role="radiogroup">
+        {choices.map((choice, i) => {
+          const selected = picked === i;
+          const showCorrect = verdict && i === correctIndex;
+          const showWrong = verdict === 'wrong' && selected;
+          return (
+            <button
+              key={i}
+              type="button"
+              className={[
+                'mc-choice',
+                selected ? 'selected' : '',
+                showCorrect ? 'correct' : '',
+                showWrong ? 'wrong' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => pick(i)}
+              role="radio"
+              aria-checked={selected}
+              disabled={verdict === 'correct'}
+            >
+              {choice}
+            </button>
+          );
+        })}
+      </div>
+      <div className="prompt-actions">
+        <button
+          type="button"
+          className="unsure"
+          onClick={unsure}
+          disabled={verdict === 'correct'}
+        >
+          unsure
+        </button>
+      </div>
+      <VerdictNote verdict={verdict}>
+        {verdict === 'correct' &&
+          (explanation ?? `Yes — ${choices[correctIndex]}.`)}
+        {verdict === 'wrong' && `Not quite. The right one is "${choices[correctIndex]}".`}
+        {verdict === 'unsure' &&
+          `Noted. The right one is "${choices[correctIndex]}" — card comes back sooner.`}
+      </VerdictNote>
+    </div>
+  );
+}
+
 function VerdictNote({
   verdict,
   children,
