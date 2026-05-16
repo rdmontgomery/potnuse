@@ -1,0 +1,214 @@
+---
+import Module10Behold from './Module10Behold';
+import Module10Derive from './Module10Derive';
+import Module10Operate from './Module10Operate';
+import Module10Prompts from './Module10Prompts';
+---
+
+<div class="m m10">
+  <section class="m-block m10-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      The spine has been hinting at this since Module 0. Schenker's
+      claim: every well-formed tonal phrase has a deep structural
+      skeleton — the <em>Ursatz</em> — which the surface elaborates
+      through prolongation. Strip the elaborations off in layers and
+      the skeleton appears. The chorale, reduced.
+    </p>
+    <Module10Behold client:visible />
+  </section>
+
+  <section class="m-block m10-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      Four layers. <strong>Foreground</strong> — every authored note.
+      <strong>Middleground</strong> — chord tones survive, passing
+      tones are absorbed. <strong>Background</strong> — one
+      structural note per bar. <strong>Ursatz</strong> — three notes
+      in the Urlinie, three in the Bassbrechung, the deep skeleton.
+      Each layer is the previous one with one round of elaboration
+      removed.
+    </p>
+    <Module10Derive client:visible />
+  </section>
+
+  <section class="m-block m10-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Hear the layers. The harmonic arc is the same in all four
+      tiers; only the elaborations change. The Ursatz strips the
+      chorale to six notes and one cadence — and you can still hear
+      that it cadenced.
+    </p>
+    <Module10Operate client:visible />
+  </section>
+
+  <section class="m-block m10-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on Schenker's depth model.
+    </p>
+    <Module10Prompts client:visible />
+  </section>
+
+  <section class="m-block m10-block m-bridge m10-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      Schenker reveals tonality's static spine. But tonality{' '}
+      <em>flows</em> — modulation is the order parameter shifting,
+      consonance and dissonance are the field at thermal equilibrium
+      or driven out of it. The final module sees music as active
+      matter.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 10 specific rules. */
+
+  .m10-behold,
+  .m10-derive,
+  .m10-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m10-staff-wrap {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem 0.2rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 400px;
+  }
+  .m10-staff {
+    color: #1f1408;
+    line-height: 0;
+  }
+  .m10-staff svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .m10-tier-track {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m10-tier-step {
+    padding: 0.35rem 0.65rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    opacity: 0.45;
+    transition:
+      opacity 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+  .m10-tier-step.active {
+    opacity: 1;
+    border-color: var(--accent);
+    background: rgba(232, 168, 56, 0.12);
+  }
+  .m10-tier-step-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+  .m10-tier-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m10-tier-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m10-tier-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .m10-tier-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.7rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m10-tier-btn:hover:not(.active):not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m10-tier-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m10-tier-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m10-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+  }
+  .m10-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m10-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m10-behold-caption,
+  .m10-derive-caption,
+  .m10-operate-caption {
+    font-size: 0.92rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 46ch;
+  }
+  .m10-derive-caption strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .m10-behold-caption em,
+  .m10-derive-caption em {
+    color: var(--accent);
+  }
+</style>

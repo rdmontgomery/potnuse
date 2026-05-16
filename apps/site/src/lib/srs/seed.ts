@@ -441,6 +441,50 @@ const MODULE_9_CARD_DEFS = [
 
 export type ModuleNineCardId = (typeof MODULE_9_CARD_DEFS)[number]['id'];
 
+// Module 10: Schenkerian Reduction.
+const MODULE_10_CARD_DEFS = [
+  {
+    id: 'm10.ursatz-shape',
+    moduleId: 10,
+    concept: 'ursatz' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In a 3-line Ursatz in a major key, what melodic motion does the Urlinie (top voice) make?',
+      choices: [
+        '1 → 5 → 1 (tonic to dominant to tonic)',
+        '3 → 2 → 1 (descending stepwise from the mediant)',
+        '5 → 4 → 3 → 2 → 1 (descending from the dominant)',
+        '1 → 2 → 3 (ascending stepwise from the tonic)',
+      ],
+      correctIndex: 1,
+      explanation:
+        '3 → 2 → 1 — the simplest descending Urlinie. The 5-line (5-4-3-2-1) and 8-line are longer alternatives; the 3-line is the most compact, just a major-third worth of stepwise descent.',
+    },
+  },
+  {
+    id: 'm10.reduction-direction',
+    moduleId: 10,
+    concept: 'schenker-layers' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Schenker\'s reduction layers move from foreground to background. What gets stripped at each level?',
+      choices: [
+        'Bass notes',
+        'Surface elaboration — passing tones, neighbor tones, prolongation',
+        'Chord roots',
+        'The Urlinie itself',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Surface elaboration. Each deeper level removes more of what merely decorates the structural framework; the framework itself (chord tones, the Urlinie, the Bassbrechung) is what survives all the way to the Ursatz.',
+    },
+  },
+] as const;
+
+export type ModuleTenCardId = (typeof MODULE_10_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -452,6 +496,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_7_CARD_DEFS,
   ...MODULE_8_CARD_DEFS,
   ...MODULE_9_CARD_DEFS,
+  ...MODULE_10_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -503,6 +548,10 @@ export function freshModuleEightCards(now: Date = new Date()): Card[] {
 
 export function freshModuleNineCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_9_CARD_DEFS, now);
+}
+
+export function freshModuleTenCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_10_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
