@@ -69,3 +69,21 @@ export function modeMidiAscending(
   }
   return out;
 }
+
+// Variance of a 7-element gap pattern — sum of squared deviations from
+// the mean (12/7), divided by 7. Smaller = more even. Diatonic
+// minimizes this over all 7-subsets of Z_12 (up to rotation), which is
+// the formal statement of "maximally even."
+export function gapVariance(gaps: readonly number[]): number {
+  const mean = 12 / gaps.length;
+  let sum = 0;
+  for (const g of gaps) sum += (g - mean) ** 2;
+  return sum / gaps.length;
+}
+
+// Contrast 7-subset for Module 3's evenness demonstration: a chromatic
+// cluster {0, 1, 2, 3, 4, 5, 6}. Its gap pattern wraps with one giant
+// leap (6 semitones) closing the cycle, which is the visual fingerprint
+// of an uneven distribution.
+export const CLUSTER_PCS: readonly PitchClass[] = [0, 1, 2, 3, 4, 5, 6];
+export const CLUSTER_GAPS: readonly number[] = [1, 1, 1, 1, 1, 1, 6];

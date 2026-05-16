@@ -231,6 +231,58 @@ import Module3Prompts from './Module3Prompts';
     border-color: var(--accent);
     color: var(--accent);
   }
+  .m3-gap-cell.m3-gap-leap {
+    background: rgba(186, 70, 70, 0.18);
+    border-color: rgba(186, 70, 70, 0.6);
+    color: rgba(220, 110, 110, 1);
+  }
+
+  /* Evenness comparison ------------------------------------------------- */
+  .m3-evenness {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    width: 100%;
+    max-width: 480px;
+    margin-top: 0.5rem;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--border);
+  }
+  .m3-evenness-eyebrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin: 0 !important;
+    text-align: center;
+  }
+  .m3-evenness-row {
+    display: grid;
+    grid-template-columns: 5rem 1fr auto;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .m3-evenness-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    color: var(--text);
+    letter-spacing: 0.06em;
+  }
+  .m3-evenness-var {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    color: var(--accent-dim);
+    letter-spacing: 0.04em;
+  }
+  .m3-evenness-caption {
+    font-size: 0.85rem !important;
+    color: var(--text-dim) !important;
+    margin: 0.25rem 0 0 !important;
+    line-height: 1.5 !important;
+    text-align: center;
+    font-style: italic;
+  }
   .m3-derive-caption {
     text-align: center;
     font-style: italic;
