@@ -5,6 +5,7 @@ import {
   TRIAD_PARTIALS,
   midiToHz,
 } from '@/lib/music/overtones';
+import { takeOver } from '@/lib/music/audioBus';
 
 // Operate for Module 1. Additive-synthesis sandbox. Each of the eight
 // partials gets a toggle and its own sine oscillator + gain; the
@@ -35,11 +36,18 @@ export default function Module1Operate() {
   const nodesRef = useRef<
     { osc: Tone.Oscillator; gain: Tone.Gain }[] | null
   >(null);
+  // Deregister handle for the audioBus — held while this module owns
+  // the bus, called on natural stop or when something else takes over.
+  const busHandleRef = useRef<(() => void) | null>(null);
 
   // Always tear down on unmount; otherwise a navigation-away leaves
   // eight oscillators humming.
   useEffect(() => {
-    return () => disposeNodes();
+    return () => {
+      disposeNodes();
+      busHandleRef.current?.();
+      busHandleRef.current = null;
+    };
   }, []);
 
   function disposeNodes() {
@@ -85,10 +93,16 @@ export default function Module1Operate() {
       osc.start();
       return { osc, gain };
     });
+    busHandleRef.current = takeOver(
+      () => disposeNodes(),
+      () => setPlaying(false),
+    );
     setPlaying(true);
   };
 
   const stop = () => {
+    busHandleRef.current?.();
+    busHandleRef.current = null;
     disposeNodes();
     setPlaying(false);
   };

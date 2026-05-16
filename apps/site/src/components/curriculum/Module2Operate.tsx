@@ -6,6 +6,7 @@ import {
 } from '@/lib/music/intervals';
 import { PITCH_NAMES, type PitchClass } from '@/lib/music/pitchClass';
 import { getPiano } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 import Z12Clock from './Z12Clock';
 
 // Operate for Module 2. Same interval selector as Derive, but with audio:
@@ -31,6 +32,15 @@ export default function Module2Operate() {
   const [building, setBuilding] = useState(false);
   const heldRef = useRef<string[]>([]);
   const timerRef = useRef<number | null>(null);
+  const busHandleRef = useRef<(() => void) | null>(null);
+
+  const cleanup = async () => {
+    if (timerRef.current != null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    await releaseAll();
+  };
 
   const releaseAll = async () => {
     const held = heldRef.current;
@@ -52,12 +62,11 @@ export default function Module2Operate() {
 
   useEffect(() => {
     return () => {
-      if (timerRef.current != null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      void releaseAll();
+      busHandleRef.current?.();
+      busHandleRef.current = null;
+      void cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const build = async () => {
@@ -68,6 +77,13 @@ export default function Module2Operate() {
     await releaseAll();
     setVisited([]);
     setBuilding(true);
+    busHandleRef.current = takeOver(
+      () => void cleanup(),
+      () => {
+        setBuilding(false);
+        setVisited([]);
+      },
+    );
 
     let piano;
     try {
@@ -103,11 +119,9 @@ export default function Module2Operate() {
   };
 
   const release = async () => {
-    if (timerRef.current != null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    await releaseAll();
+    busHandleRef.current?.();
+    busHandleRef.current = null;
+    await cleanup();
     setVisited([]);
     setBuilding(false);
   };

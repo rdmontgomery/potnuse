@@ -8,6 +8,7 @@ import {
   type PitchClass,
 } from '@/lib/music/pitchClass';
 import { getPiano, stepsToSeconds, toTonePitch } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 import Z12Clock from './Z12Clock';
 import type { PNote, Song } from '@/lib/pentimento/types';
 
@@ -99,6 +100,7 @@ export default function Module0Operate() {
     'idle',
   );
   const playEndRef = useRef<number | null>(null);
+  const busHandleRef = useRef<(() => void) | null>(null);
 
   // The playhead is a <line> attached to the engraved SVG after each
   // engrave pass. We keep a ref so the rAF tick can update it without
@@ -152,6 +154,8 @@ export default function Module0Operate() {
   // already-scheduled triggers in flight is fine.
   useEffect(() => {
     return () => {
+      busHandleRef.current?.();
+      busHandleRef.current = null;
       if (playEndRef.current != null) {
         window.clearTimeout(playEndRef.current);
         playEndRef.current = null;
@@ -228,9 +232,32 @@ export default function Module0Operate() {
     setAudioState('playing');
     const tailMs = (lastEnd - Tone.now()) * 1000 + 250;
     playEndRef.current = window.setTimeout(() => {
+      busHandleRef.current?.();
+      busHandleRef.current = null;
       setAudioState('idle');
       playEndRef.current = null;
     }, Math.max(500, tailMs));
+
+    // Register with the audio bus. The piano's notes are fire-and-forget
+    // so a take-over from another module can't silence them mid-flight —
+    // but the playhead and the React state both reset cleanly, so the
+    // UI doesn't drift out of sync with reality.
+    busHandleRef.current = takeOver(
+      () => {
+        if (rafRef.current != null) {
+          cancelAnimationFrame(rafRef.current);
+          rafRef.current = null;
+        }
+        if (playEndRef.current != null) {
+          window.clearTimeout(playEndRef.current);
+          playEndRef.current = null;
+        }
+        if (playheadRef.current) {
+          playheadRef.current.setAttribute('opacity', '0');
+        }
+      },
+      () => setAudioState('idle'),
+    );
   };
 
   const keyPcs: PitchClass[] = MAJOR_SCALE.map((s) => mod12(s + t));

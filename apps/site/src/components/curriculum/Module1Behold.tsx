@@ -8,6 +8,7 @@ import {
   partialMidi,
 } from '@/lib/music/overtones';
 import { getSineSynth } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 
 // Behold for Module 1. The first eight partials of C2, stacked with the
 // fundamental at the bottom. The triad living in partials 4-5-6 is lit
@@ -25,6 +26,15 @@ export default function Module1Behold() {
 
   const playPartial = async (n: number) => {
     setActive(n);
+    // Cut anything else playing — the partial chime is short but
+    // overlapping it with M1 Operate's drone would muddy the demo.
+    const release = takeOver(
+      () => {
+        /* sine chime is short-lived; the takeover effect is just to
+           silence other modules. */
+      },
+      () => setActive(null),
+    );
     try {
       const synth = await getSineSynth();
       const partial = PARTIALS[n - 1];
@@ -34,6 +44,7 @@ export default function Module1Behold() {
       console.error('m1 behold play failed', err);
     } finally {
       window.setTimeout(() => {
+        release();
         setActive((cur) => (cur === n ? null : cur));
       }, 700);
     }

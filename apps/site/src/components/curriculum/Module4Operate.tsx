@@ -10,6 +10,7 @@ import {
 } from '@/lib/music/triads';
 import { PITCH_NAMES, mod12 } from '@/lib/music/pitchClass';
 import { getPiano } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 import Z12Clock from './Z12Clock';
 
 // Operate for Module 4. Pick a scale degree to hear its triad in
@@ -31,9 +32,12 @@ export default function Module4Operate() {
   const [degree, setDegree] = useState(0);
   const [busy, setBusy] = useState(false);
   const timersRef = useRef<number[]>([]);
+  const busHandleRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     return () => {
+      busHandleRef.current?.();
+      busHandleRef.current = null;
       for (const t of timersRef.current) window.clearTimeout(t);
       timersRef.current = [];
     };
@@ -44,10 +48,23 @@ export default function Module4Operate() {
     timersRef.current = [];
   };
 
+  const claimBus = () => {
+    busHandleRef.current = takeOver(
+      () => cancelTimers(),
+      () => setBusy(false),
+    );
+  };
+
+  const releaseBus = () => {
+    busHandleRef.current?.();
+    busHandleRef.current = null;
+  };
+
   const playOne = async (d: number) => {
     if (busy) return;
     setBusy(true);
     cancelTimers();
+    claimBus();
     try {
       const piano = await getPiano();
       const midis = diatonicTriadMidi(d);
@@ -57,6 +74,7 @@ export default function Module4Operate() {
       console.error('play one failed', err);
     }
     const t = window.setTimeout(() => {
+      releaseBus();
       setBusy(false);
     }, CHORD_S * 1000 + 80);
     timersRef.current.push(t);
@@ -66,6 +84,7 @@ export default function Module4Operate() {
     if (busy) return;
     setBusy(true);
     cancelTimers();
+    claimBus();
     let piano;
     try {
       piano = await getPiano();
@@ -86,6 +105,7 @@ export default function Module4Operate() {
       timersRef.current.push(t);
     }
     const finalT = window.setTimeout(() => {
+      releaseBus();
       setBusy(false);
     }, degrees.length * stepMs);
     timersRef.current.push(finalT);

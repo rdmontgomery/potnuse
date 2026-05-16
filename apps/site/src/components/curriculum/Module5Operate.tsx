@@ -8,6 +8,7 @@ import {
 } from '@/lib/music/functions';
 import { PITCH_NAMES, mod12 } from '@/lib/music/pitchClass';
 import { getPiano } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 
 // Operate for Module 5. Four function slots in order (T, PD, D, T).
 // Each slot has a dropdown of candidate chords for that function. The
@@ -34,11 +35,18 @@ export default function Module5Operate() {
   const [busy, setBusy] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const timersRef = useRef<number[]>([]);
+  const busHandleRef = useRef<(() => void) | null>(null);
+
+  const cancelTimers = () => {
+    for (const t of timersRef.current) window.clearTimeout(t);
+    timersRef.current = [];
+  };
 
   useEffect(() => {
     return () => {
-      for (const t of timersRef.current) window.clearTimeout(t);
-      timersRef.current = [];
+      busHandleRef.current?.();
+      busHandleRef.current = null;
+      cancelTimers();
     };
   }, []);
 
@@ -49,9 +57,15 @@ export default function Module5Operate() {
 
   const play = async () => {
     if (busy) return;
-    for (const t of timersRef.current) window.clearTimeout(t);
-    timersRef.current = [];
+    cancelTimers();
     setBusy(true);
+    busHandleRef.current = takeOver(
+      () => cancelTimers(),
+      () => {
+        setActiveSlot(null);
+        setBusy(false);
+      },
+    );
 
     let piano;
     try {
@@ -74,6 +88,8 @@ export default function Module5Operate() {
       timersRef.current.push(t);
     }
     const finalT = window.setTimeout(() => {
+      busHandleRef.current?.();
+      busHandleRef.current = null;
       setActiveSlot(null);
       setBusy(false);
     }, degrees.length * stepMs);

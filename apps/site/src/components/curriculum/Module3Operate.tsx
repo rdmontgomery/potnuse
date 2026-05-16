@@ -7,6 +7,7 @@ import {
 } from '@/lib/music/diatonic';
 import { PITCH_NAMES, mod12 } from '@/lib/music/pitchClass';
 import { getPiano } from '@/lib/music/audio';
+import { takeOver } from '@/lib/music/audioBus';
 import Z12Clock from './Z12Clock';
 
 // Operate for Module 3. Pick a mode, press play — the piano walks the
@@ -29,24 +30,37 @@ export default function Module3Operate() {
   const [active, setActive] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const busHandleRef = useRef<(() => void) | null>(null);
+
+  const cancelTimer = () => {
+    if (timerRef.current != null) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     return () => {
-      if (timerRef.current != null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      busHandleRef.current?.();
+      busHandleRef.current = null;
+      cancelTimer();
     };
   }, []);
 
   const play = async () => {
     if (playing) return;
-    if (timerRef.current != null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    cancelTimer();
     setActive(null);
     setPlaying(true);
+    busHandleRef.current = takeOver(
+      () => {
+        cancelTimer();
+      },
+      () => {
+        setActive(null);
+        setPlaying(false);
+      },
+    );
 
     let piano;
     try {
@@ -64,11 +78,10 @@ export default function Module3Operate() {
     let i = 0;
     function tick() {
       if (i >= midis.length) {
-        if (timerRef.current != null) {
-          window.clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+        cancelTimer();
         window.setTimeout(() => {
+          busHandleRef.current?.();
+          busHandleRef.current = null;
           setActive(null);
           setPlaying(false);
         }, NOTE_MS);
