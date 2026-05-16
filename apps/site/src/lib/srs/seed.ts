@@ -363,6 +363,45 @@ const MODULE_7_CARD_DEFS = [
 
 export type ModuleSevenCardId = (typeof MODULE_7_CARD_DEFS)[number]['id'];
 
+// Module 8: Orbifold Geometry.
+const MODULE_8_CARD_DEFS = [
+  {
+    id: 'm8.plr-cost',
+    moduleId: 8,
+    concept: 'voice-leading-cost' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'In Tymoczko\'s voice-leading metric, what\'s the total semitone motion between two triads connected by a single P, L, or R from Module 7?',
+      choices: ['0', '1', '2', '3'],
+      correctIndex: 1,
+      explanation:
+        '1 semitone. P, L, and R each move exactly one voice by a half or whole step (with the half step being more common) — they\'re the minimal-cost edges in the orbifold.',
+    },
+  },
+  {
+    id: 'm8.geodesic-meaning',
+    moduleId: 8,
+    concept: 'orbifold-geodesic' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'What does "voice leading is geodesic motion in the orbifold" mean, concretely?',
+      choices: [
+        'The shortest distance in chord-space equals the minimal voice leading.',
+        'Every chord progression follows a curved path.',
+        'Voice leadings preserve consonance.',
+        'Only major triads have geodesic paths.',
+      ],
+      correctIndex: 0,
+      explanation:
+        'Geodesic = shortest path. Tymoczko\'s claim is that the shortest path between two chords *inside* the orbifold geometry is exactly the minimal voice-leading distance — the assignment of voices that moves the fewest total semitones.',
+    },
+  },
+] as const;
+
+export type ModuleEightCardId = (typeof MODULE_8_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -372,6 +411,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_5_CARD_DEFS,
   ...MODULE_6_CARD_DEFS,
   ...MODULE_7_CARD_DEFS,
+  ...MODULE_8_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -415,6 +455,10 @@ export function freshModuleSixCards(now: Date = new Date()): Card[] {
 
 export function freshModuleSevenCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_7_CARD_DEFS, now);
+}
+
+export function freshModuleEightCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_8_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure

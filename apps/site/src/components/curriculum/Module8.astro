@@ -1,0 +1,250 @@
+---
+import Module8Behold from './Module8Behold';
+import Module8Derive from './Module8Derive';
+import Module8Operate from './Module8Operate';
+import Module8Prompts from './Module8Prompts';
+---
+
+<div class="m m8">
+  <section class="m-block m8-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Tymoczko's claim: the most efficient voice leading between two
+      chords is the <em>shortest path</em> in a curved geometric space —
+      the orbifold T<sup>n</sup>/S<sub>n</sub>. The full geometry is
+      hard to draw on a screen. The consequence is easy: for any two
+      chords, compute the assignment of voices that minimizes total
+      motion, and that <em>is</em> the geodesic.
+    </p>
+    <Module8Behold client:visible />
+  </section>
+
+  <section class="m-block m8-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      Pick any two diatonic triads and the table shows which voice
+      goes where for minimum total motion. The cheapest possible
+      transition between two consonant triads is{' '}
+      <strong>one semitone</strong> total — and exactly the chord
+      pairs that achieve that one-semitone cost are the chords
+      connected by P, L, or R. Module 7's transformations were
+      already telling you about the orbifold's edges.
+    </p>
+    <Module8Derive client:visible />
+  </section>
+
+  <section class="m-block m8-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Hear the voice leading. The piano holds the source chord, then
+      the target chord; the voices that don't move sit still in the
+      sound, while the voice that does move shifts cleanly. The
+      smaller the total semitone cost, the more the two chords feel
+      like one prolonged sound rather than a leap.
+    </p>
+    <Module8Operate client:visible />
+  </section>
+
+  <section class="m-block m8-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on the metric and the geodesic.
+    </p>
+    <Module8Prompts client:visible />
+  </section>
+
+  <section class="m-block m8-block m-bridge m8-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      We've been treating tonality as structure. But a real listener
+      doesn't know the key in advance — they <em>infer</em> it from
+      the pitches they hear. Next: a statistical view, where the key
+      is the maximum-likelihood explanation of a pc distribution.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 8 specific rules. */
+
+  .m8-behold,
+  .m8-derive,
+  .m8-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Voice-leading table — shared between Behold and Derive ------------- */
+  .m8-vl-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+  .m8-vl-chord {
+    font-family: var(--font-jetbrains);
+    font-size: 1.15rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .m8-vl-arrow-big {
+    font-family: var(--font-jetbrains);
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+  .m8-vl-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.65rem 1.1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    min-width: 16rem;
+  }
+  .m8-vl-row {
+    display: grid;
+    grid-template-columns: 3rem 1fr 3rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .m8-vl-pitch {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--text);
+    text-align: center;
+  }
+  .m8-arrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-align: center;
+  }
+  .m8-arrow.stay {
+    color: var(--text-muted);
+  }
+  .m8-vl-cost {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .m8-vl-cost-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m8-vl-cost-value {
+    font-family: var(--font-jetbrains);
+    font-size: 0.95rem;
+    color: var(--accent);
+  }
+  .m8-behold-caption,
+  .m8-derive-caption,
+  .m8-operate-caption {
+    font-size: 0.92rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 44ch;
+  }
+  .m8-behold-caption em,
+  .m8-derive-caption em {
+    color: var(--accent);
+  }
+
+  /* Pair picker (Derive + Operate) ------------------------------------- */
+  .m8-pair-pickers {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m8-picker-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .m8-picker-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m8-picker-buttons {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m8-picker-btn {
+    min-width: 2.3rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m8-picker-btn:hover:not(.active):not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m8-picker-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m8-picker-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  /* Operate play button ------------------------------------------------ */
+  .m8-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+  }
+  .m8-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m8-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m8-operate-caption strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+</style>
