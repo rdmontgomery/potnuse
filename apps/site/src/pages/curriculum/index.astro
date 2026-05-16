@@ -12,62 +12,79 @@ import Module5 from '@/components/curriculum/Module5.astro';
 // The spine of the curriculum: twelve modules from Z_12 to active matter.
 // Order is firm; pace is the user's. Module 0 is the only one with content in
 // this scaffold; the rest stand as placeholders.
+// Each module carries a `lens` describing what the spine should read
+// out of the running chorale phrase for that module. PersistentStaff
+// observes which section is most-in-view and surfaces the lens above
+// its staff, so the sidebar tracks the active concept rather than
+// staying frozen on the page-load reduction.
 const MODULES = [
   {
     title: 'The Equal-Tempered Group',
     kicker:
       'Z_12 from the keyboard up. Pitch class as quotient, transposition as group action.',
+    lens: 'soprano pitches of the chorale as pcs on the clock',
   },
   {
     title: 'Spectral Foundations',
     kicker:
       'The overtone series justifies the triad before Roman numerals name it.',
+    lens: 'the chorale’s bass note as a stack of partials',
   },
   {
     title: 'Intervals and Generators',
     kicker: 'Why fifths circle: gcd(7, 12) = 1.',
+    lens: 'chord-root motion as walks on the cycle of fifths',
   },
   {
     title: 'Scales as Subsets',
     kicker:
       'The diatonic scale as the maximally even seven-subset. Modes as rotations.',
+    lens: 'the chorale’s diatonic set, viewed as one mode of seven',
   },
   {
     title: 'Triads and Roman Numerals',
     kicker:
       'Tertian stacking from spectral logic; figured-bass numerals on top.',
+    lens: 'triads from each scale degree under the soprano line',
   },
   {
     title: 'Functional Harmony',
     kicker: 'T–PD–D–T as orbit structure. Cadence as energy minimization.',
+    lens: 'function tags on the chorale’s four-bar phrase',
   },
   {
     title: 'Chromatic Harmony',
     kicker:
       'Secondary dominants as local tonicization. Neapolitan, augmented sixths, modal mixture.',
+    lens: 'borrowed and tonicizing chords against the diatonic backdrop',
   },
   {
     title: 'Neo-Riemannian Theory',
     kicker: 'P, L, R as involutions. The Tonnetz as torus triangulation.',
+    lens: 'consonant-triad transformations: P, L, R as moves',
   },
   {
     title: 'Orbifold Geometry of Voice Leading',
     kicker:
       'Tymoczko’s Tⁿ/Sₙ. Efficient voice leading as geodesic motion.',
+    lens: 'voice-leading distances as paths in the orbifold',
   },
   {
     title: 'Statistical Tonality',
     kicker:
       'Krumhansl–Schmuckler probe tones. Key-finding by correlation.',
+    lens: 'pc-distribution of the phrase against the major/minor profiles',
   },
   {
     title: 'Schenkerian Reduction',
     kicker: 'Foreground, middleground, background. The Ursatz, formalized.',
+    lens: 'the chorale at each reduction level — the spine’s native job',
   },
   {
     title: 'Music as Active Matter',
     kicker:
       'Tonality as order parameter. Modulation as phase transition.',
+    lens: 'tonality as a slow-relaxing order parameter under perturbation',
   },
 ];
 ---
@@ -99,50 +116,51 @@ const MODULES = [
       <main class="sections">
         {
           MODULES.map((m, i) => {
+            const props = { index: i, title: m.title, kicker: m.kicker, lens: m.lens };
             if (i === 0) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module0 />
                 </ModuleSection>
               );
             }
             if (i === 1) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module1 />
                 </ModuleSection>
               );
             }
             if (i === 2) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module2 />
                 </ModuleSection>
               );
             }
             if (i === 3) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module3 />
                 </ModuleSection>
               );
             }
             if (i === 4) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module4 />
                 </ModuleSection>
               );
             }
             if (i === 5) {
               return (
-                <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+                <ModuleSection {...props}>
                   <Module5 />
                 </ModuleSection>
               );
             }
             return (
-              <ModuleSection index={i} title={m.title} kicker={m.kicker}>
+              <ModuleSection {...props}>
                 <p class="placeholder">
                   Module {i} placeholder. Content lands here once the section
                   pattern stabilizes around Module 0.

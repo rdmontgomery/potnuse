@@ -14,6 +14,13 @@
       <span class="spine-label">spine</span>
       <span class="spine-tier" id="spine-tier-label">head</span>
     </div>
+    <p
+      id="spine-lens"
+      class="spine-lens"
+      aria-live="polite"
+    >
+      module 0 — soprano pitches of the chorale as pcs on the clock
+    </p>
     <div class="spine-staff-wrap">
       <div id="spine-staff-ghost" class="spine-staff spine-staff-ghost" aria-hidden="true"></div>
       <div id="spine-staff" class="spine-staff spine-staff-solid"></div>
@@ -78,6 +85,45 @@
     slider.addEventListener('input', (e) => {
       applyTier(Number((e.target as HTMLInputElement).value));
     });
+
+    // Lens tracker: observe each module section and surface the one
+    // closest to the viewport center. The spine then reads as a per-
+    // module commentary on the running example, not as page furniture
+    // frozen on the page-load tier.
+    const lensEl = document.getElementById('spine-lens') as HTMLParagraphElement | null;
+    if (lensEl) {
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('section.module[data-module]'),
+      );
+      let currentIndex = -1;
+      function pickActive() {
+        const mid = window.scrollY + window.innerHeight / 2;
+        let bestIndex = -1;
+        let bestDist = Infinity;
+        for (const sec of sections) {
+          const rect = sec.getBoundingClientRect();
+          const top = rect.top + window.scrollY;
+          const bottom = top + rect.height;
+          const center = (top + bottom) / 2;
+          const dist = Math.abs(center - mid);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestIndex = Number(sec.dataset.module);
+          }
+        }
+        if (bestIndex !== currentIndex && bestIndex >= 0) {
+          currentIndex = bestIndex;
+          const sec = sections.find((s) => Number(s.dataset.module) === bestIndex);
+          const lens = sec?.dataset.spineLens ?? '';
+          lensEl!.textContent = lens
+            ? `module ${bestIndex} — ${lens}`
+            : `module ${bestIndex}`;
+        }
+      }
+      pickActive();
+      window.addEventListener('scroll', pickActive, { passive: true });
+      window.addEventListener('resize', pickActive);
+    }
   }
 </script>
 
@@ -113,6 +159,14 @@
     font-style: italic;
     font-size: 0.95rem;
     color: #8a6b1e;
+  }
+  .spine-lens {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.78rem;
+    color: #6b5d48;
+    margin: 0;
+    line-height: 1.35;
   }
   /* Ghost layer sits in a grid cell underneath the solid staff so the next
      tier's extra notes peek through at low opacity. */

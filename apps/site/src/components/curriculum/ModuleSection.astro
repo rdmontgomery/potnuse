@@ -1,21 +1,31 @@
 ---
-// Section frame for a curriculum module. Step-1 scaffold renders the chrome
-// (number, title, kicker) and a single default slot. The five-slot template
-// (Behold / Derive / Operate / Prompt / Bridge) crystallizes when Module 1
-// arrives and tells us what's actually shared.
+// Section frame for a curriculum module. Renders the chrome (number,
+// title, kicker) and a single slot for the module's content.
+//
+// The optional `lens` prop is a one-line description of how the spine
+// should read the running example *for this module*. PersistentStaff
+// observes which section is in view and updates its header text so the
+// spine connects to the active concept instead of floating
+// independently of it.
 
 interface Props {
   index: number;
   title: string;
   kicker?: string;
+  lens?: string;
 }
 
-const { index, title, kicker } = Astro.props;
+const { index, title, kicker, lens } = Astro.props;
 const id = `module-${index}`;
 const num = String(index).padStart(2, '0');
 ---
 
-<section class="module" id={id} data-module={index}>
+<section
+  class="module"
+  id={id}
+  data-module={index}
+  data-spine-lens={lens ?? ''}
+>
   <header class="module-head">
     <span class="module-num">{num}</span>
     <h2 class="module-title">{title}</h2>
