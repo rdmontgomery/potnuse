@@ -10,9 +10,9 @@ import Module2Operate from './Module2Operate';
 import Module2Prompts from './Module2Prompts';
 ---
 
-<div class="m2">
-  <section class="m2-block">
-    <p class="m2-eyebrow">behold</p>
+<div class="m m2">
+  <section class="m-block m2-block">
+    <p class="m-eyebrow">behold</p>
     <p>
       Start on C. Step up by seven semitones — a perfect fifth — and you
       land on G. Step again: D. Again: A. Twelve steps later, you have
@@ -23,8 +23,8 @@ import Module2Prompts from './Module2Prompts';
     <Module2Behold client:visible />
   </section>
 
-  <section class="m2-block">
-    <p class="m2-eyebrow">derive</p>
+  <section class="m-block m2-block">
+    <p class="m-eyebrow">derive</p>
     <p>
       The interval N generates a cyclic subgroup whose size is{' '}
       <code>12 / gcd(N, 12)</code>. When gcd is 1, the orbit is all of
@@ -36,8 +36,8 @@ import Module2Prompts from './Module2Prompts';
     <Module2Derive client:visible />
   </section>
 
-  <section class="m2-block">
-    <p class="m2-eyebrow">operate</p>
+  <section class="m-block m2-block">
+    <p class="m-eyebrow">operate</p>
     <p>
       Now hear it. Pick an interval; press <strong>build the orbit</strong>;
       the piano stacks the orbit's pcs one at a time, each note
@@ -48,17 +48,17 @@ import Module2Prompts from './Module2Prompts';
     <Module2Operate client:visible />
   </section>
 
-  <section class="m2-block">
-    <p class="m2-eyebrow">prompt</p>
-    <p class="m2-prompt-intro">
+  <section class="m-block m2-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
       Two cards on gcd and orbit size. Same "unsure" rule — it brings the
       card back around sooner.
     </p>
     <Module2Prompts client:visible />
   </section>
 
-  <section class="m2-block m2-bridge">
-    <p class="m2-eyebrow">bridge</p>
+  <section class="m-block m2-block m-bridge m2-bridge">
+    <p class="m-eyebrow">bridge</p>
     <p>
       Generators give us chords by repetition; gcd dictates the shape.
       But the <em>diatonic</em> scale — seven notes from twelve — isn't
@@ -72,55 +72,8 @@ import Module2Prompts from './Module2Prompts';
 <style is:global>
   /* Module 2 chrome. Mirrors Modules 0 + 1; rules live next to those so
      the page-wide style remains uniform without any cross-module
-     imports. */
-  .m2 {
-    display: flex;
-    flex-direction: column;
-    gap: 3rem;
-  }
-  .m2-block {
-    color: var(--text);
-  }
-  .m2-eyebrow {
-    font-family: var(--font-jetbrains);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    margin: 0 0 0.85rem;
-  }
-  .m2 p {
-    font-family: var(--font-crimson);
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--text);
-    margin: 0 0 1rem;
-  }
-  .m2 p em {
-    font-style: italic;
-  }
-  .m2 p strong {
-    font-weight: 500;
-    color: var(--accent);
-  }
-  .m2 code {
-    font-family: var(--font-jetbrains);
-    font-size: 0.85em;
-    color: var(--accent-dim);
-    background: var(--bg-card);
-    padding: 0.05em 0.4em;
-    border-radius: 2px;
-  }
-  .m2-bridge p {
-    border-left: 2px solid var(--accent-dim);
-    padding-left: 1rem;
-    font-style: italic;
-    color: var(--text-dim);
-  }
-  .m2-prompt-intro {
-    font-size: 0.95rem !important;
-    color: var(--text-dim) !important;
-  }
+     imports. Chrome (.m, .m-block, .m-eyebrow, .m p, .m-bridge p,
+     .m-prompts, .m-prompt-intro) lives in curriculum/index.astro. */
 
   /* Behold ---------------------------------------------------------------- */
   .m2-behold {
@@ -356,10 +309,4 @@ import Module2Prompts from './Module2Prompts';
     font-weight: 500;
   }
 
-  /* Prompts list — uses the same .prompt chrome as Module 0. */
-  .m2-prompts {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
 </style>

@@ -9,9 +9,9 @@ import Module5Operate from './Module5Operate';
 import Module5Prompts from './Module5Prompts';
 ---
 
-<div class="m5">
-  <section class="m5-block">
-    <p class="m5-eyebrow">behold</p>
+<div class="m m5">
+  <section class="m-block m5-block">
+    <p class="m-eyebrow">behold</p>
     <p>
       The seven diatonic triads don't act independently. They group into
       three <em>roles</em>: tonic (home), predominant (pull away),
@@ -22,8 +22,8 @@ import Module5Prompts from './Module5Prompts';
     <Module5Behold client:visible />
   </section>
 
-  <section class="m5-block">
-    <p class="m5-eyebrow">derive</p>
+  <section class="m-block m5-block">
+    <p class="m-eyebrow">derive</p>
     <p>
       Tonic chords (I, vi, iii) stabilize. Predominants (IV, ii) set up
       tension. Dominants (V, vii°) want to resolve down a fifth — that's
@@ -34,8 +34,8 @@ import Module5Prompts from './Module5Prompts';
     <Module5Derive client:visible />
   </section>
 
-  <section class="m5-block">
-    <p class="m5-eyebrow">operate</p>
+  <section class="m-block m5-block">
+    <p class="m-eyebrow">operate</p>
     <p>
       A four-slot progression with the function order locked. Within
       each slot, swap in a substitute: vi for the home, ii for the
@@ -45,16 +45,16 @@ import Module5Prompts from './Module5Prompts';
     <Module5Operate client:visible />
   </section>
 
-  <section class="m5-block">
-    <p class="m5-eyebrow">prompt</p>
-    <p class="m5-prompt-intro">
+  <section class="m-block m5-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
       Two cards on function and cadence.
     </p>
     <Module5Prompts client:visible />
   </section>
 
-  <section class="m5-block m5-bridge">
-    <p class="m5-eyebrow">bridge</p>
+  <section class="m-block m5-block m-bridge m5-bridge">
+    <p class="m-eyebrow">bridge</p>
     <p>
       Diatonic harmony gets a long way. Outside the seven scale tones,
       the chromatic ones open secondary dominants, modal mixture,
@@ -66,55 +66,7 @@ import Module5Prompts from './Module5Prompts';
 </div>
 
 <style is:global>
-  /* Module 5 chrome. */
-  .m5 {
-    display: flex;
-    flex-direction: column;
-    gap: 3rem;
-  }
-  .m5-block {
-    color: var(--text);
-  }
-  .m5-eyebrow {
-    font-family: var(--font-jetbrains);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    margin: 0 0 0.85rem;
-  }
-  .m5 p {
-    font-family: var(--font-crimson);
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--text);
-    margin: 0 0 1rem;
-  }
-  .m5 p em {
-    font-style: italic;
-  }
-  .m5 p strong {
-    font-weight: 500;
-    color: var(--accent);
-  }
-  .m5 code {
-    font-family: var(--font-jetbrains);
-    font-size: 0.85em;
-    color: var(--accent-dim);
-    background: var(--bg-card);
-    padding: 0.05em 0.4em;
-    border-radius: 2px;
-  }
-  .m5-bridge p {
-    border-left: 2px solid var(--accent-dim);
-    padding-left: 1rem;
-    font-style: italic;
-    color: var(--text-dim);
-  }
-  .m5-prompt-intro {
-    font-size: 0.95rem !important;
-    color: var(--text-dim) !important;
-  }
+  /* Module 5 specific rules. Chrome lives in curriculum/index.astro. */
 
   /* Behold ---------------------------------------------------------------- */
   .m5-behold {
@@ -396,12 +348,6 @@ import Module5Prompts from './Module5Prompts';
     text-align: center;
     max-width: 46ch;
     line-height: 1.55 !important;
-  }
-
-  .m5-prompts {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
   }
 
   @media (max-width: 480px) {

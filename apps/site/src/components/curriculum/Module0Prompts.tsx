@@ -20,7 +20,7 @@ export default function Module0Prompts() {
   // re-renders without re-reading the store.
   const seeds = useMemo(() => freshModuleZeroCards(), []);
   return (
-    <div className="m0-prompts">
+    <div className="m-prompts m0-prompts">
       {seeds.map((seed) => (
         <InlinePrompt key={seed.id} seed={seed} onAfterSubmit={notifyGate} />
       ))}

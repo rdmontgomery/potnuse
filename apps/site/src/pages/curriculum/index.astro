@@ -245,6 +245,65 @@ const MODULES = [
   .hero-meta a:hover {
     color: var(--accent-dim);
   }
+  /* Shared module chrome — typography and rhythm common to every
+     module's content. Extracting it here means the per-module .astro
+     files only need to declare their own interactive bits; the
+     five-block rhythm is a default that future modules can override
+     by adding their own selectors, not by copy-pasting 60 lines. */
+  :global(.m) {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  :global(.m-block) {
+    color: var(--text);
+  }
+  :global(.m-eyebrow) {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+  }
+  :global(.m p) {
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 1rem;
+  }
+  :global(.m p em) {
+    font-style: italic;
+  }
+  :global(.m p strong) {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  :global(.m code) {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85em;
+    color: var(--accent-dim);
+    background: var(--bg-card);
+    padding: 0.05em 0.4em;
+    border-radius: 2px;
+  }
+  :global(.m-bridge p) {
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+  :global(.m-prompt-intro) {
+    font-size: 0.95rem !important;
+    color: var(--text-dim) !important;
+  }
+  :global(.m-prompts) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
   .hero-meta-divider {
     margin: 0 0.5rem;
   }

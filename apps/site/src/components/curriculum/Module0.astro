@@ -11,17 +11,17 @@ import Module0Prompts from './Module0Prompts';
 import Module0Gate from './Module0Gate';
 ---
 
-<div class="m0">
-  <section class="m0-block m0-behold">
-    <p class="m0-eyebrow">behold</p>
+<div class="m m0">
+  <section class="m-block m0-block m0-behold">
+    <p class="m-eyebrow">behold</p>
     <KeyboardToClock client:visible />
     <p class="m0-caption">
       Twelve pitches. Twelve positions. The keyboard you have lived your whole life inside rolls up into a clock.
     </p>
   </section>
 
-  <section class="m0-block">
-    <p class="m0-eyebrow">derive</p>
+  <section class="m-block m0-block">
+    <p class="m-eyebrow">derive</p>
     <p>
       Pick a note on a piano. Now pick the note an octave above it. The two pitches are different — one rings lower, one rings higher — but you know they share something. That something is the <strong>pitch class</strong>: the equivalence class of pitches under octave shift. Every C, in every octave, is the same element of Z<sub>12</sub>. The clock is the quotient.
     </p>
@@ -31,17 +31,17 @@ import Module0Gate from './Module0Gate';
     <Module0Derive client:visible />
   </section>
 
-  <section class="m0-block">
-    <p class="m0-eyebrow">operate</p>
+  <section class="m-block m0-block">
+    <p class="m-eyebrow">operate</p>
     <p>
       Four bars of a Bach-chorale-style phrase, in C. Each notehead is labeled with its pitch class — the integer in Z<sub>12</sub>. The slider underneath transposes the entire phrase. As it moves, the numbers above the noteheads cycle, the clock shifts to the new key, and the same pattern keeps its shape.
     </p>
     <Module0Operate client:visible />
   </section>
 
-  <section class="m0-block">
-    <p class="m0-eyebrow">prompt</p>
-    <p class="m0-prompt-intro">
+  <section class="m-block m0-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
       Two cards. The first one wants you to act on the clock; the second wants a word. Either way: if you are not sure, say so. Unsure is honest, and it brings the card back sooner.
     </p>
     <Module0Prompts client:visible />
@@ -49,8 +49,8 @@ import Module0Gate from './Module0Gate';
 
   <Module0Gate client:visible />
 
-  <section class="m0-block m0-bridge">
-    <p class="m0-eyebrow">bridge</p>
+  <section class="m-block m0-block m-bridge m0-bridge">
+    <p class="m-eyebrow">bridge</p>
     <p>
       These numbers tell us <em>where</em> the notes sit, but not <em>why</em> some combinations sound consonant. Next: the overtones.
     </p>
@@ -58,48 +58,12 @@ import Module0Gate from './Module0Gate';
 </div>
 
 <style is:global>
-  /* Module 0 layout. The :global selector reaches into the React islands so
-     each component file can stay focused on behavior; centralizing the chrome
-     here keeps the curriculum-wide palette consistent. */
+  /* Module 0 layout. Shared chrome (.m, .m-block, .m-eyebrow, .m p,
+     .m-bridge p, .m-prompts, .m-prompt-intro) lives in
+     curriculum/index.astro so every module picks it up by class alone.
+     Rules below are Module 0 specific — Behold/Derive/Operate
+     interactive elements, the soft gate, and the prompts list. */
 
-  .m0 {
-    display: flex;
-    flex-direction: column;
-    gap: 3rem;
-  }
-  .m0-block {
-    color: var(--text);
-  }
-  .m0-eyebrow {
-    font-family: var(--font-jetbrains);
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    margin: 0 0 0.85rem;
-  }
-  .m0 p {
-    font-family: var(--font-crimson);
-    font-size: 1.05rem;
-    line-height: 1.65;
-    color: var(--text);
-    margin: 0 0 1rem;
-  }
-  .m0 p em {
-    font-style: italic;
-  }
-  .m0 p strong {
-    font-weight: 500;
-    color: var(--accent);
-  }
-  .m0 code {
-    font-family: var(--font-jetbrains);
-    font-size: 0.85em;
-    color: var(--accent-dim);
-    background: var(--bg-card);
-    padding: 0.05em 0.4em;
-    border-radius: 2px;
-  }
   .m0-caption {
     font-style: italic;
     color: var(--text-dim);
@@ -107,12 +71,6 @@ import Module0Gate from './Module0Gate';
     margin: 1rem auto 0 !important;
     max-width: 36ch;
     font-size: 0.98rem !important;
-  }
-  .m0-bridge p {
-    border-left: 2px solid var(--accent-dim);
-    padding-left: 1rem;
-    font-style: italic;
-    color: var(--text-dim);
   }
 
   /* Checkpoint --------------------------------------------------------- */
@@ -447,15 +405,7 @@ import Module0Gate from './Module0Gate';
   }
 
   /* Prompts --------------------------------------------------------------- */
-  .m0-prompt-intro {
-    font-size: 0.95rem !important;
-    color: var(--text-dim) !important;
-  }
-  .m0-prompts {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
+  /* .m-prompts + .m-prompt-intro live in curriculum/index.astro now. */
   .prompt {
     background: var(--bg-card);
     border: 1px solid var(--border);
