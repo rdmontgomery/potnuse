@@ -4,7 +4,6 @@ import { BWV269 } from '@/lib/music/bwv269';
 import { engrave, type BarLayout } from '@/lib/pentimento/engrave';
 import {
   mod12,
-  pcName,
   pitchClassOf,
   type PitchClass,
 } from '@/lib/music/pitchClass';
@@ -16,43 +15,77 @@ import type { PNote, Song } from '@/lib/pentimento/types';
 // once they're transposed by the current key offset.
 const MAJOR_SCALE: readonly number[] = [0, 2, 4, 5, 7, 9, 11];
 
-const KEY_NAMES: readonly string[] = [
-  'C',
-  'C♯ / D♭',
-  'D',
-  'D♯ / E♭',
-  'E',
-  'F',
-  'F♯ / G♭',
-  'G',
-  'G♯ / A♭',
-  'A',
-  'A♯ / B♭',
-  'B',
-];
+// Per-transposition key signature. Picked along the circle of fifths so
+// each transposition gets the conventional spelling (fewest accidentals);
+// the tritone cases split direction-aware so ±6 don't collide.
+const KEY_SIG_BY_T: Record<number, string> = {
+  '-6': 'Gb',
+  '-5': 'G',
+  '-4': 'Ab',
+  '-3': 'A',
+  '-2': 'Bb',
+  '-1': 'B',
+  '0': 'C',
+  '1': 'Db',
+  '2': 'D',
+  '3': 'Eb',
+  '4': 'E',
+  '5': 'F',
+  '6': 'F#',
+};
+
+// Display labels mirroring KEY_SIG_BY_T but with proper unicode glyphs.
+const KEY_DISPLAY_BY_T: Record<number, string> = {
+  '-6': 'G♭',
+  '-5': 'G',
+  '-4': 'A♭',
+  '-3': 'A',
+  '-2': 'B♭',
+  '-1': 'B',
+  '0': 'C',
+  '1': 'D♭',
+  '2': 'D',
+  '3': 'E♭',
+  '4': 'E',
+  '5': 'F',
+  '6': 'F♯',
+};
+
+const FLAT_KEYS = new Set(['F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb']);
+
+// Two letter banks indexed by pitch class. Choosing the right bank by key
+// is what lets applyAccidentals leave the in-key notes unadorned — spell a
+// pc 1 as "db" in D♭ major and it's already in the signature.
+const SHARP_LETTERS = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'];
+const FLAT_LETTERS = ['c', 'db', 'd', 'eb', 'e', 'f', 'gb', 'g', 'ab', 'a', 'bb', 'b'];
+
+function lettersForKey(key: string): readonly string[] {
+  return FLAT_KEYS.has(key) ? FLAT_LETTERS : SHARP_LETTERS;
+}
 
 // Shift every authored pitch by n semitones at the VexFlow-string level.
-// engrave reads PNote.pitch directly; cloning the song with shifted strings
-// keeps the engraver oblivious to transposition and lets it draw the new
-// key signature's accidentals naturally.
-const LETTERS = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'];
-
-function transposePitchString(p: string, n: number): string {
-  const [head, oct] = p.split('/');
+// engrave reads PNote.pitch directly; cloning the song with respelled
+// strings keeps the engraver oblivious to transposition.
+function transposePitchString(
+  p: string,
+  n: number,
+  letters: readonly string[],
+): string {
+  const [, oct] = p.split('/');
   const pc = pitchClassOf(p);
   const newPc = mod12(pc + n);
   const newOctOffset = Math.floor((pc + n) / 12);
   const newOct = Number(oct) + newOctOffset;
-  return `${LETTERS[newPc]}/${newOct}`;
+  return `${letters[newPc]}/${newOct}`;
 }
 
-function transposeSong(song: Song, n: number): Song {
+function transposeSong(song: Song, n: number, letters: readonly string[]): Song {
   if (n === 0) return song;
   return {
     ...song,
     notes: song.notes.map((note) => ({
       ...note,
-      pitch: transposePitchString(note.pitch, n),
+      pitch: transposePitchString(note.pitch, n, letters),
     })),
   };
 }
@@ -77,7 +110,11 @@ export default function Module0Operate() {
   const phraseEndRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
-  const transposed = useMemo(() => transposeSong(BWV269, t), [t]);
+  const keySig = KEY_SIG_BY_T[String(t)] ?? 'C';
+  const transposed = useMemo(
+    () => transposeSong(BWV269, t, lettersForKey(keySig)),
+    [t, keySig],
+  );
 
   useEffect(() => {
     const el = staffRef.current;
@@ -86,6 +123,7 @@ export default function Module0Operate() {
       const result = engrave(el, transposed, {
         tier: 0,
         compact: false,
+        keySig,
         noteAnnotator: (n: PNote) => String(pitchClassOf(n.pitch)),
       });
       layoutRef.current = result.bars;
@@ -107,7 +145,7 @@ export default function Module0Operate() {
       layoutRef.current = [];
       playheadRef.current = null;
     }
-  }, [transposed]);
+  }, [transposed, keySig]);
 
   // Cancel any pending end-of-playback timer and rAF if the component
   // unmounts mid-phrase. The sampler itself is module-scoped — leaving its
@@ -196,7 +234,7 @@ export default function Module0Operate() {
   };
 
   const keyPcs: PitchClass[] = MAJOR_SCALE.map((s) => mod12(s + t));
-  const keyName = KEY_NAMES[mod12(t)];
+  const keyName = KEY_DISPLAY_BY_T[String(t)] ?? 'C';
   const slidersDisabled = audioState === 'playing';
 
   return (
@@ -253,8 +291,8 @@ export default function Module0Operate() {
             ariaLabel={`${keyName} major scale on the clock`}
           />
           <p className="m0-operate-clock-caption">
-            the pcs lit up are the seven diatonic notes of {pcName(mod12(t))}{' '}
-            major. transpose: the whole pattern rotates rigidly.
+            the pcs lit up are the seven diatonic notes of {keyName} major.
+            transpose: the whole pattern rotates rigidly.
           </p>
         </div>
       </div>

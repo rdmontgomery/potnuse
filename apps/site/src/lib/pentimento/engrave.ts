@@ -20,7 +20,10 @@ const FULL_LAYOUT = {
   barWidth: 170,
   clefWidth: 70,
   systemHeight: 200,
-  padX: 16,
+  // VexFlow's brace + clef glyphs extend ~18px to the left of the stave's
+  // start x, so padX has to clear that or the leftmost system gets sliced
+  // by the SVG's left edge.
+  padX: 26,
   padY: 24,
   bassOffset: 90,
   formatPad: 30,
@@ -31,7 +34,7 @@ const COMPACT_LAYOUT = {
   barWidth: 62,
   clefWidth: 30,
   systemHeight: 110,
-  padX: 8,
+  padX: 20,
   padY: 8,
   bassOffset: 50,
   formatPad: 14,
@@ -163,6 +166,12 @@ export interface EngraveOptions {
   // logical PNote is annotated, so multi-unit notes (whole = h + h, etc.)
   // get one label, not several.
   noteAnnotator?: (n: PNote) => string | null | undefined;
+  // Key signature for the staff. Drawn on the first system, and passed to
+  // Accidental.applyAccidentals so notes already in the key drop their
+  // accidentals. Defaults to 'C' which renders every accidental explicitly.
+  // Use VexFlow key names: 'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#',
+  // 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'.
+  keySig?: string;
 }
 
 // Engrave the active tier into the container. Single-pass: dark ink, full
@@ -176,6 +185,7 @@ export function engrave(
   container.innerHTML = '';
 
   const { tier } = options;
+  const keySig = options.keySig ?? 'C';
   const L = options.compact ? COMPACT_LAYOUT : FULL_LAYOUT;
 
   const windowStart = options.window?.start ?? 0;
@@ -218,6 +228,10 @@ export function engrave(
       if (isSystemStart) {
         treble.addClef('treble');
         bass.addClef('bass');
+        if (keySig !== 'C') {
+          treble.addKeySignature(keySig);
+          bass.addKeySignature(keySig);
+        }
         if (s === 0) {
           treble.addTimeSignature('4/4');
           bass.addTimeSignature('4/4');
@@ -258,8 +272,8 @@ export function engrave(
       const bassVoice = new Voice({ numBeats: 4, beatValue: 4 });
       bassVoice.addTickables(bassMat.tickables);
 
-      Accidental.applyAccidentals([trebleVoice], 'C');
-      Accidental.applyAccidentals([bassVoice], 'C');
+      Accidental.applyAccidentals([trebleVoice], keySig);
+      Accidental.applyAccidentals([bassVoice], keySig);
 
       const formatter = new Formatter();
       formatter.joinVoices([trebleVoice]).format([trebleVoice], w - L.formatPad);
