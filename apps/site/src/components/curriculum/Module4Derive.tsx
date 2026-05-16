@@ -1,25 +1,34 @@
 import { useState } from 'react';
 import {
+  diatonicTriadMidi,
   diatonicTriadPcs,
   romanFor,
   triadQuality,
   ROMAN_NUMERALS,
   QUALITY_LABEL,
 } from '@/lib/music/triads';
-import { PITCH_NAMES } from '@/lib/music/pitchClass';
-import Z12Clock from './Z12Clock';
+import { PITCH_NAMES, mod12 } from '@/lib/music/pitchClass';
+import ChordStaff from './ChordStaff';
 
-// Derive for Module 4. Manual scale-degree picker. The clock locks the
-// triad polygon in place so the listener can compare shapes — major
-// triads are isoceles triangles with a long bottom edge, minor flips
-// the long edge to the top, diminished is the only one that fits inside
-// a tritone (its longest edge is six positions).
+const VEX_LETTERS = ['c', 'c#', 'd', 'd#', 'e', 'f', 'f#', 'g', 'g#', 'a', 'a#', 'b'];
+
+function midiToVexKey(midi: number): string {
+  const pc = mod12(midi);
+  const octave = Math.floor(midi / 12) - 1;
+  return `${VEX_LETTERS[pc]}/${octave}`;
+}
+
+// Derive for Module 4. The triad lives on a treble staff now — the
+// notation native to chord-as-stack-of-thirds, in a way the clock's
+// pc-set view never quite is. The Roman numeral prints above the
+// staff, the spelling and quality print below. The clock is still
+// fine for orbit-and-symmetry views; this module wanted the staff.
 
 export default function Module4Derive() {
   const [degree, setDegree] = useState(0);
   const triad = diatonicTriadPcs(degree);
-  const sorted = [...triad].sort((a, b) => a - b);
-  const polygon = [...sorted, sorted[0]];
+  const midis = diatonicTriadMidi(degree);
+  const vexKeys = midis.map(midiToVexKey);
   const quality = triadQuality(degree);
 
   return (
@@ -46,14 +55,14 @@ export default function Module4Derive() {
         </div>
       </div>
 
-      <Z12Clock
-        pcs={sorted}
-        polygonPath={polygon}
-        tonicPc={triad[0]}
-        labels="both"
-        size={240}
-        ariaLabel={`${romanFor(degree)} triad of C major`}
-      />
+      <div className="m4-staff-wrap">
+        <ChordStaff
+          pitches={vexKeys}
+          label={romanFor(degree)}
+          size={260}
+          ariaLabel={`${romanFor(degree)} triad: ${triad.map((pc) => PITCH_NAMES[pc]).join(', ')}`}
+        />
+      </div>
 
       <div className="m4-derive-info">
         <div className="m4-stat">
