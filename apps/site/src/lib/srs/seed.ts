@@ -325,6 +325,44 @@ const MODULE_6_CARD_DEFS = [
 
 export type ModuleSixCardId = (typeof MODULE_6_CARD_DEFS)[number]['id'];
 
+// Module 7: Neo-Riemannian theory.
+const MODULE_7_CARD_DEFS = [
+  {
+    id: 'm7.plr-r-target',
+    moduleId: 7,
+    concept: 'plr-transformations' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question: 'Apply R to C major. What triad do you get?',
+      choices: ['C minor', 'E minor', 'A minor', 'G major'],
+      correctIndex: 2,
+      explanation:
+        'A minor — the relative minor of C major. R swaps a major triad with its relative minor; they share two pitches (C and E).',
+    },
+  },
+  {
+    id: 'm7.plr-involution',
+    moduleId: 7,
+    concept: 'plr-involutions' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Each of P, L, R is an involution. What does that mean?',
+      choices: [
+        'They commute with each other',
+        'Applying any one of them twice returns the original triad',
+        'They generate every possible chord',
+        'They preserve the root pitch class',
+      ],
+      correctIndex: 1,
+      explanation:
+        'Each is its own inverse: P(P(x)) = x, L(L(x)) = x, R(R(x)) = x. That\'s the formal meaning of involution.',
+    },
+  },
+] as const;
+
+export type ModuleSevenCardId = (typeof MODULE_7_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
@@ -333,6 +371,7 @@ const ALL_CARD_DEFS = [
   ...MODULE_4_CARD_DEFS,
   ...MODULE_5_CARD_DEFS,
   ...MODULE_6_CARD_DEFS,
+  ...MODULE_7_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -372,6 +411,10 @@ export function freshModuleFiveCards(now: Date = new Date()): Card[] {
 
 export function freshModuleSixCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_6_CARD_DEFS, now);
+}
+
+export function freshModuleSevenCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_7_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
