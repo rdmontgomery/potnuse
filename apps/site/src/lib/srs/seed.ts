@@ -206,12 +206,47 @@ const MODULE_4_CARD_DEFS = [
 
 export type ModuleFourCardId = (typeof MODULE_4_CARD_DEFS)[number]['id'];
 
+// Module 5: Functional Harmony.
+const MODULE_5_CARD_DEFS = [
+  {
+    id: 'm5.not-predominant',
+    moduleId: 5,
+    concept: 'harmonic-function' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Which of these does NOT serve a predominant function in a major key?',
+      choices: ['ii', 'IV', 'V', 'vi (used as pre-dominant substitute)'],
+      correctIndex: 2,
+      explanation:
+        'V is the dominant — the chord that pulls toward I. The predominants set up the dominant; they don\'t replace it. ii and IV are the canonical pair; vi can stand in for the predominant in some progressions but it\'s not the wrong answer here. V is unambiguously not a predominant.',
+    },
+  },
+  {
+    id: 'm5.authentic-cadence',
+    moduleId: 5,
+    concept: 'cadence' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'An authentic cadence ends with which two-chord motion?',
+      choices: ['IV → I', 'V → I', 'V → vi', 'ii → V'],
+      correctIndex: 1,
+      explanation:
+        'V → I is the authentic cadence — the most decisive way to land on the tonic. IV → I is the plagal cadence ("amen"); V → vi is the deceptive cadence; ii → V is mid-phrase, not a close.',
+    },
+  },
+] as const;
+
+export type ModuleFiveCardId = (typeof MODULE_5_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
   ...MODULE_2_CARD_DEFS,
   ...MODULE_3_CARD_DEFS,
   ...MODULE_4_CARD_DEFS,
+  ...MODULE_5_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -243,6 +278,10 @@ export function freshModuleThreeCards(now: Date = new Date()): Card[] {
 
 export function freshModuleFourCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_4_CARD_DEFS, now);
+}
+
+export function freshModuleFiveCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_5_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
