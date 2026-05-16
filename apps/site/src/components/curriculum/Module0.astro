@@ -114,12 +114,40 @@ import Module0Prompts from './Module0Prompts';
 
   /* Behold ----------------------------------------------------------------- */
   .kbd-to-clock {
+    position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.5rem;
     max-width: 420px;
     margin: 0 auto;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  .kbd-to-clock:hover,
+  .kbd-to-clock:focus-visible {
+    border-color: var(--accent-dim);
+    outline: none;
+  }
+  .kbd-to-clock.chiming {
+    border-color: var(--accent);
+  }
+  .kbd-to-clock-hint {
+    position: absolute;
+    bottom: 0.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+    margin: 0 !important;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+  }
+  .kbd-to-clock-hint.hidden {
+    opacity: 0;
   }
 
   /* Derive ---------------------------------------------------------------- */

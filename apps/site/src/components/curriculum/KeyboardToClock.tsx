@@ -1,9 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import { getPiano } from '@/lib/music/audio';
 
 // Behold for Module 0. Twelve pitches sit in a horizontal row until the
 // section comes into view, at which point they wave one by one into a clock.
 // The line wrapping into a circle is the quotient made visible — no labels
 // required, the geometry does the teaching.
+//
+// Tapping the visualization plays a soft C-major triad. That's "sit with it"
+// under the doc's audio mandate, deferred behind a click so the browser's
+// autoplay policy stays happy.
 
 const VIEW_W = 320;
 const VIEW_H = 280;
@@ -14,6 +19,8 @@ const CIRCLE_R = 92;
 const ROW_Y = 38;
 const ROW_LEFT = 26;
 const ROW_RIGHT = VIEW_W - 26;
+const TRIAD = ['C4', 'E4', 'G4', 'C5'];
+const TRIAD_DURATION_SEC = 4.8;
 
 function rowPos(pc: number): { x: number; y: number } {
   const span = ROW_RIGHT - ROW_LEFT;
@@ -31,12 +38,13 @@ function clockPos(pc: number): { x: number; y: number } {
 export default function KeyboardToClock() {
   const ref = useRef<HTMLDivElement>(null);
   const [wrapped, setWrapped] = useState(false);
+  const [hasHeard, setHasHeard] = useState(false);
+  const [chiming, setChiming] = useState(false);
+  const chimeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Server-rendered initial state is the row. If IntersectionObserver isn't
-    // available we just skip straight to the clock so the section still reads.
     if (typeof IntersectionObserver === 'undefined') {
       setWrapped(true);
       return;
@@ -57,12 +65,45 @@ export default function KeyboardToClock() {
     return () => obs.disconnect();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (chimeTimerRef.current != null) {
+        window.clearTimeout(chimeTimerRef.current);
+        chimeTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const chime = async () => {
+    if (chiming) return;
+    setChiming(true);
+    setHasHeard(true);
+    try {
+      const piano = await getPiano();
+      piano.triggerAttackRelease(TRIAD, TRIAD_DURATION_SEC, undefined, 0.32);
+    } catch (err) {
+      console.error('behold chime failed', err);
+    }
+    chimeTimerRef.current = window.setTimeout(() => {
+      setChiming(false);
+      chimeTimerRef.current = null;
+    }, TRIAD_DURATION_SEC * 1000);
+  };
+
   return (
     <div
       ref={ref}
-      className="kbd-to-clock"
-      aria-label="twelve pitches wrapping from a row into a clock"
-      role="img"
+      className={`kbd-to-clock${chiming ? ' chiming' : ''}`}
+      role="button"
+      tabIndex={0}
+      aria-label="twelve pitches wrapping from a row into a clock — tap to hear a C major triad"
+      onClick={chime}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          void chime();
+        }
+      }}
     >
       <svg
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -97,6 +138,11 @@ export default function KeyboardToClock() {
 
         {Array.from({ length: 12 }, (_, pc) => {
           const dest = wrapped ? clockPos(pc) : rowPos(pc);
+          // Highlight the dots that are part of the C major triad while the
+          // chime is sounding. Adds a subtle visual tie between the geometry
+          // and the audio without lighting up the whole wheel.
+          const isTriadPc = pc === 0 || pc === 4 || pc === 7;
+          const lit = chiming && isTriadPc;
           return (
             <g
               key={pc}
@@ -109,9 +155,13 @@ export default function KeyboardToClock() {
             >
               <circle
                 r={DOT_R}
-                fill="#fbf6e9"
+                fill={lit ? '#e8a838' : '#fbf6e9'}
                 stroke="#3d2e1a"
-                strokeWidth={1.2}
+                strokeWidth={lit ? 1.6 : 1.2}
+                style={{
+                  transition:
+                    'fill 0.4s ease, stroke-width 0.4s ease',
+                }}
               />
               <text
                 textAnchor="middle"
@@ -120,6 +170,7 @@ export default function KeyboardToClock() {
                 fontSize={12}
                 fontWeight={500}
                 fill="#1f1408"
+                style={{ pointerEvents: 'none' }}
               >
                 {pc}
               </text>
@@ -127,6 +178,12 @@ export default function KeyboardToClock() {
           );
         })}
       </svg>
+      <p
+        className={`kbd-to-clock-hint${hasHeard ? ' hidden' : ''}`}
+        aria-hidden={hasHeard}
+      >
+        tap to hear
+      </p>
     </div>
   );
 }
