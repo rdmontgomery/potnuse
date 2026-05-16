@@ -172,11 +172,46 @@ const MODULE_3_CARD_DEFS = [
 
 export type ModuleThreeCardId = (typeof MODULE_3_CARD_DEFS)[number]['id'];
 
+// Module 4: Triads and Roman Numerals.
+const MODULE_4_CARD_DEFS = [
+  {
+    id: 'm4.quality-of-v',
+    moduleId: 4,
+    concept: 'triad-quality' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'The triad built on the 5th scale degree of a major key (the V chord) has what quality?',
+      choices: ['major', 'minor', 'diminished', 'augmented'],
+      correctIndex: 0,
+      explanation:
+        'Major. In C major: G–B–D, the root, major third, and perfect fifth. V is one of the three major triads (I, IV, V) in any major key.',
+    },
+  },
+  {
+    id: 'm4.quality-of-vii',
+    moduleId: 4,
+    concept: 'triad-quality' as const,
+    prompt: {
+      kind: 'multiple-choice' as const,
+      question:
+        'Stack thirds from B in C major (B, D, F). What quality is that triad?',
+      choices: ['major', 'minor', 'diminished', 'augmented'],
+      correctIndex: 2,
+      explanation:
+        'Diminished. B–D is a minor third; D–F is also a minor third; B–F is a tritone. The vii° is the only diminished triad in a major key.',
+    },
+  },
+] as const;
+
+export type ModuleFourCardId = (typeof MODULE_4_CARD_DEFS)[number]['id'];
+
 const ALL_CARD_DEFS = [
   ...MODULE_0_CARD_DEFS,
   ...MODULE_1_CARD_DEFS,
   ...MODULE_2_CARD_DEFS,
   ...MODULE_3_CARD_DEFS,
+  ...MODULE_4_CARD_DEFS,
 ];
 
 function defsToCards(
@@ -204,6 +239,10 @@ export function freshModuleTwoCards(now: Date = new Date()): Card[] {
 
 export function freshModuleThreeCards(now: Date = new Date()): Card[] {
   return defsToCards(MODULE_3_CARD_DEFS, now);
+}
+
+export function freshModuleFourCards(now: Date = new Date()): Card[] {
+  return defsToCards(MODULE_4_CARD_DEFS, now);
 }
 
 // Every card the curriculum currently seeds. Used by /practice to make sure
