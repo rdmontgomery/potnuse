@@ -1,0 +1,49 @@
+---
+// Framed image + caption for content. Captions are a slot, so they can carry
+// inline markup (code, emphasis). Pass `wide` to break out beyond the prose
+// column for diagrams that want the room.
+interface Props {
+  src: string;
+  alt: string;
+  wide?: boolean;
+}
+const { src, alt, wide = false } = Astro.props;
+---
+
+<figure class:list={['figure', { wide }]}>
+  <img src={src} alt={alt} loading="lazy" />
+  <figcaption><slot /></figcaption>
+</figure>
+
+<style>
+  .figure {
+    margin: 2.4em 0;
+  }
+  .figure.wide {
+    width: min(1040px, 92vw);
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+  .figure img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #150e06;
+  }
+  .figure figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-top: 0.7em;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+  .figure figcaption :global(code) {
+    font-family: var(--font-jetbrains);
+    color: var(--text-dim);
+    font-size: 0.95em;
+  }
+</style>
