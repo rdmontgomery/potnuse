@@ -79,6 +79,18 @@ export default function Graph() {
   const [query, setQuery] = useState('');
   const [hovered, setHovered] = useState<string | null>(null);
 
+  // Responsive: under 720px we abandon the full-bleed overlay layout for a
+  // vertical stacked flow (matches the site's existing 720px breakpoint).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 720px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   useEffect(() => {
     fetch('/liaison-graph.json')
       .then((r) => {
@@ -264,8 +276,10 @@ export default function Graph() {
     return () => {
       sim.stop();
     };
+    // isMobile is a dep so the simulation re-reads the (now in-flow) svg
+    // dimensions after the layout switches between overlay and stacked.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simNodes, simLinks]);
+  }, [simNodes, simLinks, isMobile]);
 
   const toggleCommit = useCallback((id: string) => {
     setCommitted((prev) => {
@@ -343,9 +357,21 @@ export default function Graph() {
       </div>
     );
 
-  return (
-    <div
-      style={{
+  // ---- layout styles: full-bleed overlay on desktop, stacked flow on mobile ----
+  const outerStyle: React.CSSProperties = isMobile
+    ? {
+        width: '100%',
+        height: 'auto',
+        minHeight: '100vh',
+        background: PALETTE.bg,
+        fontFamily: PALETTE.mono,
+        color: PALETTE.text,
+        position: 'relative',
+        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
+      }
+    : {
         width: '100vw',
         height: '100vh',
         background: PALETTE.bg,
@@ -353,28 +379,97 @@ export default function Graph() {
         color: PALETTE.text,
         position: 'relative',
         overflow: 'hidden',
-      }}
-    >
-      <svg
-        ref={svgRef}
-        width="100%"
-        height="100%"
-        style={{ position: 'absolute', inset: 0 }}
-        onClick={() => setHovered(null)}
-      />
+      };
 
-      {/* masthead */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          padding: '10px 14px',
-          pointerEvents: 'none',
-          background: `linear-gradient(180deg, ${PALETTE.bg}f0, ${PALETTE.bg}00)`,
-        }}
-      >
+  const mastheadStyle: React.CSSProperties = isMobile
+    ? {
+        position: 'static',
+        padding: '12px 14px',
+        pointerEvents: 'auto',
+        background: `linear-gradient(180deg, ${PALETTE.bg}f0, ${PALETTE.bg}00)`,
+      }
+    : {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: '10px 14px',
+        pointerEvents: 'none',
+        background: `linear-gradient(180deg, ${PALETTE.bg}f0, ${PALETTE.bg}00)`,
+      };
+
+  const leftPanelStyle: React.CSSProperties = isMobile
+    ? {
+        position: 'static',
+        width: '100%',
+        maxHeight: 'none',
+        boxSizing: 'border-box',
+        padding: '0 14px 14px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }
+    : {
+        position: 'absolute',
+        top: 52,
+        left: 10,
+        width: 290,
+        maxHeight: 'calc(100vh - 64px)',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      };
+
+  const rightPanelStyle: React.CSSProperties = isMobile
+    ? {
+        position: 'static',
+        width: '100%',
+        maxHeight: 'none',
+        boxSizing: 'border-box',
+        margin: '0 14px 14px',
+        ...panel,
+      }
+    : {
+        position: 'absolute',
+        top: 52,
+        right: 10,
+        width: 260,
+        maxHeight: 'calc(100vh - 64px)',
+        overflowY: 'auto',
+        ...panel,
+      };
+
+  // On mobile the svg lives in a dedicated in-flow band (a real box with
+  // non-zero height) so D3 can read clientWidth/clientHeight; on desktop it
+  // fills the stage absolutely.
+  const svgWrapperStyle: React.CSSProperties | undefined = isMobile
+    ? {
+        position: 'relative',
+        width: '100%',
+        height: '60vh',
+        minHeight: 320,
+        flexShrink: 0,
+      }
+    : undefined;
+  const svgStyle: React.CSSProperties = isMobile
+    ? { display: 'block', width: '100%', height: '100%' }
+    : { position: 'absolute', inset: 0 };
+
+  const svgEl = (
+    <svg
+      ref={svgRef}
+      width="100%"
+      height="100%"
+      style={svgStyle}
+      onClick={() => setHovered(null)}
+    />
+  );
+
+  return (
+    <div style={outerStyle}>
+      {/* masthead — in-flow first on mobile, absolute overlay on desktop */}
+      <div style={mastheadStyle}>
         <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, color: PALETTE.accent }}>
           LIAISON
         </div>
@@ -384,20 +479,11 @@ export default function Graph() {
         </div>
       </div>
 
+      {/* graph: dedicated in-flow band on mobile, full-bleed stage on desktop */}
+      {isMobile ? <div style={svgWrapperStyle}>{svgEl}</div> : svgEl}
+
       {/* left control panel */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 52,
-          left: 10,
-          width: 290,
-          maxHeight: 'calc(100vh - 64px)',
-          overflowY: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-        }}
-      >
+      <div style={leftPanelStyle}>
         {/* the dish */}
         <div style={panel}>
           <Label>your dish {isDish ? '(bridging mode)' : '(single ingredient)'}</Label>
@@ -568,17 +654,7 @@ export default function Graph() {
       </div>
 
       {/* right ranked panel */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 52,
-          right: 10,
-          width: 260,
-          maxHeight: 'calc(100vh - 64px)',
-          overflowY: 'auto',
-          ...panel,
-        }}
-      >
+      <div style={rightPanelStyle}>
         <Label>
           {isDish
             ? `best bridges for the dish · by ${agg}`
