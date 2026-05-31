@@ -1,0 +1,235 @@
+---
+// Grow your own electrode. A live, on-lattice diffusion-limited aggregate:
+// random walkers launched from a ring, sticking on contact. Watch the
+// estimated fractal dimension settle toward the Witten-Sander value (~1.7),
+// the number neither of Rick's two literatures put next to his H-tree.
+const id = 'dla-' + Math.random().toString(36).slice(2, 8);
+---
+
+<figure class="fig">
+  <div class="panel">
+    <canvas id={`${id}-c`} width="640" height="640" aria-label="diffusion-limited aggregation simulation"></canvas>
+    <div class="hud">
+      <div class="readout">
+        <span class="k">particles</span><span id={`${id}-n`} class="v">1</span>
+        <span class="k">estimated D</span><span id={`${id}-d`} class="v accent">&mdash;</span>
+      </div>
+      <div class="btns">
+        <button id={`${id}-go`} type="button">grow</button>
+        <button id={`${id}-rs`} type="button" class="ghost">reset</button>
+      </div>
+    </div>
+  </div>
+  <figcaption>
+    Click <em>grow</em>. Every speck is a particle that wandered in from the edge and stuck where it first
+    touched. Nobody designed the branches; the Laplace equation did. The dimension it converges to
+    (~1.7) is the same number whether you&rsquo;re plating silver, watching a coral grow, or modeling a
+    growth cone &mdash; and it&rsquo;s the number that should have been stapled to the H-tree from day one.
+  </figcaption>
+</figure>
+
+<script is:inline define:vars={{ id }}>
+  (function () {
+    const cv = document.getElementById(id + '-c');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const nEl = document.getElementById(id + '-n');
+    const dEl = document.getElementById(id + '-d');
+    const goBtn = document.getElementById(id + '-go');
+    const rsBtn = document.getElementById(id + '-rs');
+
+    const G = 220; // lattice resolution
+    const cell = cv.width / G;
+    const c = G >> 1;
+    let occ, count, sumr2, maxR, running, raf;
+
+    function reset() {
+      occ = new Uint8Array(G * G);
+      count = 1;
+      sumr2 = 0;
+      maxR = 1;
+      occ[c * G + c] = 1;
+      ctx.fillStyle = '#1a1207';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      paint(c, c, 0);
+      nEl.textContent = '1';
+      dEl.textContent = '—';
+    }
+
+    function hot(t) {
+      // cold brown -> hot amber, by normalized radius
+      const cold = [0x6b, 0x4a, 0x1e];
+      const warm = [0xff, 0xd9, 0x84];
+      const r = Math.round(cold[0] + (warm[0] - cold[0]) * t);
+      const g = Math.round(cold[1] + (warm[1] - cold[1]) * t);
+      const b = Math.round(cold[2] + (warm[2] - cold[2]) * t);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function paint(x, y, rnorm) {
+      ctx.fillStyle = hot(Math.min(1, rnorm));
+      ctx.fillRect(x * cell, y * cell, Math.ceil(cell), Math.ceil(cell));
+    }
+
+    function near(x, y) {
+      return (
+        (x + 1 < G && occ[x + 1 + y * G]) ||
+        (x - 1 >= 0 && occ[x - 1 + y * G]) ||
+        (y + 1 < G && occ[x + (y + 1) * G]) ||
+        (y - 1 >= 0 && occ[x + (y - 1) * G])
+      );
+    }
+
+    function addParticle() {
+      const spawnR = Math.min(maxR + 5, c - 2);
+      const killR = spawnR + 12;
+      let a = Math.random() * 6.283185;
+      let x = Math.round(c + spawnR * Math.cos(a));
+      let y = Math.round(c + spawnR * Math.sin(a));
+      let steps = 0;
+      while (steps++ < 8000) {
+        if (x > 0 && x < G - 1 && y > 0 && y < G - 1 && near(x, y)) {
+          occ[x + y * G] = 1;
+          count++;
+          const r2 = (x - c) * (x - c) + (y - c) * (y - c);
+          sumr2 += r2;
+          const r = Math.sqrt(r2);
+          if (r > maxR) maxR = r;
+          paint(x, y, r / (c - 2));
+          return true;
+        }
+        const d = (Math.random() * 4) | 0;
+        if (d === 0) x++;
+        else if (d === 1) x--;
+        else if (d === 2) y++;
+        else y--;
+        if ((x - c) * (x - c) + (y - c) * (y - c) > killR * killR) {
+          a = Math.random() * 6.283185;
+          x = Math.round(c + spawnR * Math.cos(a));
+          y = Math.round(c + spawnR * Math.sin(a));
+        }
+      }
+      return true;
+    }
+
+    function step() {
+      if (!running) return;
+      for (let i = 0; i < 14; i++) {
+        if (maxR >= c - 4) {
+          running = false;
+          goBtn.textContent = 'full';
+          goBtn.disabled = true;
+          break;
+        }
+        addParticle();
+      }
+      nEl.textContent = String(count);
+      // D from N ~ Rg^D, Rg = sqrt(mean r^2)
+      const rg = Math.sqrt(sumr2 / count);
+      if (rg > 2 && count > 30) dEl.textContent = (Math.log(count) / Math.log(rg)).toFixed(2);
+      raf = requestAnimationFrame(step);
+    }
+
+    goBtn.addEventListener('click', function () {
+      if (goBtn.disabled) return;
+      running = !running;
+      goBtn.textContent = running ? 'pause' : 'grow';
+      if (running) step();
+      else cancelAnimationFrame(raf);
+    });
+    rsBtn.addEventListener('click', function () {
+      running = false;
+      cancelAnimationFrame(raf);
+      goBtn.textContent = 'grow';
+      goBtn.disabled = false;
+      reset();
+    });
+
+    reset();
+  })();
+</script>
+
+<style>
+  .fig {
+    margin: 2.6em 0;
+  }
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+    border-radius: 4px;
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.7rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .readout {
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 0.15rem 0.7rem;
+    align-items: baseline;
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+  }
+  .readout .k {
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+  .readout .v {
+    color: var(--text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .readout .v.accent {
+    color: var(--accent);
+  }
+  .btns {
+    display: flex;
+    gap: 0.5rem;
+  }
+  button {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: lowercase;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  button:hover {
+    opacity: 0.85;
+  }
+  button:disabled {
+    background: var(--text-muted);
+    cursor: default;
+  }
+  button.ghost {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.85rem;
+    letter-spacing: 0.01em;
+    max-width: 60ch;
+  }
+</style>

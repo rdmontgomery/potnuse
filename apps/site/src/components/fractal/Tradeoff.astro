@@ -1,0 +1,152 @@
+---
+// The trade-off a Euclidean electrode cannot escape, and the frontier a
+// fractal lifts you onto. x = fraction of the pixel covered by metal.
+// Two competing goods: charge capacity rises with metal; transparency +
+// tissue proximity fall with metal. Their product (what a solid electrode
+// can actually deliver) peaks at a mediocre compromise. The fractal sits
+// up and to the right of that peak.
+const W = 620;
+const H = 360;
+const m = { l: 56, r: 24, t: 28, b: 48 };
+const px = (t: number) => m.l + t * (W - m.l - m.r);
+const py = (v: number) => H - m.b - v * (H - m.t - m.b);
+
+// charge ~ saturating rise with coverage
+const charge = (t: number) => 1 - Math.exp(-3.0 * t);
+// transparency * proximity ~ decay with coverage
+const optics = (t: number) => Math.exp(-2.4 * t);
+// what a solid electrode delivers = product, normalized
+const samples = Array.from({ length: 81 }, (_, i) => i / 80);
+const prod = samples.map((t) => charge(t) * optics(t));
+const prodMax = Math.max(...prod);
+const path = (fn: (t: number) => number) =>
+  samples.map((t, i) => `${i ? 'L' : 'M'}${px(t).toFixed(1)} ${py(fn(t)).toFixed(1)}`).join(' ');
+const prodPath = samples
+  .map((t, i) => `${i ? 'L' : 'M'}${px(t).toFixed(1)} ${py((charge(t) * optics(t)) / prodMax).toFixed(1)}`)
+  .join(' ');
+// peak of the Euclidean compromise
+const peakI = prod.indexOf(prodMax);
+const peakT = samples[peakI];
+---
+
+<figure class="fig">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pareto trade-off plot">
+    <!-- axes -->
+    <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} class="axis" />
+    <line x1={m.l} y1={m.t} x2={m.l} y2={H - m.b} class="axis" />
+    <text x={(m.l + W - m.r) / 2} y={H - 10} class="lbl" text-anchor="middle">
+      fraction of the pixel covered by metal &rarr;
+    </text>
+    <text x={-(H) / 2} y={16} class="lbl" text-anchor="middle" transform="rotate(-90)">
+      performance
+    </text>
+
+    <!-- charge curve -->
+    <path d={path(charge)} class="charge" />
+    <text x={px(0.92)} y={py(charge(0.92)) - 8} class="tag charge-t" text-anchor="end">charge / capacitance</text>
+
+    <!-- optics curve -->
+    <path d={path(optics)} class="optics" />
+    <text x={px(0.5)} y={py(optics(0.5)) - 8} class="tag optics-t">light + tissue proximity</text>
+
+    <!-- product: the achievable Euclidean line -->
+    <path d={prodPath} class="prod" />
+    <circle cx={px(peakT)} cy={py(prodMax / prodMax)} r="4" class="peak" />
+    <text x={px(peakT)} y={py(1) - 12} class="tag peak-t" text-anchor="middle">best a solid electrode can do</text>
+
+    <!-- the fractal escape -->
+    <g class="escape">
+      <path d={`M${px(0.55)} ${py(0.66)} Q ${px(0.78)} ${py(0.55)} ${px(0.9)} ${py(0.9)}`} class="arrow" />
+      <polygon points={`${px(0.9)},${py(0.9)} ${px(0.87)},${py(0.83)} ${px(0.935)},${py(0.85)}`} class="arrowhead" />
+      <circle cx={px(0.9)} cy={py(0.9)} r="6" class="frac-pt" />
+      <text x={px(0.88)} y={py(0.9) - 12} class="tag frac-t" text-anchor="end">fractal: high charge <tspan class="amp">and</tspan> high transparency</text>
+    </g>
+  </svg>
+  <figcaption>
+    A solid electrode lives on one knob. Turn it toward charge and you go opaque and shove the
+    tissue away; turn it toward transparency and you can&rsquo;t inject enough current. The product peaks
+    at a compromise nobody is happy with. The fractal&rsquo;s whole pitch is that it doesn&rsquo;t live on the knob.
+  </figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 2.4em 0;
+  }
+  .fig svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .axis {
+    stroke: var(--text-muted);
+    stroke-width: 1;
+  }
+  .lbl {
+    fill: var(--text-muted);
+    font-family: var(--font-jetbrains);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .charge {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.4;
+  }
+  .optics {
+    fill: none;
+    stroke: var(--text-dim);
+    stroke-width: 2.4;
+    stroke-dasharray: 2 4;
+  }
+  .prod {
+    fill: none;
+    stroke: var(--accent-dim);
+    stroke-width: 1.4;
+    opacity: 0.7;
+  }
+  .peak {
+    fill: var(--accent-dim);
+  }
+  .frac-pt {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 1.5;
+  }
+  .arrow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-dasharray: 3 3;
+  }
+  .arrowhead {
+    fill: var(--accent);
+  }
+  .tag {
+    font-family: var(--font-jetbrains);
+    font-size: 11.5px;
+    fill: var(--text-dim);
+  }
+  .charge-t {
+    fill: var(--accent);
+  }
+  .frac-t {
+    fill: var(--accent);
+  }
+  .amp {
+    font-style: italic;
+    fill: var(--text);
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.8rem;
+    letter-spacing: 0.01em;
+    max-width: 56ch;
+  }
+</style>

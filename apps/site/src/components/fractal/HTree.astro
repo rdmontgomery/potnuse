@@ -1,0 +1,100 @@
+---
+// The H-tree: the deterministic, space-filling fractal Rick's electrode
+// actually used. Four panels, orders 1..4, drawn by honest recursion.
+type Seg = { x1: number; y1: number; x2: number; y2: number; d: number };
+
+function htree(x: number, y: number, len: number, depth: number, horiz: boolean, max: number, out: Seg[]) {
+  if (depth > max) return;
+  if (horiz) {
+    const x1 = x - len / 2;
+    const x2 = x + len / 2;
+    out.push({ x1, y1: y, x2, y2: y, d: depth });
+    const n = len / Math.SQRT2;
+    htree(x1, y, n, depth + 1, false, max, out);
+    htree(x2, y, n, depth + 1, false, max, out);
+  } else {
+    const y1 = y - len / 2;
+    const y2 = y + len / 2;
+    out.push({ x1: x, y1, x2: x, y2, d: depth });
+    const n = len / Math.SQRT2;
+    htree(x, y1, n, depth + 1, true, max, out);
+    htree(x, y2, n, depth + 1, true, max, out);
+  }
+}
+
+const S = 150;
+const orders = [1, 2, 3, 4].map((max) => {
+  const segs: Seg[] = [];
+  htree(S / 2, S / 2, S * 0.5, 1, true, max, segs);
+  return { max, segs };
+});
+const sw = (d: number) => Math.max(0.6, 2.6 - d * 0.45);
+---
+
+<figure class="fig">
+  <div class="row">
+    {
+      orders.map(({ max, segs }) => (
+        <div class="cell">
+          <svg viewBox={`0 0 ${S} ${S}`} role="img" aria-label={`H-tree order ${max}`}>
+            {segs.map((s) => (
+              <line x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke="var(--accent)" stroke-width={sw(s.d)} stroke-linecap="round" />
+            ))}
+          </svg>
+          <span class="cap">order {max}</span>
+        </div>
+      ))
+    }
+  </div>
+  <figcaption>
+    Each iteration hangs a smaller H off every tip. Keep going and the branches pack the plane:
+    the H-tree&rsquo;s fractal dimension climbs toward <strong>D = 2</strong>. It is a beautiful, manufacturable,
+    perfectly self-similar shape &mdash; and, it turns out, a slightly strange thing to point at a neuron.
+  </figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 2.4em 0;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+  }
+  .cell {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.5rem 0.3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cell svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .cap {
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    margin-top: 0.3rem;
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.8rem;
+    letter-spacing: 0.01em;
+    max-width: 60ch;
+  }
+  @media (max-width: 520px) {
+    .row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
