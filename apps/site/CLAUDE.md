@@ -12,6 +12,15 @@ Three collections under `src/content/`, all sharing a base schema (`title`, `dat
 
 `state` runs `seedling → germinating → stable → fossil`. `connects` is a list of slugs that forms graph edges for random navigation.
 
+## Prose voice
+
+This governs all writing across the three collections.
+
+- **Noir, not thriller.** The mood is dread and inevitability, not velocity and cliffhangers. The pleasure is in watching a thing close in, not in being yanked along by a hook. Don't withhold to manufacture suspense.
+- **Tell the reader what they're going to learn, then learn them.** Declare the payload up front and then deliver it. Anti-suspense structure: the thesis is not a twist saved for the end. (See `discourse-active-matter` — "the thesis, stated once and plainly so the rest of the program has something to hang on.")
+- **Show the crime, implicate the reader.** Don't hold the reveal at arm's length. Put it on the table and make the reader complicit — they were always already inside the system being described, not watching it from the gallery.
+- **Engaging as Borges, funny as Cortázar.** Borges for the structural vertigo — the idea that turns back on itself, the catalog that becomes cosmology. Cortázar for the play — the wink, the rule-break, the willingness to be light about something serious. The combination is the target register; neither alone.
+
 ## Exchange style
 
 Exchanges are edited conversations, not transcripts. The reader should feel they're reading a literary form, not a ChatGPT paste.
