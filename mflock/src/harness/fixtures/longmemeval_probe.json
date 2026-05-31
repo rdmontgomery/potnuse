@@ -1,0 +1,2400 @@
+{
+  "name": "longmemeval_probe",
+  "variant": "recency-interference",
+  "note": "Hard probe: 'current gym code' under recency interference from other-referent number lures planted in later sessions. Difficulty scales with evidence_distance by construction. Plus pool-code abstention traps. Deterministic (seed=7).",
+  "instances": [
+    {
+      "question_id": "ku-d0",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "6305",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 3471.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 3471.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 6305. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 6305.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d1",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "1791",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 2186.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 2186.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 1791. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 1791.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 1950.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 1950.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d2",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "9313",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 4517.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 4517.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 9313. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 9313.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 2144.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 2144.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 7955.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 7955.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d3",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "1968",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Quick dinner idea for tonight?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Sheet-pan chicken with whatever vegetables you have.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 3028.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 3028.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 1968. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 1968.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 2013.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 2013.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 1812.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 1812.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d4",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "3181",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 5744.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 5744.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 3181. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 3181.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 6054.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 6054.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 2688.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 2688.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 7101.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 7101.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 1976.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 1976.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d5",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "4374",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 9133.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 9133.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 4374. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 4374.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 8628.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 8628.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 6924.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 6924.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 4999.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 4999.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 9604.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 9604.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 8353.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 8353.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d6",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "5717",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 2199.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 2199.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 5717. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 5717.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 6604.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 6604.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 7909.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 7909.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 6140.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 6140.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 9137.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 9137.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 2126.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 2126.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-d8",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "8767",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 2064.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 2064.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 8767. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 8767.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 5662.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 5662.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a fair tip at a cafe?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Rounding up or about ten percent is common.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 6823.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 6823.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 9088.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 9088.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 3119.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 3119.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s9",
+          "timestamp": "2026-01-10",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s10",
+          "timestamp": "2026-01-11",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 2320.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 2320.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L5",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "3725",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 8359.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 8359.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 3725. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 3725.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 8053.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 8053.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L7",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "7804",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Quick dinner idea for tonight?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Sheet-pan chicken with whatever vegetables you have.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 6878.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 6878.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I keep basil alive indoors?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Bright light, water when the top soil dries, pinch the flowers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 7804. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 7804.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 4800.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 4800.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 8945.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 8945.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L9",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "3987",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I keep basil alive indoors?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Bright light, water when the top soil dries, pinch the flowers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 5304.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 5304.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 3987. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 3987.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 6220.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 6220.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L11",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "1884",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 8481.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 8481.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 1884. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 1884.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s9",
+          "timestamp": "2026-01-10",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 4122.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 4122.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s10",
+          "timestamp": "2026-01-11",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 8219.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 8219.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L13",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "3659",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a fair tip at a cafe?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Rounding up or about ten percent is common.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a low-effort houseplant?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "A snake plant or a pothos is nearly unkillable.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a low-effort houseplant?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "A snake plant or a pothos is nearly unkillable.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I keep basil alive indoors?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Bright light, water when the top soil dries, pinch the flowers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Suggest a stretch break routine.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Stand, roll your shoulders, and look at something far away.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 2801.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 2801.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s9",
+          "timestamp": "2026-01-10",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s10",
+          "timestamp": "2026-01-11",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 3659. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 3659.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s11",
+          "timestamp": "2026-01-12",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a low-effort houseplant?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "A snake plant or a pothos is nearly unkillable.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s12",
+          "timestamp": "2026-01-13",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 7164.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 7164.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "ku-L15",
+      "question_type": "knowledge-update",
+      "question": "What is my current gym locker code?",
+      "answer": "3433",
+      "abstention": false,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a fair tip at a cafe?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Rounding up or about ten percent is common.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a low-effort houseplant?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "A snake plant or a pothos is nearly unkillable.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a fair tip at a cafe?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Rounding up or about ten percent is common.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s9",
+          "timestamp": "2026-01-10",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s10",
+          "timestamp": "2026-01-11",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Save my old gym locker code, it was 5132.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Saved your old gym locker code 5132.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s11",
+          "timestamp": "2026-01-12",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s12",
+          "timestamp": "2026-01-13",
+          "turns": [
+            {
+              "role": "user",
+              "content": "I changed it -- my current gym locker code is now 3433. Use this one.",
+              "has_answer": true
+            },
+            {
+              "role": "assistant",
+              "content": "Updated, your current gym locker code is 3433.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s13",
+          "timestamp": "2026-01-14",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 6613.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 6613.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s14",
+          "timestamp": "2026-01-15",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "abs-0",
+      "question_type": "abstention",
+      "question": "What is my current swimming pool locker code?",
+      "answer": "",
+      "abstention": true,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 6926.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 6926.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 1443.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 1443.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How often should I rotate my tires?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Roughly every 8,000 to 12,000 kilometers.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 9493.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 9493.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 6827.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 6827.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "abs-1",
+      "question_type": "abstention",
+      "question": "What is my current swimming pool locker code?",
+      "answer": "",
+      "abstention": true,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 6401.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 6401.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 4197.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 4197.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Best way to defog a windshield fast?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "AC on, heat up, vent to the glass, crack a window.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Quick dinner idea for tonight?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Sheet-pan chicken with whatever vegetables you have.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 6825.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 6825.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a good stretch for tight hamstrings?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a standing forward fold and lying hamstring stretches.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "How do I get espresso less bitter?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Coarsen the grind a touch and shorten the shot.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 6640.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 6640.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 6974.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 6974.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "abs-2",
+      "question_type": "abstention",
+      "question": "What is my current swimming pool locker code?",
+      "answer": "",
+      "abstention": true,
+      "haystack_sessions": [
+        {
+          "session_id": "s0",
+          "timestamp": "2026-01-01",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 4222.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 4222.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s1",
+          "timestamp": "2026-01-02",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 1031.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 1031.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s2",
+          "timestamp": "2026-01-03",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my home wifi code is 2389.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, home wifi code 2389.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s3",
+          "timestamp": "2026-01-04",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Recommend a podcast for a long drive.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Try a narrative history podcast like Revolutions.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s4",
+          "timestamp": "2026-01-05",
+          "turns": [
+            {
+              "role": "user",
+              "content": "Quick dinner idea for tonight?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Sheet-pan chicken with whatever vegetables you have.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s5",
+          "timestamp": "2026-01-06",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 8109.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 8109.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s6",
+          "timestamp": "2026-01-07",
+          "turns": [
+            {
+              "role": "user",
+              "content": "What's a fair tip at a cafe?",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Rounding up or about ten percent is common.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s7",
+          "timestamp": "2026-01-08",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 8588.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 8588.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s8",
+          "timestamp": "2026-01-09",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my work locker code is 3602.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, work locker code 3602.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s9",
+          "timestamp": "2026-01-10",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my bike lock code is 1451.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, bike lock code 1451.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s10",
+          "timestamp": "2026-01-11",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my garage keypad code is 3394.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, garage keypad code 3394.",
+              "has_answer": false
+            }
+          ]
+        },
+        {
+          "session_id": "s11",
+          "timestamp": "2026-01-12",
+          "turns": [
+            {
+              "role": "user",
+              "content": "By the way my office alarm code is 8771.",
+              "has_answer": false
+            },
+            {
+              "role": "assistant",
+              "content": "Noted, office alarm code 8771.",
+              "has_answer": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

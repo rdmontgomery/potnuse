@@ -1,0 +1,20 @@
+{
+  "_note": "This session's model (Claude) answering the hard recency-interference probe with the FULL context in view, read by hand from each rendered haystack (not the gold field). The 'full memory' contrast to the windowed backend.",
+  "ku-d0": "Your current gym locker code is 6305.",
+  "ku-d1": "Your current gym locker code is 1791.",
+  "ku-d2": "Your current gym locker code is 9313.",
+  "ku-d3": "Your current gym locker code is 1968.",
+  "ku-d4": "Your current gym locker code is 3181.",
+  "ku-d5": "Your current gym locker code is 4374.",
+  "ku-d6": "Your current gym locker code is 5717.",
+  "ku-d8": "Your current gym locker code is 8767.",
+  "ku-L5": "Your current gym locker code is 3725.",
+  "ku-L7": "Your current gym locker code is 7804.",
+  "ku-L9": "Your current gym locker code is 3987.",
+  "ku-L11": "Your current gym locker code is 1884.",
+  "ku-L13": "Your current gym locker code is 3659.",
+  "ku-L15": "Your current gym locker code is 3433.",
+  "abs-0": "I have no record of you giving me a swimming pool locker code.",
+  "abs-1": "I have no record of you giving me a swimming pool locker code.",
+  "abs-2": "I have no record of you giving me a swimming pool locker code."
+}

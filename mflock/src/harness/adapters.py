@@ -89,8 +89,8 @@ def turn_texts(instance: dict[str, Any]) -> list[str]:
     ]
 
 
-def load_fixture(n: int | None = None) -> list[dict[str, Any]]:
-    data = json.loads(FIXTURE_PATH.read_text())
+def load_fixture(n: int | None = None, path: str | Path | None = None) -> list[dict[str, Any]]:
+    data = json.loads(Path(path or FIXTURE_PATH).read_text())
     instances = [_enrich(inst) for inst in data["instances"]]
     return instances[:n] if n else instances
 
@@ -141,10 +141,12 @@ def load_hf(n: int | None = None, name: str = "longmemeval_s") -> list[dict[str,
     return out
 
 
-def load_slice(n: int | None = None, source: str = "fixture", **kw) -> list[dict[str, Any]]:
+def load_slice(
+    n: int | None = None, source: str = "fixture", fixture_path: str | Path | None = None, **kw
+) -> list[dict[str, Any]]:
     """Load a LongMemEval slice. source in {"fixture", "hf"}."""
     if source == "hf":
         return load_hf(n, **kw)
     if source == "fixture":
-        return load_fixture(n)
+        return load_fixture(n, path=fixture_path)
     raise ValueError(f"unknown source: {source!r} (expected 'fixture' or 'hf')")

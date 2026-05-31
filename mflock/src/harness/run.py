@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -119,7 +120,45 @@ class FileModel:
         return str(self.answers[qid]).strip()
 
 
-def make_model(kind: str, model_name: str | None, answers: str | None = None):
+class WindowModel:
+    """A memory with a hard window: sees only the last K sessions.
+
+    A legitimate (if minimal) memory architecture: truncation is the simplest
+    forgetting. It injects a *known* correlation length K, so running the probe
+    through it tests whether the retention estimator recovers K. Within the
+    window it answers via a deterministic oracle (latest 'current <ref> code is
+    NNNN'); if the referent isn't in the window, it abstains. So it nails
+    abstention (the pool code is never anywhere) and falls off a cliff exactly
+    when the true answer slips past the window edge.
+    """
+
+    name = "window"
+    _REF = re.compile(r"current (.+?) code", re.IGNORECASE)
+    _VAL = None  # built per call from the referent
+
+    def __init__(self, window: int = 4, model_name: str | None = None):
+        self.window = window
+        self.model_name = model_name or f"window-k{window}"
+
+    def answer(self, instance: dict[str, Any]) -> str:
+        m = self._REF.search(instance["question"])
+        ref = m.group(1).strip() if m else "gym locker"
+        visible = instance["haystack_sessions"][-self.window :]
+        pat = re.compile(
+            rf"current {re.escape(ref)} code is (?:now )?(\d{{4}})", re.IGNORECASE
+        )
+        found = None
+        for sess in visible:  # later sessions overwrite earlier -> latest wins
+            for turn in sess["turns"]:
+                hit = pat.search(turn["content"])
+                if hit:
+                    found = hit.group(1)
+        if found:
+            return f"Your current {ref} code is {found}."
+        return f"I have no record of your current {ref} code in recent memory."
+
+
+def make_model(kind: str, model_name: str | None, answers: str | None = None, window: int = 4):
     if kind == "auto":
         kind = "anthropic" if os.environ.get("ANTHROPIC_API_KEY") else "mock"
     if kind == "anthropic":
@@ -130,6 +169,8 @@ def make_model(kind: str, model_name: str | None, answers: str | None = None):
         if not answers:
             raise SystemExit("--model file requires --answers <path.json>")
         return FileModel(answers, model_name)
+    if kind == "window":
+        return WindowModel(window, model_name)
     raise ValueError(f"unknown model kind: {kind!r}")
 
 
@@ -137,14 +178,16 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Run a LongMemEval slice against a model.")
     ap.add_argument("--slice", type=int, default=None, help="number of instances (default: all)")
     ap.add_argument("--source", default="fixture", choices=["fixture", "hf"])
-    ap.add_argument("--model", default="auto", choices=["auto", "anthropic", "mock", "file"])
+    ap.add_argument("--fixture", default=None, help="path to an alternate fixture JSON")
+    ap.add_argument("--model", default="auto", choices=["auto", "anthropic", "mock", "file", "window"])
     ap.add_argument("--model-name", default=None)
     ap.add_argument("--answers", default=None, help="JSON {question_id: answer} for --model file")
+    ap.add_argument("--window", type=int, default=4, help="memory window (sessions) for --model window")
     ap.add_argument("--out", default=str(RESULTS_DIR))
     args = ap.parse_args()
 
-    instances = adapters.load_slice(args.slice, source=args.source)
-    model = make_model(args.model, args.model_name, args.answers)
+    instances = adapters.load_slice(args.slice, source=args.source, fixture_path=args.fixture)
+    model = make_model(args.model, args.model_name, args.answers, args.window)
     print(f"[run] {len(instances)} instances | source={args.source} | model={model.name} ({model.model_name})")
 
     records = []

@@ -174,7 +174,12 @@ def render_html(result: dict[str, Any]) -> str:
 
     # retention curve bars
     curve = op["retention"]["curve"]
+    d_half = op["retention"].get("halfwidth_d_half")
+    d_half_txt = "&#8734; (no decay)" if d_half == "inf" else f"{d_half}"
     ret_rows = [
+        f'<div class="meta">half-retention distance d&#189; = <strong>{d_half_txt}</strong> '
+        "&mdash; the recovered width of reliable memory (sessions)</div>"
+    ] + [
         _bar_row(f"d = {d} sessions  (n={v['n']})", v["retention"], "#8a63d2", f"{v['retention']:.2f}")
         for d, v in sorted(curve.items(), key=lambda kv: int(kv[0]))
     ] or ['<div class="meta">no answerable instances to chart</div>']
@@ -273,6 +278,7 @@ def main() -> None:
         "[order-params] "
         f"phi={op['polarization']['phi_mean']:.3f}  "
         f"xi={op['retention']['correlation_length_xi']}  "
+        f"d_half={op['retention']['halfwidth_d_half']}  "
         f"chi={op['susceptibility']['chi']}"
     )
     print(f"[score] wrote {out_path}")

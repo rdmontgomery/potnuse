@@ -113,6 +113,22 @@ def retention_decay_length(distances: Sequence[int], recalled: Sequence[bool]) -
 # --------------------------------------------------------------------------- #
 # 3. susceptibility  (linear response)
 # --------------------------------------------------------------------------- #
+def retention_halfwidth(distances: Sequence[int], recalled: Sequence[bool], threshold: float = 0.5) -> float:
+    """Distance at which retention first falls below ``threshold``.
+
+    The cliff-detecting companion to ``retention_decay_length``: an exponential
+    fit misses a sharp cutoff (a fixed memory window reads as flat-then-zero,
+    not a smooth decay), so this returns the *width* of reliable memory — for a
+    hard window of K sessions it recovers ~K. Returns inf if retention never
+    drops below threshold within the observed range.
+    """
+    curve = retention_curve(distances, recalled)
+    for d in sorted(curve):
+        if curve[d]["retention"] < threshold:
+            return float(d)
+    return math.inf
+
+
 def susceptibility(loads: Sequence[float], accuracies: Sequence[float]) -> float | None:
     """d(accuracy) / d(load): least-squares slope of accuracy vs distractor load.
 
@@ -154,6 +170,7 @@ def order_parameters(judged: list[dict[str, Any]]) -> dict[str, Any]:
     recalled = [bool(r.get("correct")) for r in answerable]
     curve = retention_curve(distances, recalled)
     xi = retention_decay_length(distances, recalled)
+    d_half = retention_halfwidth(distances, recalled)
 
     # 3. susceptibility: accuracy vs haystack depth (distractor-load proxy).
     loads = [r["n_sessions"] for r in answerable]
@@ -173,7 +190,8 @@ def order_parameters(judged: list[dict[str, Any]]) -> dict[str, Any]:
         "retention": {
             "curve": {str(k): v for k, v in curve.items()},
             "correlation_length_xi": (None if xi is None else (xi if math.isfinite(xi) else "inf")),
-            "note": "fraction recalled vs evidence distance (sessions); xi from r(d)~exp(-d/xi).",
+            "halfwidth_d_half": (d_half if math.isfinite(d_half) else "inf"),
+            "note": "fraction recalled vs evidence distance (sessions); xi from r(d)~exp(-d/xi); d_half = distance where retention crosses 0.5 (recovers a hard memory window).",
         },
         "susceptibility": {
             "chi": chi,

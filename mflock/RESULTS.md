@@ -76,6 +76,57 @@ upper bound, not a held-out score.
 
 ---
 
+## Experiment 3 — recover an injected correlation length (the probe)
+
+**Question.** Experiment 2 left ξ=∞, χ≈0 because the fixture was too easy to
+perturb a careful reader. So: build a probe with a *principled, scaling*
+difficulty, and check whether the retention estimator can recover a **known**
+correlation length when one is deliberately injected.
+
+**The probe** (`mflock-probe` → `fixtures/longmemeval_probe.json`, 17
+instances). Every instance asks "what is my current gym locker code?" The true
+answer is planted once; then later sessions plant *other-referent* number lures
+(work locker, bike lock, wifi, garage) of the same 4-digit format. The further
+back the true answer sits (larger `evidence_distance`), the more recent-but-
+wrong numbers compete — difficulty rises with distance by construction. Plus
+three abstention traps (a pool code that was never given).
+
+**Two memory architectures, as backends:**
+
+- **windowed (K=4)** — `--model window --window 4`. Sees only the last 4
+  sessions; answers from an oracle over that window, else abstains. This
+  *injects* a ground-truth correlation length of 4 sessions.
+- **full context** — `--model file`, this session's model reading the whole
+  haystack by hand (`experiments/claude_answers_probe.json`). Unbounded memory.
+
+**Result.** The estimator recovers the injected window cleanly:
+
+| model | overall | retention r(d) | d½ (recovered ξ) |
+|---|---|---|---|
+| **windowed K=4** | 0.765 | `1,1,1,1, 0,0,0,0` at d=`0,1,2,3,4,5,6,8` | **4.0** |
+| **full context** | 1.000 | `1,1,1,1,1,1,1,1` | ∞ |
+
+The windowed model's retention falls off a **cliff at exactly d=4** — and
+`d_half` reads **4.0**, recovering the injected K. The full-context model stays
+flat at 1.0, `d_half=∞`. Two architectures, two phases (finite vs. infinite
+correlation length), and the order parameter separates them with the
+*right number*. Both abstain correctly on the pool traps (3/3).
+
+Two notes kept honest: (1) the exponential-fit ξ reads ∞ for *both* — a sharp
+cliff isn't an exponential decay, which is precisely why `d_half` was added as
+the cliff-detector; report d½ for windowed memory, ξ for graded decay. (2) χ
+stays ≈0 on the load axis because the windowed model's failures are driven by
+*distance crossing the window*, not by raw haystack depth — a correct and
+falsifiable prediction in itself: susceptibility lives on the distance axis
+here, not the load axis.
+
+**Why this matters.** It's the first time the harness recovers a *known*
+quantity. Inject ξ=4, measure d½=4. That's the minimum credibility test for an
+order-parameter estimator — before trusting it on a real model where the true ξ
+is unknown, show it returns the right answer when the truth is planted. It does.
+
+---
+
 ## What this proves, and what it doesn't
 
 **Proves:**
@@ -84,6 +135,9 @@ upper bound, not a held-out score.
 - φ behaves like an order parameter on a controlled coherence sweep (Exp 1).
 - The φ/ξ/χ triple distinguishes an ordered (saturated) system from a critical
   (decaying) one (Exp 2 vs. mock) — the harness can *see* a phase difference.
+- The retention estimator recovers a **known** correlation length: inject a
+  K=4 memory window, measure d½=4 (Exp 3). It returns the right answer when the
+  truth is planted — the prerequisite for trusting it where the truth is not.
 
 **Doesn't prove (yet):**
 

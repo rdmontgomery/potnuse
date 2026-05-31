@@ -14,6 +14,7 @@ dependencies = [
 mflock-run = "harness.run:main"
 mflock-score = "harness.score:main"
 mflock-phi = "harness.experiments:main"
+mflock-probe = "harness.probe_gen:main"
 
 [build-system]
 requires = ["hatchling"]
