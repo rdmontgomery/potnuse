@@ -110,6 +110,118 @@ def per_category_accuracy(judged: list[dict[str, Any]]) -> dict[str, dict[str, f
     return out
 
 
+_CSS = """
+.mflock-report{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  max-width:760px;margin:0 auto;color:#1a1a1a;line-height:1.5}
+.mflock-report h1{font-size:1.5rem;margin:0 0 .15rem;font-weight:650}
+.mflock-report h2{font-size:1rem;text-transform:uppercase;letter-spacing:.06em;
+  color:#666;margin:1.8rem 0 .7rem;border-bottom:1px solid #e6e6e6;padding-bottom:.3rem}
+.mflock-report .meta{font-size:.82rem;color:#666;margin:0 0 .4rem}
+.mflock-report .mock{background:#fff4e0;border:1px solid #f0c46a;color:#7a4f00;
+  padding:.55rem .7rem;border-radius:6px;font-size:.82rem;margin:.6rem 0}
+.mflock-report .row{display:grid;grid-template-columns:190px 1fr 64px;align-items:center;
+  gap:.6rem;margin:.32rem 0;font-size:.86rem}
+.mflock-report .row .lbl{color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mflock-report .track{background:#eee;border-radius:4px;height:16px;overflow:hidden}
+.mflock-report .fill{height:100%;border-radius:4px}
+.mflock-report .val{text-align:right;font-variant-numeric:tabular-nums;color:#333}
+.mflock-report .op{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin:.4rem 0}
+.mflock-report .card{border:1px solid #e6e6e6;border-radius:8px;padding:.8rem .9rem}
+.mflock-report .card .sym{font-size:1.5rem;font-weight:600}
+.mflock-report .card .num{font-size:1.35rem;font-variant-numeric:tabular-nums;margin:.15rem 0}
+.mflock-report .card .cap{font-size:.74rem;color:#777}
+.mflock-report details{margin-top:1.4rem;font-size:.8rem;color:#555}
+.mflock-report pre{background:#f7f7f7;border-radius:6px;padding:.7rem;overflow:auto;font-size:.74rem}
+.mflock-report .foot{margin-top:1.4rem;font-size:.74rem;color:#888}
+"""
+
+
+def _bar_row(label: str, value: float, color: str, value_text: str | None = None) -> str:
+    pct = max(0.0, min(1.0, value)) * 100
+    vt = value_text if value_text is not None else f"{value:.3f}"
+    return (
+        f'<div class="row"><div class="lbl">{label}</div>'
+        f'<div class="track"><div class="fill" style="width:{pct:.1f}%;background:{color}"></div></div>'
+        f'<div class="val">{vt}</div></div>'
+    )
+
+
+def render_html(result: dict[str, Any]) -> str:
+    is_mock = result.get("model") == "mock"
+    op = result["order_parameters"]
+
+    # per-category bars
+    cat_rows = [_bar_row("overall", result["overall_accuracy"], "#3b7dd8")]
+    for cat, d in result["per_category"].items():
+        cat_rows.append(_bar_row(f"{cat}  ({d['correct']}/{d['n']})", d["accuracy"], "#4a9d5b"))
+
+    # order parameter cards
+    phi = op["polarization"]["phi_mean"]
+    xi = op["retention"]["correlation_length_xi"]
+    chi = op["susceptibility"]["chi"]
+    xi_txt = "n/a" if xi is None else ("∞" if xi == "inf" else f"{float(xi):.2f}")
+    chi_txt = "n/a" if chi is None else f"{chi:+.3f}"
+    cards = (
+        '<div class="op">'
+        f'<div class="card"><div class="sym">&#966;</div><div class="num">{phi:.3f}</div>'
+        '<div class="cap">polarization &mdash; flocking magnetization of the turns (0&ndash;1)</div></div>'
+        f'<div class="card"><div class="sym">&#958;</div><div class="num">{xi_txt}</div>'
+        '<div class="cap">correlation length &mdash; sessions before memory decoheres (&#8734; = no decay seen)</div></div>'
+        f'<div class="card"><div class="sym">&#967;</div><div class="num">{chi_txt}</div>'
+        '<div class="cap">susceptibility &mdash; d(accuracy)/d(load); negative is the expected sign</div></div>'
+        "</div>"
+    )
+
+    # retention curve bars
+    curve = op["retention"]["curve"]
+    ret_rows = [
+        _bar_row(f"d = {d} sessions  (n={v['n']})", v["retention"], "#8a63d2", f"{v['retention']:.2f}")
+        for d, v in sorted(curve.items(), key=lambda kv: int(kv[0]))
+    ] or ['<div class="meta">no answerable instances to chart</div>']
+
+    mock_banner = (
+        '<div class="mock"><strong>Mock model.</strong> These numbers come from the '
+        "deterministic offline mock, whose accuracy decays with distance and load by "
+        "construction. They demonstrate the pipeline and the estimators &mdash; they are "
+        "not evidence about a real model. Set ANTHROPIC_API_KEY and re-run for that.</div>"
+        if is_mock
+        else ""
+    )
+
+    meta = (
+        f"model: <strong>{result.get('model')}</strong> ({result.get('model_name')}) "
+        f"&middot; judge: {result.get('judge')} &middot; source: {result.get('source')} "
+        f"&middot; n={result['n_instances']} &middot; {result['timestamp']}"
+    )
+
+    body = (
+        '<section class="mflock-report">'
+        "<h1>mflock &mdash; memory as a flock</h1>"
+        f'<div class="meta">{meta}</div>'
+        f"{mock_banner}"
+        "<h2>per-category accuracy</h2>"
+        + "".join(cat_rows)
+        + "<h2>order parameters</h2>"
+        + cards
+        + "<h2>retention curve r(d)</h2>"
+        + "".join(ret_rows)
+        + "<details><summary>raw result JSON</summary><pre>"
+        + json.dumps(result, indent=2).replace("<", "&lt;")
+        + "</pre></details>"
+        + '<div class="foot">mflock &middot; discourse as active matter. '
+        "&#966; flocking magnetization &middot; &#958; retention correlation length &middot; "
+        "&#967; susceptibility. See HYPOTHESIS.md for the category&rarr;parameter mapping.</div>"
+        "</section>"
+    )
+
+    return (
+        "<!doctype html><html lang=en><head><meta charset=utf-8>"
+        '<meta name=viewport content="width=device-width,initial-scale=1">'
+        "<title>mflock report</title><style>" + _CSS + "</style></head>"
+        "<body>" + body + "</body></html>"
+    )
+
+
 def latest_raw(results_dir: Path) -> Path:
     raws = sorted(results_dir.glob("raw_*.json"))
     if not raws:
@@ -151,6 +263,8 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"run_{ts}.json"
     out_path.write_text(json.dumps(result, indent=2))
+    html_path = out_dir / "index.html"
+    html_path.write_text(render_html(result))
 
     print(f"[score] judge={args.judge} model={raw.get('model')} n={n} overall={overall:.3f}")
     for cat, d in per_cat.items():
@@ -162,6 +276,7 @@ def main() -> None:
         f"chi={op['susceptibility']['chi']}"
     )
     print(f"[score] wrote {out_path}")
+    print(f"[score] wrote {html_path}")
 
 
 if __name__ == "__main__":
