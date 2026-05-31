@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from harness import adapters
+from mflock import order_params
 
 RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
 
@@ -131,6 +132,7 @@ def main() -> None:
 
     n = len(judged)
     overall = sum(r["correct"] for r in judged) / n if n else 0.0
+    op = order_params.order_parameters(judged)
 
     ts = time.strftime("%Y%m%d-%H%M%S")
     result = {
@@ -144,6 +146,7 @@ def main() -> None:
         "n_instances": n,
         "overall_accuracy": overall,
         "per_category": per_cat,
+        "order_parameters": op,
     }
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"run_{ts}.json"
@@ -152,6 +155,12 @@ def main() -> None:
     print(f"[score] judge={args.judge} model={raw.get('model')} n={n} overall={overall:.3f}")
     for cat, d in per_cat.items():
         print(f"  {cat:<26} {d['accuracy']:.3f}  ({d['correct']}/{d['n']})")
+    print(
+        "[order-params] "
+        f"phi={op['polarization']['phi_mean']:.3f}  "
+        f"xi={op['retention']['correlation_length_xi']}  "
+        f"chi={op['susceptibility']['chi']}"
+    )
     print(f"[score] wrote {out_path}")
 
 
