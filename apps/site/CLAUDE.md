@@ -12,6 +12,21 @@ Three collections under `src/content/`, all sharing a base schema (`title`, `dat
 
 `state` runs `seedling → germinating → stable → fossil`. `connects` is a list of slugs that forms graph edges for random navigation.
 
+## Narrative form: noir, not thriller
+
+This governs every long-form piece on the site — essays and exchanges alike. It is the single most important rule about *delivery*, and it overrides the instinct to build to a reveal.
+
+**Tell the story; don't withhold it.** A thriller hoards its turns and bets the reader will stay for the payoff. A noir commits the crime in the opening frame — you know who's dead and roughly who did it before the credits finish — and the reader stays anyway, because the pleasure was never *what happened*. The pleasure is the telling, and the slow recognition that they are implicated in it.
+
+Concretely, for any piece:
+
+- **Commit the crime up front.** State the result, the corpse, the wall the search can never get past — in the first beat. No "the part that put me on the floor" teases withheld for paragraphs. The reader should know exactly what they're in for and choose to stay.
+- **Implicate the reader.** The reason they read to the end is that the reading makes them complicit — an active accomplice, not a passenger. The form should *make them do the detective work* (open the evidence, run the instrument, click the cut), so every revelation is one they chose to uncover.
+- **Lean into collapsible section headers.** Collapsibles are a noir device, not a space-saver: each one the reader opens is a door they decided to walk through. Use them (see `Spoiler` / `SectionHeader` in `care-for-an-esper`). The compendium model (cf. esper's GameFAQs walkthrough) is the house style.
+- **Voice: as engaging as Borges, as funny as Cortázar.** Borgesian — the labyrinth stated plainly, the vertigo in the architecture rather than the cliffhanger. Cortázar — the wit, the instruction-manual deadpan, the form that enacts its own argument. If a passage reads like a science blog post or a Twitter thread, it has failed; rewrite it.
+
+**Reference exemplar:** `src/pages/essays/care-for-an-esper.astro` (+ `src/components/care-for-an-esper/`) — the bespoke walkthrough that *tells* its story and implicates the reader by form. When a piece earns it, go bespoke and build the chrome.
+
 ## Exchange style
 
 Exchanges are edited conversations, not transcripts. The reader should feel they're reading a literary form, not a ChatGPT paste.

@@ -1,0 +1,75 @@
+---
+// A collapsible dossier. In the noir register a collapsible is not a
+// space-saver — it is a door the reader decides to open, which is what makes
+// them an accomplice rather than a passenger. Native <details> so it works
+// without JS and stays accessible; the slot carries MDX (prose, blockquotes).
+interface Props {
+  summary: string;
+  open?: boolean;
+}
+const { summary, open = false } = Astro.props;
+---
+
+<details class="reveal" open={open}>
+  <summary>
+    <span class="reveal-mark" aria-hidden="true"></span>
+    <span class="reveal-label">{summary}</span>
+  </summary>
+  <div class="reveal-body"><slot /></div>
+</details>
+
+<style>
+  .reveal {
+    margin: 1.8em 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(31, 22, 8, 0.5);
+    overflow: hidden;
+  }
+  .reveal > summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+    transition: color 0.15s ease;
+  }
+  .reveal > summary::-webkit-details-marker {
+    display: none;
+  }
+  .reveal > summary:hover {
+    color: var(--text);
+  }
+  .reveal-mark {
+    flex: none;
+    width: 0.75em;
+    color: var(--accent);
+    transition: transform 0.15s ease;
+  }
+  .reveal-mark::before {
+    content: '▸';
+  }
+  .reveal[open] .reveal-mark::before {
+    content: '▾';
+  }
+  .reveal-label {
+    text-transform: uppercase;
+  }
+  .reveal-body {
+    padding: 0.2rem 1.1rem 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+  /* The body inherits prose typography from the exchange template; just trim
+     the first/last child margins so the box doesn't gap awkwardly. */
+  .reveal-body :global(> :first-child) {
+    margin-top: 0.9em;
+  }
+  .reveal-body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>
