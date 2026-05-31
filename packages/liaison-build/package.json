@@ -1,0 +1,10 @@
+{
+  "name": "@rdm/liaison-build",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "description": "Projects the Ahn et al. 2011 flavor network (pinned bipartite source) into the static liaison-graph.json consumed by /liaison.",
+  "scripts": {
+    "build": "node build.mjs"
+  }
+}
