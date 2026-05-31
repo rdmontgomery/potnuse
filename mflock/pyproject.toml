@@ -13,6 +13,7 @@ dependencies = [
 [project.scripts]
 mflock-run = "harness.run:main"
 mflock-score = "harness.score:main"
+mflock-phi = "harness.experiments:main"
 
 [build-system]
 requires = ["hatchling"]

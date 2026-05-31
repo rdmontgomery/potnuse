@@ -97,13 +97,39 @@ class MockModel:
         return "I have no record of that in our conversation."
 
 
-def make_model(kind: str, model_name: str | None):
+class FileModel:
+    """Answers supplied by an external model, as a {question_id: answer} JSON.
+
+    The escape hatch for "the LLM is right here." When this session's own model
+    (or any model run elsewhere) answers the slice by hand, drop the answers in
+    a JSON file and score them through the same pipeline as an API run. Stamped
+    with its own name so its provenance is explicit in every result.
+    """
+
+    name = "file"
+
+    def __init__(self, answers_path: str, model_name: str | None = None):
+        self.model_name = model_name or f"file:{Path(answers_path).name}"
+        self.answers = json.loads(Path(answers_path).read_text())
+
+    def answer(self, instance: dict[str, Any]) -> str:
+        qid = instance["question_id"]
+        if qid not in self.answers:
+            raise KeyError(f"no answer for {qid!r} in answers file")
+        return str(self.answers[qid]).strip()
+
+
+def make_model(kind: str, model_name: str | None, answers: str | None = None):
     if kind == "auto":
         kind = "anthropic" if os.environ.get("ANTHROPIC_API_KEY") else "mock"
     if kind == "anthropic":
         return AnthropicModel(model_name or DEFAULT_MODEL_NAME)
     if kind == "mock":
         return MockModel(model_name or "mock-decay-v1")
+    if kind == "file":
+        if not answers:
+            raise SystemExit("--model file requires --answers <path.json>")
+        return FileModel(answers, model_name)
     raise ValueError(f"unknown model kind: {kind!r}")
 
 
@@ -111,13 +137,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Run a LongMemEval slice against a model.")
     ap.add_argument("--slice", type=int, default=None, help="number of instances (default: all)")
     ap.add_argument("--source", default="fixture", choices=["fixture", "hf"])
-    ap.add_argument("--model", default="auto", choices=["auto", "anthropic", "mock"])
+    ap.add_argument("--model", default="auto", choices=["auto", "anthropic", "mock", "file"])
     ap.add_argument("--model-name", default=None)
+    ap.add_argument("--answers", default=None, help="JSON {question_id: answer} for --model file")
     ap.add_argument("--out", default=str(RESULTS_DIR))
     args = ap.parse_args()
 
     instances = adapters.load_slice(args.slice, source=args.source)
-    model = make_model(args.model, args.model_name)
+    model = make_model(args.model, args.model_name, args.answers)
     print(f"[run] {len(instances)} instances | source={args.source} | model={model.name} ({model.model_name})")
 
     records = []
