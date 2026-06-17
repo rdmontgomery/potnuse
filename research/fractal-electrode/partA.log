@@ -1,0 +1,20 @@
+references ...
+  square  cov=1.00 D~2.0  meanE=0.0072 Q=2  field/cov=0.0072
+  h-tree  cov=0.24 D=1.41 meanE=0.0072 Q=2  field/cov=0.0300
+  DLA     cov=0.14 D=1.61 meanE=0.0064 Q=1  field/cov=0.0454
+
+sweep ...
+  eta= 1.0 s1 D=1.61 cov=0.14 meanE=0.0064 field/cov=0.0454
+  eta= 1.0 s2 D=1.69 cov=0.14 meanE=0.0064 field/cov=0.0455
+  eta= 1.5 s1 D=1.62 cov=0.14 meanE=0.0064 field/cov=0.0453
+  eta= 1.5 s2 D=1.62 cov=0.14 meanE=0.0064 field/cov=0.0451
+  eta= 2.0 s1 D=1.61 cov=0.14 meanE=0.0064 field/cov=0.0453
+  eta= 2.0 s2 D=1.61 cov=0.14 meanE=0.0064 field/cov=0.0450
+  eta= 3.0 s1 D=1.69 cov=0.14 meanE=0.0064 field/cov=0.0454
+  eta= 3.0 s2 D=1.69 cov=0.14 meanE=0.0064 field/cov=0.0454
+  eta= 4.0 s1 D=1.61 cov=0.14 meanE=0.0064 field/cov=0.0453
+  eta= 4.0 s2 D=1.69 cov=0.14 meanE=0.0064 field/cov=0.0452
+  total 123.9s
+wrote figs/A1_harmonic_measure.png
+wrote figs/A2_tradeoff.png
+wrote results_A.json
