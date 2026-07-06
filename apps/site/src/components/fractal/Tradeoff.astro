@@ -1,71 +1,77 @@
 ---
-// The trade-off a Euclidean electrode cannot escape, and the frontier a
-// fractal lifts you onto. x = fraction of the pixel covered by metal.
-// Two competing goods: charge capacity rises with metal; transparency +
-// tissue proximity fall with metal. Their product (what a solid electrode
-// can actually deliver) peaks at a mediocre compromise. The fractal sits
-// up and to the right of that peak.
+// The trade-off a Euclidean electrode cannot escape, drawn as a good-vs-good
+// Pareto plot. x = charge / capacitance, y = transparency + tissue proximity.
+// A solid electrode has one knob (how much metal); sweeping it traces a
+// frontier from (low charge, high transparency) to (high charge, low
+// transparency). It can sit anywhere on or under that curve, never above it.
+// The fractal lands up-and-to-the-right of the frontier: both goods at once,
+// in the region a Euclidean electrode cannot reach.
 const W = 620;
 const H = 360;
 const m = { l: 56, r: 24, t: 28, b: 48 };
-const px = (t: number) => m.l + t * (W - m.l - m.r);
-const py = (v: number) => H - m.b - v * (H - m.t - m.b);
+const xPx = (v: number) => m.l + v * (W - m.l - m.r);
+const yPy = (v: number) => H - m.b - v * (H - m.t - m.b);
 
-// charge ~ saturating rise with coverage
+// Sweep the one knob (metal coverage). Charge saturates up; optics decays down.
 const charge = (t: number) => 1 - Math.exp(-3.0 * t);
-// transparency * proximity ~ decay with coverage
 const optics = (t: number) => Math.exp(-2.4 * t);
-// what a solid electrode delivers = product, normalized
 const samples = Array.from({ length: 81 }, (_, i) => i / 80);
-const prod = samples.map((t) => charge(t) * optics(t));
-const prodMax = Math.max(...prod);
-const path = (fn: (t: number) => number) =>
-  samples.map((t, i) => `${i ? 'L' : 'M'}${px(t).toFixed(1)} ${py(fn(t)).toFixed(1)}`).join(' ');
-const prodPath = samples
-  .map((t, i) => `${i ? 'L' : 'M'}${px(t).toFixed(1)} ${py((charge(t) * optics(t)) / prodMax).toFixed(1)}`)
+
+// The frontier itself, parametrised by the knob: (charge, transparency).
+const frontier = samples
+  .map((t, i) => `${i ? 'L' : 'M'}${xPx(charge(t)).toFixed(1)} ${yPy(optics(t)).toFixed(1)}`)
   .join(' ');
-// peak of the Euclidean compromise
-const peakI = prod.indexOf(prodMax);
-const peakT = samples[peakI];
+// Everything a solid electrode can actually reach: the region under the frontier.
+const reachable =
+  frontier +
+  ` L ${xPx(charge(1)).toFixed(1)} ${yPy(0).toFixed(1)}` +
+  ` L ${xPx(0).toFixed(1)} ${yPy(0).toFixed(1)} Z`;
+
+// The "best compromise" a solid electrode settles for: peak of charge x optics.
+const prod = samples.map((t) => charge(t) * optics(t));
+const peakT = samples[prod.indexOf(Math.max(...prod))];
+const cx = xPx(charge(peakT));
+const cy = yPy(optics(peakT));
+
+// The fractal: both goods at once, beyond the frontier.
+const fx = xPx(0.82);
+const fy = yPy(0.82);
 ---
 
 <figure class="fig">
-  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pareto trade-off plot">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pareto trade-off plot: charge versus transparency">
+    <!-- the region a solid electrode can reach -->
+    <path d={reachable} class="reach" />
+
     <!-- axes -->
     <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} class="axis" />
     <line x1={m.l} y1={m.t} x2={m.l} y2={H - m.b} class="axis" />
     <text x={(m.l + W - m.r) / 2} y={H - 10} class="lbl" text-anchor="middle">
-      fraction of the pixel covered by metal &rarr;
+      charge / capacitance &rarr;
     </text>
     <text x={-(H) / 2} y={16} class="lbl" text-anchor="middle" transform="rotate(-90)">
-      performance
+      transparency + tissue proximity &uarr;
     </text>
 
-    <!-- charge curve -->
-    <path d={path(charge)} class="charge" />
-    <text x={px(0.92)} y={py(charge(0.92)) - 8} class="tag charge-t" text-anchor="end">charge / capacitance</text>
+    <!-- the Euclidean frontier: one knob, can't get both -->
+    <path d={frontier} class="frontier" />
+    <text x={xPx(0.34)} y={yPy(0.30)} class="tag frontier-t">a solid electrode is stuck on this line</text>
 
-    <!-- optics curve -->
-    <path d={path(optics)} class="optics" />
-    <text x={px(0.5)} y={py(optics(0.5)) - 8} class="tag optics-t">light + tissue proximity</text>
+    <!-- the compromise it settles for -->
+    <circle cx={cx} cy={cy} r="4.5" class="peak" />
+    <text x={cx + 12} y={cy + 4} class="tag peak-t">best compromise</text>
 
-    <!-- product: the achievable Euclidean line -->
-    <path d={prodPath} class="prod" />
-    <circle cx={px(peakT)} cy={py(prodMax / prodMax)} r="4" class="peak" />
-    <text x={px(peakT)} y={py(1) - 12} class="tag peak-t" text-anchor="middle">best a solid electrode can do</text>
-
-    <!-- the fractal escape -->
-    <g class="escape">
-      <path d={`M${px(0.55)} ${py(0.66)} Q ${px(0.78)} ${py(0.55)} ${px(0.9)} ${py(0.9)}`} class="arrow" />
-      <polygon points={`${px(0.9)},${py(0.9)} ${px(0.87)},${py(0.83)} ${px(0.935)},${py(0.85)}`} class="arrowhead" />
-      <circle cx={px(0.9)} cy={py(0.9)} r="6" class="frac-pt" />
-      <text x={px(0.88)} y={py(0.9) - 12} class="tag frac-t" text-anchor="end">fractal: high charge <tspan class="amp">and</tspan> high transparency</text>
-    </g>
+    <!-- the fractal: off the line, up and to the right -->
+    <path d={`M${cx.toFixed(1)} ${cy.toFixed(1)} Q ${xPx(0.5).toFixed(1)} ${yPy(0.86).toFixed(1)} ${fx.toFixed(1)} ${fy.toFixed(1)}`} class="arrow" />
+    <circle cx={fx} cy={fy} r="6" class="frac-pt" />
+    <text x={fx} y={fy - 16} class="tag frac-t" text-anchor="middle">the fractal</text>
+    <text x={fx} y={fy - 2} class="tag frac-sub" text-anchor="middle">both goods at once</text>
   </svg>
   <figcaption>
-    A solid electrode lives on one knob. Turn it toward charge and you go opaque and shove the
-    tissue away; turn it toward transparency and you can&rsquo;t inject enough current. The product peaks
-    at a compromise nobody is happy with. The fractal&rsquo;s whole pitch is that it doesn&rsquo;t live on the knob.
+    Plot the two goods against each other. A solid electrode has one knob &mdash; how much metal &mdash; so
+    it can only ever sit somewhere on the curved frontier: more charge buys less transparency, and back
+    again. Everything it can reach lives in the shaded region. The fractal lands in the corner the curve
+    walls off &mdash; high charge <em>and</em> high transparency &mdash; because it doesn&rsquo;t live on the knob.
   </figcaption>
 </figure>
 
@@ -91,25 +97,18 @@ const peakT = samples[peakI];
     font-size: 12px;
     letter-spacing: 0.04em;
   }
-  .charge {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 2.4;
+  .reach {
+    fill: var(--accent);
+    opacity: 0.06;
+    stroke: none;
   }
-  .optics {
+  .frontier {
     fill: none;
     stroke: var(--text-dim);
-    stroke-width: 2.4;
-    stroke-dasharray: 2 4;
-  }
-  .prod {
-    fill: none;
-    stroke: var(--accent-dim);
-    stroke-width: 1.4;
-    opacity: 0.7;
+    stroke-width: 2;
   }
   .peak {
-    fill: var(--accent-dim);
+    fill: var(--text-dim);
   }
   .frac-pt {
     fill: var(--accent);
@@ -122,23 +121,25 @@ const peakT = samples[peakI];
     stroke-width: 1.6;
     stroke-dasharray: 3 3;
   }
-  .arrowhead {
-    fill: var(--accent);
-  }
   .tag {
     font-family: var(--font-jetbrains);
     font-size: 11.5px;
     fill: var(--text-dim);
   }
-  .charge-t {
-    fill: var(--accent);
+  .frontier-t {
+    fill: var(--text-muted);
+  }
+  .peak-t {
+    fill: var(--text-muted);
   }
   .frac-t {
     fill: var(--accent);
+    font-size: 12.5px;
   }
-  .amp {
-    font-style: italic;
-    fill: var(--text);
+  .frac-sub {
+    fill: var(--accent);
+    opacity: 0.8;
+    font-size: 10.5px;
   }
   figcaption {
     font-family: var(--font-jetbrains);
