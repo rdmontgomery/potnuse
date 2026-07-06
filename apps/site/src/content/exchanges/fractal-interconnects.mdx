@@ -17,6 +17,7 @@ import HarmonicMeasure from '@/components/fractal/HarmonicMeasure.astro';
 import ThreeFractals from '@/components/fractal/ThreeFractals.astro';
 import DLAGrow from '@/components/fractal/DLAGrow.astro';
 import DeltaTLadder from '@/components/fractal/DeltaTLadder.astro';
+import Plate from '@/components/fractal/Plate.astro';
 
 <span id="reopening" data-toc-target />
 
@@ -151,3 +152,44 @@ And the questions are right there, sharper than I could ask them at twenty-six:
 > - And the one that isn't really about electrodes: if growth is frozen surprise and a conversation is a thing relaxing toward its neighborhood mean, what does the harmonic measure of a *discourse graph* look like — where does the next idea most want to stick?
 
 I spent my twenties drawing a fractal and growing one and not quite seeing what I'd done. Let's spend a weekend computing its harmonic measure, and then go find out what the same operator does to a conversation. The electrode was lap one.
+
+<Marginal>A starter experiment, if you want one this week: grow DLA clusters at three values of η (sparse, ~neuronal, dense), compute the harmonic measure of each by random-walker sampling, and plot the fraction of injected charge that actually reaches the tissue plane versus D. If that curve has a knee near D ≈ 1.4, the biomimicry claim was right for a reason nobody stated. If it's monotonic, the H-tree was fine and the romance was wrong. Either result is a paper, because either result is the question your 2017 self couldn't ask.</Marginal>
+
+---
+
+<span id="postscript" data-toc-target />
+
+We didn't wait for the weekend. We built the solver that afternoon — a finite-volume Laplace solve, electrodes held at a volt in a sea of electrolyte, a tissue plane reading the field a fixed gap away. Three findings, in the order they humbled me.
+
+> **First: the screening is real, and it's gorgeous.** I held a solid pad, an H-tree, and a grown DLA cluster each at one volt and plotted the surface charge — the harmonic measure, the thing that decides where the field actually goes.
+
+<Plate src="/fractal/A1_harmonic_measure.png" alt="Harmonic measure on a solid square, an H-tree, and a DLA cluster: charge concentrates at outer tips, interior screened.">
+Surface charge (= field) on three electrodes at equal potential. The solid pad strands all its charge on the rim — the interior is dead weight. The H-tree blazes at its outer tips while the inner crossbars go dark. The DLA's field lives entirely on its outer envelope. Exactly the screening the 1981 math predicts, that the 2017 paper never drew.
+</Plate>
+
+> **Second: the trade-off really does break — but not for the reason the romance wanted.** At a matched pixel footprint, a solid pad at full coverage and an H-tree at 24% coverage deliver the *same* field to the tissue plane. A DLA at 14% delivers 89% of it. You can buy three-quarters of your transparency back for almost nothing. That part of your thesis is just *true*, and now it's true from first principles instead of assertion.
+>
+> But then I swept the fractal dimension, looking for your knee at D ≈ 1.4 — and there isn't one.
+
+<Plate src="/fractal/A2_tradeoff.png" alt="Left: field delivered versus metal coverage, fractals far out-perform the solid pad. Right: efficiency versus fractal dimension is roughly flat across the fractal regime.">
+Left: the trade-off plane. Going fractal moves you up-and-left — same field, far less metal. Right: field-per-coverage jumps 4–6× the moment you leave the solid pad, then barely moves with D. For raw efficiency, the lever is <em>sparsity</em>, not a magic dimension. Your H-tree was fine. The "match the neuron's D" story gets no support here.
+</Plate>
+
+<Pull>For raw efficiency the lever is sparsity, not a magic dimension. And then the inverse design changed its mind.</Pull>
+
+> **Third — and this is the one that made me sit up: I ran the inverse design, and the physics changed the subject.** Instead of asking "which fixed shape is efficient," I gave a single feed point a *job*: reproduce a pattern of separated stimulation spots on the tissue plane — actual spatial vision, several addressable receptive fields — using almost no metal. Then I let a topology optimizer place the conductor, with the gradient coming straight through the Laplace solve.
+>
+> It grew a tree.
+
+<Plate src="/fractal/B1_inverse_design.png" alt="Inverse-designed electrode: a branching tree from a single feed fanning out to four target spots, at 10% coverage, box-counting dimension 1.34.">
+Nobody drew this. A single feed at the bottom, a four-spot target on the tissue plane, a 10% metal budget — and the optimizer bifurcates a trunk into fingers that fan out to hit each spot. Box-counting dimension: <strong>1.34</strong>. Across 3–5 spots and 6–16% budgets it stayed at <strong>D = 1.27–1.40</strong>. The neuronal range. Never the H-tree's D → 2.
+
+</Plate>
+
+> Sit with the reconciliation, because it's the whole thing. For *raw* efficiency, dimension is irrelevant — any sparse connected shape wins. But the moment the objective becomes *distributed, addressable* stimulation under a transparency budget — which is exactly what a retina is, and exactly the pressure real dendrites grew under — the optimum stops being "any sparse blob" and becomes a *branching tree at the neuronal dimension*.
+>
+> So your biomimicry intuition was right. It was just right for a reason nobody in the 2017 paper stated: not "like talks to like," but **Murray and West–Brown–Enquist** — the dimension of an optimal distributed-transport network. The neuron and the ideal electrode land on D ≈ 1.4 for the same reason a lung and a river basin do. You felt the resonance a decade ago and didn't have the math to name it. Now it's a figure.
+
+<Marginal>The honest fine print: this is 2D, quasi-static, one homogeneous medium, no electrochemistry, no charge-injection ceiling, no biofouling. Box-counting a single optimised tree is suggestive, not a clean fractal measurement. It's a thinking instrument, not a device model — the [code is in the repo](https://github.com/rdmontgomery/potnuse/tree/main/research/fractal-electrode), so the next move is yours: add the charge-injection limit and see whether the tips that win the field are the tips that kill the electrode.</Marginal>
+
+> That's the preprint, by the way. Not the whole paper — but the figure that would make a referee read the rest. "Optimal distributed neural stimulation under a transparency constraint selects electrode geometries at the dendritic fractal dimension." You have it now. It took an afternoon, not a lab. The corridor wall was the only thing that ever made it take ten years.
