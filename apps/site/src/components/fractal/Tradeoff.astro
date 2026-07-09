@@ -1,0 +1,153 @@
+---
+// The trade-off a Euclidean electrode cannot escape, drawn as a good-vs-good
+// Pareto plot. x = charge / capacitance, y = transparency + tissue proximity.
+// A solid electrode has one knob (how much metal); sweeping it traces a
+// frontier from (low charge, high transparency) to (high charge, low
+// transparency). It can sit anywhere on or under that curve, never above it.
+// The fractal lands up-and-to-the-right of the frontier: both goods at once,
+// in the region a Euclidean electrode cannot reach.
+const W = 620;
+const H = 360;
+const m = { l: 56, r: 24, t: 28, b: 48 };
+const xPx = (v: number) => m.l + v * (W - m.l - m.r);
+const yPy = (v: number) => H - m.b - v * (H - m.t - m.b);
+
+// Sweep the one knob (metal coverage). Charge saturates up; optics decays down.
+const charge = (t: number) => 1 - Math.exp(-3.0 * t);
+const optics = (t: number) => Math.exp(-2.4 * t);
+const samples = Array.from({ length: 81 }, (_, i) => i / 80);
+
+// The frontier itself, parametrised by the knob: (charge, transparency).
+const frontier = samples
+  .map((t, i) => `${i ? 'L' : 'M'}${xPx(charge(t)).toFixed(1)} ${yPy(optics(t)).toFixed(1)}`)
+  .join(' ');
+// Everything a solid electrode can actually reach: the region under the frontier.
+const reachable =
+  frontier +
+  ` L ${xPx(charge(1)).toFixed(1)} ${yPy(0).toFixed(1)}` +
+  ` L ${xPx(0).toFixed(1)} ${yPy(0).toFixed(1)} Z`;
+
+// The "best compromise" a solid electrode settles for: peak of charge x optics.
+const prod = samples.map((t) => charge(t) * optics(t));
+const peakT = samples[prod.indexOf(Math.max(...prod))];
+const cx = xPx(charge(peakT));
+const cy = yPy(optics(peakT));
+
+// The fractal: both goods at once, beyond the frontier.
+const fx = xPx(0.82);
+const fy = yPy(0.82);
+---
+
+<figure class="fig">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pareto trade-off plot: charge versus transparency">
+    <!-- the region a solid electrode can reach -->
+    <path d={reachable} class="reach" />
+
+    <!-- axes -->
+    <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} class="axis" />
+    <line x1={m.l} y1={m.t} x2={m.l} y2={H - m.b} class="axis" />
+    <text x={(m.l + W - m.r) / 2} y={H - 10} class="lbl" text-anchor="middle">
+      charge / capacitance &rarr;
+    </text>
+    <text x={-(H) / 2} y={16} class="lbl" text-anchor="middle" transform="rotate(-90)">
+      transparency + tissue proximity &uarr;
+    </text>
+
+    <!-- the Euclidean frontier: one knob, can't get both -->
+    <path d={frontier} class="frontier" />
+    <text x={xPx(0.34)} y={yPy(0.30)} class="tag frontier-t">a solid electrode is stuck on this line</text>
+
+    <!-- the compromise it settles for -->
+    <circle cx={cx} cy={cy} r="4.5" class="peak" />
+    <text x={cx + 12} y={cy + 4} class="tag peak-t">best compromise</text>
+
+    <!-- the fractal: off the line, up and to the right -->
+    <path d={`M${cx.toFixed(1)} ${cy.toFixed(1)} Q ${xPx(0.5).toFixed(1)} ${yPy(0.86).toFixed(1)} ${fx.toFixed(1)} ${fy.toFixed(1)}`} class="arrow" />
+    <circle cx={fx} cy={fy} r="6" class="frac-pt" />
+    <text x={fx} y={fy - 16} class="tag frac-t" text-anchor="middle">the fractal</text>
+    <text x={fx} y={fy - 2} class="tag frac-sub" text-anchor="middle">both goods at once</text>
+  </svg>
+  <figcaption>
+    Plot the two goods against each other. A solid electrode has one knob &mdash; how much metal &mdash; so
+    it can only ever sit somewhere on the curved frontier: more charge buys less transparency, and back
+    again. Everything it can reach lives in the shaded region. The fractal lands in the corner the curve
+    walls off &mdash; high charge <em>and</em> high transparency &mdash; because it doesn&rsquo;t live on the knob.
+  </figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 2.4em 0;
+  }
+  .fig svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .axis {
+    stroke: var(--text-muted);
+    stroke-width: 1;
+  }
+  .lbl {
+    fill: var(--text-muted);
+    font-family: var(--font-jetbrains);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+  .reach {
+    fill: var(--accent);
+    opacity: 0.06;
+    stroke: none;
+  }
+  .frontier {
+    fill: none;
+    stroke: var(--text-dim);
+    stroke-width: 2;
+  }
+  .peak {
+    fill: var(--text-dim);
+  }
+  .frac-pt {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 1.5;
+  }
+  .arrow {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-dasharray: 3 3;
+  }
+  .tag {
+    font-family: var(--font-jetbrains);
+    font-size: 11.5px;
+    fill: var(--text-dim);
+  }
+  .frontier-t {
+    fill: var(--text-muted);
+  }
+  .peak-t {
+    fill: var(--text-muted);
+  }
+  .frac-t {
+    fill: var(--accent);
+    font-size: 12.5px;
+  }
+  .frac-sub {
+    fill: var(--accent);
+    opacity: 0.8;
+    font-size: 10.5px;
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.8rem;
+    letter-spacing: 0.01em;
+    max-width: 56ch;
+  }
+</style>

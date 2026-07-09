@@ -8,7 +8,7 @@ import StateBadge from '@/components/StateBadge.astro';
 export const getStaticPaths: GetStaticPaths = async () => {
   // Slugs that have their own bespoke page file under src/pages/exchanges/.
   // Keep this list in sync; the dynamic route skips them to avoid collisions.
-  const bespoke = new Set<string>(['mumford-magick']);
+  const bespoke = new Set<string>(['mumford-magick', 'fractal-interconnects']);
   const exchanges = await getCollection('exchanges');
   return exchanges
     .filter((entry) => !bespoke.has(entry.id))
