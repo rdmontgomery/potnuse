@@ -13,6 +13,8 @@ const {
   type,
 } = Astro.props;
 
+import CornerDrag from '@/components/CornerDrag.astro';
+
 const SITE = 'https://rdmontgomery.com';
 const canonical = new URL(Astro.url.pathname, SITE).toString();
 const ogImage = new URL(image, SITE).toString();
@@ -63,6 +65,8 @@ const displayTitle =
   </head>
   <body>
     <slot />
+
+    <CornerDrag />
 
     <script>
       // Up Down Left Right Left Right — opens /rhizome from anywhere.

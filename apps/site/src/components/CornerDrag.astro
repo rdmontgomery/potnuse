@@ -1,0 +1,429 @@
+---
+// Corner-drag page transition.
+//
+// Grab an empty corner of a reading page and peel it like a dog-ear; the
+// lifted corner reveals a *related* node bleeding through from underneath.
+// Release past the threshold and the peel swallows the page — you've
+// traversed an edge of the rhizome. Release short and it snaps flat.
+//
+// "Related" is resolved at build time from this page's place in the graph:
+// forward `connects` (heaviest), `backlinks`, then shared-tag neighbours,
+// plus a chaotic pure-random tail. Each grab re-rolls the destination, so
+// the gesture is chaotic neutral by construction — you steer the *leaving*,
+// not the *arriving*.
+import { buildGraph } from '@/lib/graph';
+
+const COLORS: Record<string, string> = {
+  essays: '#e8a838',
+  experiments: '#7fb069',
+  exchanges: '#c48ac9',
+  page: '#9e8e72',
+};
+
+const strip = (p: string) =>
+  p.length > 1 && p.endsWith('/') ? p.slice(0, -1) : p;
+
+const graph = await buildGraph();
+const here = strip(Astro.url.pathname);
+const current = graph.find((n) => strip(n.url) === here);
+
+type Dest = {
+  url: string;
+  title: string;
+  collection: string;
+  color: string;
+  description: string;
+  w: number;
+};
+
+const seen = new Set<string>();
+const pool: Dest[] = [];
+const add = (slugOrId: string, w: number) => {
+  const n = graph.find((g) => g.slug === slugOrId || g.id === slugOrId);
+  if (!n || seen.has(n.url) || (current && n.url === current.url)) return;
+  seen.add(n.url);
+  pool.push({
+    url: n.url,
+    title: n.title,
+    collection: n.collection,
+    color: COLORS[n.collection] ?? COLORS.page,
+    description: n.description ?? '',
+    w,
+  });
+};
+
+if (current) {
+  for (const s of current.connects) add(s, 3);
+  for (const s of current.backlinks) add(s, 2);
+  for (const n of graph) {
+    if (n.tags.some((t) => current.tags.includes(t))) add(n.slug, 1);
+  }
+}
+
+// Fallback / not-a-graph-page: the whole rhizome, uniform.
+if (pool.length === 0) {
+  for (const n of graph) {
+    if (current && n.url === current.url) continue;
+    if (seen.has(n.url)) continue;
+    seen.add(n.url);
+    pool.push({
+      url: n.url,
+      title: n.title,
+      collection: n.collection,
+      color: COLORS[n.collection] ?? COLORS.page,
+      description: n.description ?? '',
+      w: 1,
+    });
+  }
+}
+---
+
+{
+  pool.length > 0 && (
+    <div id="cd-root" aria-hidden="true">
+      <div id="cd-reveal">
+        <div class="cd-card">
+          <span class="cd-kicker" />
+          <span class="cd-title" />
+          <span class="cd-desc" />
+          <span class="cd-arrow">follow the edge →</span>
+        </div>
+      </div>
+      <div id="cd-flap" />
+      <div id="cd-crease" />
+    </div>
+  )
+}
+
+<script define:vars={{ pool }}>
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const root = document.getElementById('cd-root');
+  if (root && !reduced && Array.isArray(pool) && pool.length > 0) {
+    const reveal = document.getElementById('cd-reveal');
+    const flap = document.getElementById('cd-flap');
+    const crease = document.getElementById('cd-crease');
+    const card = reveal.querySelector('.cd-card');
+    const kickerEl = reveal.querySelector('.cd-kicker');
+    const titleEl = reveal.querySelector('.cd-title');
+    const descEl = reveal.querySelector('.cd-desc');
+
+    const HOT = 96; // px: size of each corner hot-zone
+    const totalW = pool.reduce((s, d) => s + d.w, 0);
+
+    // Weighted roll, with a chaotic ~15% pure-uniform tail.
+    function roll() {
+      if (Math.random() < 0.15) {
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
+      let r = Math.random() * totalW;
+      for (const d of pool) {
+        r -= d.w;
+        if (r <= 0) return d;
+      }
+      return pool[pool.length - 1];
+    }
+
+    // Which corner is (sx, sy) in, if any.
+    function cornerOf(sx, sy) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const left = sx <= HOT;
+      const right = sx >= w - HOT;
+      const top = sy <= HOT;
+      const bottom = sy >= h - HOT;
+      if (top && left) return 'tl';
+      if (top && right) return 'tr';
+      if (bottom && left) return 'bl';
+      if (bottom && right) return 'br';
+      return null;
+    }
+
+    const ignoreSel = 'a, button, input, textarea, select, canvas, video, [contenteditable=""], [contenteditable="true"], [data-no-corner-drag]';
+
+    let active = null; // corner id
+    let dest = null;
+    let originX = 0;
+    let originY = 0;
+    let maxL = 0;
+    let committing = false;
+
+    function cornerXY(c) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      switch (c) {
+        case 'tl': return [0, 0];
+        case 'tr': return [w, 0];
+        case 'bl': return [0, h];
+        case 'br': return [w, h];
+      }
+    }
+
+    // Given corner + leg length L (px along each edge), compute the two
+    // clip-path polygons: the revealed wedge (destination) and the flap
+    // (backside of the peeled corner, a dog-ear reflected over the crease).
+    function geometry(c, L) {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const cx = c === 'tr' || c === 'br' ? w : 0;
+      const cy = c === 'bl' || c === 'br' ? h : 0;
+      const sx = cx === 0 ? 1 : -1; // inward x direction
+      const sy = cy === 0 ? 1 : -1; // inward y direction
+      const ax = cx + sx * L; // point along horizontal edge
+      const ay = cy;
+      const bx = cx;
+      const by = cy + sy * L; // point along vertical edge
+      const dgx = cx + sx * L; // reflected corner (dog-ear tip)
+      const dgy = cy + sy * L;
+      const pt = (x, y) => `${x}px ${y}px`;
+      // revealed triangle: corner, edge-x point, edge-y point
+      const reveal = `polygon(${pt(cx, cy)}, ${pt(ax, ay)}, ${pt(bx, by)})`;
+      // flap triangle: edge-x point, dog-ear tip, edge-y point
+      const flap = `polygon(${pt(ax, ay)}, ${pt(dgx, dgy)}, ${pt(bx, by)})`;
+      return { reveal, flap, ax, ay, bx, by };
+    }
+
+    function paint(c, L) {
+      const g = geometry(c, L);
+      reveal.style.clipPath = g.reveal;
+      flap.style.clipPath = g.flap;
+      // crease line between the two edge points
+      const len = Math.hypot(g.bx - g.ax, g.by - g.ay);
+      const ang = Math.atan2(g.by - g.ay, g.bx - g.ax);
+      crease.style.width = `${len}px`;
+      crease.style.left = `${g.ax}px`;
+      crease.style.top = `${g.ay}px`;
+      crease.style.transform = `rotate(${ang}rad)`;
+      crease.style.opacity = L > 6 ? '1' : '0';
+      // shade the flap by how far it's lifted
+      const t = Math.min(1, L / maxL);
+      flap.style.filter = `drop-shadow(0 ${4 + t * 18}px ${8 + t * 26}px rgba(0,0,0,${0.35 + t * 0.35}))`;
+      // pull the destination card toward the corner
+      const [px, py] = cornerXY(c);
+      const inX = c === 'tr' || c === 'br' ? -1 : 1;
+      const inY = c === 'bl' || c === 'br' ? -1 : 1;
+      card.style.left = `${px + inX * 20}px`;
+      card.style.top = `${py + inY * 20}px`;
+      card.style.transform = `translate(${inX < 0 ? '-100%' : '0'}, ${inY < 0 ? '-100%' : '0'})`;
+      card.style.opacity = String(Math.max(0, Math.min(1, (L - 40) / 90)));
+    }
+
+    function setDest(d) {
+      dest = d;
+      kickerEl.textContent = d.collection;
+      kickerEl.style.color = d.color;
+      titleEl.textContent = d.title;
+      descEl.textContent = d.description;
+      reveal.style.setProperty('--cd-accent', d.color);
+    }
+
+    function begin(c, sx, sy) {
+      active = c;
+      committing = false;
+      const [px, py] = cornerXY(c);
+      originX = px;
+      originY = py;
+      maxL = Math.min(window.innerWidth, window.innerHeight) * 0.62;
+      setDest(roll());
+      root.classList.add('cd-live');
+      paint(c, 0);
+    }
+
+    function legLength(sx, sy) {
+      // distance from corner along the diagonal, projected to per-edge leg
+      const dx = Math.abs(sx - originX);
+      const dy = Math.abs(sy - originY);
+      return Math.min(maxL, (dx + dy) / 2 + Math.min(dx, dy) * 0.4);
+    }
+
+    function snapBack() {
+      const startL = legLength(lastX, lastY);
+      const t0 = performance.now();
+      const dur = 260;
+      root.classList.remove('cd-live');
+      function frame(now) {
+        const k = Math.min(1, (now - t0) / dur);
+        const e = 1 - Math.pow(1 - k, 3);
+        paint(active, startL * (1 - e));
+        if (k < 1) requestAnimationFrame(frame);
+        else reset();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function commit() {
+      committing = true;
+      const c = active;
+      const startL = legLength(lastX, lastY);
+      const full = Math.hypot(window.innerWidth, window.innerHeight) * 1.15;
+      const t0 = performance.now();
+      const dur = 460;
+      card.style.opacity = '1';
+      function frame(now) {
+        const k = Math.min(1, (now - t0) / dur);
+        const e = k * k * (3 - 2 * k); // smoothstep
+        paint(c, startL + (full - startL) * e);
+        if (k < 1) requestAnimationFrame(frame);
+        else window.location.href = dest.url;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function reset() {
+      active = null;
+      dest = null;
+      committing = false;
+      reveal.style.clipPath = 'polygon(0 0, 0 0, 0 0)';
+      flap.style.clipPath = 'polygon(0 0, 0 0, 0 0)';
+      crease.style.opacity = '0';
+      card.style.opacity = '0';
+    }
+
+    let lastX = 0;
+    let lastY = 0;
+
+    window.addEventListener(
+      'pointerdown',
+      (ev) => {
+        if (active || committing) return;
+        if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+        const c = cornerOf(ev.clientX, ev.clientY);
+        if (!c) return;
+        if (ev.target instanceof Element && ev.target.closest(ignoreSel)) return;
+        lastX = ev.clientX;
+        lastY = ev.clientY;
+        begin(c, ev.clientX, ev.clientY);
+        try {
+          root.setPointerCapture(ev.pointerId);
+        } catch {}
+      },
+      { passive: true },
+    );
+
+    window.addEventListener(
+      'pointermove',
+      (ev) => {
+        if (!active || committing) return;
+        lastX = ev.clientX;
+        lastY = ev.clientY;
+        if (ev.cancelable) ev.preventDefault();
+        paint(active, legLength(ev.clientX, ev.clientY));
+      },
+      { passive: false },
+    );
+
+    function end() {
+      if (!active || committing) return;
+      const L = legLength(lastX, lastY);
+      if (L >= maxL * 0.55) commit();
+      else snapBack();
+    }
+
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', () => {
+      if (active && !committing) snapBack();
+    });
+    window.addEventListener('resize', () => {
+      if (active && !committing) {
+        maxL = Math.min(window.innerWidth, window.innerHeight) * 0.62;
+        paint(active, legLength(lastX, lastY));
+      }
+    });
+  }
+</script>
+
+<style>
+  #cd-root {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  #cd-root.cd-live {
+    /* capture the drag so text selection / scroll don't fight it */
+    pointer-events: auto;
+    cursor: grabbing;
+    touch-action: none;
+  }
+
+  #cd-reveal {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 0 0, 0 0);
+    background:
+      radial-gradient(
+        120% 120% at var(--cd-ox, 0) var(--cd-oy, 0),
+        color-mix(in srgb, var(--cd-accent, #e8a838) 22%, #1a1207) 0%,
+        #14100a 62%
+      );
+    /* subtle "underneath" grain */
+    box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.6);
+  }
+
+  .cd-card {
+    position: absolute;
+    max-width: min(66vw, 340px);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    opacity: 0;
+    will-change: opacity, left, top;
+  }
+  .cd-kicker {
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+  }
+  .cd-title {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .cd-desc {
+    font-family: var(--font-crimson);
+    font-size: 0.92rem;
+    line-height: 1.35;
+    color: var(--text-dim);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cd-arrow {
+    margin-top: 0.2rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+  }
+
+  #cd-flap {
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(0 0, 0 0, 0 0);
+    /* backside of the peeled sheet: darker paper with an edge sheen */
+    background: linear-gradient(
+      135deg,
+      #2a2011 0%,
+      #201811 46%,
+      #120d06 100%
+    );
+    will-change: clip-path, filter;
+  }
+
+  #cd-crease {
+    position: absolute;
+    height: 2px;
+    transform-origin: 0 0;
+    background: linear-gradient(
+      90deg,
+      rgba(232, 168, 56, 0) 0%,
+      rgba(240, 230, 210, 0.85) 50%,
+      rgba(232, 168, 56, 0) 100%
+    );
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
