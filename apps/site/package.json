@@ -10,6 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "graph-doctor": "node scripts/graph-doctor.mjs",
     "generate-types": "wrangler types"
   },
   "dependencies": {
