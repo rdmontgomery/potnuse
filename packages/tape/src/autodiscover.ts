@@ -229,10 +229,33 @@ export async function autoDiscover(
   };
 }
 
+/** base58, 32-44 chars, and the alphabet omits 0 O I l. */
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
 export function assertAddress(input: string): Address {
-  const trimmed = input.trim().toLowerCase();
-  if (!/^0x[0-9a-f]{40}$/.test(trimmed)) {
-    throw new TapeError(`"${input.trim()}" is not a contract address`);
+  const raw = input.trim();
+  const trimmed = raw.toLowerCase();
+  if (/^0x[0-9a-f]{40}$/.test(trimmed)) return trimmed as Address;
+
+  // Naming the format is the difference between a dead end and a decision.
+  // Most memecoin flow is on Solana, so this is the likeliest paste to fail,
+  // and "not a contract address" tells someone nothing about why.
+  if (BASE58.test(raw) && !raw.startsWith('0x')) {
+    throw new TapeError(
+      `"${raw}" looks like a Solana address. This runner reads EVM chains only — ` +
+        'ERC-20 tokens and constant-product pairs. Solana needs a different feed.',
+    );
   }
-  return trimmed as Address;
+  if (/^0x[0-9a-fA-F]{64}$/.test(raw)) {
+    throw new TapeError(
+      `"${raw}" is 32 bytes, which is a pool id or a transaction hash rather than a token address.`,
+    );
+  }
+  if (/^0x[0-9a-fA-F]*$/.test(raw)) {
+    const digits = raw.length - 2;
+    throw new TapeError(
+      `"${raw}" has ${digits} hex digit${digits === 1 ? '' : 's'}; an address has 40.`,
+    );
+  }
+  throw new TapeError(`"${raw}" is not a contract address`);
 }

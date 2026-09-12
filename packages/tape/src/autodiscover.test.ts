@@ -237,8 +237,24 @@ describe('address validation', () => {
     expect(assertAddress(`  ${POOL_USDC.toUpperCase().replace('0X', '0x')}  `)).toBe(POOL_USDC);
   });
 
-  it('rejects anything that is not one, with the input quoted back', () => {
+  it('names Solana rather than shrugging', () => {
+    // Most memecoin flow is on Solana, so this is the likeliest paste to fail.
+    expect(() => assertAddress('B4Vwozy1FGtp8SELXSXydWSzavPUGnJ77DURV2k4MhUV')).toThrow(
+      /looks like a Solana address.*EVM chains only/s,
+    );
+  });
+
+  it('tells a 32-byte id apart from a token address', () => {
+    expect(() => assertAddress(`0x${'ab'.repeat(32)}`)).toThrow(
+      /32 bytes, which is a pool id or a transaction hash/,
+    );
+  });
+
+  it('counts the digits when hex is the right shape but the wrong length', () => {
+    expect(() => assertAddress('0x123')).toThrow(/has 3 hex digits; an address has 40/);
+  });
+
+  it('falls back to a plain refusal for anything else', () => {
     expect(() => assertAddress('artificial inu')).toThrow(/"artificial inu" is not a contract/);
-    expect(() => assertAddress('0x123')).toThrow(/not a contract address/);
   });
 });
