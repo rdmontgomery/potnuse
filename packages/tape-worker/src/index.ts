@@ -1,7 +1,9 @@
 import { jsonRpc, jsonRpcClient, poolFeed } from '@rdm/tape/feed';
 import {
-  discoverMarket,
+  assertAddress,
+  autoDiscover,
   enterMarket,
+  hintsFrom,
   makePlan,
   runOnce,
   screen,
@@ -140,53 +142,96 @@ async function pageData(store: TapeStore, journalFor?: string | null): Promise<P
   return data;
 }
 
-/** Build and screen a market from pasted addresses; store it only if it passes. */
+/**
+ * Default place to ask "which pools hold this token".
+ *
+ * A hint source only. Whatever it returns is checked against the chain before
+ * anything is stored, so a wrong, changed or absent indexer costs nothing but
+ * a slower path. `{token}` is substituted.
+ */
+const DEFAULT_INDEXER =
+  'https://api.geckoterminal.com/api/v2/networks/robinhood/tokens/{token}/pools';
+
+/**
+ * Turn a pasted contract address into a watched market.
+ *
+ * The only thing anyone actually has is the address. Pool, quote asset,
+ * decimals and symbols are on-chain facts, and making a person look them up is
+ * asking them to do a machine's job badly — so this does the looking.
+ */
 async function addMarket(store: TapeStore, form: FormData): Promise<PageData['flash']> {
   const read = (key: string) => String(form.get(key) ?? '').trim();
-  const rpcUrl = read('rpcUrl');
+  const num = (key: string, fallback: number) => {
+    const value = Number(read(key));
+    return Number.isFinite(value) ? value : fallback;
+  };
+
+  const rpcUrl = read('rpcUrl') || 'https://rpc.mainnet.chain.robinhood.com';
+  const chainId = num('chainId', 4663);
 
   try {
-    const market = await discoverMarket(jsonRpc(rpcUrl, { timeoutMs: 8_000 }), {
-      chainId: Number(read('chainId')),
-      base: read('base').toLowerCase() as Address,
-      quote: read('quote').toLowerCase() as Address,
-      pool: read('pool') ? (read('pool').toLowerCase() as Address) : undefined,
-      factory: read('factory') ? (read('factory').toLowerCase() as Address) : undefined,
-    });
+    const token = assertAddress(read('base'));
+    const rpc = jsonRpcClient(rpcUrl, { timeoutMs: 8_000 });
 
-    const stop = Number(read('stop'));
-    const trail = Number(read('trail'));
+    // An explicit pool wins; otherwise ask an indexer for somewhere to look.
+    const override = read('pool');
+    const candidates = override
+      ? [assertAddress(override)]
+      : await hintsFrom(DEFAULT_INDEXER.replace('{token}', token), token);
+
+    const found = await autoDiscover(rpc.call, { chainId, token, candidates });
+    if (!found.market) {
+      const tried = found.candidates
+        .map((c) => `${c.pool}  ${c.rejected ?? 'ok'}`)
+        .join('\n');
+      return {
+        kind: 'bad',
+        text: `${found.note}. Paste a pool address under Advanced if you have one.`,
+        detail: tried || undefined,
+      };
+    }
+
+    const market = found.market;
     const plan = makePlan({
       denom: read('denom') === 'quote' ? 'quote' : 'usd',
-      rungs: parseRungs(read('rungs')),
-      // A stop of zero means run without one — the paper week's whole point is
-      // finding out whether it pays for itself.
-      stopMultiple: stop > 0 ? stop : 0.000001,
-      trail: trail > 0 ? { armAtMultiple: 2, dropPct: trail } : undefined,
+      rungs: parseRungs(read('rungs') || '2:4000,3:3000,5:1500'),
+      // Zero means run without a stop, which is the point of the paper week:
+      // a stop-out ends the tape that would tell us whether it pays for itself.
+      stopMultiple: num('stop', 0) > 0 ? num('stop', 0) : 0.000001,
+      trail: num('trail', 35) > 0 ? { armAtMultiple: 2, dropPct: num('trail', 35) } : undefined,
     });
 
-    const fees = { buyBps: Number(read('buyBps')), sellBps: Number(read('sellBps')) };
-    const budget = Number(read('budget'));
-    const slots = Number(read('slots'));
-    const usdRefKind = read('usdRef') === 'none' ? 'none' : 'pegged';
+    const fees = { buyBps: num('buyBps', 30), sellBps: num('sellBps', 30) };
+    const budget = num('budget', 500);
+    const slots = Math.max(Math.round(num('slots', 10)), 1);
+    const noReference = read('usdRef') === 'none';
+
+    // Start from the current head unless asked to backfill. Recording forward
+    // is what a fresh paste wants; history is a deliberate, slower choice.
+    const head = await rpc.blockNumber();
+    const backfillHours = Math.max(num('backfillHours', 0), 0);
+    const lookback = BigInt(Math.round(backfillHours * 36_000)); // ~100ms blocks
+    const startBlock = head > lookback ? head - lookback : 0n;
 
     const config: MarketConfig = {
       rpcUrl,
       market,
-      usdRef: usdRefKind === 'none' ? { kind: 'none' } : { kind: 'pegged' },
+      usdRef: noReference ? { kind: 'none' } : { kind: 'pegged' },
       fees,
       plan,
       bankroll: { programBudgetUsd: budget, slots },
-      feed: { kind: 'sync', startBlock: Number(read('startBlock')), confirmations: 5, maxRange: 2_000 },
+      baseIsToken0: undefined,
+      feed: {
+        kind: 'sync',
+        startBlock: Number(startBlock),
+        confirmations: 5,
+        maxRange: 2_000,
+      },
     };
 
-    // Screen before storing, so a pool that cannot be exited never joins the
-    // watchlist in the first place.
-    const rpc = jsonRpcClient(rpcUrl, { timeoutMs: 8_000 });
     const observation = await poolFeed(rpc.call, market, usdReference(config.usdRef)).poll(
       Date.now(),
     );
-
     if (!observation) {
       return { kind: 'bad', text: `${market.base.symbol}: the pool reports no reserves.` };
     }
@@ -197,7 +242,7 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
         pool: observation.pool,
         fees,
         usdPerQuote: observation.mark.usdPerQuote,
-        quoteKind: usdRefKind === 'none' ? 'unreferenced' : 'stable',
+        quoteKind: noReference ? 'unreferenced' : 'stable',
         quoteVolatilityPct: null,
         sourceVerified: null,
         ownerRenounced: null,
@@ -210,7 +255,13 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
       { intendedSizeUsd: budget / slots },
     );
 
-    const detail = verdict.findings.map((f) => `${f.severity.padEnd(5)} ${f.code}: ${f.message}`).join('\n');
+    const detail = [
+      found.note,
+      `pool ${market.pool}`,
+      `price ${observation.mark.quotePerBase.toPrecision(6)} ${market.quote.symbol} per ${market.base.symbol}`,
+      '',
+      ...verdict.findings.map((f) => `${f.severity.padEnd(5)} ${f.code}: ${f.message}`),
+    ].join('\n');
 
     if (verdict.outcome === 'block') {
       return {
@@ -223,7 +274,7 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
     await store.putMarket({ id: market.pool.toLowerCase(), config, active: true });
     return {
       kind: verdict.outcome === 'warn' ? 'warn' : 'ok',
-      text: `Watching ${market.base.symbol}/${market.quote.symbol} at ${market.pool}.`,
+      text: `Watching ${market.base.symbol}/${market.quote.symbol}. Open a ticket when you want one.`,
       detail,
     };
   } catch (error) {

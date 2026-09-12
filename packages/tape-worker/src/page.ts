@@ -200,37 +200,43 @@ ${flash}
 
 <section><h2>Watch a contract</h2>
 <form method="post" action="/market">
-<fieldset><legend>Market</legend>
-<label>Base token CA<input id="base" name="base" placeholder="0x…" required></label>
-<label>Quote token CA<input id="quote" name="quote" placeholder="0x…" required></label>
-<label>Pool address (optional)<input id="pool" name="pool" placeholder="0x…"></label>
-<label>Factory (if no pool)<input id="factory" name="factory" placeholder="0x…"></label>
-<label>RPC URL<input id="rpcUrl" name="rpcUrl" value="https://rpc.mainnet.chain.robinhood.com" required></label>
-<label>Chain ID<input id="chainId" name="chainId" value="4663" required></label>
-<label>Start block<input id="startBlock" name="startBlock" value="0" required></label>
+<fieldset style="grid-template-columns:1fr"><legend>Paste it</legend>
+<label>Contract address<input id="base" name="base" placeholder="0x…" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
 </fieldset>
-<fieldset><legend>Pricing and fees</legend>
+<div class="row" style="margin-top:1rem">
+<button class="primary" type="submit">Find the pool and watch it</button>
+</div>
+<p class="note" style="margin-top:.75rem">Pool, quote asset, decimals and symbols are all on-chain facts &mdash; it finds them. Every candidate pool is verified against the chain before anything is stored, and the screen runs before it joins the list.</p>
+
+<details style="margin-top:1rem">
+<summary class="m" style="cursor:pointer;color:var(--accent)">Advanced &mdash; only if the defaults are wrong</summary>
+<div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem">
+<fieldset><legend>Chain</legend>
+<label>RPC URL<input id="rpcUrl" name="rpcUrl" value="https://rpc.mainnet.chain.robinhood.com"></label>
+<label>Chain ID<input id="chainId" name="chainId" value="4663"></label>
+<label>Pool address (skips the search)<input id="pool" name="pool" placeholder="0x…"></label>
+<label>Backfill hours (0 = from now)<input id="backfillHours" name="backfillHours" value="0"></label>
+</fieldset>
+<fieldset><legend>Fees and pricing</legend>
+<label>Buy fee bps<input id="buyBps" name="buyBps" value="30"></label>
+<label>Sell fee bps<input id="sellBps" name="sellBps" value="30"></label>
 <label>Quote USD reference<select id="usdRef" name="usdRef">
-<option value="pegged">Stablecoin (1.00)</option>
-<option value="none">None — pair ratio only</option>
+<option value="pegged">Assume quote is a dollar stable</option>
+<option value="none">No dollar reference &mdash; pair ratio only</option>
 </select></label>
-<label>Buy fee bps<input id="buyBps" name="buyBps" value="100" required></label>
-<label>Sell fee bps<input id="sellBps" name="sellBps" value="100" required></label>
 <label>Measure multiples in<select id="denom" name="denom">
 <option value="usd">USD</option><option value="quote">Quote asset</option>
 </select></label>
 </fieldset>
 <fieldset><legend>Ladder and bankroll</legend>
 <label>Rungs<input id="rungs" name="rungs" value="2:4000,3:3000,5:1500"></label>
-<label>Stop multiple<input id="stop" name="stop" value="0.5"></label>
+<label>Stop multiple (0 = none)<input id="stop" name="stop" value="0"></label>
 <label>Trail % off high<input id="trail" name="trail" value="35"></label>
-<label>Program budget USD<input id="budget" name="budget" value="500" required></label>
-<label>Slots<input id="slots" name="slots" value="10" required></label>
+<label>Program budget USD<input id="budget" name="budget" value="500"></label>
+<label>Slots<input id="slots" name="slots" value="10"></label>
 </fieldset>
-<div class="row" style="margin-top:1rem">
-<button class="primary" type="submit">Screen and watch</button>
-<span class="note">Discovery reads decimals and symbols on-chain. The screen runs before anything is stored.</span>
 </div>
+</details>
 </form></section>
 ${journal}
 <footer>No signer, no keys, one write path. Set <span class="m">stop</span> to 0 to run without one.<br>
