@@ -26,27 +26,41 @@ pnpm --filter @rdm/tape-worker exec wrangler secret put TAPE_READ_TOKEN
 pnpm --filter @rdm/tape-worker deploy
 ```
 
-Register a market — the CLI prints the statement rather than writing it, since
-the Worker's HTTP surface is read-only on purpose:
+Then open the Worker's URL, sign in with the token, and paste a contract
+address. Discovery reads decimals, symbols and (given a factory) the pool
+address on-chain, so the only things typed by hand are addresses.
 
-```sh
-node --experimental-strip-types packages/tape/src/cli.ts market ./my-market.json
-```
+Set **start block** to the pool's deployment block for full history, or a recent
+block to start from now. The cursor takes over from there.
 
-Set `feed.startBlock` to the pool's deployment block for full history, or a
-recent block to start from now. The cursor takes over from there.
+## The page
 
-## Endpoints
+Everything is behind the token and **fails closed** — with no `TAPE_READ_TOKEN`
+set, nothing is served at all. Put Cloudflare Access in front as well if you
+want the Google sign-in rather than a token.
 
-Read-only and **fail closed** — with no `TAPE_READ_TOKEN` set, nothing is
-served. Put Cloudflare Access in front as well if you want the Google sign-in
-instead of a bearer token.
-
-| Path | What it returns |
+| Route | What it does |
 | --- | --- |
-| `/status` | bankroll, and each market's cursor and open position |
-| `/markets` | the active watchlist with its configs |
-| `/journal?market=0x…&limit=200` | recent events plus a summary |
+| `/` | watchlist, bankroll, add-a-contract form, journal tail |
+| `POST /market` | discover, screen, and watch — **stores nothing if the screen blocks** |
+| `POST /market/enter` | open a paper ticket by hand |
+| `POST /market/deactivate` | stop watching |
+| `/api/status`, `/api/journal` | the same data as JSON, for scripts |
+
+This surface was read-only in the first cut, on the reasoning that a mutation
+path on the internet was not worth saving a paste. That reasoning no longer
+holds: driving the harness from a phone *is* the point, and none of these
+writes can move money. They add a market, open a simulated position, or stop a
+scan. The signer boundary is unchanged.
+
+**Opening a ticket is always manual.** `runOnce` never opens a position —
+deciding which tickers enter the universe is the one judgement this system
+leaves to a person.
+
+### Running without a stop
+
+Set **stop multiple** to `0`. The paper week exists partly to find out whether
+the stop pays for itself, and a stop-out ends the tape that would answer it.
 
 ## Operational notes
 

@@ -1,6 +1,6 @@
 import { makeBankroll, openBankroll } from './bankroll.ts';
 import { usdReference, type TapeConfig } from './config.ts';
-import { resolveTokenOrder } from './feed/pool.ts';
+import { poolFeed, resolveTokenOrder } from './feed/pool.ts';
 import { syncFeed } from './feed/sync.ts';
 import type { RpcClient } from './feed/types.ts';
 import { summarize } from './journal.ts';
@@ -171,4 +171,69 @@ export async function runOnce(deps: RunnerDeps): Promise<RunSummary> {
   });
 
   return { startedAt, finishedAt, markets: results, observations, errors };
+}
+
+/**
+ * Open a paper position by hand.
+ *
+ * Separate from the scan loop, and deliberately so: deciding which tickers
+ * enter the universe is the one judgement this system leaves to a person.
+ * Nothing in `runOnce` ever opens a position.
+ *
+ * Entry prices against a fresh pool read rather than the log tape. The tape is
+ * history — correct for driving a ladder, wrong for deciding what you can buy
+ * right now.
+ */
+export async function enterMarket(
+  deps: RunnerDeps,
+  marketId: string,
+  facts: Parameters<ReturnType<typeof paperSession>['enter']>[1],
+  policy?: Parameters<ReturnType<typeof paperSession>['enter']>[2],
+): Promise<{ ok: boolean; detail: string; verdict?: unknown }> {
+  const now = deps.now ?? Date.now;
+  const markets = await deps.store.activeMarkets();
+  const stored = markets.find((market) => market.id === marketId);
+  if (!stored) return { ok: false, detail: 'market is not on the watchlist' };
+
+  const config = stored.config as MarketConfig;
+  const rpc = deps.rpcFor(config);
+  const usdRef = deps.usdRefFor ? deps.usdRefFor(config) : usdReference(config.usdRef);
+  const journal = bufferedJournal(deps.store, marketId);
+
+  const bankroll = (await deps.store.getBankroll(PROGRAM)) ?? openBankroll();
+  const saved = await deps.store.getPosition(marketId);
+
+  const session = paperSession(
+    {
+      market: config.market,
+      plan: config.plan,
+      bankroll: makeBankroll(config.bankroll),
+      fees: config.fees,
+      latencyHaircutBps: config.latencyHaircutBps,
+    },
+    poolFeed(rpc.call, config.market, usdRef),
+    journal,
+    {
+      bankroll,
+      position: saved?.position ?? null,
+      costUsd: saved?.costUsd ?? 0,
+      proceedsUsd: saved?.proceedsUsd ?? 0,
+    },
+  );
+
+  const outcome = await session.enter(now(), facts, policy);
+  await journal.flush();
+
+  if (!outcome.opened) {
+    return { ok: false, detail: outcome.why, verdict: outcome.verdict };
+  }
+
+  const state = session.state();
+  await deps.store.setPosition(marketId, {
+    position: state.position,
+    costUsd: state.costUsd,
+    proceedsUsd: state.proceedsUsd,
+  });
+  await deps.store.setBankroll(PROGRAM, state.bankroll);
+  return { ok: true, detail: `opened $${outcome.sizeUsd}` };
 }

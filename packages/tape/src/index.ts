@@ -82,6 +82,15 @@ export {
 } from './paper.ts';
 
 export {
+  discoverMarket,
+  decodeSymbol,
+  findPair,
+  readAsset,
+  type DiscoverRequest,
+} from './discover.ts';
+
+export {
+  enterMarket,
   runOnce,
   type MarketConfig,
   type MarketResult,
