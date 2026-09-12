@@ -1,0 +1,33 @@
+{
+  "rpcUrl": "https://rpc.mainnet.chain.robinhood.com",
+  "market": {
+    "base": { "chainId": 4663, "address": "0x0000000000000000000000000000000000000000", "symbol": "MEME", "decimals": 18 },
+    "quote": { "chainId": 4663, "address": "0x0000000000000000000000000000000000000000", "symbol": "USDC", "decimals": 6 },
+    "pool": "0x0000000000000000000000000000000000000000",
+    "venue": "uniswap-v2"
+  },
+  "usdRef": { "kind": "pegged" },
+  "fees": { "buyBps": 100, "sellBps": 100 },
+  "plan": {
+    "denom": "usd",
+    "rungs": [
+      { "atMultiple": 2, "sellBps": 4000 },
+      { "atMultiple": 3, "sellBps": 3000 },
+      { "atMultiple": 5, "sellBps": 1500 }
+    ],
+    "stopMultiple": 0.5,
+    "trail": { "armAtMultiple": 2, "dropPct": 35 },
+    "timeStopMs": 604800000
+  },
+  "bankroll": {
+    "programBudgetUsd": 500,
+    "slots": 10,
+    "sizing": "fixed-notional",
+    "maxConcurrent": 3,
+    "cooldownAfterLossMs": 21600000
+  },
+  "screen": { "maxExitImpactBps": 300, "minPoolDepthUsd": 50000, "maxTopHolderPct": 15 },
+  "pollMs": 60000,
+  "latencyHaircutBps": 30,
+  "journalPath": "./journals/meme-usdc.jsonl"
+}
