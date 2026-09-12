@@ -265,7 +265,10 @@ export default {
       return html(
         loginPage({
           kind: 'unconfigured',
-          text: 'No access token is set on this Worker yet. Add TAPE_READ_TOKEN as a Secret under Settings, then reload.',
+          text:
+            'No access token is set on this Worker yet. Add TAPE_READ_TOKEN as a RUNTIME secret ' +
+            '(the Worker\u2019s own Settings \u2192 Variables and Secrets), not a build variable \u2014 ' +
+            'build variables reach the build process and never reach the running Worker. Then reload.',
         }),
         503,
       );
