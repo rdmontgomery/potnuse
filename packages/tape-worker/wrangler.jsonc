@@ -19,8 +19,7 @@
     {
       "binding": "TAPE_DB",
       "database_name": "tape",
-      // Replace with the id printed by `wrangler d1 create tape`.
-      "database_id": "REPLACE_ME"
+      "database_id": "00f344d9-09f1-4ae5-be30-600be4c8e5e3"
     }
   ],
 
