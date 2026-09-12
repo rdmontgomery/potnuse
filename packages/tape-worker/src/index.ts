@@ -175,18 +175,26 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
 
     // An explicit pool wins; otherwise ask an indexer for somewhere to look.
     const override = read('pool');
-    const candidates = override
-      ? [assertAddress(override)]
+    const hints = override
+      ? { pools: [assertAddress(override)], poolIds: [] }
       : await hintsFrom(DEFAULT_INDEXER.replace('{token}', token), token);
 
-    const found = await autoDiscover(rpc.call, { chainId, token, candidates });
+    const found = await autoDiscover(rpc.call, {
+      chainId,
+      token,
+      candidates: hints.pools,
+      poolIds: hints.poolIds,
+    });
     if (!found.market) {
-      const tried = found.candidates
-        .map((c) => `${c.pool}  ${c.rejected ?? 'ok'}`)
-        .join('\n');
+      const tried = [
+        ...found.candidates.map((c) => `${c.pool}  ${c.rejected ?? 'ok'}`),
+        ...(hints.poolIds.length
+          ? ['', `32-byte pool ids seen (no pair contract to read):`, ...hints.poolIds]
+          : []),
+      ].join('\n');
       return {
         kind: 'bad',
-        text: `${found.note}. Paste a pool address under Advanced if you have one.`,
+        text: `${found.note} Paste a pool address under Advanced if you have one.`,
         detail: tried || undefined,
       };
     }

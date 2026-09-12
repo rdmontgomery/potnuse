@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addressesIn, assertAddress, autoDiscover, hintsFrom } from './autodiscover.ts';
+import { addressesIn, assertAddress, autoDiscover, hintsFrom, poolIdsIn } from './autodiscover.ts';
 import type { EthCall } from './feed/types.ts';
 import type { Address } from './types.ts';
 
@@ -75,25 +75,68 @@ describe('address scraping', () => {
   it('finds nothing in text with no addresses', () => {
     expect(addressesIn('{"error":"not found"}')).toEqual([]);
   });
+
+  it('does not chop a 32-byte pool id into a plausible fake address', () => {
+    // The bug this replaces: the first 40 characters of a 64-character id
+    // match, producing an address that was never deployed and then fails
+    // verification for a reason unrelated to why it actually failed.
+    const poolId = '0xcbdfea90430a30ee4469c9902e120a77e7c7e4711d5643671c1d1957f2f1ce27';
+    expect(addressesIn(poolId)).toEqual([]);
+    expect(addressesIn(`{"id":"${poolId}","addr":"${POOL_USDC}"}`)).toEqual([POOL_USDC]);
+  });
+
+  it('does not chop a transaction hash either', () => {
+    expect(addressesIn(`0x${'ab'.repeat(32)}`)).toEqual([]);
+  });
+});
+
+describe('32-byte pool ids', () => {
+  it('reports ids a pair-based venue would never produce', () => {
+    const poolId = '0xcbdfea90430a30ee4469c9902e120a77e7c7e4711d5643671c1d1957f2f1ce27';
+    expect(poolIdsIn(`{"id":"robinhood_${poolId}"}`)).toEqual([poolId]);
+  });
+
+  it('does not mistake an address for one', () => {
+    expect(poolIdsIn(POOL_USDC)).toEqual([]);
+  });
 });
 
 describe('hints are never trusted and never fatal', () => {
   it('returns addresses from a successful fetch', async () => {
     const fetchImpl = (async () =>
       new Response(`{"pool":"${POOL_USDC}"}`, { status: 200 })) as unknown as typeof fetch;
-    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual([POOL_USDC]);
+    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual({
+      pools: [POOL_USDC],
+      poolIds: [],
+    });
+  });
+
+  it('separates 32-byte ids from addresses in one response', async () => {
+    const poolId = `0x${'ef'.repeat(32)}`;
+    const fetchImpl = (async () =>
+      new Response(`{"id":"${poolId}","addr":"${POOL_USDC}"}`, { status: 200 })) as unknown as typeof fetch;
+    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual({
+      pools: [POOL_USDC],
+      poolIds: [poolId],
+    });
   });
 
   it('yields nothing rather than throwing when the indexer is down', async () => {
     const fetchImpl = (async () => {
       throw new Error('ECONNREFUSED');
     }) as unknown as typeof fetch;
-    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual([]);
+    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual({
+      pools: [],
+      poolIds: [],
+    });
   });
 
   it('yields nothing on a non-200', async () => {
     const fetchImpl = (async () => new Response('nope', { status: 500 })) as unknown as typeof fetch;
-    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual([]);
+    expect(await hintsFrom('https://x.invalid', TOKEN, { fetchImpl })).toEqual({
+      pools: [],
+      poolIds: [],
+    });
   });
 });
 
@@ -128,6 +171,30 @@ describe('discovery verifies every candidate against the chain', () => {
     expect(result.market?.pool).toBe(POOL_USDC);
     expect(result.note).toMatch(/took the deepest \(USDC\)/);
     expect(result.candidates.filter((c) => c.rejected === null)).toHaveLength(2);
+  });
+
+  it('names the venue when every candidate failed and the hints carried pool ids', async () => {
+    // "None of these were pairs" and "this trades somewhere I cannot read" are
+    // very different things to tell someone staring at a refusal.
+    const result = await autoDiscover(chain(), {
+      chainId: 4663,
+      token: TOKEN,
+      candidates: [NOT_A_PAIR],
+      poolIds: ['0x' + 'ab'.repeat(32)],
+    });
+    expect(result.market).toBeNull();
+    expect(result.note).toMatch(/32-byte id/);
+    expect(result.note).toMatch(/Uniswap V4/);
+  });
+
+  it('says so when there is nothing to check but ids were seen', async () => {
+    const result = await autoDiscover(chain(), {
+      chainId: 4663,
+      token: TOKEN,
+      candidates: [],
+      poolIds: ['0x' + 'cd'.repeat(32)],
+    });
+    expect(result.note).toMatch(/Uniswap V4/);
   });
 
   it('survives a hint list that is entirely garbage', async () => {

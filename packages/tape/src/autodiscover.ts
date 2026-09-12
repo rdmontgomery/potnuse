@@ -37,29 +37,58 @@ export interface AutoDiscovery {
 export function addressesIn(text: string, exclude: Address[] = []): Address[] {
   const skip = new Set(exclude.map((address) => address.toLowerCase()));
   const found = new Set<string>();
-  for (const match of text.matchAll(/0x[0-9a-fA-F]{40}/g)) {
+  // The lookarounds are load-bearing. Without them a 64-character pool id
+  // matches its own first 40 characters and becomes a plausible-looking
+  // address that was never deployed, which then fails verification for a
+  // reason that has nothing to do with why it failed.
+  for (const match of text.matchAll(/(?<![0-9a-fA-F])0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/g)) {
     const address = match[0].toLowerCase();
     if (!skip.has(address) && address !== `0x${'0'.repeat(40)}`) found.add(address);
   }
   return [...found] as Address[];
 }
 
+/**
+ * 32-byte identifiers in the same text.
+ *
+ * A venue that names pools with a hash rather than an address is not a
+ * constant-product pair and never will be: Uniswap V4 holds every pool inside
+ * one singleton and identifies them by `PoolId`, so there is no per-pair
+ * contract to call `token0()` on. Spotting these is the difference between
+ * "none of these were pairs" and "this token trades somewhere this code does
+ * not support yet", which are very different things to tell someone.
+ */
+export function poolIdsIn(text: string): string[] {
+  const found = new Set<string>();
+  for (const match of text.matchAll(/(?<![0-9a-fA-F])0x[0-9a-fA-F]{64}(?![0-9a-fA-F])/g)) {
+    found.add(match[0].toLowerCase());
+  }
+  return [...found];
+}
+
 /** Best-effort hints from an indexer. Never throws; an outage yields nothing. */
+export interface Hints {
+  pools: Address[];
+  /** 32-byte ids, which imply a venue with no per-pair contract. */
+  poolIds: string[];
+}
+
 export async function hintsFrom(
   url: string,
   token: Address,
   opts: { timeoutMs?: number; fetchImpl?: typeof fetch } = {},
-): Promise<Address[]> {
+): Promise<Hints> {
   const doFetch = opts.fetchImpl ?? fetch;
   try {
     const response = await doFetch(url, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(opts.timeoutMs ?? 6_000),
     });
-    if (!response.ok) return [];
-    return addressesIn(await response.text(), [token]);
+    if (!response.ok) return { pools: [], poolIds: [] };
+    const text = await response.text();
+    return { pools: addressesIn(text, [token]), poolIds: poolIdsIn(text) };
   } catch {
-    return [];
+    return { pools: [], poolIds: [] };
   }
 }
 
@@ -134,14 +163,26 @@ export async function autoDiscover(
     chainId: number;
     token: Address;
     candidates: Address[];
+    /** 32-byte pool ids seen alongside the candidates, if any. */
+    poolIds?: string[];
     venue?: string;
     /** Cap on chain round trips; each candidate costs about five calls. */
     maxCandidates?: number;
   },
 ): Promise<AutoDiscovery> {
+  const poolIds = request.poolIds ?? [];
+  const unsupported =
+    poolIds.length > 0
+      ? `this token appears to trade on a venue that identifies pools by a 32-byte id rather than a pair contract (Uniswap V4 and similar), which this runner cannot read yet`
+      : null;
+
   const pools = request.candidates.slice(0, request.maxCandidates ?? 12);
   if (pools.length === 0) {
-    return { market: null, candidates: [], note: 'no candidate pools to check' };
+    return {
+      market: null,
+      candidates: [],
+      note: unsupported ?? 'no candidate pools to check',
+    };
   }
 
   const base = await readAsset(call, request.chainId, request.token).catch(() => null);
@@ -160,10 +201,13 @@ export async function autoDiscover(
 
   const verified = candidates.filter((candidate) => candidate.rejected === null);
   if (verified.length === 0) {
+    const checked = `checked ${candidates.length} candidate${candidates.length === 1 ? '' : 's'}; none held ${base.symbol} with liquidity`;
     return {
       market: null,
       candidates,
-      note: `checked ${candidates.length} candidate${candidates.length === 1 ? '' : 's'}; none held ${base.symbol} with liquidity`,
+      // When every candidate failed AND the hints carried 32-byte ids, the
+      // venue is the explanation, not the addresses.
+      note: unsupported ? `${checked}. Likely because ${unsupported}.` : checked,
     };
   }
 
