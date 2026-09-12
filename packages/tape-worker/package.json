@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler d1 migrations apply TAPE_DB --remote && wrangler deploy",
     "tail": "wrangler tail",
-    "migrate": "wrangler d1 migrations apply tape",
-    "migrate:local": "wrangler d1 migrations apply tape --local"
+    "migrate": "wrangler d1 migrations apply TAPE_DB --remote",
+    "migrate:local": "wrangler d1 migrations apply TAPE_DB --local"
   },
   "dependencies": {
     "@rdm/tape": "workspace:*"

@@ -16,15 +16,46 @@ invokes wrangler from there. This one is deployed by hand, so a site build can
 never ship the runner and a runner change can never ship the site. Different
 things with different failure modes get different deploy buttons.
 
-## Setup
+## Deploys are merges to main, same as the site
+
+Once wired, this deploys exactly like everything else in the repo: merge to
+main, Cloudflare rebuilds. It is a *second* Worker rather than a second kind of
+thing, so it needs its own Workers Builds connection — one-time dashboard work,
+not an ongoing manual step.
+
+In the Cloudflare dashboard, connect the repo to a Worker named `tape-runner`
+with:
+
+| Setting | Value |
+| --- | --- |
+| Root directory | `packages/tape-worker` |
+| Build command | `pnpm install` |
+| Deploy command | `pnpm run deploy` |
+| Build watch paths | `packages/tape-worker/*`, `packages/tape/*` |
+
+The watch paths matter in a monorepo: without them every site commit rebuilds
+the runner and every runner commit rebuilds the site. With them, each rebuilds
+only when something it depends on actually changed.
+
+**Migrations run on deploy.** The `deploy` script is
+`wrangler d1 migrations apply TAPE_DB --remote && wrangler deploy`, so a schema
+change ships with the commit that needs it rather than being a step someone has
+to remember. It references the *binding* name, not the database name, so it
+survives the database being renamed or recreated.
+
+## One-time setup
+
+Four things that a git push genuinely cannot do, because they create resources
+or hold secrets:
 
 ```sh
 pnpm --filter @rdm/tape-worker exec wrangler d1 create tape
-# paste the printed database_id into wrangler.jsonc
-pnpm --filter @rdm/tape-worker migrate
+# paste the printed database_id into wrangler.jsonc — this one is a code change
 pnpm --filter @rdm/tape-worker exec wrangler secret put TAPE_READ_TOKEN
-pnpm --filter @rdm/tape-worker deploy
+pnpm --filter @rdm/tape-worker deploy   # first deploy, to create the Worker
 ```
+
+Then connect the repo as above. After that you never run wrangler again.
 
 Then open the Worker's URL, sign in with the token, and paste a contract
 address. Discovery reads decimals, symbols and (given a factory) the pool

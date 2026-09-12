@@ -30,9 +30,16 @@ workspace, it belongs elsewhere.
 
 ### Runner (`packages/tape-worker`)
 
-The cron Worker (`tape-runner`) that drives the harness. Deployed **separately**
-from the site with `pnpm --filter @rdm/tape-worker deploy` — the site's config
-at the repo root is untouched, so neither deploy can ship the other.
+The cron Worker (`tape-runner`) that drives the harness. Deploys on merge to
+main like the site, but as its **own** Workers Builds connection (root
+directory `packages/tape-worker`, deploy command `pnpm run deploy`, watch paths
+covering `packages/tape-worker/*` and `packages/tape/*`). Two connections, not
+one, so neither deploy can ship the other and a site commit does not rebuild
+the runner.
+
+Its deploy script applies D1 migrations before deploying, so schema changes
+ship with the commit that needs them. Never add a manual migration step to a
+runbook — put it in the script.
 
 Keep it thin. Logic belongs in `@rdm/tape`, which is Cloudflare-free and tested
 under Node; the Worker supplies bindings and entry points only.
