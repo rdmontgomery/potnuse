@@ -62,9 +62,24 @@ describe('login page', () => {
   });
 
   it('shows an error without leaking the token back into the page', () => {
-    const out = loginPage('That token is not right.');
+    const out = loginPage({ kind: 'rejected', text: 'That token is not right.' });
     expect(out).toContain('That token is not right.');
     expect(out).not.toContain('value="');
+  });
+
+  it('does not blame the reader for a runner nobody configured', () => {
+    // "Rejected" sends someone hunting for a typo instead of a missing secret.
+    const out = loginPage({ kind: 'unconfigured', text: 'No access token is set yet.' });
+    expect(out).toContain('Not configured yet');
+    expect(out).not.toContain('Not signed in');
+  });
+
+  it('names the setting to add so the fix needs no documentation', () => {
+    const out = loginPage({
+      kind: 'unconfigured',
+      text: 'No access token is set on this Worker yet. Add TAPE_READ_TOKEN as a Secret under Settings, then reload.',
+    });
+    expect(out).toContain('TAPE_READ_TOKEN');
   });
 });
 
