@@ -261,12 +261,20 @@ export default {
     const url = new URL(request.url);
 
     // Fails closed: with no token configured the Worker serves nothing.
-    if (!secret) return html(loginPage('This runner has no access token set.'), 503);
+    if (!secret) {
+      return html(
+        loginPage({
+          kind: 'unconfigured',
+          text: 'No access token is set on this Worker yet. Add TAPE_READ_TOKEN as a Secret under Settings, then reload.',
+        }),
+        503,
+      );
+    }
 
     if (request.method === 'POST' && url.pathname === '/login') {
       const form = await request.formData();
       if (!sameSecret(String(form.get('token') ?? ''), secret)) {
-        return html(loginPage('That token is not right.'), 401);
+        return html(loginPage({ kind: 'rejected', text: 'That token is not right.' }), 401);
       }
       return new Response(null, {
         status: 303,
@@ -313,7 +321,7 @@ export default {
           ? { kind: 'ok', text: result.detail }
           : { kind: 'bad', text: `Refused: ${result.detail}` };
       } else {
-        return html(loginPage(), 404);
+        return html(loginPage({ kind: 'rejected', text: 'No such page.' }), 404);
       }
 
       const data = await pageData(store);
@@ -337,6 +345,6 @@ export default {
       return html(dashboard(await pageData(store, url.searchParams.get('journal'))));
     }
 
-    return html(loginPage(), 404);
+    return html(loginPage({ kind: 'rejected', text: 'No such page.' }), 404);
   },
 };

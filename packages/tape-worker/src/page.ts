@@ -110,12 +110,25 @@ function shell(title: string, body: string): string {
 <style>${STYLE}</style></head><body><div class="sheet">${body}</div></body></html>`;
 }
 
-export function loginPage(error?: string): string {
+/**
+ * The signed-out page.
+ *
+ * `notice` distinguishes a wrong token from a runner nobody has configured
+ * yet. Labelling the second one "rejected" blames the reader for something
+ * the operator has not done, and sends them looking for a typo instead of a
+ * missing secret.
+ */
+export function loginPage(notice?: { kind: 'rejected' | 'unconfigured'; text: string }): string {
+  const banner = notice
+    ? `<div class="flash ${notice.kind === 'rejected' ? 'bad' : 'warn'}">
+<span class="k">${notice.kind === 'rejected' ? 'Not signed in' : 'Not configured yet'}</span>
+<p>${esc(notice.text)}</p></div>`
+    : '';
   return shell(
     'Tape Runner',
     `<header><span class="slug">Paper trading runner</span>
 <h1>Ladder <em>and</em> Ledger</h1></header>
-${error ? `<div class="flash bad"><span class="k">Rejected</span><p>${esc(error)}</p></div>` : ''}
+${banner}
 <form method="post" action="/login">
 <fieldset><legend>Sign in</legend>
 <label>Access token<input id="token" name="token" type="password" autocomplete="current-password" autofocus></label>
