@@ -82,11 +82,22 @@ export {
 } from './paper.ts';
 
 export {
+  CHAINS,
+  chainById,
+  chainsHolding,
+  probeChains,
+  type ChainProbe,
+  type ChainProfile,
+} from './chains.ts';
+
+export {
   addressesIn,
   assertAddress,
   autoDiscover,
   hintsFrom,
+  poolIdsIn,
   type AutoDiscovery,
+  type Hints,
   type Candidate,
 } from './autodiscover.ts';
 

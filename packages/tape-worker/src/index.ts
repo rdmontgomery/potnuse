@@ -1,9 +1,13 @@
 import { jsonRpc, jsonRpcClient, poolFeed } from '@rdm/tape/feed';
 import {
+  CHAINS,
   assertAddress,
   autoDiscover,
+  chainById,
+  chainsHolding,
   enterMarket,
   hintsFrom,
+  probeChains,
   makePlan,
   runOnce,
   screen,
@@ -143,16 +147,6 @@ async function pageData(store: TapeStore, journalFor?: string | null): Promise<P
 }
 
 /**
- * Default place to ask "which pools hold this token".
- *
- * A hint source only. Whatever it returns is checked against the chain before
- * anything is stored, so a wrong, changed or absent indexer costs nothing but
- * a slower path. `{token}` is substituted.
- */
-const DEFAULT_INDEXER =
-  'https://api.geckoterminal.com/api/v2/networks/robinhood/tokens/{token}/pools';
-
-/**
  * Turn a pasted contract address into a watched market.
  *
  * The only thing anyone actually has is the address. Pool, quote asset,
@@ -166,18 +160,44 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
     return Number.isFinite(value) ? value : fallback;
   };
 
-  const rpcUrl = read('rpcUrl') || 'https://rpc.mainnet.chain.robinhood.com';
-  const chainId = num('chainId', 4663);
-
   try {
     const token = assertAddress(read('base'));
-    const rpc = jsonRpcClient(rpcUrl, { timeoutMs: 8_000 });
 
-    // An explicit pool wins; otherwise ask an indexer for somewhere to look.
+    // A contract address carries no chain information — the same twenty bytes
+    // are valid everywhere — so ask each chain whether it holds this token
+    // rather than making someone remember where a ticker came from.
+    const pinned = read('chainId') ? chainById(Number(read('chainId'))) : undefined;
+    const searchIn = pinned ? [pinned] : CHAINS;
+    const probes = await probeChains(
+      token,
+      (chain) => jsonRpcClient(read('rpcUrl') || chain.rpcUrl, { timeoutMs: 6_000 }).call,
+      searchIn,
+    );
+    const holding = chainsHolding(probes);
+
+    if (holding.length === 0) {
+      return {
+        kind: 'bad',
+        text: `That address is not a token on ${searchIn.length === 1 ? searchIn[0]!.name : 'any chain this runner knows'}.`,
+        detail: searchIn.map((c) => `${c.name.padEnd(16)} no`).join('\n'),
+      };
+    }
+
+    const chain = holding[0]!;
+    const rpcUrl = read('rpcUrl') || chain.rpcUrl;
+    const chainId = chain.id;
+    const rpc = jsonRpcClient(rpcUrl, { timeoutMs: 8_000 });
+    const foundOn =
+      holding.length > 1
+        ? `deployed on ${holding.map((c) => c.name).join(', ')}; using ${chain.name}`
+        : `on ${chain.name}`;
+
     const override = read('pool');
     const hints = override
       ? { pools: [assertAddress(override)], poolIds: [] }
-      : await hintsFrom(DEFAULT_INDEXER.replace('{token}', token), token);
+      : chain.indexer
+        ? await hintsFrom(chain.indexer.replace('{token}', token), token)
+        : { pools: [], poolIds: [] };
 
     const found = await autoDiscover(rpc.call, {
       chainId,
@@ -189,12 +209,12 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
       const tried = [
         ...found.candidates.map((c) => `${c.pool}  ${c.rejected ?? 'ok'}`),
         ...(hints.poolIds.length
-          ? ['', `32-byte pool ids seen (no pair contract to read):`, ...hints.poolIds]
+          ? ['', '32-byte pool ids seen (no pair contract to read):', ...hints.poolIds]
           : []),
       ].join('\n');
       return {
         kind: 'bad',
-        text: `${found.note} Paste a pool address under Advanced if you have one.`,
+        text: `${found.note} (${foundOn}). Paste a pool address under Advanced if you have one.`,
         detail: tried || undefined,
       };
     }
@@ -264,7 +284,7 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
     );
 
     const detail = [
-      found.note,
+      `${found.note} (${foundOn})`,
       `pool ${market.pool}`,
       `price ${observation.mark.quotePerBase.toPrecision(6)} ${market.quote.symbol} per ${market.base.symbol}`,
       '',

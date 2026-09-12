@@ -9,6 +9,8 @@ const TOKEN0 = '0x0dfe1683';
 const TOKEN1 = '0xd21220a7';
 /** getReserves() */
 const GET_RESERVES = '0x0902f1ac';
+/** fee() — present on concentrated-liquidity pools, absent on V2 pairs */
+const FEE = '0xddca3f43';
 
 export interface Candidate {
   pool: Address;
@@ -121,7 +123,20 @@ async function inspect(
   try {
     reserves = words(await call(pool, encodeCall(GET_RESERVES)));
   } catch {
-    return { pool, rejected: 'reserves unreadable' };
+    // A concentrated-liquidity pool answers token0/token1 exactly like a pair
+    // and then has no reserves at all — liquidity lives in ticks. Saying
+    // "reserves unreadable" for that hides a whole category of venue behind
+    // what sounds like a transient read failure.
+    const concentrated = await call(pool, encodeCall(FEE)).then(
+      () => true,
+      () => false,
+    );
+    return {
+      pool,
+      rejected: concentrated
+        ? 'concentrated-liquidity pool (Uniswap V3 style), which this runner cannot price yet'
+        : 'reserves unreadable',
+    };
   }
 
   const raw = BigInt(`0x${baseIsToken0 ? reserves[1] : reserves[0]}`);
@@ -176,21 +191,24 @@ export async function autoDiscover(
       ? `this token appears to trade on a venue that identifies pools by a 32-byte id rather than a pair contract (Uniswap V4 and similar), which this runner cannot read yet`
       : null;
 
-  const pools = request.candidates.slice(0, request.maxCandidates ?? 12);
-  if (pools.length === 0) {
-    return {
-      market: null,
-      candidates: [],
-      note: unsupported ?? 'no candidate pools to check',
-    };
-  }
-
+  // Ask the chain about the token first. "No pools found" for an address that
+  // is not even deployed here sends someone hunting for liquidity when the
+  // real answer is that they are pointed at the wrong chain.
   const base = await readAsset(call, request.chainId, request.token).catch(() => null);
   if (!base) {
     return {
       market: null,
       candidates: [],
-      note: 'that address does not answer decimals(), so it is not an ERC-20 on this chain',
+      note: 'that address does not answer decimals() on this chain, so it is not a token here — check which chain it was deployed on',
+    };
+  }
+
+  const pools = request.candidates.slice(0, request.maxCandidates ?? 12);
+  if (pools.length === 0) {
+    return {
+      market: null,
+      candidates: [],
+      note: unsupported ?? `${base.symbol} is a token here, but no candidate pools turned up to check`,
     };
   }
 
