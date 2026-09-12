@@ -51,7 +51,7 @@ or hold secrets:
 ```sh
 pnpm --filter @rdm/tape-worker exec wrangler d1 create tape
 # paste the printed database_id into wrangler.jsonc — this one is a code change
-pnpm --filter @rdm/tape-worker exec wrangler secret put TAPE_READ_TOKEN
+pnpm --filter @rdm/tape-worker exec wrangler secret put TAPE_READ_TOKEN  # RUNTIME secret
 pnpm --filter @rdm/tape-worker deploy   # first deploy, to create the Worker
 ```
 
@@ -63,6 +63,22 @@ address on-chain, so the only things typed by hand are addresses.
 
 Set **start block** to the pool's deployment block for full history, or a recent
 block to start from now. The cursor takes over from there.
+
+## Runtime secret, not a build secret
+
+Cloudflare has two things called variables and they are easy to confuse,
+especially in the mobile dashboard:
+
+| Where | Reaches | Use for |
+| --- | --- | --- |
+| **Worker → Settings → Variables and Secrets** | `env` at runtime | `TAPE_READ_TOKEN` |
+| Workers Builds → Build variables and secrets | the build process only | nothing here |
+
+A token set as a build variable never reaches the running Worker, so the page
+keeps serving "Not configured yet" while the dashboard shows a secret that
+looks correctly set. If that is what you are seeing, this is why.
+
+`wrangler secret put` always sets the runtime one.
 
 ## The page
 

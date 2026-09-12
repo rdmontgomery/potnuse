@@ -82,6 +82,15 @@ export {
 } from './paper.ts';
 
 export {
+  addressesIn,
+  assertAddress,
+  autoDiscover,
+  hintsFrom,
+  type AutoDiscovery,
+  type Candidate,
+} from './autodiscover.ts';
+
+export {
   discoverMarket,
   decodeSymbol,
   findPair,
