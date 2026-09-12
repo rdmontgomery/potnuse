@@ -6,12 +6,11 @@ import type { PoolState } from './fills.ts';
 import {
   decodeEvent,
   encodeEvent,
-  fileJournal,
   memoryJournal,
-  readJournal,
   summarize,
   type JournalEvent,
 } from './journal.ts';
+import { fileJournal, readJournal } from './node.ts';
 
 const fill: JournalEvent = {
   kind: 'fill',

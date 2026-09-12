@@ -3,7 +3,8 @@ import { factsFrom, usdReference, type TapeConfig } from './config.ts';
 import { poolFeed, resolveTokenOrder } from './feed/pool.ts';
 import { jsonRpcClient } from './feed/rpc.ts';
 import { syncFeed } from './feed/sync.ts';
-import { fileJournal, memoryJournal, readJournal, summarize } from './journal.ts';
+import { memoryJournal, summarize } from './journal.ts';
+import { fileJournal, readJournal } from './node.ts';
 import { paperSession } from './paper.ts';
 import { formatVerdict, screen } from './screen.ts';
 import { slotSize, makeBankroll, openBankroll } from './bankroll.ts';
@@ -14,6 +15,7 @@ const USAGE = `tape — paper-trading harness
   screen <config.json>              read the pool and score the token
   watch  <config.json>              build a tape and run the ladder against it
   report <journal.jsonl>            read a recorded run back
+  market <config.json>              print the statement that registers a market
 
 The tape comes from either spot polling or the pair's Sync logs (feed.kind in
 the config). Sync logs give the real price path -- every wick between polls --
@@ -137,6 +139,24 @@ async function cmdWatch(path: string): Promise<void> {
   console.log(JSON.stringify(summarize(journal.events), null, 2));
 }
 
+/**
+ * Print the statement that registers a market with the runner.
+ *
+ * Deliberately prints rather than writes. The Worker's HTTP surface is
+ * read-only, and adding a write endpoint so the CLI could call it would put a
+ * mutation path on the internet to save one copy and paste.
+ */
+async function cmdMarket(path: string): Promise<void> {
+  const config = await loadConfig(path);
+  const id = config.market.pool.toLowerCase();
+  const row = JSON.stringify(config).replace(/'/g, "''");
+  console.log(
+    `wrangler d1 execute tape --remote --command "INSERT INTO markets (id, config, active, created_at) ` +
+      `VALUES ('${id}', '${row}', 1, ${Date.now()}) ` +
+      `ON CONFLICT(id) DO UPDATE SET config = excluded.config, active = 1;"`,
+  );
+}
+
 async function cmdReport(path: string): Promise<void> {
   const summary = summarize(await readJournal(path));
   console.log(JSON.stringify(summary, null, 2));
@@ -157,6 +177,7 @@ async function main(): Promise<void> {
   if (command === 'screen') return cmdScreen(argument);
   if (command === 'watch') return cmdWatch(argument);
   if (command === 'report') return cmdReport(argument);
+  if (command === 'market') return cmdMarket(argument);
   console.log(USAGE);
   process.exitCode = 1;
 }

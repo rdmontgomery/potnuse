@@ -8,5 +8,5 @@ export {
   wordToBigInt,
 } from './rpc.ts';
 export { poolFeed, readPool, resolveTokenOrder } from './pool.ts';
-export { replayFeed, replayFromJournal } from './replay.ts';
+export { replayFeed } from './replay.ts';
 export { SYNC_TOPIC, decodeSync, scanSync, syncFeed, type ScanOptions, type SyncScan } from './sync.ts';

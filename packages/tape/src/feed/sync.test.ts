@@ -233,6 +233,24 @@ describe('as a feed', () => {
     expect(feed.cursor()).toBe(96n);
   });
 
+  it('reports the next unprocessed block while a buffer is still draining', async () => {
+    // A consumer that stops early must resume at the observation it did not
+    // take, not at the end of the range the scan happened to cover.
+    const logs = [20n, 30n, 40n].map((block, i) =>
+      syncLog(block, 1_000n * E18, BigInt(100 + i * 10) * E6),
+    );
+    const { rpc } = fakeRpc(logs, 1_000n);
+    const feed = syncFeed(rpc, market, pegged(), true, 0n);
+
+    await feed.poll(0);
+    expect(feed.cursor()).toBe(30n);
+    await feed.poll(0);
+    expect(feed.cursor()).toBe(40n);
+    await feed.poll(0);
+    // Buffer empty: the scanned range is now genuinely all processed.
+    expect(feed.cursor()).toBe(996n);
+  });
+
   it('still produces marks when the quote asset has no dollar reference', async () => {
     const { rpc } = fakeRpc([syncLog(10n, 1_000n * E18, 100n * E6)], 100n);
     const feed = syncFeed(rpc, market, unreferenced, true, 0n);

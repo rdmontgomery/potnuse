@@ -4,6 +4,14 @@ import type { Address, Mark, Market } from '../types.ts';
 export interface Observation {
   mark: Mark;
   pool: PoolState;
+  /**
+   * Block this observation came from, where the source knows it.
+   *
+   * Carried so a consumer that stops early can resume from the first
+   * observation it did NOT process. Without it a cursor can only report what
+   * was scanned, and anything scanned-but-undrained is skipped for good.
+   */
+  block?: bigint;
 }
 
 /**

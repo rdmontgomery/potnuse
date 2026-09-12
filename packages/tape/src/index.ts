@@ -63,14 +63,48 @@ export {
 
 export {
   decodeEvent,
+  decodeJson,
   encodeEvent,
-  fileJournal,
+  encodeJson,
   memoryJournal,
-  readJournal,
   summarize,
   type Journal,
   type JournalEvent,
   type Summary,
 } from './journal.ts';
 
-export { paperSession, type EnterOutcome, type PaperConfig, type PaperSnapshot } from './paper.ts';
+export {
+  paperSession,
+  type EnterOutcome,
+  type PaperConfig,
+  type PaperSnapshot,
+  type PaperState,
+} from './paper.ts';
+
+export {
+  runOnce,
+  type MarketConfig,
+  type MarketResult,
+  type RunnerDeps,
+  type RunSummary,
+} from './runner.ts';
+
+export {
+  bufferedJournal,
+  memoryStore,
+  sqlStore,
+  type RunRecord,
+  type SqlDatabase,
+  type SqlStatement,
+  type StoredMarket,
+  type StoredPosition,
+  type TapeStore,
+} from './store/index.ts';
+
+export {
+  factsFrom,
+  usdReference,
+  type FeedConfig,
+  type TapeConfig,
+  type UsdRefConfig,
+} from './config.ts';

@@ -1,4 +1,3 @@
-import { readJournal } from '../journal.ts';
 import type { Market } from '../types.ts';
 import type { MarkFeed, Observation } from './types.ts';
 
@@ -21,20 +20,4 @@ export function replayFeed(market: Market, observations: Observation[]): MarkFee
       return next;
     },
   };
-}
-
-/** Rebuild a feed from a journal written by a previous run. */
-export async function replayFromJournal(market: Market, path: string): Promise<MarkFeed> {
-  const events = await readJournal(path);
-  const observations: Observation[] = [];
-
-  for (const event of events) {
-    if (event.kind !== 'mark') continue;
-    if (event.market !== market.pool) continue;
-    // The pool snapshot is recorded alongside every mark precisely so a replay
-    // pays the same impact the live run did. A replay that fills at mid is not
-    // a replay, it is a wish.
-    observations.push({ mark: event.mark, pool: event.pool });
-  }
-  return replayFeed(market, observations);
 }

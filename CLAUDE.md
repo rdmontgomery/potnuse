@@ -28,6 +28,19 @@ has the wrong blast radius. Live execution goes in a separate private repo
 behind a policy engine. If a change would add a signing dependency to this
 workspace, it belongs elsewhere.
 
+### Runner (`packages/tape-worker`)
+
+The cron Worker (`tape-runner`) that drives the harness. Deployed **separately**
+from the site with `pnpm --filter @rdm/tape-worker deploy` — the site's config
+at the repo root is untouched, so neither deploy can ship the other.
+
+Keep it thin. Logic belongs in `@rdm/tape`, which is Cloudflare-free and tested
+under Node; the Worker supplies bindings and entry points only.
+
+`@rdm/tape` must stay importable from a Worker: no `node:` imports in the
+package root or in `./feed`. Filesystem paths live in `@rdm/tape/node` and are
+for the CLI and tests. `wrangler deploy --dry-run` is the check.
+
 ## Design docs
 
 `docs/plans/` holds design docs and implementation plans. Don't write content there — content lives in `apps/site/src/content/`.

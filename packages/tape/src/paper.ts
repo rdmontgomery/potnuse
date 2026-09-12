@@ -24,6 +24,22 @@ export interface PaperConfig {
   latencyHaircutBps?: number;
 }
 
+/**
+ * Everything a session must carry across a restart.
+ *
+ * A cron-driven runner is stateless: it wakes, does a minute of work and
+ * exits, so anything held in a closure is gone by the next firing. This is the
+ * part that has to survive. Reserves are deliberately absent — they are re-read
+ * from the chain, and a stale copy would price the next fill against a pool
+ * that has since moved.
+ */
+export interface PaperState {
+  bankroll: BankrollState;
+  position: PositionState | null;
+  costUsd: number;
+  proceedsUsd: number;
+}
+
 export interface PaperSnapshot {
   bankroll: BankrollState;
   position: PositionState | null;
@@ -46,16 +62,21 @@ export type EnterOutcome =
  * survives realistic execution, which means the simulation has to be allowed
  * to say no.
  */
-export function paperSession(config: PaperConfig, feed: MarkFeed, journal: Journal) {
+export function paperSession(
+  config: PaperConfig,
+  feed: MarkFeed,
+  journal: Journal,
+  restore?: PaperState,
+) {
   const plan = makePlan(config.plan);
   const bankrollConfig = makeBankroll(config.bankroll);
   const haircut = { latencyHaircutBps: config.latencyHaircutBps ?? 30 };
 
-  let bankroll = openBankroll();
-  let position: PositionState | null = null;
+  let bankroll = restore?.bankroll ?? openBankroll();
+  let position: PositionState | null = restore?.position ?? null;
   let pool: PoolState | null = null;
-  let costUsd = 0;
-  let proceedsUsd = 0;
+  let costUsd = restore?.costUsd ?? 0;
+  let proceedsUsd = restore?.proceedsUsd ?? 0;
   const fills: Fill[] = [];
 
   const key = config.market.pool;
@@ -194,5 +215,14 @@ export function paperSession(config: PaperConfig, feed: MarkFeed, journal: Journ
     return { bankroll, position, pool, costUsd, proceedsUsd, fills: [...fills] };
   }
 
-  return { enter, tick, drain, snapshot };
+  /**
+   * The part worth persisting. Kept separate from `snapshot` because a
+   * snapshot carries this run's fills and reserves, which belong to the
+   * journal and to the chain respectively, not to the saved state.
+   */
+  function state(): PaperState {
+    return { bankroll, position, costUsd, proceedsUsd };
+  }
+
+  return { enter, tick, drain, snapshot, state };
 }

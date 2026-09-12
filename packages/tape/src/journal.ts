@@ -1,5 +1,3 @@
-import { appendFile, mkdir, readFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import type { Fill, Intent, Mark } from './types.ts';
 import type { PoolState } from './fills.ts';
 import type { BankrollState } from './bankroll.ts';
@@ -44,6 +42,19 @@ function reviver(_key: string, value: unknown): unknown {
   return value;
 }
 
+/**
+ * Serialise any value carrying bigints. Shared with the session-state store,
+ * so a resumed position holds exactly the quantity it held before the restart
+ * rather than a float that looks like it.
+ */
+export function encodeJson(value: unknown): string {
+  return JSON.stringify(value, replacer);
+}
+
+export function decodeJson<T>(text: string): T {
+  return JSON.parse(text, reviver) as T;
+}
+
 export function encodeEvent(event: JournalEvent): string {
   return JSON.stringify(event, replacer);
 }
@@ -68,27 +79,6 @@ export function memoryJournal(): Journal {
       events.push(decodeEvent(encodeEvent(event)));
     },
   };
-}
-
-/** JSONL on disk. One file per run; never rewritten, only appended. */
-export async function fileJournal(path: string): Promise<Journal> {
-  await mkdir(dirname(path), { recursive: true });
-  const events: JournalEvent[] = [];
-  return {
-    events,
-    async write(event) {
-      events.push(event);
-      await appendFile(path, `${encodeEvent(event)}\n`, 'utf8');
-    },
-  };
-}
-
-export async function readJournal(path: string): Promise<JournalEvent[]> {
-  const raw = await readFile(path, 'utf8');
-  return raw
-    .split('\n')
-    .filter((line) => line.trim().length > 0)
-    .map(decodeEvent);
 }
 
 export interface Summary {

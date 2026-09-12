@@ -129,6 +129,7 @@ export async function scanSync(
     observations.push({
       mark: { t, quotePerBase: priceOf(pool), usdPerQuote: await usdRef.usdPerUnit(t) },
       pool,
+      block: log.blockNumber,
     });
   }
 
@@ -148,6 +149,12 @@ export async function scanSync(
  * runner is unchanged and a polled tape and a log-derived tape are directly
  * comparable. Each `poll` drains one buffered observation and refills from the
  * chain when empty, so the caller's loop shape does not change either.
+ *
+ * `cursor()` reports the first block NOT yet processed, which while a buffer is
+ * draining is the block of the next observation rather than the end of the
+ * scanned range. A consumer that stops early — a ceiling on work per firing, a
+ * timeout, a crash — therefore resumes at the right place instead of skipping
+ * everything it scanned but never drained.
  */
 export function syncFeed(
   rpc: RpcClient,
@@ -162,7 +169,10 @@ export function syncFeed(
 
   return {
     market,
-    cursor: () => nextBlock,
+    cursor: () => {
+      const pending = buffer[0];
+      return pending?.block ?? nextBlock;
+    },
     async poll(): Promise<Observation | null> {
       if (buffer.length === 0) {
         const scan = await scanSync(rpc, market, usdRef, baseIsToken0, nextBlock, opts);
