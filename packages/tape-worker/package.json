@@ -1,0 +1,21 @@
+{
+  "name": "@rdm/tape-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "deploy": "wrangler d1 migrations apply TAPE_DB --remote && wrangler deploy",
+    "tail": "wrangler tail",
+    "migrate": "wrangler d1 migrations apply TAPE_DB --remote",
+    "migrate:local": "wrangler d1 migrations apply TAPE_DB --local"
+  },
+  "dependencies": {
+    "@rdm/tape": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.82.2"
+  }
+}

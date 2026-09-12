@@ -1,0 +1,29 @@
+{
+  // Deployed separately from the site, on purpose. The site's config lives at
+  // the repo root because Cloudflare CI invokes wrangler from there; this one
+  // is deployed by hand (`pnpm --filter @rdm/tape-worker deploy`) so a site
+  // build can never ship the runner and a runner change can never ship the
+  // site.
+  "name": "tape-runner",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-14",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+
+  // Every minute. The runner is resumable from a block cursor, so a missed
+  // firing costs latency and not data.
+  "triggers": {
+    "crons": ["* * * * *"]
+  },
+
+  "d1_databases": [
+    {
+      "binding": "TAPE_DB",
+      "database_name": "tape",
+      "database_id": "00f344d9-09f1-4ae5-be30-600be4c8e5e3"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
