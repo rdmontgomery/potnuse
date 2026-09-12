@@ -1,7 +1,8 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { factsFrom, usdReference, type TapeConfig } from './config.ts';
-import { poolFeed } from './feed/pool.ts';
-import { jsonRpc } from './feed/rpc.ts';
+import { poolFeed, resolveTokenOrder } from './feed/pool.ts';
+import { jsonRpcClient } from './feed/rpc.ts';
+import { syncFeed } from './feed/sync.ts';
 import { fileJournal, memoryJournal, readJournal, summarize } from './journal.ts';
 import { paperSession } from './paper.ts';
 import { formatVerdict, screen } from './screen.ts';
@@ -11,8 +12,12 @@ import { TapeError } from './types.ts';
 const USAGE = `tape — paper-trading harness
 
   screen <config.json>              read the pool and score the token
-  watch  <config.json>              poll the pool and record a tape
+  watch  <config.json>              build a tape and run the ladder against it
   report <journal.jsonl>            read a recorded run back
+
+The tape comes from either spot polling or the pair's Sync logs (feed.kind in
+the config). Sync logs give the real price path -- every wick between polls --
+and resume from a block cursor, so an outage is caught up rather than lost.
 
 Nothing in this package can sign a transaction. It reads pools and writes
 files. Entries are opened by hand, from the screen output.`;
@@ -21,16 +26,42 @@ async function loadConfig(path: string): Promise<TapeConfig> {
   return JSON.parse(await readFile(path, 'utf8')) as TapeConfig;
 }
 
-function build(config: TapeConfig) {
-  const call = jsonRpc(config.rpcUrl);
-  const feed = poolFeed(call, config.market, usdReference(config.usdRef));
-  return { call, feed };
+/** Last block consumed by a sync feed, so a restart resumes instead of replaying. */
+async function readCursor(path: string | undefined, fallback: bigint): Promise<bigint> {
+  if (!path) return fallback;
+  try {
+    return BigInt((await readFile(path, 'utf8')).trim());
+  } catch {
+    return fallback;
+  }
+}
+
+async function build(config: TapeConfig) {
+  const rpc = jsonRpcClient(config.rpcUrl);
+  const usdRef = usdReference(config.usdRef);
+  const feedConfig = config.feed ?? { kind: 'poll' as const };
+
+  if (feedConfig.kind === 'poll') {
+    return { rpc, feed: poolFeed(rpc.call, config.market, usdRef), cursor: null };
+  }
+
+  const baseIsToken0 = await resolveTokenOrder(rpc.call, config.market);
+  const start = await readCursor(config.cursorPath, BigInt(feedConfig.startBlock));
+  const feed = syncFeed(rpc, config.market, usdRef, baseIsToken0, start, {
+    confirmations: feedConfig.confirmations === undefined ? undefined : BigInt(feedConfig.confirmations),
+    maxRange: feedConfig.maxRange === undefined ? undefined : BigInt(feedConfig.maxRange),
+    maxObservations: feedConfig.maxObservations,
+  });
+  return { rpc, feed, cursor: feed.cursor };
 }
 
 async function cmdScreen(path: string): Promise<void> {
   const config = await loadConfig(path);
-  const { feed } = build(config);
-  const observation = await feed.poll(Date.now());
+  const { rpc } = await build(config);
+  // A screen always wants current reserves, whatever the tape is built from.
+  const observation = await poolFeed(rpc.call, config.market, usdReference(config.usdRef)).poll(
+    Date.now(),
+  );
   if (!observation) throw new TapeError('pool returned no reserves');
 
   const ticket = slotSize(makeBankroll(config.bankroll), openBankroll());
@@ -55,7 +86,7 @@ async function cmdScreen(path: string): Promise<void> {
 
 async function cmdWatch(path: string): Promise<void> {
   const config = await loadConfig(path);
-  const { feed } = build(config);
+  const { feed, cursor } = await build(config);
   const pollMs = config.pollMs ?? 60_000;
   const journal = config.journalPath
     ? await fileJournal(config.journalPath)
@@ -83,8 +114,13 @@ async function cmdWatch(path: string): Promise<void> {
 
   while (!stop) {
     try {
-      const alive = await session.tick(Date.now());
-      if (!alive) console.warn('feed returned nothing this poll');
+      // Drain everything available before sleeping. A sync feed hands back a
+      // whole backlog after an outage, and sleeping between each buffered
+      // observation would take an hour to replay an hour.
+      let drained = 0;
+      while (!stop && (await session.tick(Date.now()))) drained += 1;
+      if (cursor && config.cursorPath) await writeFile(config.cursorPath, cursor().toString(), 'utf8');
+      if (drained > 0) console.log(`${drained} observations`);
     } catch (error) {
       // A dropped poll is not a reason to lose the run. Record and carry on;
       // a gap in the tape is visible later, a crashed process is not.

@@ -72,6 +72,25 @@ estimator's variance swamps the estimate. What is left is crude and robust.
   historical P&L of everyone who has ever done this and the cheapest thing on
   this list to prevent.
 
+## Two ways to build a tape
+
+`feed.kind: 'poll'` reads spot reserves on a timer. Simple, and blind to
+everything between two reads — a wick through your stop is invisible, which
+makes poll interval do risk work it has no business doing.
+
+`feed.kind: 'sync'` reads the pair's `Sync` logs instead. Sync fires on every
+swap, mint and burn carrying post-event reserves, so the tape is the actual
+price path rather than a sample of it. It also catches liquidity leaving: a
+burn that halves the pool prints exactly like a price move, because for an
+exit that is what it is.
+
+Sync scanning is **resumable from a block cursor**, which is the property that
+matters for hosting. A runner that was down for six hours catches up rather
+than losing the window, so the runtime does not have to be reliable — it has
+to be occasionally awake. It leaves `confirmations` blocks unscanned at the
+head, because a reorg rewrites recent history and a tape built from rewritten
+blocks describes a chain that no longer exists.
+
 ## Running a paper week
 
 ```sh
@@ -96,11 +115,16 @@ arrives inside the mark.
 
 Stated plainly, because each of these is a way the paper week could lie:
 
-- **Paths, only points.** Marks are spot observations. A wick through your
-  stop between polls is invisible here, so poll interval is a risk parameter,
-  not a performance knob. When a tick gaps through both a rung and the stop,
-  the engine resolves it as the stop — the pessimistic reading, chosen so the
-  simulation does not flatter itself.
+- **Historical dollar prices, on a floating quote.** The Sync scanner asks the
+  USD reference for a price at each historical timestamp. A live endpoint will
+  answer with *today's* price for every one of them. Backfilling a non-stable
+  pair therefore needs a historical price source, or `denom: 'quote'`, which
+  needs no reference at all. Polling forward in real time is unaffected.
+- **Gaps within a block.** Sync prints post-event reserves, so the tape has
+  every reserve state the pool ever held, but not the intra-transaction path
+  a sandwich would traverse. When a tick gaps through both a rung and the
+  stop, the engine still resolves it as the stop — the pessimistic reading,
+  chosen so the simulation does not flatter itself.
 - **Constant product only.** No concentrated liquidity, no multi-hop routing,
   no aggregator splitting. Real fills on a V3-style venue will differ.
 - **No MEV.** The latency haircut is a crude stand-in for sandwiching and

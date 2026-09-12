@@ -17,6 +17,22 @@ const TOKEN0 = '0x0dfe1683';
  * price in the system and the mistake is invisible until the first trade, so
  * token0 is resolved once and asserted against the market definition.
  */
+/**
+ * Which side of the pair the base token sits on.
+ *
+ * Resolved once and passed around rather than re-derived, because getting it
+ * backwards inverts every price in the system and stays invisible until the
+ * first trade.
+ */
+export async function resolveTokenOrder(call: EthCall, market: Market): Promise<boolean> {
+  const token0 = wordToAddress(words(await call(market.pool, encodeCall(TOKEN0)))[0]).toLowerCase();
+  if (token0 === market.base.address.toLowerCase()) return true;
+  if (token0 === market.quote.address.toLowerCase()) return false;
+  throw new TapeError(
+    `pool ${market.pool} holds neither ${market.base.symbol} nor ${market.quote.symbol} as token0`,
+  );
+}
+
 export async function readPool(
   call: EthCall,
   market: Market,

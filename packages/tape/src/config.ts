@@ -17,6 +17,25 @@ export type UsdRefConfig =
   | { kind: 'none' }
   | { kind: 'http'; url: string; path: string; maxStaleMs?: number };
 
+/**
+ * How the tape is built.
+ *
+ * `poll` reads spot reserves on a timer: simple, and blind to anything that
+ * happened between two reads. `sync` reads the pair's Sync logs, which is the
+ * actual price path including every wick, and is resumable from a block cursor
+ * so a runner that was offline catches up instead of losing the window.
+ */
+export type FeedConfig =
+  | { kind: 'poll' }
+  | {
+      kind: 'sync';
+      /** Block to start from. Use the pool's deployment block for a full history. */
+      startBlock: number;
+      confirmations?: number;
+      maxRange?: number;
+      maxObservations?: number;
+    };
+
 export interface TapeConfig {
   rpcUrl: string;
   market: Market;
@@ -27,7 +46,10 @@ export interface TapeConfig {
   screen?: Omit<ScreenPolicy, 'intendedSizeUsd'>;
   /** Everything the screen cannot read off the pool. Unset stays unknown. */
   facts?: Partial<Omit<ScreenFacts, 'market' | 'pool' | 'fees'>>;
+  feed?: FeedConfig;
   pollMs?: number;
+  /** Where the block cursor is persisted between runs, for `sync` feeds. */
+  cursorPath?: string;
   latencyHaircutBps?: number;
   journalPath?: string;
 }

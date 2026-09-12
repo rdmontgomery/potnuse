@@ -61,11 +61,19 @@
     "minPoolDepthUsd": 50000,
     "maxTopHolderPct": 15
   },
-  "pollMs": 60000,
+  "pollMs": 30000,
   "latencyHaircutBps": 30,
   "journalPath": "./journals/meme-nvdax.jsonl",
   "facts": {
     "quoteKind": "floating",
     "quoteVolatilityPct": 45
-  }
+  },
+  "feed": {
+    "kind": "sync",
+    "startBlock": 0,
+    "confirmations": 5,
+    "maxRange": 2000,
+    "maxObservations": 5000
+  },
+  "cursorPath": "./journals/floating.cursor"
 }

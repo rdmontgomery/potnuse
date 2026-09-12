@@ -1,5 +1,5 @@
 import { TapeError, type Address } from '../types.ts';
-import type { EthCall } from './types.ts';
+import type { EthCall, LogEntry, LogFilter, RpcClient } from './types.ts';
 
 /**
  * An `EthCall` over plain JSON-RPC.
@@ -59,4 +59,79 @@ export function wordToBigInt(word: string | undefined): bigint {
 export function wordToAddress(word: string | undefined): Address {
   if (word === undefined) throw new TapeError('returndata too short');
   return `0x${word.slice(24)}` as Address;
+}
+
+const hex = (value: bigint) => `0x${value.toString(16)}`;
+
+/** Full RPC client over JSON-RPC. Reads only; there is no write method here. */
+export function jsonRpcClient(url: string, opts: { timeoutMs?: number } = {}): RpcClient {
+  const timeoutMs = opts.timeoutMs ?? 10_000;
+  let id = 0;
+
+  async function send<T>(method: string, params: unknown[]): Promise<T> {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: (id += 1), method, params }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) throw new TapeError(`rpc ${response.status} from ${url}`);
+    const body = (await response.json()) as { result?: T; error?: { message: string } };
+    if (body.error) throw new TapeError(`${method}: ${body.error.message}`);
+    if (body.result === undefined) throw new TapeError(`${method} returned no result`);
+    return body.result;
+  }
+
+  return {
+    call: (to, data) => send<`0x${string}`>('eth_call', [{ to, data }, 'latest']),
+
+    async getLogs(filter: LogFilter) {
+      const raw = await send<
+        {
+          address: Address;
+          topics: `0x${string}`[];
+          data: `0x${string}`;
+          blockNumber: string;
+          logIndex: string;
+          transactionHash: `0x${string}`;
+        }[]
+      >('eth_getLogs', [
+        {
+          address: filter.address,
+          topics: filter.topics,
+          fromBlock: hex(filter.fromBlock),
+          toBlock: hex(filter.toBlock),
+        },
+      ]);
+
+      return raw.map<LogEntry>((entry) => ({
+        address: entry.address,
+        topics: entry.topics,
+        data: entry.data,
+        blockNumber: BigInt(entry.blockNumber),
+        logIndex: Number(entry.logIndex),
+        transactionHash: entry.transactionHash,
+      }));
+    },
+
+    async blockNumber() {
+      return BigInt(await send<string>('eth_blockNumber', []));
+    },
+
+    async blockTimestamps(blocks: bigint[]) {
+      const unique = [...new Set(blocks.map((block) => block.toString()))];
+      const found = new Map<bigint, number>();
+      // Sequential on purpose: an RPC that rate-limits a burst of header reads
+      // will drop some of them, and a tape with holes in its timestamps is
+      // worse than a tape that took longer to build.
+      for (const block of unique) {
+        const header = await send<{ timestamp: string }>('eth_getBlockByNumber', [
+          hex(BigInt(block)),
+          false,
+        ]);
+        found.set(BigInt(block), Number(BigInt(header.timestamp)) * 1000);
+      }
+      return found;
+    },
+  };
 }

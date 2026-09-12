@@ -25,3 +25,34 @@ export interface MarkFeed {
  * network. Wire viem, ethers or raw fetch to it in one line.
  */
 export type EthCall = (to: Address, data: `0x${string}`) => Promise<`0x${string}`>;
+
+export interface LogEntry {
+  address: Address;
+  topics: `0x${string}`[];
+  data: `0x${string}`;
+  blockNumber: bigint;
+  logIndex: number;
+  transactionHash: `0x${string}`;
+}
+
+export interface LogFilter {
+  address: Address;
+  topics: (`0x${string}` | null)[];
+  fromBlock: bigint;
+  toBlock: bigint;
+}
+
+/**
+ * The RPC surface the log scanner needs, beyond a bare `eth_call`.
+ *
+ * Still a plain structural type with no client library behind it, so a fake in
+ * a test and a live node are interchangeable and this package keeps its only
+ * dependency being `fetch`.
+ */
+export interface RpcClient {
+  call: EthCall;
+  getLogs(filter: LogFilter): Promise<LogEntry[]>;
+  blockNumber(): Promise<bigint>;
+  /** Timestamps in epoch milliseconds, keyed by block number. */
+  blockTimestamps(blocks: bigint[]): Promise<Map<bigint, number>>;
+}
