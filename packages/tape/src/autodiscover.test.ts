@@ -9,6 +9,7 @@ const WETH: Address = '0x00000000000000000000000000000000000000cc';
 const POOL_USDC: Address = '0x0000000000000000000000000000000000000d01';
 const POOL_WETH: Address = '0x0000000000000000000000000000000000000d02';
 const NOT_A_PAIR: Address = '0x0000000000000000000000000000000000000d03';
+const V3_POOL: Address = '0x0000000000000000000000000000000000000d05';
 const EMPTY_POOL: Address = '0x0000000000000000000000000000000000000d04';
 
 const word = (v: string | bigint) =>
@@ -40,6 +41,14 @@ function chain(): EthCall {
     if (token) {
       if (selector === '0x313ce567') return `0x${word(token.decimals)}` as `0x${string}`;
       if (selector === '0x95d89b41') return symbolOf(token.symbol) as `0x${string}`;
+    }
+    // A concentrated-liquidity pool answers token0/token1 and fee(), and has
+    // no reserves at all.
+    if (address === V3_POOL) {
+      if (selector === '0x0dfe1683') return `0x${word(TOKEN)}` as `0x${string}`;
+      if (selector === '0xd21220a7') return `0x${word(USDC)}` as `0x${string}`;
+      if (selector === '0xddca3f43') return `0x${word(3000n)}` as `0x${string}`;
+      throw new Error('no getReserves on a V3 pool');
     }
     const pair = pairs[address];
     if (pair) {
@@ -211,11 +220,36 @@ describe('discovery verifies every candidate against the chain', () => {
       candidates: [POOL_USDC],
     });
     expect(result.market).toBeNull();
-    expect(result.note).toMatch(/not an ERC-20 on this chain/);
+    expect(result.note).toMatch(/not a token here/);
   });
 
-  it('reports having nothing to check rather than pretending to search', async () => {
-    expect((await discover([])).note).toMatch(/no candidate pools/);
+  it('calls a concentrated-liquidity pool what it is', async () => {
+    // It answers token0/token1 exactly like a pair, so "reserves unreadable"
+    // would hide a whole category of venue behind a transient-sounding error.
+    const result = await discover([V3_POOL]);
+    expect(result.market).toBeNull();
+    expect(result.candidates[0]?.rejected).toMatch(/concentrated-liquidity.*Uniswap V3/);
+  });
+
+  it('still finds a real pair when a V3 pool is among the candidates', async () => {
+    expect((await discover([V3_POOL, POOL_USDC])).market?.pool).toBe(POOL_USDC);
+  });
+
+  it('blames the chain, not the search, when the token is not deployed here', async () => {
+    // "No pools found" for an address that does not exist here sends someone
+    // hunting for liquidity when they are simply pointed at the wrong chain.
+    const absent = '0x00000000000000000000000000000000000000ee' as Address;
+    const result = await autoDiscover(chain(), {
+      chainId: 4663,
+      token: absent,
+      candidates: [],
+    });
+    expect(result.note).toMatch(/not a token here/);
+    expect(result.note).not.toMatch(/no candidate pools/);
+  });
+
+  it('reports having nothing to check once the token itself checks out', async () => {
+    expect((await discover([])).note).toMatch(/MEME is a token here, but no candidate pools/);
   });
 
   it('bounds how many candidates it will check', async () => {

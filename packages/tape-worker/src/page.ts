@@ -206,14 +206,20 @@ ${flash}
 <div class="row" style="margin-top:1rem">
 <button class="primary" type="submit">Find the pool and watch it</button>
 </div>
-<p class="note" style="margin-top:.75rem">Pool, quote asset, decimals and symbols are all on-chain facts &mdash; it finds them. Every candidate pool is verified against the chain before anything is stored, and the screen runs before it joins the list.</p>
+<p class="note" style="margin-top:.75rem">Chain, pool, quote asset, decimals and symbols are all on-chain facts &mdash; it finds them. An address carries no chain information, so it asks each chain whether it holds the token. Every candidate pool is verified against the chain before anything is stored, and the screen runs before it joins the list.</p>
 
 <details style="margin-top:1rem">
 <summary class="m" style="cursor:pointer;color:var(--accent)">Advanced &mdash; only if the defaults are wrong</summary>
 <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem">
 <fieldset><legend>Chain</legend>
-<label>RPC URL<input id="rpcUrl" name="rpcUrl" value="https://rpc.mainnet.chain.robinhood.com"></label>
-<label>Chain ID<input id="chainId" name="chainId" value="4663"></label>
+<label>Chain<select id="chainId" name="chainId">
+<option value="">Work it out from the address</option>
+<option value="4663">Robinhood Chain</option>
+<option value="1">Ethereum</option>
+<option value="8453">Base</option>
+<option value="42161">Arbitrum One</option>
+</select></label>
+<label>RPC URL (overrides the default)<input id="rpcUrl" name="rpcUrl" placeholder="https://…"></label>
 <label>Pool address (skips the search)<input id="pool" name="pool" placeholder="0x…"></label>
 <label>Backfill hours (0 = from now)<input id="backfillHours" name="backfillHours" value="0"></label>
 </fieldset>
