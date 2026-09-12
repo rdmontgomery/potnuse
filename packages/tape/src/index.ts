@@ -13,10 +13,16 @@ export { TapeError } from './types.ts';
 
 export { basis, floating, markFrom, pegged, unreferenced, type UsdReference } from './price.ts';
 
+export type { Bar, PairQuote, QuoteSource } from './quotes/types.ts';
+export { barsIn, byLiquidity, pairsIn } from './quotes/parse.ts';
+
 export {
   makePlan,
   openPosition,
   step,
+  stepBar,
+  studyStops,
+  type StopStudy,
   type LadderPlan,
   type PositionState,
   type Rung,
