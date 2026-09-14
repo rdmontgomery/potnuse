@@ -1,0 +1,27 @@
+[project]
+name = "mflock"
+version = "0.1.0"
+description = "Discourse as active matter: a memory-eval harness that forces an empirical definition of the discourse order parameter."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.49",
+    "datasets>=2.19",
+    "numpy>=1.26",
+]
+
+[project.scripts]
+mflock-run = "harness.run:main"
+mflock-score = "harness.score:main"
+mflock-phi = "harness.experiments:main"
+mflock-probe = "harness.probe_gen:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mflock", "src/harness"]
+
+[tool.uv]
+package = true

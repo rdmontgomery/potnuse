@@ -1,0 +1,207 @@
+{
+  "name": "longmemeval_fixture",
+  "variant": "S-mini",
+  "note": "Small, LongMemEval-shaped fixture for offline end-to-end runs. NOT the real dataset. Hand-authored to span the six question types plus abstention, with varied evidence distance and haystack size so the order-parameter estimators have a gradient. Sessions are short; haystacks tiny. Use --source hf for the real benchmark.",
+  "instances": [
+    {
+      "question_id": "ssu-1",
+      "question_type": "single-session-user",
+      "question": "What is the name of the dog I adopted?",
+      "answer": "Biscuit",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-01-04", "turns": [
+          {"role": "user", "content": "Morning. Can you suggest a stretching routine for tight hips?", "has_answer": false},
+          {"role": "assistant", "content": "Sure. Try couch stretch, pigeon pose, and 90/90 holds, two minutes each side.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-01-09", "turns": [
+          {"role": "user", "content": "Big news, I adopted a dog this weekend, a beagle named Biscuit.", "has_answer": true},
+          {"role": "assistant", "content": "Congratulations! Beagles are wonderful. How is Biscuit settling in?", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-01-15", "turns": [
+          {"role": "user", "content": "What's a good resource for learning bread baking?", "has_answer": false},
+          {"role": "assistant", "content": "Ken Forkish's Flour Water Salt Yeast is a great start.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "ssa-1",
+      "question_type": "single-session-assistant",
+      "question": "What book did you recommend for my long flight?",
+      "answer": "The Glass Bead Game",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-02-02", "turns": [
+          {"role": "user", "content": "I have a 14-hour flight next month. Recommend one novel to bring.", "has_answer": false},
+          {"role": "assistant", "content": "For a long flight I'd recommend The Glass Bead Game by Hermann Hesse, it rewards a slow read.", "has_answer": true}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-02-08", "turns": [
+          {"role": "user", "content": "How do I convert a column to datetime in pandas?", "has_answer": false},
+          {"role": "assistant", "content": "Use pd.to_datetime(df['col']).", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-02-14", "turns": [
+          {"role": "user", "content": "Any tips for sleeping on planes?", "has_answer": false},
+          {"role": "assistant", "content": "Window seat, neck pillow, and avoid screens for the last hour.", "has_answer": false}
+        ]},
+        {"session_id": "s3", "timestamp": "2026-02-20", "turns": [
+          {"role": "user", "content": "Remind me to pack a charger.", "has_answer": false},
+          {"role": "assistant", "content": "Noted, pack a charger.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "ssp-1",
+      "question_type": "single-session-preference",
+      "question": "Which seat should I book for you on the next flight?",
+      "answer": "aisle",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-02-25", "turns": [
+          {"role": "user", "content": "By the way, I always prefer an aisle seat, I get up a lot.", "has_answer": true},
+          {"role": "assistant", "content": "Got it, aisle seat it is.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-03-01", "turns": [
+          {"role": "user", "content": "What's a quick weeknight pasta?", "has_answer": false},
+          {"role": "assistant", "content": "Cacio e pepe: pasta, pecorino, black pepper, pasta water.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-03-07", "turns": [
+          {"role": "user", "content": "Recommend a podcast for commutes.", "has_answer": false},
+          {"role": "assistant", "content": "Try In Our Time for something dense and calm.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "ms-1",
+      "question_type": "multi-session",
+      "question": "What city did I move to and what kind of company do I now work for?",
+      "answer": "Lisbon, a fintech",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-01-10", "turns": [
+          {"role": "user", "content": "We're relocating to Lisbon in the spring, finally pulling the trigger.", "has_answer": true},
+          {"role": "assistant", "content": "Exciting! Lisbon is beautiful. Any neighborhood in mind?", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-02-01", "turns": [
+          {"role": "user", "content": "How do I learn basic Portuguese fast?", "has_answer": false},
+          {"role": "assistant", "content": "Pimsleur for listening, plus a weekly tutor on italki.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-03-15", "turns": [
+          {"role": "user", "content": "First week done.", "has_answer": false},
+          {"role": "assistant", "content": "How was it?", "has_answer": false}
+        ]},
+        {"session_id": "s3", "timestamp": "2026-04-02", "turns": [
+          {"role": "user", "content": "I started the new job, it's a fintech doing payments infrastructure.", "has_answer": true},
+          {"role": "assistant", "content": "Congratulations on the fintech role!", "has_answer": false}
+        ]},
+        {"session_id": "s4", "timestamp": "2026-04-20", "turns": [
+          {"role": "user", "content": "Any good coworking cafes?", "has_answer": false},
+          {"role": "assistant", "content": "Plenty in Príncipe Real and Cais do Sodré.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "tr-1",
+      "question_type": "temporal-reasoning",
+      "question": "Did I book the dentist appointment before or after I signed the lease?",
+      "answer": "before",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-03-03", "turns": [
+          {"role": "user", "content": "Booked a dentist appointment today for a cleaning.", "has_answer": true},
+          {"role": "assistant", "content": "Good, regular cleanings matter.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-03-10", "turns": [
+          {"role": "user", "content": "What's a fair security deposit to expect?", "has_answer": false},
+          {"role": "assistant", "content": "Often one to two months' rent, varies by region.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-03-21", "turns": [
+          {"role": "user", "content": "Signed the lease on the new apartment today.", "has_answer": true},
+          {"role": "assistant", "content": "Congratulations on the new place!", "has_answer": false}
+        ]},
+        {"session_id": "s3", "timestamp": "2026-03-30", "turns": [
+          {"role": "user", "content": "Best way to label moving boxes?", "has_answer": false},
+          {"role": "assistant", "content": "By room, with a number and a contents list per box.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "ku-1",
+      "question_type": "knowledge-update",
+      "question": "What is my current phone number?",
+      "answer": "555-0199",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-01-05", "turns": [
+          {"role": "user", "content": "Save my number for reminders: 555-0101.", "has_answer": true},
+          {"role": "assistant", "content": "Saved 555-0101.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-02-12", "turns": [
+          {"role": "user", "content": "What's a good cadence for strength training?", "has_answer": false},
+          {"role": "assistant", "content": "Three sessions a week with a day between is a solid default.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-03-18", "turns": [
+          {"role": "user", "content": "I switched carriers, my new number is 555-0199. Use that one now.", "has_answer": true},
+          {"role": "assistant", "content": "Updated, I'll use 555-0199.", "has_answer": false}
+        ]},
+        {"session_id": "s3", "timestamp": "2026-04-22", "turns": [
+          {"role": "user", "content": "Recommend a budgeting method.", "has_answer": false},
+          {"role": "assistant", "content": "Zero-based budgeting pairs well with a weekly review.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "ms-2",
+      "question_type": "multi-session",
+      "question": "What instrument am I learning and who is my teacher?",
+      "answer": "cello, with Marta",
+      "abstention": false,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2025-11-02", "turns": [
+          {"role": "user", "content": "I want to pick up an instrument as an adult. Leaning toward cello.", "has_answer": true},
+          {"role": "assistant", "content": "Cello is a beautiful choice. Renting first is wise.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2025-11-20", "turns": [
+          {"role": "user", "content": "How often should a beginner practice?", "has_answer": false},
+          {"role": "assistant", "content": "20-30 minutes daily beats long weekend marathons.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2025-12-09", "turns": [
+          {"role": "user", "content": "What's a good first piece?", "has_answer": false},
+          {"role": "assistant", "content": "Open-string bowing drills, then Twinkle variations.", "has_answer": false}
+        ]},
+        {"session_id": "s3", "timestamp": "2026-01-15", "turns": [
+          {"role": "user", "content": "Found a teacher, her name is Marta and she's great.", "has_answer": true},
+          {"role": "assistant", "content": "Wonderful, a good teacher accelerates everything.", "has_answer": false}
+        ]},
+        {"session_id": "s4", "timestamp": "2026-02-28", "turns": [
+          {"role": "user", "content": "How do I stop my left hand from cramping?", "has_answer": false},
+          {"role": "assistant", "content": "Lower your thumb pressure and take micro-rests.", "has_answer": false}
+        ]},
+        {"session_id": "s5", "timestamp": "2026-03-30", "turns": [
+          {"role": "user", "content": "Any tips for reading bass clef faster?", "has_answer": false},
+          {"role": "assistant", "content": "Drill landmark notes and use a spaced-repetition app.", "has_answer": false}
+        ]}
+      ]
+    },
+    {
+      "question_id": "abs-1",
+      "question_type": "abstention",
+      "question": "What did I tell you about my trip to Antarctica?",
+      "answer": "",
+      "abstention": true,
+      "haystack_sessions": [
+        {"session_id": "s0", "timestamp": "2026-02-04", "turns": [
+          {"role": "user", "content": "Recommend a warm winter jacket under $200.", "has_answer": false},
+          {"role": "assistant", "content": "Look at Uniqlo's seamless down or a Decathlon parka.", "has_answer": false}
+        ]},
+        {"session_id": "s1", "timestamp": "2026-02-19", "turns": [
+          {"role": "user", "content": "What's a good travel insurance provider?", "has_answer": false},
+          {"role": "assistant", "content": "Compare World Nomads and your card's built-in coverage.", "has_answer": false}
+        ]},
+        {"session_id": "s2", "timestamp": "2026-03-05", "turns": [
+          {"role": "user", "content": "How cold is too cold to run outside?", "has_answer": false},
+          {"role": "assistant", "content": "Below about -15C windchill, move it indoors.", "has_answer": false}
+        ]}
+      ]
+    }
+  ]
+}

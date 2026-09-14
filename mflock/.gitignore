@@ -1,0 +1,11 @@
+# mflock — generated and downloaded artifacts
+data/
+results/
+.venv/
+
+# python
+__pycache__/
+*.pyc
+.uv/
+*.egg-info/
+.pytest_cache/

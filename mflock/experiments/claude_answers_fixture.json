@@ -1,0 +1,11 @@
+{
+  "_note": "Answers produced by this session's model (Claude) reading each fixture instance's haystack and answering in one pass. Fed back through the harness via `mflock-run --model file --answers`. Authorship-contaminated (the same model helped build the fixture), so this is a plumbing demonstration and an upper bound, not held-out evidence.",
+  "ssu-1": "You adopted a beagle named Biscuit.",
+  "ssa-1": "I recommended The Glass Bead Game by Hermann Hesse for your long flight.",
+  "ssp-1": "Book an aisle seat — you mentioned you prefer the aisle since you get up a lot.",
+  "ms-1": "You moved to Lisbon and now work at a fintech doing payments infrastructure.",
+  "tr-1": "Before — you booked the dentist appointment on March 3rd, before signing the lease on March 21st.",
+  "ku-1": "Your current phone number is 555-0199.",
+  "ms-2": "You're learning the cello, with your teacher Marta.",
+  "abs-1": "I have no record of you mentioning a trip to Antarctica."
+}
