@@ -34,6 +34,18 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     url: '/allons-jouer',
   },
   {
+    id: 'page/liaison',
+    collection: 'page',
+    slug: 'liaison',
+    title: 'liaison',
+    state: 'seedling',
+    connects: ['allons-jouer', 'necromantic-circle'],
+    tags: ['graph', 'food', 'flavor', 'cajun', 'network', 'd3'],
+    description:
+      'The Ahn 2011 flavor network as a pairing explorer — ingredients linked by shared aroma compounds. Lock a dish, mutate one axis.',
+    url: '/liaison',
+  },
+  {
     id: 'page/calibrate',
     collection: 'page',
     slug: 'calibrate',
