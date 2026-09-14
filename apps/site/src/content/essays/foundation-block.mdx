@@ -1,0 +1,72 @@
+---
+title: the foundation block
+date: 2026-09-14
+state: seedling
+connects: [mumford-magick, toner-tu-map, necromantic-circle]
+tags: [viticulture, model-collapse, llm, synthetic-data, genetics]
+description: An ampelographer explains what a vine nursery already knows about clonal degeneration, and what it has to say about a model trained on its own output.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+I keep a graveyard of clean vines. That's not the job title — the job title is nursery propagator, or if you want the formal version, curator of a <Gloss def="A screenhouse or isolated block holding virus-tested, true-to-type source material for every registered clone of a variety. Nurseries take cuttings from here, never from a customer's field, so contamination can't compound.">foundation block</Gloss> — but graveyard is closer to what it feels like some mornings. Rows of vines that exist for no reason except that they are provably, expensively clean, so that everything downstream of them has a chance of being clean too. You test them every few years whether you suspect anything or not. You never take a cutting from a customer's vineyard, no matter how good it looks, without running it through the whole pipeline first. The block isn't there to make wine. It's there so that thirty years from now, somebody can still find out what a virus-free 1987 clone of this variety actually looked like, because by then the field will have drifted somewhere else.
+
+I am telling you this because I think I have watched this exact process happen to something that isn't a vine, and the vocabulary for it turns out to already exist in my shed.
+
+---
+
+### the ratchet, and where it actually lives
+
+Start with what a vine is, mechanically. A cutting is not a new individual sampling the parent's genome — it *is* the parent, continued. Barring a periclinal mutation in the growing tip, the genome you propagate this year is the same molecule, physically, as the one you propagated forty years ago. This matters, because it means the vine itself is largely immune to the thing I'm about to describe. What isn't immune is everything riding inside it.
+
+<Gloss def="Grapevine leafroll-associated virus, fanleaf virus, and a dozen others — RNA viruses that move systemically through a vine and get carried along with every cutting taken from it, generation after generation, with no way out short of tissue culture.">Grapevine viruses</Gloss> propagate the same way the vine does — vegetatively, riding the sap, never recombining with a fresh viral lineage unless a vector happens to bring one in. A viral population confined to one host for decades is, in the technical sense, an asexual population. And asexual populations have a known problem: <Gloss def="In a population that reproduces without recombination, deleterious mutations accumulate irreversibly because there's no way to recombine two lineages into one with fewer mutations than either parent. Each 'click' of the ratchet is the stochastic loss of the least-mutated class, which then can't be regenerated.">Muller's ratchet</Gloss>. Chao's classic experiment on mammalian RNA viruses forced through repeated single-particle bottlenecks showed measurable fitness decline within a few dozen passages — not from selection pressure, just from drift with no recombination to undo it. The virus population inside an old vine is doing a slow-motion version of the same experiment, except the vine planted it and never asked to be the petri dish.
+
+<Pull>The vine is the carrier. The ratchet works on the passenger.</Pull>
+
+That distinction — the carrier persists intact, the ratchet does its work on a resampled population riding inside the carrier — is the whole essay, if you want it in one sentence. Everything else is just working out which part is which when the carrier is a training pipeline instead of a graft union.
+
+<Marginal>The relevant contrast is with the vine's actual germline. A sexually reproduced grapevine seedling recombines every generation and mostly escapes the ratchet, which is exactly why every fine-wine variety you've heard of is propagated clonally rather than from seed — seedlings don't breed true, but they also don't accumulate the same load. The trade made a bet: sacrifice recombination's cleanup for exact varietal fidelity, then build an entire industry — foundation blocks, virus-indexing, meristem culture — to manage the bill that bet leaves behind.</Marginal>
+
+---
+
+### the outcross that saved the trade
+
+The trade has done this before at continental scale. <Gloss def="Daktulosphaira vitifoliae, a root-feeding aphid-relative native to eastern North America, accidentally introduced to Europe around 1863. European Vitis vinifera roots had no resistance; by the 1880s it had destroyed most of the vineyards of France.">Phylloxera</Gloss> arrived on American rootstock imported for breeding experiments, found a genus of roots with zero co-evolved defense, and ate its way through the vineyards of France, then the rest of Europe, in about twenty years. Every fix that tried to work within the vinifera lineage itself — flooding, sulfide injection, breeding a resistant vinifera from scratch — failed or came too late. The fix that worked was structural: graft the fruiting variety, unchanged, onto rootstock from the resistant American species. Keep the scion's genome exactly as it was. Replace only the part of the system that was exposed to the failure mode, using genetic material from outside the lineage that was failing.
+
+That's not a purification. It's an outcross performed on the part of the plant that needed one, while leaving the part that carried the variety's identity untouched. It is, structurally, the same move as importing wild Saccharomyces from an old cellar wall to restart a stuck fermentation that a single commercial yeast strain has driven into a corner — bring in variance from outside the failing population, apply it exactly where the failure is, don't discard what still works.
+
+---
+
+### the same shape, four training runs later
+
+Here's the paper I keep thinking about while I'm doing ELISA plates on budwood. [Shumailov et al.](https://pubmed.ncbi.nlm.nih.gov/39048682/) trained a model on its own generations' output, repeatedly — each generation's synthetic text becomes the next generation's training data — and showed, first analytically on a toy Gaussian case and then empirically across text, code, and image models, that the estimated distribution's variance collapses and its tails vanish within a handful of generations. <Gloss def="The measurable degradation of a generative model's output distribution — reduced diversity, vanishing tails, convergence toward a narrower mode — that results from training repeatedly on data generated by earlier versions of itself or its peers, rather than on freshly sampled real-world data.">Model collapse</Gloss>, the field calls it, and the mechanism is almost boringly close to what I watch happen in a virus titer over decades: each generation is a finite sample standing in for a population, each re-estimation from that finite sample loses a little of what was rare in the original, and there's no recombination step — no fresh outcross — built into the loop to put it back.
+
+The fix that has actually held up in the follow-on work is the one I'd have guessed from the vineyard: don't replace the real data with synthetic data generation over generation. *Accumulate* — keep the old real corpus in the mix, indefinitely, alongside whatever synthetic material gets added on top. Bounded error if you accumulate. Unbounded drift if you replace. That is, formally, the foundation-block discipline. Never take your propagation stock from the field population that's been recycling itself. Keep an isolated, dated, tested reservoir of the real thing, and refresh the working population *from* the reservoir rather than trusting the working population to have stayed clean on its own.
+
+<Pull>Accumulate, don't replace, is a sentence a nursery propagator already lives by.</Pull>
+
+<Marginal>It is not lost on me that the industry term for the object at the bottom of this whole pipeline — a certified, tested, canonical reference collection that everything downstream gets built from and periodically re-anchored to — is a *foundation* block, and the industry term for the thing collapsing in the ML papers is a *foundation* model. I don't think anyone planned that pun. I think two industries that both spend their careers worrying about lineage integrity independently reached for the same word, which is itself a small piece of evidence for the correspondence.</Marginal>
+
+---
+
+### where the graft doesn't take
+
+I'd be lying to you, and to myself, if I said the mapping were exact, and the exact place it stops being exact is worth sitting with rather than smoothing over.
+
+Muller's ratchet is a *discrete, stochastic* process: a population reproducing with a fixed load of deleterious mutations occasionally loses its least-loaded class entirely to drift, and that class cannot be regenerated absent back-mutation or recombination. It clicks. It doesn't slide. Model collapse, at least in the clean Gaussian analysis, is closer to a *continuous* estimation bias — every re-fit from a finite sample shrinks the variance a little, smoothly, as a direct consequence of the central limit theorem, with no discrete "class" going extinct in the population-genetic sense. Both processes end in the same place — a population that has lost the tails of what it once represented, with no internal mechanism to recover them — but they get there by different machinery, and I'd rather say that plainly than pretend the resonance is an identity.
+
+The second place it strains: I told you the vine's own genome mostly escapes the ratchet because vegetative propagation isn't resampling, it's continuation. So strictly, the ratchet in my world lives in the virus, not the vine — I had to relocate the analogy from the obvious carrier to its passenger to get the mechanism to actually fit. That relocation is doing real work, and it's fair to ask whether I only noticed it because I needed the pieces to line up. My honest answer: I noticed the virus case first, from thirty years of watching titers climb in old material, and only went looking for the ML paper afterward because the shape was already familiar. That's the right order to have found it in, but you should weigh it knowing I have a stake in the story holding together.
+
+<Marginal>There's a live research thread on whether even clonal grapevine populations show the opposite of collapse — accumulating somatic-mutation diversity over centuries of propagation rather than narrowing (see the [intra-varietal diversity work](https://pmc.ncbi.nlm.nih.gov/articles/PMC12618426/) coming out of long-propagated Vitis vinifera lineages). If the vine's own genome is doing that, it's evidence for exactly the point above: the collapse dynamic isn't a property of "clonal propagation" in general, it's specific to a *resampled, non-recombining population under drift* — which is the virus and the retraining loop, not the plant.</Marginal>
+
+---
+
+### what the vine remembers
+
+There's a doctrine the trade has never bothered to name, because it doesn't need a name to be practiced correctly: structural resemblance between two lineages under drift is not decoration, it's a signature of shared generative process, and the signature is only worth trusting if it predicts something you didn't already know. I didn't know, before I went looking, that the ML literature had independently rediscovered accumulate-don't-replace as the load-bearing fix. Finding it there is what makes this worth writing down instead of just being a nice thing to say at a grower's meeting.
+
+The order parameter, if you want one, is the variance carried in the tail of whatever's being propagated — rare alleles, rare virus genotypes, rare tokens — and the thing both systems have in common is that this variance only survives contact with drift if something outside the recycling loop keeps feeding it back in. A field block with no foundation block behind it is a population that has already started clicking and doesn't know it yet. So, I suspect, is a model with no accumulating reservoir of text nobody generated on purpose.
+
+I don't know how you'd run the ELISA on that. But I'd start by asking what your foundation block actually is, and whether anyone's testing it.
