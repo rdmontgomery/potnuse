@@ -110,6 +110,12 @@ importers:
         specifier: ^5
         version: 5.0.12(@types/react@19.2.14)(react@19.2.5)
 
+  packages/rhizome-tend:
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
   packages/stego:
     devDependencies:
       typescript:

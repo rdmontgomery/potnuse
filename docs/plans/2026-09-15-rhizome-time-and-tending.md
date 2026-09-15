@@ -109,12 +109,24 @@ spread is already informative and currently invisible.
 
 Split by what actually needs reading.
 
-**Mechanical pass** — `scripts/tend-rhizome.ts`, plain Node, no model. Walks
-git history and `buildGraph()` and emits, per node: creation date, last
-substantive edit (diffs that touch prose, not frontmatter), current in-degree,
-in-degree delta since the last run, corpus size delta. Output is JSON plus a
-proposed state per node *with the numbers attached*. Runnable by hand;
-deterministic; testable under vitest like the rest of the repo.
+**Mechanical pass** — `@rdm/rhizome-tend`, plain Node, no model. Shipped as a
+workspace package rather than a loose `scripts/` file because vitest only globs
+`packages/*/src/**`, and the pure parts of this deserve tests.
+
+It reconstructs the whole graph at arbitrary git revisions — `git ls-tree` plus
+`git show`, no `astro:content` — and diffs two samples. Per node: creation date,
+last *prose* edit, in-degree, in-degree delta, corpus delta, accrual, and a
+proposed state with the numbers attached. Exit 1 when there is something to
+review, 0 on a quiet month.
+
+Two calls worth recording. Frontmatter-only commits do not count as edits,
+because frontmatter churn is what this routine writes — counting it would let
+each run reset every node's clock and nothing would ever settle; classification
+is by diff hunk line numbers against the frontmatter fence, which is exact where
+reading the diff text cannot distinguish a markdown bullet from a YAML list
+item. And node age comes from frontmatter, not the git add date: several nodes
+were committed weeks after they were written, and the ladder should not disagree
+with the map about how old something is.
 
 **Judgment pass** — the agent. Reads the script's output, then reads the
 content for every node it proposes to change. Overrides the arithmetic where
@@ -136,7 +148,8 @@ is content, and content is voice.
 A Routine (`create_trigger`, fresh session per fire), whose prompt is one
 line: follow `.claude/skills/tend-rhizome/SKILL.md`. The logic lives in git,
 versioned and reviewable, not buried in a trigger's prompt field where it
-can't be diffed.
+can't be diffed. The skill is written and checked in; the Routine itself is
+not created yet — say the word.
 
 **Monthly, not weekly.** At roughly two posts a month a weekly run has nothing
 to say, and a routine that mostly produces empty PRs trains you to stop
