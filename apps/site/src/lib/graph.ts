@@ -27,6 +27,7 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     slug: 'allons-jouer',
     title: 'Allons jouer',
     state: 'stable',
+    date: '2026-04-29T00:00:00.000Z',
     connects: ['ladder'],
     tags: ['instrument', 'cajun', 'accordion'],
     description:
@@ -39,6 +40,7 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     slug: 'calibrate',
     title: 'calibrate',
     state: 'germinating',
+    date: '2026-04-29T00:00:00.000Z',
     connects: ['dsl-hobbies', 'mumford-magick'],
     tags: ['llm', 'prompt', 'epistemology', 'exercise'],
     description:

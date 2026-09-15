@@ -24,6 +24,7 @@ const payload = {
     state: n.state,
     url: n.url,
     description: n.description ?? '',
+    date: n.date ?? null,
     degree: n.connects.length + n.backlinks.length,
   })),
   edges,
@@ -37,13 +38,16 @@ const payload = {
   <main class="rhizome">
     <header>
       <h1>rhizome</h1>
-      <p class="sub">tap a node to focus. tap the focused node to enter. hold to summon a card.</p>
+      <p class="sub">tap a node to focus. tap the focused node to enter. hold to summon a card. newer drifts up.</p>
       <ul class="legend" aria-label="legend">
         <li><span class="dot essays"></span>essays</li>
         <li><span class="dot experiments"></span>experiments</li>
         <li><span class="dot exchanges"></span>exchanges</li>
         <li><span class="dot page"></span>pages</li>
       </ul>
+      <button id="field-toggle" class="field-toggle" type="button" aria-pressed="true">
+        time field
+      </button>
     </header>
     <div class="stage">
       <canvas id="graph" aria-label="rhizome graph"></canvas>
@@ -52,6 +56,7 @@ const payload = {
         <div id="focus-labels" class="focus-labels"></div>
         <div id="summon-card" class="summon-card">
           <div class="summon-title"></div>
+          <div class="summon-meta"></div>
           <div class="summon-desc"></div>
           <div class="summon-neighbors"></div>
         </div>
@@ -84,6 +89,21 @@ const payload = {
   const MOVE_THRESHOLD = 6; // px before tap becomes drag/pan
   const PARTICLE_SPEED = 42; // world units per second
 
+  // --- temporal field ---
+  // Each dated node carries a charge in [-1, +1]: +1 newest, -1 oldest. A
+  // *uniform* vertical field pushes positive charge toward the top. Uniform,
+  // not a spring-to-target: the force is the same regardless of displacement,
+  // so it biases the layout without dictating it. A well-connected old node
+  // can still be dragged up among its young neighbours by link tension, and
+  // that tension is exactly the thing worth seeing. Net charge is ~0, so the
+  // graph does not drift as a whole.
+  const FIELD = 5.5; // tuned so link tension still leaves a readable spread
+  const TIME_RANK_MIX = 0.5; // 0 = pure calendar spacing, 1 = pure rank order
+  const RECENT_DAYS = 45; // glow window for "new"
+  const MONO = "'JetBrains Mono', ui-monospace, monospace";
+  const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const DAY_MS = 86400000;
+
   const reducedMotion = window.matchMedia(
     '(prefers-reduced-motion: reduce)',
   ).matches;
@@ -103,6 +123,7 @@ const payload = {
     throw new Error('rhizome: dom missing');
   }
   const summonTitleEl = summonCard.querySelector('.summon-title');
+  const summonMetaEl = summonCard.querySelector('.summon-meta');
   const summonDescEl = summonCard.querySelector('.summon-desc');
   const summonNeighborsEl = summonCard.querySelector('.summon-neighbors');
   const ctx = canvas.getContext('2d');
@@ -134,6 +155,77 @@ const payload = {
     adj.get(e.target).add(e.source);
   }
 
+  // --- force simulation (Fruchterman-Reingold-ish, dependency-free) ---
+  const LINK_DIST = 110;
+  const LINK_STRENGTH = 0.04;
+  const CHARGE = 1400;
+  const CENTER = 0.015;
+  const DAMPING = 0.82;
+
+  // --- assign temporal charge ---
+  // Blend calendar position with rank position. Pure calendar collapses a
+  // burst of posts into one indistinguishable band; pure rank spaces them
+  // evenly and lies about the quiet months. The blend keeps both legible:
+  // clusters stay clustered, gaps stay visible, order inside a cluster reads.
+  const now = Date.now();
+  const dated = nodes.filter((n) => n.date);
+  const byTime = [...dated].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  const tMin = byTime.length ? Date.parse(byTime[0].date) : 0;
+  const tMax = byTime.length ? Date.parse(byTime[byTime.length - 1].date) : 1;
+  const tSpan = Math.max(1, tMax - tMin);
+  byTime.forEach((n, i) => {
+    n.rankNorm = byTime.length > 1 ? i / (byTime.length - 1) : 0.5;
+  });
+  for (const n of nodes) {
+    if (!n.date) {
+      n.charge = 0; // undated nodes float at the field's neutral line
+      n.ageDays = null;
+      continue;
+    }
+    const t = Date.parse(n.date);
+    const timeNorm = (t - tMin) / tSpan; // 0 oldest -> 1 newest
+    const u = (1 - TIME_RANK_MIX) * timeNorm + TIME_RANK_MIX * n.rankNorm;
+    n.charge = u * 2 - 1;
+    n.ageDays = (now - t) / DAY_MS;
+  }
+
+  // Re-center so total charge is exactly zero. Without this a corpus skewed
+  // old (most of them are) carries a net downward force and the whole graph
+  // sags off-centre instead of just tilting.
+  if (dated.length) {
+    const meanCharge =
+      nodes.reduce((sum, n) => sum + n.charge, 0) / nodes.length;
+    for (const n of nodes) n.charge -= meanCharge;
+  }
+
+  // One tick per month that has nodes. The tick rides the *actual* mean y of
+  // its month rather than the field's nominal equilibrium: topology drags
+  // nodes off the ideal line, and a gridline that lies about where its month
+  // sits is worse than no gridline.
+  const axisTicks = (() => {
+    const buckets = new Map();
+    for (const n of dated) {
+      const key = n.date.slice(0, 7);
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(n);
+    }
+    return [...buckets.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, ns]) => ({
+        label: `${MONTHS[Number(key.slice(5, 7)) - 1]} ${key.slice(2, 4)}`,
+        members: ns,
+        y: 0,
+      }));
+  })();
+
+  function updateAxisTicks() {
+    for (const tick of axisTicks) {
+      let sum = 0;
+      for (const n of tick.members) sum += n.y;
+      tick.y = sum / tick.members.length;
+    }
+  }
+
   let width = 0;
   let height = 0;
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -150,16 +242,17 @@ const payload = {
   resize();
   window.addEventListener('resize', resize);
 
-  // --- force simulation (Fruchterman-Reingold-ish, dependency-free) ---
-  const LINK_DIST = 110;
-  const LINK_STRENGTH = 0.04;
-  const CHARGE = 1400;
-  const CENTER = 0.015;
-  const DAMPING = 0.82;
+  let fieldOn = true;
+  let fieldT = 1; // 0 -> 1 ramp so toggling the field is a settle, not a snap
 
   function step() {
     const cx = 0;
     const cy = 0;
+
+    // Uniform temporal field.
+    if (fieldT > 0.001) {
+      for (const n of nodes) n.vy -= n.charge * FIELD * fieldT;
+    }
 
     // Repulsion (O(n^2), fine for < ~300 nodes).
     for (let i = 0; i < nodes.length; i++) {
@@ -268,6 +361,8 @@ const payload = {
   function showSummon(node) {
     summoned = node;
     summonTitleEl.textContent = node.title;
+    const when = node.date ? node.date.slice(0, 10) : 'undated';
+    summonMetaEl.textContent = `${when} · ${node.state}`;
     summonDescEl.textContent = node.description || ' ';
     summonNeighborsEl.replaceChildren();
     const ns = [...(adj.get(node) || [])].slice(0, 12);
@@ -548,6 +643,15 @@ const payload = {
     }
   });
 
+  const fieldToggle = document.getElementById('field-toggle');
+  if (fieldToggle) {
+    fieldToggle.addEventListener('click', () => {
+      fieldOn = !fieldOn;
+      fieldToggle.setAttribute('aria-pressed', String(fieldOn));
+      fieldToggle.classList.toggle('is-off', !fieldOn);
+    });
+  }
+
   // --- per-frame time-based motion ---
   function advance(dt) {
     if (!reducedMotion) {
@@ -562,6 +666,14 @@ const payload = {
         e.particleT = (e.particleT + (PARTICLE_SPEED * dt) / dist) % 1;
       }
     }
+    const fieldTarget = fieldOn ? 1 : 0;
+    if (reducedMotion) {
+      fieldT = fieldTarget;
+    } else {
+      fieldT += (fieldTarget - fieldT) * 0.06;
+      if (Math.abs(fieldT - fieldTarget) < 0.002) fieldT = fieldTarget;
+    }
+
     const target = focused && !releasing ? 1 : 0;
     if (reducedMotion) {
       focusT = target;
@@ -586,6 +698,30 @@ const payload = {
 
   function draw() {
     ctx.clearRect(0, 0, width, height);
+
+    // Time axis: screen-space rules at each month's nominal field height.
+    // Drawn first so the graph sits on top of it.
+    if (fieldT > 0.02) {
+      updateAxisTicks();
+      ctx.save();
+      ctx.font = `10px ${MONO}`;
+      ctx.textBaseline = 'middle';
+      for (const tick of axisTicks) {
+        const sy = (tick.y + ty) * scale + height / 2;
+        if (sy < 10 || sy > height - 10) continue;
+        ctx.globalAlpha = 0.14 * fieldT;
+        ctx.strokeStyle = TEXT_DIM;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(58, sy);
+        ctx.lineTo(width, sy);
+        ctx.stroke();
+        ctx.globalAlpha = 0.45 * fieldT;
+        ctx.fillStyle = TEXT_DIM;
+        ctx.fillText(tick.label, 10, sy);
+      }
+      ctx.restore();
+    }
 
     ctx.save();
     ctx.translate(width / 2, height / 2);
@@ -634,6 +770,24 @@ const payload = {
       }
       ctx.globalAlpha = 1;
     }
+
+    // recency glow — the direct answer to "which of these is new?"
+    for (const n of nodes) {
+      if (n.ageDays === null || n.ageDays >= RECENT_DAYS) continue;
+      const freshness = Math.pow(1 - n.ageDays / RECENT_DAYS, 1.5);
+      if (freshness <= 0.01) continue;
+      const outer = n.r * 4.5;
+      const grad = ctx.createRadialGradient(n.x, n.y, n.r * 0.8, n.x, n.y, outer);
+      const color = COLORS[n.collection] || TEXT_DIM;
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.globalAlpha = 0.3 * freshness * (dim ? 1 - 0.6 * focusT : 1);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, outer, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
 
     // nodes
     for (const n of nodes) {
@@ -770,6 +924,37 @@ const payload = {
   .dot.page {
     background: #9e8e72;
   }
+  .field-toggle {
+    margin-top: 0.85rem;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 0.25rem 0.6rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease,
+      opacity 0.15s ease;
+  }
+  .field-toggle::before {
+    content: '\2022\00a0';
+    color: #e8a838;
+  }
+  .field-toggle:hover {
+    color: var(--text);
+    border-color: #e8a838;
+  }
+  .field-toggle.is-off {
+    opacity: 0.55;
+  }
+  .field-toggle.is-off::before {
+    color: var(--text-dim);
+  }
   .stage {
     position: relative;
     height: min(78vh, 820px);
@@ -865,6 +1050,13 @@ const payload = {
     color: #f0e6d2;
     margin-bottom: 0.25rem;
   }
+  .summon-meta {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.3rem;
+  }
   .summon-desc {
     font-family: 'EB Garamond', Georgia, serif;
     font-style: italic;
@@ -888,7 +1080,8 @@ const payload = {
   @media (prefers-reduced-motion: reduce) {
     .hover-label,
     :global(.focus-label),
-    .summon-card {
+    .summon-card,
+    .field-toggle {
       transition: none;
     }
   }
