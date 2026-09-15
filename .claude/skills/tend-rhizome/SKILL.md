@@ -94,7 +94,20 @@ insertions without review — proposing an edge is reversible, writing one lets
 this routine slowly rewrite the graph's argument.
 
 If last month's tending PR is still open, push to that branch instead of
-opening a second one.
+opening a second one. If it was **merged**, do not reuse the branch — restart
+it from `main` and open a new PR.
+
+If no GitHub tooling is available (no `mcp__github__*` tools, no `gh`), push
+the branch anyway and report the compare URL rather than dropping the work on
+the floor:
+
+```
+https://github.com/rdmontgomery/potnuse/compare/main...rhizome/tending-YYYY-MM
+```
+
+Then say plainly that the PR was not opened and why. A tending run whose
+findings never reach a branch is worse than no run at all — the next month's
+report will show the same ten proposals and look like nothing is happening.
 
 ## Two things not to "fix"
 
