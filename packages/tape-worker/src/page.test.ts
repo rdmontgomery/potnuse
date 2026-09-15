@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dashboard, loginPage, type PageData } from './page.ts';
+import { dashboard, loginPage, probePage, type PageData, type ProbeView } from './page.ts';
 import { parseRungs, sameSecret } from './index.ts';
 
 const empty: PageData = { bankroll: null, budgetUsd: 500, rows: [] };
@@ -145,5 +145,85 @@ describe('dashboard', () => {
     const out = dashboard(data);
     expect(out).toContain('Refused');
     expect(out).toContain('pool-too-thin');
+  });
+});
+
+describe('probe page', () => {
+  const view: ProbeView = {
+    token: 'B4Vwozy1FGtp8SELXSXydWSzavPUGnJ77DURV2k4MhUV',
+    attempts: [
+      {
+        endpoint: 'dexscreener-token',
+        url: 'https://api.dexscreener.com/latest/dex/tokens/B4Vw',
+        status: 200,
+        bytes: 4821,
+        sample: '{"pairs":[{"chainId":"solana"',
+        pairCount: 3,
+        barCount: 0,
+        error: null,
+      },
+      {
+        endpoint: 'geckoterminal-search',
+        url: 'https://api.geckoterminal.com/api/v2/search/pools?query=B4Vw',
+        status: null,
+        bytes: 0,
+        sample: '',
+        pairCount: 0,
+        barCount: 0,
+        error: 'ETIMEDOUT',
+      },
+    ],
+    best: {
+      chain: 'solana',
+      pairId: '8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj',
+      dex: 'raydium',
+      baseSymbol: 'PENGU',
+      quoteSymbol: 'SOL',
+      priceUsd: 0.0231,
+      liquidityUsd: 1_842_000,
+    },
+  };
+
+  it('opens as an empty form before anything is asked', () => {
+    const out = probePage(null);
+    expect(out).toContain('Ask every source');
+    expect(out).not.toContain('Nothing usable');
+  });
+
+  it('shows each endpoint with its status, size and body', () => {
+    const out = probePage(view);
+    expect(out).toContain('dexscreener-token');
+    expect(out).toContain('4,821');
+    expect(out).toContain('ETIMEDOUT');
+    expect(out).toContain('{&quot;pairs&quot;:[{&quot;chainId&quot;:&quot;solana&quot;');
+  });
+
+  it('shows the winning pair with its identifier intact', () => {
+    // The identifier is the thing most likely to be mangled, so show it whole.
+    expect(probePage(view)).toContain('8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj');
+  });
+
+  it('says plainly when nothing was usable, and keeps the evidence', () => {
+    const out = probePage({ ...view, best: null });
+    expect(out).toContain('Nothing usable');
+    expect(out).toContain('dexscreener-token');
+  });
+
+  it('renders an empty body as a marker rather than a blank block', () => {
+    expect(probePage(view)).toContain('(empty)');
+  });
+
+  it('escapes a response body rather than letting it into the page', () => {
+    const hostile = {
+      ...view,
+      attempts: [{ ...view.attempts[0]!, sample: '<script>alert(1)</script>' }],
+    };
+    const out = probePage(hostile);
+    expect(out).not.toContain('<script>alert(1)');
+    expect(out).toContain('&lt;script&gt;');
+  });
+
+  it('keeps the token in the field so it can be re-run', () => {
+    expect(probePage(view)).toContain('value="B4Vwozy1FGtp8SELXSXydWSzavPUGnJ77DURV2k4MhUV"');
   });
 });

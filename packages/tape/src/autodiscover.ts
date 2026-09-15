@@ -277,3 +277,23 @@ export function assertAddress(input: string): Address {
   }
   throw new TapeError(`"${raw}" is not a contract address`);
 }
+
+/**
+ * A token identifier for the aggregator path.
+ *
+ * Accepts an EVM address or a base58 mint, because "which chain family" is
+ * not a question the person pasting a ticker should have to answer. The chain
+ * runner still uses `assertAddress`, which is stricter for good reason: it is
+ * about to make an eth_call.
+ */
+export function assertTokenId(input: string): string {
+  const raw = input.trim();
+  if (/^0x[0-9a-fA-F]{40}$/.test(raw)) return raw.toLowerCase();
+  if (BASE58.test(raw) && !raw.startsWith('0x')) return raw;
+  if (/^0x[0-9a-fA-F]{64}$/.test(raw)) {
+    throw new TapeError(
+      `"${raw}" is 32 bytes, which is a pool id or a transaction hash rather than a token.`,
+    );
+  }
+  throw new TapeError(`"${raw}" is neither an EVM address nor a base58 mint.`);
+}

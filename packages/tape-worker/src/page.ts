@@ -7,6 +7,7 @@ export interface MarketRow {
   position: StoredPosition | null;
   symbol: string;
   quoteSymbol: string;
+  venue?: string;
 }
 
 export interface PageData {
@@ -139,6 +140,84 @@ ${banner}
   );
 }
 
+export interface ProbeView {
+  token: string;
+  attempts: {
+    endpoint: string;
+    url: string;
+    status: number | null;
+    bytes: number;
+    sample: string;
+    pairCount: number;
+    barCount: number;
+    error: string | null;
+  }[];
+  best: {
+    chain: string;
+    pairId: string;
+    dex: string | null;
+    baseSymbol: string | null;
+    quoteSymbol: string | null;
+    priceUsd: number | null;
+    liquidityUsd: number | null;
+  } | null;
+}
+
+/**
+ * What every price source said, verbatim.
+ *
+ * Exists so a shape nobody has seen costs one paste instead of a round of
+ * guessing: status, size, the start of the body, and what the parser made of
+ * it, per endpoint.
+ */
+export function probePage(view: ProbeView | null): string {
+  const rows = view
+    ? view.attempts
+        .map(
+          (a) => `<tr>
+<td class="mono"><strong>${esc(a.endpoint)}</strong><br><span style="color:var(--ink-faint)">${esc(a.url)}</span></td>
+<td class="mono">${a.error ? `<span style="color:var(--block)">${esc(a.error)}</span>` : esc(String(a.status))}</td>
+<td class="mono">${a.bytes.toLocaleString()}</td>
+<td class="mono">${a.pairCount} / ${a.barCount}</td>
+</tr>
+<tr><td colspan="4"><pre class="journal">${esc(a.sample) || '(empty)'}</pre></td></tr>`,
+        )
+        .join('')
+    : '';
+
+  const best = view?.best
+    ? `<div class="flash"><span class="k">Best pair</span>
+<pre>${esc(
+        [
+          `chain      ${view.best.chain}`,
+          `pair id    ${view.best.pairId}`,
+          `dex        ${view.best.dex ?? '—'}`,
+          `symbols    ${view.best.baseSymbol ?? '?'} / ${view.best.quoteSymbol ?? '?'}`,
+          `price usd  ${view.best.priceUsd ?? '—'}`,
+          `liquidity  ${view.best.liquidityUsd ?? '—'}`,
+        ].join('\n'),
+      )}</pre></div>`
+    : view
+      ? `<div class="flash bad"><span class="k">Nothing usable</span><p>No endpoint returned a pair this parser could read. The bodies above are the evidence.</p></div>`
+      : '';
+
+  return shell(
+    'Tape Runner',
+    `<header><span class="slug">Diagnostics</span>
+<h1>What the <em>sources</em> said</h1></header>
+<form method="get" action="/probe">
+<fieldset style="grid-template-columns:1fr"><legend>Token</legend>
+<label>Contract address or mint<input id="token" name="token" value="${esc(view?.token ?? '')}" placeholder="0x… or base58" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
+</fieldset>
+<div class="row" style="margin-top:1rem"><button class="primary" type="submit">Ask every source</button>
+<a href="/"><button type="button">Back</button></a></div>
+</form>
+${best}
+${view ? `<div class="scroll"><table><thead><tr><th>Endpoint</th><th>Status</th><th>Bytes</th><th>Pairs / bars</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+<footer>Read-only. This asks price aggregators what they know about a token and shows the raw answer.</footer>`,
+  );
+}
+
 export function dashboard(data: PageData): string {
   const b = data.bankroll;
   const committed = b?.committedUsd ?? 0;
@@ -159,7 +238,7 @@ export function dashboard(data: PageData): string {
           const held = row.position?.position;
           const pnl = (row.position?.proceedsUsd ?? 0) - (row.position?.costUsd ?? 0);
           return `<tr>
-<td><strong>${esc(row.symbol)}</strong> / ${esc(row.quoteSymbol)}<br><span class="m" style="color:var(--ink-faint)">${esc(row.market.id)}</span></td>
+<td><strong>${esc(row.symbol)}</strong> / ${esc(row.quoteSymbol)}${row.venue ? `<br><span class="m" style="color:var(--accent)">${esc(row.venue)}</span>` : ''}<br><span class="m" style="color:var(--ink-faint)">${esc(row.market.id)}</span></td>
 <td class="mono">${esc(row.cursor ?? 'not started')}</td>
 <td>${held ? `<span class="pill open">holding</span>` : `<span class="pill flat">flat</span>`}</td>
 <td class="mono">${row.position ? esc(money(row.position.costUsd)) : '—'}</td>
@@ -201,7 +280,7 @@ ${flash}
 <section><h2>Watch a contract</h2>
 <form method="post" action="/market">
 <fieldset style="grid-template-columns:1fr"><legend>Paste it</legend>
-<label>Contract address<input id="base" name="base" placeholder="0x…" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
+<label>Contract address or Solana mint<input id="base" name="base" placeholder="0x… or base58" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
 </fieldset>
 <div class="row" style="margin-top:1rem">
 <button class="primary" type="submit">Find the pool and watch it</button>
@@ -211,17 +290,10 @@ ${flash}
 <details style="margin-top:1rem">
 <summary class="m" style="cursor:pointer;color:var(--accent)">Advanced &mdash; only if the defaults are wrong</summary>
 <div style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem">
-<fieldset><legend>Chain</legend>
-<label>Chain<select id="chainId" name="chainId">
-<option value="">Work it out from the address</option>
-<option value="4663">Robinhood Chain</option>
-<option value="1">Ethereum</option>
-<option value="8453">Base</option>
-<option value="42161">Arbitrum One</option>
-</select></label>
-<label>RPC URL (overrides the default)<input id="rpcUrl" name="rpcUrl" placeholder="https://…"></label>
-<label>Pool address (skips the search)<input id="pool" name="pool" placeholder="0x…"></label>
-<label>Backfill hours (0 = from now)<input id="backfillHours" name="backfillHours" value="0"></label>
+<fieldset><legend>Market</legend>
+<label>Pair id (pins one pool)<input id="pool" name="pool" placeholder="from /probe"></label>
+<label>Candle minutes<input id="barMinutes" name="barMinutes" value="5"></label>
+<label>Latency haircut bps<input id="haircutBps" name="haircutBps" value="30"></label>
 </fieldset>
 <fieldset><legend>Fees and pricing</legend>
 <label>Buy fee bps<input id="buyBps" name="buyBps" value="30"></label>

@@ -15,6 +15,29 @@ export { basis, floating, markFrom, pegged, unreferenced, type UsdReference } fr
 
 export type { Bar, PairQuote, QuoteSource } from './quotes/types.ts';
 export { barsIn, byLiquidity, pairsIn } from './quotes/parse.ts';
+export {
+  ENDPOINTS,
+  aggregatorSource,
+  probeToken,
+  type Endpoint,
+  type FetchResult,
+  type ProbeReport,
+} from './quotes/aggregator.ts';
+export { poolFor, poolFromLiquidity } from './quotes/synthetic.ts';
+export {
+  barSession,
+  type BarEnterOutcome,
+  type BarPaperConfig,
+  type BarPaperState,
+} from './barpaper.ts';
+export {
+  enterQuoteMarket,
+  isQuoteMarket,
+  runQuotes,
+  type QuoteMarketConfig,
+  type QuoteRunResult,
+  type QuoteRunSummary,
+} from './runner-quotes.ts';
 
 export {
   makePlan,
@@ -99,6 +122,7 @@ export {
 export {
   addressesIn,
   assertAddress,
+  assertTokenId,
   autoDiscover,
   hintsFrom,
   poolIdsIn,
