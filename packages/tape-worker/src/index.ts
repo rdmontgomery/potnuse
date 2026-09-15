@@ -7,6 +7,7 @@ import {
   chainsHolding,
   enterMarket,
   hintsFrom,
+  probeToken,
   probeChains,
   makePlan,
   runOnce,
@@ -20,7 +21,7 @@ import {
   type SqlDatabase,
   type TapeStore,
 } from '@rdm/tape';
-import { dashboard, loginPage, type MarketRow, type PageData } from './page.ts';
+import { dashboard, loginPage, probePage, type MarketRow, type PageData } from './page.ts';
 
 /**
  * The runner: a cron that builds tapes, and a page to drive it from.
@@ -409,6 +410,38 @@ export default {
       const data = await pageData(store);
       data.flash = flash;
       return html(dashboard(data));
+    }
+
+    if (url.pathname === '/probe') {
+      const token = url.searchParams.get('token')?.trim();
+      if (!token) return html(probePage(null));
+      const report = await probeToken(token, { timeoutMs: 8_000 });
+      return html(
+        probePage({
+          token,
+          attempts: report.attempts.map((a) => ({
+            endpoint: a.endpoint,
+            url: a.url,
+            status: a.status,
+            bytes: a.bytes,
+            sample: a.sample,
+            pairCount: a.pairs.length,
+            barCount: a.bars.length,
+            error: a.error,
+          })),
+          best: report.best
+            ? {
+                chain: report.best.chain,
+                pairId: report.best.pairId,
+                dex: report.best.dex,
+                baseSymbol: report.best.baseSymbol,
+                quoteSymbol: report.best.quoteSymbol,
+                priceUsd: report.best.priceUsd,
+                liquidityUsd: report.best.liquidityUsd,
+              }
+            : null,
+        }),
+      );
     }
 
     if (url.pathname === '/api/status') {

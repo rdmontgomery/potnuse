@@ -15,6 +15,15 @@ export { basis, floating, markFrom, pegged, unreferenced, type UsdReference } fr
 
 export type { Bar, PairQuote, QuoteSource } from './quotes/types.ts';
 export { barsIn, byLiquidity, pairsIn } from './quotes/parse.ts';
+export {
+  ENDPOINTS,
+  aggregatorSource,
+  probeToken,
+  type Endpoint,
+  type FetchResult,
+  type ProbeReport,
+} from './quotes/aggregator.ts';
+export { poolFor, poolFromLiquidity } from './quotes/synthetic.ts';
 
 export {
   makePlan,

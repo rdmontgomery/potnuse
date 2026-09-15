@@ -139,6 +139,84 @@ ${banner}
   );
 }
 
+export interface ProbeView {
+  token: string;
+  attempts: {
+    endpoint: string;
+    url: string;
+    status: number | null;
+    bytes: number;
+    sample: string;
+    pairCount: number;
+    barCount: number;
+    error: string | null;
+  }[];
+  best: {
+    chain: string;
+    pairId: string;
+    dex: string | null;
+    baseSymbol: string | null;
+    quoteSymbol: string | null;
+    priceUsd: number | null;
+    liquidityUsd: number | null;
+  } | null;
+}
+
+/**
+ * What every price source said, verbatim.
+ *
+ * Exists so a shape nobody has seen costs one paste instead of a round of
+ * guessing: status, size, the start of the body, and what the parser made of
+ * it, per endpoint.
+ */
+export function probePage(view: ProbeView | null): string {
+  const rows = view
+    ? view.attempts
+        .map(
+          (a) => `<tr>
+<td class="mono"><strong>${esc(a.endpoint)}</strong><br><span style="color:var(--ink-faint)">${esc(a.url)}</span></td>
+<td class="mono">${a.error ? `<span style="color:var(--block)">${esc(a.error)}</span>` : esc(String(a.status))}</td>
+<td class="mono">${a.bytes.toLocaleString()}</td>
+<td class="mono">${a.pairCount} / ${a.barCount}</td>
+</tr>
+<tr><td colspan="4"><pre class="journal">${esc(a.sample) || '(empty)'}</pre></td></tr>`,
+        )
+        .join('')
+    : '';
+
+  const best = view?.best
+    ? `<div class="flash"><span class="k">Best pair</span>
+<pre>${esc(
+        [
+          `chain      ${view.best.chain}`,
+          `pair id    ${view.best.pairId}`,
+          `dex        ${view.best.dex ?? '—'}`,
+          `symbols    ${view.best.baseSymbol ?? '?'} / ${view.best.quoteSymbol ?? '?'}`,
+          `price usd  ${view.best.priceUsd ?? '—'}`,
+          `liquidity  ${view.best.liquidityUsd ?? '—'}`,
+        ].join('\n'),
+      )}</pre></div>`
+    : view
+      ? `<div class="flash bad"><span class="k">Nothing usable</span><p>No endpoint returned a pair this parser could read. The bodies above are the evidence.</p></div>`
+      : '';
+
+  return shell(
+    'Tape Runner',
+    `<header><span class="slug">Diagnostics</span>
+<h1>What the <em>sources</em> said</h1></header>
+<form method="get" action="/probe">
+<fieldset style="grid-template-columns:1fr"><legend>Token</legend>
+<label>Contract address or mint<input id="token" name="token" value="${esc(view?.token ?? '')}" placeholder="0x… or base58" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
+</fieldset>
+<div class="row" style="margin-top:1rem"><button class="primary" type="submit">Ask every source</button>
+<a href="/"><button type="button">Back</button></a></div>
+</form>
+${best}
+${view ? `<div class="scroll"><table><thead><tr><th>Endpoint</th><th>Status</th><th>Bytes</th><th>Pairs / bars</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
+<footer>Read-only. This asks price aggregators what they know about a token and shows the raw answer.</footer>`,
+  );
+}
+
 export function dashboard(data: PageData): string {
   const b = data.bankroll;
   const committed = b?.committedUsd ?? 0;
