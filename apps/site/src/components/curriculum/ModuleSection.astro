@@ -1,0 +1,91 @@
+---
+// Section frame for a curriculum module. Renders the chrome (number,
+// title, kicker) and a single slot for the module's content.
+//
+// The optional `lens` prop is a one-line description of how the spine
+// should read the running example *for this module*. PersistentStaff
+// observes which section is in view and updates its header text so the
+// spine connects to the active concept instead of floating
+// independently of it.
+
+interface Props {
+  index: number;
+  title: string;
+  kicker?: string;
+  lens?: string;
+}
+
+const { index, title, kicker, lens } = Astro.props;
+const id = `module-${index}`;
+const num = String(index).padStart(2, '0');
+---
+
+<section
+  class="module"
+  id={id}
+  data-module={index}
+  data-spine-lens={lens ?? ''}
+>
+  <header class="module-head">
+    <span class="module-num">{num}</span>
+    <h2 class="module-title">{title}</h2>
+    {kicker && <p class="module-kicker">{kicker}</p>}
+  </header>
+  <div class="module-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .module {
+    min-height: 80vh;
+    padding: 3rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 1rem;
+  }
+  .module:last-child {
+    border-bottom: none;
+  }
+  .module-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1rem;
+    row-gap: 0.4rem;
+    align-items: baseline;
+    margin-bottom: 2rem;
+  }
+  .module-num {
+    grid-row: 1 / span 2;
+    font-family: var(--font-jetbrains);
+    font-size: 0.85rem;
+    color: var(--accent-dim);
+    letter-spacing: 0.1em;
+    align-self: start;
+    padding-top: 0.45rem;
+  }
+  .module-title {
+    grid-column: 2;
+    font-family: var(--font-crimson);
+    font-weight: 500;
+    font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .module-kicker {
+    grid-column: 2;
+    font-family: var(--font-crimson);
+    font-style: italic;
+    color: var(--text-dim);
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+  .module-body {
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .module-body :global(p) {
+    margin: 0 0 1rem;
+  }
+</style>

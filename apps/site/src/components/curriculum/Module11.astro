@@ -1,0 +1,337 @@
+---
+import Module11Behold from './Module11Behold';
+import Module11Derive from './Module11Derive';
+import Module11Operate from './Module11Operate';
+import Module11Prompts from './Module11Prompts';
+---
+
+<div class="m m11">
+  <section class="m-block m11-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Treat the chorale as a physical system. The Krumhansl-style
+      inference from Module 9 is the system's <em>order parameter</em>:
+      a vector in tonic-space pointing to the inferred key, with a
+      magnitude (the correlation) measuring how committed the system
+      is. Add thermal noise, and watch the order parameter shrink —
+      until at high enough temperature the magnetic domain breaks
+      down and no key wins decisively.
+    </p>
+    <Module11Behold client:visible />
+  </section>
+
+  <section class="m-block m11-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      Six dictionary entries between condensed-matter physics and
+      tonal music. The mapping isn't strict isomorphism — but every
+      term on the right behaves like the one on the left in the
+      ways that count.
+    </p>
+    <Module11Derive client:visible />
+  </section>
+
+  <section class="m-block m11-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      A temperature dial. Pull it toward zero (quench) and the
+      chorale's tonal field locks into C major decisively. Push it up
+      and the inferred-key margin collapses; second-place keys start
+      trading the lead with each re-noise. Music is active matter
+      doing the same kind of work other ordered phases do: balancing
+      symmetry against the driving forces that break it.
+    </p>
+    <Module11Operate client:visible />
+  </section>
+
+  <section class="m-block m11-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on the physics mapping.
+    </p>
+    <Module11Prompts client:visible />
+  </section>
+
+  <section class="m-block m11-block m-bridge m11-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      Twelve modules. Z<sub>12</sub> to active matter. The math was
+      the ladder; the music was the ceiling — and they share more
+      structure than music theory has usually been willing to admit.
+      The spine ends here. The cards live on at{' '}
+      <a href="/practice">/practice</a>.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 11 specific rules. */
+
+  .m11-behold,
+  .m11-derive,
+  .m11-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.95rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  /* Readout bars (Behold) ---------------------------------------------- */
+  .m11-readout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .m11-readout-row {
+    display: grid;
+    grid-template-columns: 4rem 1fr 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .m11-readout-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m11-readout-bar {
+    height: 0.55rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .m11-readout-fill {
+    height: 100%;
+    transition: width 0.25s ease;
+  }
+  .m11-thermo {
+    background: linear-gradient(
+      to right,
+      rgba(76, 134, 200, 1),
+      rgba(232, 168, 56, 1),
+      rgba(186, 70, 70, 1)
+    );
+  }
+  .m11-order {
+    background: var(--accent);
+  }
+  .m11-readout-value {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+    color: var(--text);
+    text-align: right;
+  }
+  .m11-key-card {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    padding: 0.55rem 0.95rem;
+    background: rgba(232, 168, 56, 0.08);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+  }
+  .m11-key-card-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m11-key-card-name {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--accent);
+  }
+  .m11-key-card-margin {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  /* Derive table ------------------------------------------------------- */
+  .m11-mapping-table {
+    width: 100%;
+    max-width: 540px;
+    border-collapse: collapse;
+    font-family: var(--font-jetbrains);
+  }
+  .m11-mapping-table th {
+    text-align: left;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .m11-mapping-table td {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .m11-mapping-table tr:last-child td {
+    border-bottom: none;
+  }
+  .m11-mapping-table td:first-child {
+    color: var(--accent);
+    width: 14rem;
+  }
+
+  /* Operate ------------------------------------------------------------ */
+  .m11-slider-row {
+    display: grid;
+    grid-template-columns: 6.5rem 1fr 3rem;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    max-width: 420px;
+  }
+  .m11-slider-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m11-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .m11-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .m11-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .m11-slider-value {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-align: right;
+  }
+  .m11-hist {
+    width: 100%;
+    max-width: 360px;
+  }
+  .m11-inference {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .m11-inf-row {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+  .m11-inf-row.dim {
+    opacity: 0.7;
+  }
+  .m11-inf-pos {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+  .m11-inf-key {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .m11-inf-top {
+    color: var(--accent);
+  }
+  .m11-inf-corr {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+  }
+  .m11-margin {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-align: right;
+    color: var(--text-muted);
+    margin-top: 0.1rem;
+  }
+  .m11-operate-controls {
+    display: flex;
+    gap: 0.45rem;
+  }
+  .m11-operate-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m11-operate-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+
+  .m11-behold-caption,
+  .m11-derive-caption,
+  .m11-operate-caption {
+    font-size: 0.92rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.55 !important;
+    max-width: 48ch;
+  }
+  .m11-behold-caption em,
+  .m11-derive-caption em {
+    color: var(--accent);
+  }
+  .m11-operate-caption strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+</style>

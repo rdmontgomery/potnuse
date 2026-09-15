@@ -1,0 +1,341 @@
+---
+import Base from '@/layouts/Base.astro';
+import Backlinks from '@/components/Backlinks.astro';
+import { CC_RIDER } from '@/lib/pentimento/song';
+
+const song = CC_RIDER;
+const maxTier = song.tierLabels.length - 1;
+---
+
+<Base
+  title="pentimento"
+  description="A sliding scale of musical complexity. Strip a 12-bar blues to its bones, then add layers back to virtuoso."
+>
+  <article class="page">
+    <header class="head">
+      <h1>pentimento</h1>
+      <p class="sub">{song.title} — slide between the bones and the virtuoso.</p>
+    </header>
+
+    <div class="card">
+      <div class="staff-wrap">
+        <div id="staff-ghost" class="staff staff-ghost" aria-hidden="true"></div>
+        <div id="staff" class="staff staff-solid"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="tier-row">
+        <span class="tier-current" id="tier-label">head</span>
+      </div>
+      <input
+        type="range"
+        id="slider"
+        class="slider"
+        min="0"
+        max={maxTier}
+        step="1"
+        value="1"
+        aria-label="complexity"
+      />
+      <div class="ticks">
+        {song.tierLabels.map((label) => <span>{label}</span>)}
+      </div>
+      <div class="transport">
+        <button id="play" class="btn primary">play</button>
+        <button id="pause" class="btn">pause</button>
+        <button id="stop" class="btn">stop</button>
+      </div>
+    </div>
+
+    <p class="hint">
+      Each tier of the slider is an arrangement: the song's harmonic skeleton at
+      one end, virtuoso embellishments at the other. Slide while it plays — the
+      current measure rings out, but the next downbeat picks up the new layer.
+    </p>
+
+    <section class="chrome">
+      <Backlinks slug="pentimento" />
+    </section>
+  </article>
+</Base>
+
+<script>
+  import * as Tone from 'tone';
+  import { CC_RIDER } from '@/lib/pentimento/song';
+  import { engrave, type BarLayout } from '@/lib/pentimento/engrave';
+  import {
+    loadAudio,
+    setupSong,
+    play,
+    pause,
+    stop,
+  } from '@/lib/pentimento/audio';
+
+  const song = CC_RIDER;
+  let currentTier = 1;
+  let barLayout: BarLayout[] = [];
+  let playhead: SVGLineElement | null = null;
+
+  const staffEl = document.getElementById('staff') as HTMLDivElement;
+  const ghostEl = document.getElementById('staff-ghost') as HTMLDivElement;
+  const slider = document.getElementById('slider') as HTMLInputElement;
+  const tierLabel = document.getElementById('tier-label') as HTMLSpanElement;
+  const playBtn = document.getElementById('play') as HTMLButtonElement;
+  const pauseBtn = document.getElementById('pause') as HTMLButtonElement;
+  const stopBtn = document.getElementById('stop') as HTMLButtonElement;
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function attachPlayhead(svg: SVGSVGElement | null): SVGLineElement | null {
+    if (!svg) return null;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('stroke', '#e8a838');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0');
+    line.style.pointerEvents = 'none';
+    svg.appendChild(line);
+    return line;
+  }
+
+  function applyTier(t: number) {
+    currentTier = t;
+    tierLabel.textContent = song.tierLabels[t];
+    try {
+      // Ghost layer: render the next tier underneath, in pale ink (via CSS
+      // opacity). Active-tier notes will paint on top and obscure overlapping
+      // ghost notes; ghost notes unique to the next tier peek through.
+      if (t + 1 < song.tierLabels.length) {
+        engrave(ghostEl, song, { tier: t + 1 });
+      } else {
+        ghostEl.innerHTML = '';
+      }
+      const result = engrave(staffEl, song, { tier: t });
+      barLayout = result.bars;
+      playhead = attachPlayhead(result.svg);
+    } catch (err) {
+      console.error('engrave failed', err);
+      staffEl.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
+      staffEl.style.color = '#a83a2a';
+      staffEl.style.padding = '1rem';
+      ghostEl.innerHTML = '';
+      barLayout = [];
+      playhead = null;
+    }
+  }
+
+  applyTier(currentTier);
+  setupSong(song, () => currentTier);
+
+  // Playhead rAF loop. Reads Transport.position (which wraps when the
+  // transport loops) and maps it onto the bar layout returned by engrave.
+  function tickPlayhead() {
+    requestAnimationFrame(tickPlayhead);
+    if (!playhead || barLayout.length === 0) return;
+    const transport = Tone.getTransport();
+    if (transport.state === 'stopped') {
+      playhead.setAttribute('opacity', '0');
+      return;
+    }
+    const pos = String(transport.position);
+    const parts = pos.split(':');
+    const bar = Number(parts[0]);
+    const beat = Number(parts[1]);
+    const sx = Number(parts[2]);
+    const sixteenths = bar * 16 + beat * 4 + sx;
+    const songLen = song.bars * 16;
+    const inSong = ((sixteenths % songLen) + songLen) % songLen;
+    const barIdx = Math.floor(inSong / 16);
+    const frac = (inSong - barIdx * 16) / 16;
+    const layout = barLayout[barIdx];
+    if (!layout) return;
+    const x = layout.notesX + frac * layout.notesWidth;
+    playhead.setAttribute('x1', String(x));
+    playhead.setAttribute('x2', String(x));
+    playhead.setAttribute('y1', String(layout.yTop));
+    playhead.setAttribute('y2', String(layout.yBottom));
+    playhead.setAttribute('opacity', transport.state === 'paused' ? '0.45' : '0.9');
+  }
+  requestAnimationFrame(tickPlayhead);
+
+  slider.addEventListener('input', (e) => {
+    const t = Number((e.target as HTMLInputElement).value);
+    if (t !== currentTier) applyTier(t);
+  });
+
+  playBtn.addEventListener('click', async () => {
+    await loadAudio();
+    play();
+  });
+  pauseBtn.addEventListener('click', () => pause());
+  stopBtn.addEventListener('click', () => stop());
+</script>
+
+<style>
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 4rem;
+  }
+  .head h1 {
+    font-family: var(--font-crimson);
+    font-size: 2.4rem;
+    font-weight: 500;
+    margin: 0 0 0.4rem;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  .head .sub {
+    color: var(--text-dim);
+    font-family: var(--font-crimson);
+    font-style: italic;
+    margin: 0 0 2rem;
+    font-size: 1rem;
+  }
+
+  /* Sheet-music card: warm-white paper sitting on the dark page. */
+  .card {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.75rem 0 0.5rem;
+    overflow-x: auto;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  }
+  /* Grid stacking: both children occupy the single grid cell, so they overlay
+     pixel-aligned. The ghost paints behind via low opacity; the solid sits on
+     top via z-index. */
+  .staff-wrap {
+    display: grid;
+    grid-template-areas: 'stack';
+    min-width: min-content;
+    margin: 0 auto;
+  }
+  .staff {
+    grid-area: stack;
+    color: #1f1408;
+    min-width: min-content;
+    line-height: 0;
+  }
+  .staff :global(svg) {
+    display: block;
+    margin: 0 auto;
+  }
+  .staff-ghost {
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .staff-solid {
+    z-index: 2;
+  }
+
+  .controls {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .tier-row {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+  .tier-current {
+    font-family: var(--font-crimson);
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+  }
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    margin: 0.5rem 0 0;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 4px;
+  }
+
+  .transport {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.25rem;
+  }
+  .btn {
+    background: var(--bg-button);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 1.4rem;
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .btn:hover {
+    color: var(--accent);
+  }
+  .btn.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .btn.primary:hover {
+    background: var(--accent-dim);
+    color: var(--bg);
+  }
+
+  .hint {
+    margin: 2.5rem auto 0;
+    max-width: 560px;
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  .chrome {
+    max-width: 680px;
+    margin: 3.5rem auto 0;
+  }
+</style>

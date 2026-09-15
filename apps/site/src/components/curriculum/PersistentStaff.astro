@@ -1,0 +1,235 @@
+---
+// The curriculum's spine. Renders the current section's example as a compact
+// grand-staff window with a slider that mutates the underlying reduction.
+//
+// For now the example is C.C. Rider (the only song the pentimento engine
+// knows about) and the slider runs the song's bones→virtuoso tiers. The
+// schenker-proper labels appear once Module 11 actually reduces a chorale;
+// until then the slider is the existing pentimento mechanic, scaled down.
+---
+
+<aside class="staff-spine" aria-label="reduction spine">
+  <div class="spine-card">
+    <div class="spine-head">
+      <span class="spine-label">spine</span>
+      <span class="spine-tier" id="spine-tier-label">head</span>
+    </div>
+    <p
+      id="spine-lens"
+      class="spine-lens"
+      aria-live="polite"
+    >
+      module 0 — soprano pitches of the chorale as pcs on the clock
+    </p>
+    <div class="spine-staff-wrap">
+      <div id="spine-staff-ghost" class="spine-staff spine-staff-ghost" aria-hidden="true"></div>
+      <div id="spine-staff" class="spine-staff spine-staff-solid"></div>
+    </div>
+    <input
+      type="range"
+      id="spine-slider"
+      class="spine-slider"
+      min="0"
+      max="3"
+      step="1"
+      value="1"
+      aria-label="reduction depth"
+    />
+    <div class="spine-ticks">
+      <span>bones</span>
+      <span>head</span>
+      <span>standard</span>
+      <span>virtuoso</span>
+    </div>
+  </div>
+</aside>
+
+<script>
+  import { CC_RIDER } from '@/lib/pentimento/song';
+  import { engrave } from '@/lib/pentimento/engrave';
+
+  const song = CC_RIDER;
+  const staffEl = document.getElementById('spine-staff') as HTMLDivElement | null;
+  const ghostEl = document.getElementById('spine-staff-ghost') as HTMLDivElement | null;
+  const slider = document.getElementById('spine-slider') as HTMLInputElement | null;
+  const tierLabel = document.getElementById('spine-tier-label') as HTMLSpanElement | null;
+
+  if (!staffEl || !ghostEl || !slider || !tierLabel) {
+    // Page didn't mount the spine — bail rather than throw.
+  } else {
+    // Window onto the first phrase of the song. Four bars fit one compact
+    // system; later modules will rebind this to the current section's example.
+    const WINDOW = { start: 0, count: 4 } as const;
+
+    function applyTier(t: number) {
+      tierLabel!.textContent = song.tierLabels[t];
+      try {
+        if (t + 1 < song.tierLabels.length) {
+          engrave(ghostEl!, song, {
+            tier: t + 1,
+            compact: true,
+            window: WINDOW,
+          });
+        } else {
+          ghostEl!.innerHTML = '';
+        }
+        engrave(staffEl!, song, { tier: t, compact: true, window: WINDOW });
+      } catch (err) {
+        console.error('spine engrave failed', err);
+        staffEl!.textContent = `engrave error: ${(err as Error).message ?? String(err)}`;
+        ghostEl!.innerHTML = '';
+      }
+    }
+
+    applyTier(Number(slider.value));
+    slider.addEventListener('input', (e) => {
+      applyTier(Number((e.target as HTMLInputElement).value));
+    });
+
+    // Lens tracker: observe each module section and surface the one
+    // closest to the viewport center. The spine then reads as a per-
+    // module commentary on the running example, not as page furniture
+    // frozen on the page-load tier.
+    const lensEl = document.getElementById('spine-lens') as HTMLParagraphElement | null;
+    if (lensEl) {
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('section.module[data-module]'),
+      );
+      let currentIndex = -1;
+      function pickActive() {
+        const mid = window.scrollY + window.innerHeight / 2;
+        let bestIndex = -1;
+        let bestDist = Infinity;
+        for (const sec of sections) {
+          const rect = sec.getBoundingClientRect();
+          const top = rect.top + window.scrollY;
+          const bottom = top + rect.height;
+          const center = (top + bottom) / 2;
+          const dist = Math.abs(center - mid);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestIndex = Number(sec.dataset.module);
+          }
+        }
+        if (bestIndex !== currentIndex && bestIndex >= 0) {
+          currentIndex = bestIndex;
+          const sec = sections.find((s) => Number(s.dataset.module) === bestIndex);
+          const lens = sec?.dataset.spineLens ?? '';
+          lensEl!.textContent = lens
+            ? `module ${bestIndex} — ${lens}`
+            : `module ${bestIndex}`;
+        }
+      }
+      pickActive();
+      window.addEventListener('scroll', pickActive, { passive: true });
+      window.addEventListener('resize', pickActive);
+    }
+  }
+</script>
+
+<style>
+  .staff-spine {
+    padding: 0.25rem 0;
+  }
+  .spine-card {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.55rem 0.65rem 0.6rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .spine-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .spine-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: #6b5d48;
+  }
+  .spine-tier {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #8a6b1e;
+  }
+  .spine-lens {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 0.78rem;
+    color: #6b5d48;
+    margin: 0;
+    line-height: 1.35;
+  }
+  /* Ghost layer sits in a grid cell underneath the solid staff so the next
+     tier's extra notes peek through at low opacity. */
+  .spine-staff-wrap {
+    display: grid;
+    grid-template-areas: 'stack';
+    min-width: min-content;
+    overflow-x: auto;
+  }
+  .spine-staff {
+    grid-area: stack;
+    color: #1f1408;
+    line-height: 0;
+    min-width: min-content;
+  }
+  .spine-staff :global(svg) {
+    display: block;
+    margin: 0 auto;
+  }
+  .spine-staff-ghost {
+    opacity: 0.22;
+    pointer-events: none;
+  }
+  .spine-staff-solid {
+    z-index: 2;
+  }
+  .spine-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #c8b896;
+    border-radius: 2px;
+    outline: none;
+    margin: 0.4rem 0 0;
+  }
+  .spine-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid #f5efe0;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .spine-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid #f5efe0;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .spine-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-jetbrains);
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b5d48;
+  }
+</style>

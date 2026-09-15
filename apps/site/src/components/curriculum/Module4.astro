@@ -1,0 +1,343 @@
+---
+// Module 4: Triads and Roman Numerals. Behold builds each diatonic
+// triad note-by-note on the clock; Derive locks the picker so the
+// listener can compare shapes; Operate plays the triad and two stock
+// progressions so the cadential pull (V → I) becomes audible.
+import Module4Behold from './Module4Behold';
+import Module4Derive from './Module4Derive';
+import Module4Operate from './Module4Operate';
+import Module4Prompts from './Module4Prompts';
+---
+
+<div class="m m4">
+  <section class="m-block m4-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Start at any scale degree. Skip one diatonic note, then another
+      — you've stacked two thirds and built a triad. Do this from each
+      of the seven degrees and you get the diatonic chord family:
+      I, ii, iii, IV, V, vi, vii°.
+    </p>
+    <Module4Behold client:visible />
+  </section>
+
+  <section class="m-block m4-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      Three intervals: a third (3 or 4 semitones) and a fifth (6, 7, or
+      8). Combine them and the triad lands in one of four qualities —
+      <strong>major</strong>, <strong>minor</strong>,{' '}
+      <strong>diminished</strong>, <strong>augmented</strong>. The
+      diatonic scale generates three majors, three minors, and one
+      diminished, in the fixed order M-m-m-M-M-m-dim. That pattern is
+      the fingerprint of every major key.
+    </p>
+    <Module4Derive client:visible />
+  </section>
+
+  <section class="m-block m4-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Hear them. Each triad in isolation, then the two stock
+      progressions that show up in nearly every pop song ever
+      recorded — <code>I–IV–V–I</code> and <code>I–vi–IV–V</code>.
+      The root motion is a walk through generators of Z<sub>12</sub>:
+      this is Module 2 still doing work, one floor up.
+    </p>
+    <Module4Operate client:visible />
+  </section>
+
+  <section class="m-block m4-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on triad quality.
+    </p>
+    <Module4Prompts client:visible />
+  </section>
+
+  <section class="m-block m4-block m-bridge m4-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      The chords have names. They also have <em>tendencies</em>: V wants
+      to land on I, ii wants to lead into V, vi can stand in for I. That
+      structure of pull and resolution is harmonic function — the
+      next module.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 4 specific rules. Chrome lives in curriculum/index.astro. */
+
+  /* Behold ---------------------------------------------------------------- */
+  .m4-behold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+  .m4-behold-scale {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m4-scale-dot {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    padding: 0.15rem 0.35rem;
+    border-radius: 2px;
+  }
+  .m4-scale-dot.in-chord {
+    color: var(--accent);
+    background: rgba(232, 168, 56, 0.1);
+  }
+  .m4-behold-label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+  }
+  .m4-behold-roman {
+    font-family: var(--font-jetbrains);
+    font-size: 1.4rem;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .m4-behold-quality {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--text-dim);
+  }
+  .m4-behold-spell {
+    font-family: var(--font-jetbrains);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+  }
+  .m4-behold-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    max-width: 38ch;
+  }
+
+  /* Degree picker — shared between Derive + Operate -------------------- */
+  .m4-degree-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+  }
+  .m4-degree-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m4-degree-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m4-degree-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    min-width: 3rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: var(--font-jetbrains);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m4-degree-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m4-degree-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m4-degree-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m4-degree-roman {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .m4-degree-quality {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+  .m4-degree-btn.active .m4-degree-quality {
+    color: var(--bg);
+    opacity: 0.85;
+  }
+
+  /* Chord-on-staff wrapper for Derive ----------------------------------- */
+  .m4-staff-wrap {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem 0.2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    color: #1f1408;
+    line-height: 0;
+  }
+  .m4-staff-wrap .chord-staff svg {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m4-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m4-derive-info {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m4-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .m4-stat-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+  }
+  .m4-stat-value {
+    font-family: var(--font-jetbrains);
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .m4-stat-quality {
+    font-family: var(--font-crimson);
+    font-style: italic;
+    color: var(--accent);
+    font-size: 1rem;
+  }
+  .m4-derive-caption {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    max-width: 40ch;
+    line-height: 1.5 !important;
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m4-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m4-operate-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m4-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .m4-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m4-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m4-operate-prog {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m4-operate-prog:hover:not(:disabled) {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .m4-operate-prog:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+  .m4-operate-caption {
+    font-size: 0.92rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 44ch;
+    line-height: 1.5 !important;
+  }
+
+</style>
