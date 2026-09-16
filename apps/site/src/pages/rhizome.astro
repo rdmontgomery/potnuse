@@ -1,8 +1,10 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { buildGraph } from '@/lib/graph';
+import { temporalU } from '@/lib/temporal';
 
 const graph = await buildGraph();
+const uBySlug = temporalU(graph);
 
 // Build an id set so edges only point at nodes we actually have.
 const ids = new Set(graph.map((n) => n.slug));
@@ -25,6 +27,7 @@ const payload = {
     url: n.url,
     description: n.description ?? '',
     date: n.date ?? null,
+    u: uBySlug.get(n.slug) ?? null,
     degree: n.connects.length + n.backlinks.length,
   })),
   edges,
@@ -109,14 +112,6 @@ const payload = {
   // many ties you have — which was the effect worth seeing in the first
   // place. Set to 0 for the old uncompensated behaviour.
   const FIELD_DEGREE_COMP = 1;
-  const TIME_RANK_MIX = 0.5; // 0 = pure calendar spacing, 1 = pure rank order
-  // Floor on the charge gap between consecutive *distinct* dates, as a
-  // fraction of the field's full range. Below roughly this, the force
-  // differential is smaller than the jitter link tension imposes and the
-  // vertical order of two near-dated nodes is decided by topology instead
-  // of by the calendar. Four days apart should still read as four days
-  // apart, not as a coin flip.
-  const MIN_CHARGE_GAP = 0.07;
   const RECENT_DAYS = 45; // glow window for "new"
   const MONO = "'JetBrains Mono', ui-monospace, monospace";
   const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
@@ -181,54 +176,20 @@ const payload = {
   const DAMPING = 0.82;
 
   // --- assign temporal charge ---
-  // Blend calendar position with rank position. Pure calendar collapses a
-  // burst of posts into one indistinguishable band; pure rank spaces them
-  // evenly and lies about the quiet months. The blend keeps both legible:
-  // clusters stay clustered, gaps stay visible, order inside a cluster reads.
+  // `u` (0 oldest -> 1 newest) is computed at build by lib/temporal.ts and
+  // shared with the door sigil, so the two views cannot disagree about which
+  // node is newer. Here it becomes a charge in [-1, +1].
   const now = Date.now();
-  const dated = nodes.filter((n) => n.date);
-  const byTime = [...dated].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-  const tMin = byTime.length ? Date.parse(byTime[0].date) : 0;
-  const tMax = byTime.length ? Date.parse(byTime[byTime.length - 1].date) : 1;
-  const tSpan = Math.max(1, tMax - tMin);
-  byTime.forEach((n, i) => {
-    n.rankNorm = byTime.length > 1 ? i / (byTime.length - 1) : 0.5;
-  });
+  const dated = nodes.filter((n) => n.u !== null);
   for (const n of nodes) {
-    if (!n.date) {
+    if (n.u === null) {
       n.charge = 0; // undated nodes float at the field's neutral line
       n.ageDays = null;
       continue;
     }
-    const t = Date.parse(n.date);
-    const timeNorm = (t - tMin) / tSpan; // 0 oldest -> 1 newest
-    n.u = (1 - TIME_RANK_MIX) * timeNorm + TIME_RANK_MIX * n.rankNorm;
-    n.ageDays = (now - t) / DAY_MS;
+    n.charge = n.u * 2 - 1;
+    n.ageDays = (now - Date.parse(n.date)) / DAY_MS;
   }
-
-  // Enforce the separation floor in date order, then renormalize back into
-  // [0, 1]. Same-day nodes keep the same u deliberately — they are the same
-  // day, and pretending otherwise is the lie the rank blend exists to avoid.
-  // Distinct days always separate, which is what keeps a post from floating
-  // above one published four days later just because it has fewer edges.
-  if (byTime.length > 1) {
-    let prev = byTime[0];
-    for (let i = 1; i < byTime.length; i++) {
-      const n = byTime[i];
-      if (n.date === prev.date) {
-        n.u = prev.u;
-      } else {
-        n.u = Math.max(n.u, prev.u + MIN_CHARGE_GAP);
-      }
-      prev = n;
-    }
-    const uMax = byTime[byTime.length - 1].u;
-    const uMin = byTime[0].u;
-    const uSpan = Math.max(1e-6, uMax - uMin);
-    for (const n of byTime) n.u = (n.u - uMin) / uSpan;
-  }
-
-  for (const n of dated) n.charge = n.u * 2 - 1;
 
   // Re-center so total charge is exactly zero. Without this a corpus skewed
   // old (most of them are) carries a net downward force and the whole graph

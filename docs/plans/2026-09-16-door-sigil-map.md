@@ -1,7 +1,7 @@
 # The door sigil as a map — design
 
 Date: 2026-09-16
-Status: design (pre-implementation)
+Status: implemented (proposal A)
 
 ## The problem
 
@@ -82,12 +82,31 @@ Keep everything, add a small link to `/rhizome`.
 Honest fallback if the index objection above is judged fatal. Costs nothing,
 gains little, and leaves the door as inert as it is now.
 
-## Open questions
+## What shipped, and what the open questions resolved to
 
-- Size. Current is 140px. The map wants more; 280px still reads as a door. Worth
-  seeing both before deciding.
-- Whether radius should be `u` (the blend) or raw calendar. Raw calendar collapses
-  the April cluster into a near-solid ring, which may actually look right on a
-  growth-ring figure — that is what a slow growth year looks like.
-- Whether the four collections should be tinted by their `/rhizome` colors or left
-  monochrome. Monochrome is more sigil; color is more map.
+Proposal A, at `src/pages/index.astro` with the layout in `lib/sigil.ts`.
+
+- **Size** landed at `min(86vmin, 400px)`. 300px read as an ornament with a knot
+  in the middle; 400px lets the chords separate.
+- **Radius** is the shared temporal coordinate at a rank-heavy mix (0.82) rather
+  than the field's calendar-heavy 0.5. Built at 0.5 first and it was wrong on a
+  disc: April packed into one unreadable knot near the center, September stranded
+  as two dots on the rim, most of the face empty. Ordering is identical at any
+  mix — that is the invariant the views share, and it lives in `lib/temporal.ts`
+  so neither view can drift from it. Spacing is a display choice, and a disc and
+  a vertical axis do not want the same one.
+- **Color** stayed, using the `/rhizome` palette. Monochrome lost the one thing
+  the mark says at a glance, which is that the corpus has kinds.
+- **Orientation**: the spiral is spun so the newest node sits at twelve o'clock.
+  Unplanned, and it is what turned a scatter into a seal.
+
+## The footer, same language
+
+`Backlinks.astro` went with it — the list of "connects to" / "pointed to by"
+became an ego graph. The current node is a hub, its neighbours fan left for
+incoming and right for outgoing, each side ordered newest first, with threads
+drawn between them. Labels are ordinary HTML links and the threads are an SVG
+layer drawn after layout, so the curves are decorative: with no JS you get two
+columns and lose nothing that navigates. Below 640px it collapses to a single
+column and the threads turn off, which is the only honest thing to do with a
+horizontal fan on a phone.
