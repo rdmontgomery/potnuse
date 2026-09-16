@@ -102,6 +102,13 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
       const hx = hub.left + hub.width / 2 - box.left;
       const hy = hub.top + hub.height / 2 - box.top;
 
+      // Which way the threads run is a layout question, and layout is CSS's
+      // to decide. The breakpoint lives in exactly one place; this reads the
+      // answer rather than keeping a second copy of it.
+      const vertical =
+        getComputedStyle(root).getPropertyValue('--ego-axis').trim() ===
+        'vertical';
+
       const paths: string[] = [];
       for (const link of root.querySelectorAll<HTMLElement>('.thread')) {
         const dot = link.querySelector('.dot');
@@ -109,12 +116,16 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
         const d = dot.getBoundingClientRect();
         const x = d.left + d.width / 2 - box.left;
         const y = d.top + d.height / 2 - box.top;
-        // Two control points on a horizontal tangent: the thread leaves the
-        // hub sideways and arrives sideways, so it reads as a root rather
-        // than a ruled line, and stacked neighbours never overlap.
-        const mid = (hx + x) / 2;
+        // Control points on the tangent of whichever axis the neighbours are
+        // stacked along: the thread leaves the hub and arrives at the dot
+        // along that axis, so it reads as a root rather than a ruled line and
+        // stacked neighbours never overlap. Wide layouts fan sideways;
+        // narrow ones grow down a trunk.
+        const curve = vertical
+          ? `C ${hx} ${(hy + y) / 2}, ${x} ${(hy + y) / 2}, ${x} ${y}`
+          : `C ${(hx + x) / 2} ${hy}, ${(hx + x) / 2} ${y}, ${x} ${y}`;
         paths.push(
-          `<path d="M ${hx} ${hy} C ${mid} ${hy}, ${mid} ${y}, ${x} ${y}" fill="none" stroke="${link.dataset.color}" stroke-width="1" opacity="0.32" />`,
+          `<path d="M ${hx} ${hy} ${curve}" fill="none" stroke="${link.dataset.color}" stroke-width="1" opacity="0.32" />`,
         );
       }
       svg.innerHTML = paths.join('');
@@ -277,15 +288,25 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
     .ego,
     .ego:not(.has-in),
     .ego:not(.has-out) {
+      /* Read by the thread-drawing script: neighbours stack, so the threads
+         run down a trunk instead of fanning sideways. */
+      --ego-axis: vertical;
       grid-template-columns: 1fr;
-      gap: 1.75rem;
-      justify-items: start;
+      gap: 1.5rem;
+      justify-items: stretch;
     }
     .label {
       max-width: none;
     }
-    .threads {
-      display: none;
+    .col {
+      /* Gutter the threads descend through before they curve out to a dot. */
+      padding-left: 1.4rem;
+    }
+    /* The hub leads on a phone: the trunk starts at the top of the block and
+       everything descends from it, rather than the node turning up halfway
+       down its own neighbours. */
+    .hub {
+      order: -1;
     }
     .col.in {
       text-align: left;
@@ -299,6 +320,11 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
     .hub {
       flex-direction: row;
       align-items: center;
+      justify-content: flex-start;
+      padding: 0;
+    }
+    .hub-title {
+      background: none;
       padding: 0;
     }
     .hub-title {
