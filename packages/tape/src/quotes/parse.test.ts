@@ -85,6 +85,62 @@ describe('pair extraction survives shapes it has never seen', () => {
   });
 });
 
+describe('fields the screen was warning about, which were in the body all along', () => {
+  it('reads the pool creation time as the age', () => {
+    const [pair] = pairsIn({
+      pairs: [{ chainId: 'solana', address: '0xa', priceUsd: 1, pairCreatedAt: 1_734_440_426_000 }],
+    });
+    expect(pair?.createdAt).toBe(1_734_440_426_000);
+  });
+
+  it('normalises a seconds timestamp and an ISO string alike', () => {
+    const [seconds] = pairsIn({ pairs: [{ address: '0xa', priceUsd: 1, pairCreatedAt: 1_734_440_426 }] });
+    const [iso] = pairsIn({ pairs: [{ address: '0xb', priceUsd: 1, createdAt: '2024-12-17T13:00:26Z' }] });
+    expect(seconds?.createdAt).toBe(1_734_440_426_000);
+    expect(iso?.createdAt).toBe(Date.parse('2024-12-17T13:00:26Z'));
+  });
+
+  it('reads the real reserves rather than leaving them to be assumed', () => {
+    const [pair] = pairsIn({
+      pairs: [
+        {
+          address: '0xa',
+          priceUsd: '0.006788',
+          liquidity: { usd: 2_481_974.69, base: 222_448_202, quote: 10_035 },
+        },
+      ],
+    });
+    expect(pair?.reserveBase).toBe(222_448_202);
+    expect(pair?.reserveQuote).toBe(10_035);
+    expect(pair?.liquidityUsd).toBeCloseTo(2_481_974.69, 2);
+  });
+
+  it('reads the day\'s trade counts, which say whether anyone is trading it', () => {
+    const [pair] = pairsIn({
+      pairs: [
+        {
+          address: '0xa',
+          priceUsd: 1,
+          txns: { m5: { buys: 2, sells: 1 }, h24: { buys: 926, sells: 984 } },
+          priceChange: { h24: -1.72 },
+          fdv: 603_434_960,
+        },
+      ],
+    });
+    expect(pair?.buys24h).toBe(926);
+    expect(pair?.sells24h).toBe(984);
+    expect(pair?.priceChange24hPct).toBeCloseTo(-1.72, 5);
+    expect(pair?.fdvUsd).toBe(603_434_960);
+  });
+
+  it('leaves them null when the source does not carry them', () => {
+    const [pair] = pairsIn({ pairs: [{ address: '0xa', priceUsd: 1 }] });
+    expect(pair?.createdAt).toBeNull();
+    expect(pair?.reserveBase).toBeNull();
+    expect(pair?.buys24h).toBeNull();
+  });
+});
+
 describe('the identifier stays opaque', () => {
   // This is the assumption that cost a week: pair ids are not EVM addresses.
   it('keeps a base58 Solana pool id intact', () => {

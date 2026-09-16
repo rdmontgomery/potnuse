@@ -21,6 +21,22 @@ export interface PairQuote {
   priceNative: number | null;
   liquidityUsd: number | null;
   volume24hUsd: number | null;
+  /**
+   * Base-side reserve in whole tokens, when the source reports it.
+   *
+   * Worth more than it looks. Without it the two sides have to be assumed to
+   * hold equal value, and real pools drift a long way from that — which
+   * understates what an exit costs, the wrong direction to be wrong in.
+   */
+  reserveBase?: number | null;
+  reserveQuote?: number | null;
+  /** Pool creation time, epoch milliseconds. The age the screen asks for. */
+  createdAt?: number | null;
+  /** Trade counts over the last day: whether anyone is actually trading it. */
+  buys24h?: number | null;
+  sells24h?: number | null;
+  priceChange24hPct?: number | null;
+  fdvUsd?: number | null;
 }
 
 /** One OHLCV bar. The high and low are the point of it. */

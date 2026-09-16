@@ -56,6 +56,13 @@ const PRICE_USD = ['priceUsd', 'price_usd', 'base_token_price_usd', 'attributes.
 const PRICE_NATIVE = ['priceNative', 'price_native', 'base_token_price_native_currency'];
 const LIQUIDITY = ['liquidity.usd', 'liquidity_usd', 'reserve_in_usd', 'totalLiquidityUsd'];
 const VOLUME = ['volume.h24', 'volume_usd.h24', 'volume24h', 'volume_usd_24h'];
+const RESERVE_BASE = ['liquidity.base', 'reserve_base', 'baseReserve'];
+const RESERVE_QUOTE = ['liquidity.quote', 'reserve_quote', 'quoteReserve'];
+const CREATED = ['pairCreatedAt', 'pair_created_at', 'pool_created_at', 'createdAt'];
+const BUYS = ['txns.h24.buys', 'transactions.h24.buys', 'buys24h'];
+const SELLS = ['txns.h24.sells', 'transactions.h24.sells', 'sells24h'];
+const CHANGE = ['priceChange.h24', 'price_change_percentage.h24', 'priceChange24h'];
+const FDV = ['fdv', 'fdv_usd', 'fullyDilutedValuation'];
 const BASE_SYMBOL = ['baseToken.symbol', 'base_token.symbol', 'base_symbol'];
 const BASE_ADDRESS = ['baseToken.address', 'base_token.address', 'base_token_address'];
 const QUOTE_SYMBOL = ['quoteToken.symbol', 'quote_token.symbol', 'quote_symbol'];
@@ -112,6 +119,20 @@ function toPair(node: Record<string, Json>): PairQuote | null {
     priceNative: asNumber(pick(flat, PRICE_NATIVE)),
     liquidityUsd,
     volume24hUsd: asNumber(pick(flat, VOLUME)),
+    reserveBase: asNumber(pick(flat, RESERVE_BASE)),
+    reserveQuote: asNumber(pick(flat, RESERVE_QUOTE)),
+    createdAt: (() => {
+      const raw = asNumber(pick(flat, CREATED));
+      if (raw !== null) return raw > 1e11 ? raw : raw * 1000;
+      // Some sources give an ISO timestamp instead of epoch.
+      const text = asString(pick(flat, CREATED));
+      const parsed = text ? Date.parse(text) : Number.NaN;
+      return Number.isFinite(parsed) ? parsed : null;
+    })(),
+    buys24h: asNumber(pick(flat, BUYS)),
+    sells24h: asNumber(pick(flat, SELLS)),
+    priceChange24hPct: asNumber(pick(flat, CHANGE)),
+    fdvUsd: asNumber(pick(flat, FDV)),
   };
 }
 

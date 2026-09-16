@@ -23,7 +23,7 @@ export {
   type FetchResult,
   type ProbeReport,
 } from './quotes/aggregator.ts';
-export { poolFor, poolFromLiquidity } from './quotes/synthetic.ts';
+export { poolFor, poolFromLiquidity, valueSkewPct } from './quotes/synthetic.ts';
 export {
   cachedFetch,
   isRefusal,
