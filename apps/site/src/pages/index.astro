@@ -1,56 +1,161 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { buildGraph } from '@/lib/graph';
+import { buildSigil, SIGIL_COLORS, VIEW } from '@/lib/sigil';
 
 // Graph baked into the page at build so the click doesn't need a fetch.
 const graph = await buildGraph();
+const sigil = buildSigil(graph);
+const RECENT_DAYS = 45; // same glow window as the rhizome map
 ---
 
 <Base title="potnuse">
   <main class="door">
-    <button class="sigil" type="button" aria-label="enter">
-      <svg viewBox="0 0 120 120" width="140" height="140" aria-hidden="true">
+    <div class="sigil-stage">
+      <svg
+        class="sigil"
+        viewBox={`0 0 ${VIEW} ${VIEW}`}
+        role="img"
+        aria-label="the graph, arranged by age — center oldest, rim newest"
+      >
+        <defs>
+          <radialGradient id="fresh">
+            <stop offset="0%" stop-color="currentColor" stop-opacity="0.5" />
+            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+          </radialGradient>
+        </defs>
+
+        {
+          sigil.rings.map((r, i) => (
+            <circle
+              class="ring"
+              cx={VIEW / 2}
+              cy={VIEW / 2}
+              r={r}
+              fill="none"
+              stroke="currentColor"
+              stroke-width="0.5"
+              stroke-dasharray={i === sigil.rings.length - 1 ? '3 6' : '2 5'}
+              opacity={i === sigil.rings.length - 1 ? 0.4 : 0.15}
+            />
+          ))
+        }
+
+        <g class="chords">
+          {
+            sigil.edges.map((e) => (
+              <path d={e.d} fill="none" stroke={e.color} stroke-width="0.28" />
+            ))
+          }
+        </g>
+
+        <g class="glows">
+          {
+            sigil.points
+              .filter((p) => p.ageDays !== null && p.ageDays < RECENT_DAYS)
+              .map((p) => (
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={p.r * 4}
+                  fill="url(#fresh)"
+                  style={`color: ${SIGIL_COLORS[p.collection] ?? SIGIL_COLORS.page}`}
+                  opacity={Math.pow(1 - (p.ageDays ?? 0) / RECENT_DAYS, 1.5)}
+                />
+              ))
+          }
+        </g>
+
+        <g class="nodes">
+          {
+            sigil.points.map((p) => (
+              <circle
+                class="node"
+                cx={p.x}
+                cy={p.y}
+                r={p.r}
+                fill={SIGIL_COLORS[p.collection] ?? SIGIL_COLORS.page}
+                opacity={p.state === 'fossil' ? 0.5 : 0.92}
+                data-url={p.url}
+                data-title={p.title}
+                data-date={p.date ?? 'undated'}
+                tabindex="0"
+                role="link"
+                aria-label={p.title}
+              />
+            ))
+          }
+        </g>
+
         <circle
-          cx="60"
-          cy="60"
-          r="52"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1"
-          stroke-dasharray="3 6"
+          class="door-dot"
+          cx={VIEW / 2}
+          cy={VIEW / 2}
+          r="3.4"
+          fill="currentColor"
+          tabindex="0"
+          role="button"
+          aria-label="enter somewhere"
         />
-        <circle
-          cx="60"
-          cy="60"
-          r="34"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1"
-          stroke-dasharray="2 5"
-        />
-        <circle
-          cx="60"
-          cy="60"
-          r="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1"
-        />
-        <circle cx="60" cy="60" r="3" fill="currentColor" />
       </svg>
-    </button>
+      <div class="hover-label" id="hover-label" aria-hidden="true"></div>
+    </div>
   </main>
 </Base>
 
 <script define:vars={{ graph }}>
-  const button = document.querySelector('.sigil');
-  if (button && Array.isArray(graph) && graph.length > 0) {
-    button.addEventListener('click', () => {
+  const svg = document.querySelector('.sigil');
+  const label = document.getElementById('hover-label');
+  const doorDot = document.querySelector('.door-dot');
+  if (svg && label && doorDot) {
+    const enterRandom = () => {
+      if (!Array.isArray(graph) || graph.length === 0) return;
       const node = graph[Math.floor(Math.random() * graph.length)];
-      if (node && node.url) {
-        window.location.href = node.url;
+      if (node && node.url) window.location.href = node.url;
+    };
+
+    const show = (el) => {
+      label.textContent = `${el.dataset.title} · ${el.dataset.date}`;
+      label.classList.add('on');
+      const box = el.getBoundingClientRect();
+      const stage = svg.parentElement.getBoundingClientRect();
+      label.style.left = `${box.left + box.width / 2 - stage.left}px`;
+      label.style.top = `${box.top - stage.top - 10}px`;
+    };
+    const hide = () => label.classList.remove('on');
+
+    for (const el of svg.querySelectorAll('.node')) {
+      el.addEventListener('pointerenter', () => show(el));
+      el.addEventListener('focus', () => show(el));
+      el.addEventListener('pointerleave', hide);
+      el.addEventListener('blur', hide);
+      el.addEventListener('click', () => {
+        window.location.href = el.dataset.url;
+      });
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          window.location.href = el.dataset.url;
+        }
+      });
+    }
+
+    doorDot.addEventListener('click', enterRandom);
+    doorDot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        enterRandom();
       }
     });
+    doorDot.addEventListener('pointerenter', () => {
+      label.textContent = 'enter somewhere';
+      label.classList.add('on');
+      const box = doorDot.getBoundingClientRect();
+      const stage = svg.parentElement.getBoundingClientRect();
+      label.style.left = `${box.left + box.width / 2 - stage.left}px`;
+      label.style.top = `${box.top - stage.top - 10}px`;
+    });
+    doorDot.addEventListener('pointerleave', hide);
   }
 </script>
 
@@ -61,27 +166,69 @@ const graph = await buildGraph();
     place-items: center;
     padding: 2rem;
   }
+  .sigil-stage {
+    position: relative;
+  }
   .sigil {
-    background: none;
-    border: none;
+    width: min(86vmin, 400px);
+    height: auto;
     color: var(--text);
-    cursor: pointer;
-    padding: 1.5rem;
-    opacity: 0.75;
+    opacity: 0.82;
+    overflow: visible;
     transition:
       opacity 0.8s ease,
-      color 0.6s ease,
       transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .sigil:hover,
-  .sigil:focus-visible {
+  .sigil:hover {
     opacity: 1;
-    color: var(--accent);
-    transform: rotate(18deg);
-    outline: none;
+    transform: rotate(6deg);
   }
-  .sigil:active {
-    transform: rotate(32deg) scale(0.96);
-    transition-duration: 0.2s;
+  .chords {
+    opacity: 0.22;
+  }
+  .node,
+  .door-dot {
+    cursor: pointer;
+    transition:
+      r 0.25s ease,
+      opacity 0.25s ease;
+  }
+  .node:hover,
+  .node:focus-visible {
+    opacity: 1 !important;
+    outline: none;
+    r: 3.2;
+  }
+  .door-dot:hover,
+  .door-dot:focus-visible {
+    color: var(--accent);
+    outline: none;
+    r: 4.6;
+  }
+  .hover-label {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: var(--text);
+    background: var(--bg);
+    padding: 0.15rem 0.4rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .hover-label.on {
+    opacity: 0.9;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sigil,
+    .node,
+    .door-dot {
+      transition: none;
+    }
+    .sigil:hover {
+      transform: none;
+    }
   }
 </style>

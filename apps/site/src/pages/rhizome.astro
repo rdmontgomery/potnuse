@@ -1,8 +1,10 @@
 ---
 import Base from '@/layouts/Base.astro';
 import { buildGraph } from '@/lib/graph';
+import { temporalU } from '@/lib/temporal';
 
 const graph = await buildGraph();
+const uBySlug = temporalU(graph);
 
 // Build an id set so edges only point at nodes we actually have.
 const ids = new Set(graph.map((n) => n.slug));
@@ -25,6 +27,7 @@ const payload = {
     url: n.url,
     description: n.description ?? '',
     date: n.date ?? null,
+    u: uBySlug.get(n.slug) ?? null,
     degree: n.connects.length + n.backlinks.length,
   })),
   edges,
@@ -98,7 +101,17 @@ const payload = {
   // that tension is exactly the thing worth seeing. Net charge is ~0, so the
   // graph does not drift as a whole.
   const FIELD = 5.5; // tuned so link tension still leaves a readable spread
-  const TIME_RANK_MIX = 0.5; // 0 = pure calendar spacing, 1 = pure rank order
+  // The field is an acceleration, so every node gets the same upward push
+  // regardless of how many links are hauling on it. Link forces are per-edge
+  // and they are not: a node wired to five older nodes takes five downward
+  // pulls against one push, a node wired to three takes three. Equilibrium
+  // height then lands at charge / degree, which means a sparse older node
+  // floats above a denser newer one on connectivity alone. Scaling the field
+  // impulse by degree cancels that: height goes back to tracking charge, and
+  // what still bends the layout is *whose* dates you are tied to, not how
+  // many ties you have — which was the effect worth seeing in the first
+  // place. Set to 0 for the old uncompensated behaviour.
+  const FIELD_DEGREE_COMP = 1;
   const RECENT_DAYS = 45; // glow window for "new"
   const MONO = "'JetBrains Mono', ui-monospace, monospace";
   const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
@@ -163,30 +176,19 @@ const payload = {
   const DAMPING = 0.82;
 
   // --- assign temporal charge ---
-  // Blend calendar position with rank position. Pure calendar collapses a
-  // burst of posts into one indistinguishable band; pure rank spaces them
-  // evenly and lies about the quiet months. The blend keeps both legible:
-  // clusters stay clustered, gaps stay visible, order inside a cluster reads.
+  // `u` (0 oldest -> 1 newest) is computed at build by lib/temporal.ts and
+  // shared with the door sigil, so the two views cannot disagree about which
+  // node is newer. Here it becomes a charge in [-1, +1].
   const now = Date.now();
-  const dated = nodes.filter((n) => n.date);
-  const byTime = [...dated].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
-  const tMin = byTime.length ? Date.parse(byTime[0].date) : 0;
-  const tMax = byTime.length ? Date.parse(byTime[byTime.length - 1].date) : 1;
-  const tSpan = Math.max(1, tMax - tMin);
-  byTime.forEach((n, i) => {
-    n.rankNorm = byTime.length > 1 ? i / (byTime.length - 1) : 0.5;
-  });
+  const dated = nodes.filter((n) => n.u !== null);
   for (const n of nodes) {
-    if (!n.date) {
+    if (n.u === null) {
       n.charge = 0; // undated nodes float at the field's neutral line
       n.ageDays = null;
       continue;
     }
-    const t = Date.parse(n.date);
-    const timeNorm = (t - tMin) / tSpan; // 0 oldest -> 1 newest
-    const u = (1 - TIME_RANK_MIX) * timeNorm + TIME_RANK_MIX * n.rankNorm;
-    n.charge = u * 2 - 1;
-    n.ageDays = (now - t) / DAY_MS;
+    n.charge = n.u * 2 - 1;
+    n.ageDays = (now - Date.parse(n.date)) / DAY_MS;
   }
 
   // Re-center so total charge is exactly zero. Without this a corpus skewed
@@ -196,6 +198,26 @@ const payload = {
     const meanCharge =
       nodes.reduce((sum, n) => sum + n.charge, 0) / nodes.length;
     for (const n of nodes) n.charge -= meanCharge;
+  }
+
+  // Per-node field gain (see FIELD_DEGREE_COMP). Normalized by the mean
+  // degree so the tuned FIELD still describes the average node and the whole
+  // layout keeps its scale. Degree-0 nodes balance against the centering
+  // spring instead of against links, so they take the unscaled push.
+  {
+    const linkCount = new Map(nodes.map((n) => [n, 0]));
+    for (const e of edges) {
+      linkCount.set(e.source, linkCount.get(e.source) + 1);
+      linkCount.set(e.target, linkCount.get(e.target) + 1);
+    }
+    const degrees = nodes.map((n) => linkCount.get(n));
+    const meanDeg =
+      degrees.reduce((sum, d) => sum + d, 0) / Math.max(1, degrees.length);
+    for (const n of nodes) {
+      const d = linkCount.get(n);
+      const ratio = d > 0 && meanDeg > 0 ? d / meanDeg : 1;
+      n.fieldScale = 1 + FIELD_DEGREE_COMP * (ratio - 1);
+    }
   }
 
   // One tick per month that has nodes. The tick rides the *actual* mean y of
@@ -251,7 +273,7 @@ const payload = {
 
     // Uniform temporal field.
     if (fieldT > 0.001) {
-      for (const n of nodes) n.vy -= n.charge * FIELD * fieldT;
+      for (const n of nodes) n.vy -= n.charge * FIELD * n.fieldScale * fieldT;
     }
 
     // Repulsion (O(n^2), fine for < ~300 nodes).
