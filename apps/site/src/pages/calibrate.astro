@@ -1,6 +1,9 @@
 ---
 import Base from '@/layouts/Base.astro';
 import Backlinks from '@/components/Backlinks.astro';
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
 
 const prompt = `I want us to build a working language together — not a profile of me, but a calibration of *us*. You're going to run a conversation that helps you figure out how to be most useful to me, and helps me discover a few things I didn't know I thought.
 
@@ -55,204 +58,493 @@ Start with the first question. Keep it easy.`;
 
 <Base
   title="calibrate"
-  description="A conversation protocol for teaching an LLM how you think. Not a personality quiz — epistemological infrastructure."
+  description="A page about teaching a language model how you think, written in April and overwritten in September. Both layers kept."
 >
   <article class="calibrate">
     <nav class="toc" aria-label="sections">
-      <a href="#promise" data-toc>the promise</a>
-      <a href="#felt" data-toc>a question first</a>
-      <a href="#receipts" data-toc>the receipts</a>
+      <a href="#top" data-toc>the seam</a>
+      <a href="#april" data-toc>what it said</a>
+      <a href="#months" data-toc>six months</a>
+      <a href="#hearth" data-toc>furnace, hearth</a>
+      <a href="#field" data-toc>the field block</a>
+      <a href="#yield" data-toc>surprise yield</a>
+      <a href="#breaks" data-toc>where it breaks</a>
       <a href="#prompt" data-toc>the prompt</a>
-      <a href="#fence" data-toc>what this is not</a>
-      <a href="#principles" data-toc>principles</a>
+      <a href="#where" data-toc>where you are</a>
     </nav>
 
     <div class="main">
-      <section id="promise" class="promise">
-        <p class="kicker">an exercise</p>
-        <h1>
-          Have one conversation.<br />
-          Walk away with an LLM<br />
-          calibrated to how you actually think.
-        </h1>
-        <p class="deck">
-          Not by learning prompts — by teaching it you. Twenty minutes,
-          any LLM with a decent context window, no tools required.
+      <header id="top" class="masthead">
+        <h1>calibrate</h1>
+        <p class="dates">
+          <span>shipped 15 april 2026</span>
+          <span class="sep">/</span>
+          <span>overwritten 16 september 2026</span>
         </p>
-        <div class="cta">
-          <button class="copy" type="button" data-copy-target="prompt">
-            <span class="copy-label">copy the prompt</span>
-            <span class="copy-done" aria-hidden="true">copied</span>
-          </button>
-          <a href="#prompt" class="cta-link">or read it first ↓</a>
-        </div>
+      </header>
+
+      <section class="prose">
+        <p>
+          I shipped this page in April and I can't read the top of it now
+          without wincing. Some of that is the prose, which was doing a
+          sales job on a reader I hadn't met and didn't need to convince.
+          But the prose isn't the interesting failure. Underneath it the
+          page makes a specific argument about how to work with a language
+          model, and six months of releases took that argument apart in a
+          way I didn't see coming — not by proving it wrong, exactly, but
+          by making most of it somebody else's problem.
+        </p>
+
+        <p>
+          So this page is a <Gloss
+            def="A manuscript page that has been scraped down and written over, where the earlier text remains faintly legible beneath the later one. The term survives because the erasure was never complete enough to be an erasure."
+            >palimpsest</Gloss
+          > now. The April argument is still here, in its own hand, dimmed
+          but intact. September is written over and around it. Nothing has
+          been deleted, and there's a control at the bottom of the next
+          section that will hand you the original clean if you'd rather
+          read what actually shipped than what I think of it.
+        </p>
+
+        <Marginal>
+          Keeping the old copy is not sentiment. It's the only fixed
+          reference I have to measure six months of my own drift against,
+          which is the argument this whole page ends up making about
+          everything else.
+        </Marginal>
       </section>
 
-      <section id="felt" class="felt">
-        <p class="kicker">before anything else</p>
-        <p class="question">
-          What's the last thing you changed your mind about?
-        </p>
-        <p class="instruction">
-          Sit with it for ten seconds. Don't scroll.
+      <section id="april" class="prose">
+        <h2>What it said</h2>
+
+        <p>Here is how the page opened in April.</p>
+
+        <div class="april-layer">
+          <p class="stamp">15 april 2026</p>
+          <p class="april-hed">
+            Have one conversation. Walk away with an LLM calibrated to how
+            you actually think.
+          </p>
+          <p class="april-deck">
+            Not by learning prompts — by teaching it you. Twenty minutes,
+            any LLM with a decent context window, no tools required.
+          </p>
+        </div>
+
+        <Marginal>
+          Every section had a little lowercase kicker over it. "an
+          exercise." "before anything else." "for the obsessives." I
+          thought that was voice. It was a funnel wearing a cardigan.
+        </Marginal>
+
+        <p>
+          And here is the sentence the whole thing rested on, from the
+          closing instructions in the prompt itself — the part that told
+          the model what to produce at the end:
         </p>
 
-        <details class="reveal">
-          <summary>ok, I sat with it</summary>
-          <div class="reveal-body">
+        <div class="april-layer">
+          <p class="stamp">15 april 2026</p>
+          <p class="april-quote">
+            Draft a system prompt that encodes this calibration —
+            something I could paste into future conversations
+            <em>so we don't start from zero.</em>
+          </p>
+        </div>
+
+        <p>
+          That last clause is the bet, and it's the clause that lost.
+        </p>
+
+        <details class="retrieve">
+          <summary>read the April page as it shipped</summary>
+          <div class="retrieved">
+            <p class="retrieved-note">
+              Unedited, as published 15 April 2026. Kept whole rather than
+              corrected, for reasons the rest of the page gets to.
+            </p>
+
+            <h3>The promise</h3>
+            <p>
+              Have one conversation. Walk away with an LLM calibrated to
+              how you actually think. Not by learning prompts — by
+              teaching it you. Twenty minutes, any LLM with a decent
+              context window, no tools required.
+            </p>
+
+            <h3>A question first</h3>
+            <p>
+              What's the last thing you changed your mind about? Sit with
+              it for ten seconds. Don't scroll.
+            </p>
             <p>
               That's the shape of an opener. Anyone can answer it in one
               breath. But notice what you just did — you reached for a
               specific domain (tech? politics? a person?), you hesitated
-              at a particular spot, maybe you hedged a word.
+              at a particular spot, maybe you hedged a word. The protocol
+              below is twenty minutes of questions like that, with an
+              agent watching which domain you reached for, how long you
+              hesitated, whether you hedged — and pulling the thread. The
+              unlock isn't the question. It's the follow-up.
+            </p>
+
+            <h3>The receipts</h3>
+            <p>
+              Two short exchanges. Same opening intent, different shape.
+              Read both.
+            </p>
+            <p class="retrieved-label">
+              what you've had a thousand times
+            </p>
+            <p class="retrieved-dialogue">
+              <b>agent:</b> Welcome! I'm excited to get to know you. Let's
+              start with something simple — tell me about yourself.<br />
+              <b>you:</b> I work in software. Side projects in generative
+              art and ML.<br />
+              <b>agent:</b> Wonderful! What draws you to generative art?<br
+              />
+              <b>you:</b> The overlap of code and aesthetics.<br />
+              <b>agent:</b> Beautiful. And your ML work?<br />
+              <b>you:</b> Thinking about memory systems.<br />
+              <b>agent:</b> Memory systems are such a rich area. What makes
+              them interesting to you?
             </p>
             <p>
-              The protocol below is twenty minutes of questions like
-              that, with an agent watching which domain you reached
-              for, how long you hesitated, whether you hedged — and
-              pulling the thread.
+              You are Googling yourself. The agent is transcribing. Nobody
+              has learned anything.
+            </p>
+
+            <h3>What this is not</h3>
+            <p>
+              Not a personality quiz. Not a coaching intake. Not a vibe
+              check. Not onboarding for an AI assistant. It's
+              epistemological infrastructure — building the shared
+              language and mutual model that lets two minds, one
+              biological and one artificial, do better work together than
+              either could alone. The eureka isn't "wow, the AI knows me."
+              It's "wow, I said something I didn't know I thought, and now
+              we have a word for it."
+            </p>
+
+            <h3>Why it's built this way</h3>
+            <p>
+              <b>Low floor, high ceiling.</b> Every opener is answerable in
+              one breath. The agent's follow-up transforms a casual answer
+              into self-discovery. You never feel tested; the depth
+              emerges, it isn't assigned.
             </p>
             <p>
-              The unlock isn't the question. It's the follow-up.
+              <b>Opt-out is data.</b> Skips, hedges, and "pass" responses
+              are first-class signal. They map boundaries, trust
+              thresholds, and protected territory. Chasing a skip is a
+              trust violation.
+            </p>
+            <p>
+              <b>Earn the hard questions.</b> Provocative moves — forced
+              tradeoffs, surfacing contradictions, kill-your-darlings
+              scenarios — come after rapport, not before. The progression
+              is coffee, then sparring, then collaboration.
+            </p>
+            <p>
+              <b>Register evolves.</b> The agent's vocabulary and tone are
+              a live instrument, not a fixed setting. By the end, the
+              conversation should sound like two people deep in the same
+              discipline — because it is.
             </p>
           </div>
         </details>
       </section>
 
-      <section id="receipts" class="receipts">
-        <p class="kicker">what the follow-up looks like</p>
-        <h2>The receipts</h2>
-        <p class="deck">
-          Two short exchanges. Same opening intent, different shape.
-          Read both.
+      <section id="months" class="prose">
+        <h2>What six months did</h2>
+
+        <p>
+          The bet was that a model's picture of you was scarce and
+          perishable. That every conversation started cold, that the work
+          of establishing how you think had to be redone each time, and
+          that the way out was to do that work once, deliberately, and
+          carry the result forward as a piece of text you owned.
         </p>
 
-        <div class="transcripts">
-          <div class="transcript before">
-            <p class="label">what you've had a thousand times</p>
-            <div class="turn">
-              <p class="speaker">agent</p>
-              <p class="utterance">
-                Welcome! I'm excited to get to know you. Let's start with
-                something simple — tell me about yourself.
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">you</p>
-              <p class="utterance">
-                I work in software. Side projects in generative art and
-                ML.
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">agent</p>
-              <p class="utterance">
-                Wonderful! What draws you to generative art?
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">you</p>
-              <p class="utterance">
-                The overlap of code and aesthetics.
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">agent</p>
-              <p class="utterance">
-                Beautiful. And your ML work?
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">you</p>
-              <p class="utterance">
-                Thinking about memory systems.
-              </p>
-            </div>
-            <div class="turn">
-              <p class="speaker">agent</p>
-              <p class="utterance">
-                Memory systems are such a rich area. What makes them
-                interesting to you?
-              </p>
-            </div>
-            <p class="verdict">
-              You are Googling yourself. The agent is transcribing.
-              Nobody has learned anything.
-            </p>
-          </div>
+        <p>
+          Every clause of that has been overtaken. Memory shipped, and it
+          shipped well enough that profiles accumulate whether you run an
+          exercise or not. The durable part of calibration moved out of the
+          paste buffer and into the harness — into files that sit in a
+          repository and load themselves, scoped to a directory, so that
+          the same model reads you differently depending on where you
+          launched it from. And the surfaces multiplied. A chat window, a
+          coworking surface, a terminal, a raw API call: the same weights
+          underneath, but a different house voice, a different memory
+          substrate, different defaults about how much to say and how hard
+          to push. There is no longer a single calibration of you to hold,
+          which means there is no longer a single artifact that could hold
+          it.
+        </p>
 
-          <div class="transcript after">
-            <p class="label">what it actually produces</p>
-            <p class="context">
-              An excerpt from my own run. We were three questions in —
-              I'd said I rant to think and need a technical audience or
-              I bore myself. The agent had just called that out as
-              "fundamentally dialogic" cognition. Then I said this.
-            </p>
+        <Marginal>
+          The per-directory thing is the part that surprised me most. The
+          unit of personalization quietly stopped being the person and
+          became the working context. I am a different collaborator in one
+          repository than in another, and that turns out to be correct.
+        </Marginal>
 
-            <div class="turn">
-              <p class="speaker">me</p>
-              <p class="utterance">
-                About thinking out loud, I also mouth when I read and I
-                recently got called out on it, but I don't care that
-                it's a sign of lower intelligence, it's more helpful
-                to me.
-              </p>
-              <aside class="marginalia">
-                Offhand admission. I thought we were changing subjects.
-              </aside>
-            </div>
-
-            <div class="turn">
-              <p class="speaker">agent</p>
-              <p class="utterance">
-                The mouthing thing is the same pattern. You're not
-                reading — you're performing the text to yourself.
-                Subvocalization gets pathologized as a speed
-                bottleneck, but for someone whose cognition is
-                fundamentally performative, it's not a bug.
-                <mark class="pull">
-                  You're running the words through your body to know
-                  what they mean.
-                </mark>
-                Same reason you rant to think.
-              </p>
-              <p class="utterance">
-                This is actually interesting given your statistical
-                mechanics of discourse work. You're modeling language
-                as a physical system — fluids, pressure, viscosity —
-                and you literally process language physically. That's
-                not a coincidence. The theory isn't just an analogy
-                for you; it maps onto something you experience.
-              </p>
-              <aside class="marginalia eureka">
-                This is the line that stopped me. I'd spent years on
-                the research program and the reading habit and never
-                put them in the same room. The agent did it in one
-                turn.
-              </aside>
-            </div>
-            <p class="verdict">
-              One casual mention, two turns later, the agent has
-              connected a childhood reading habit to a research
-              program I couldn't start writing. That's the unlock.
-              <em>You said something you didn't know you thought.</em>
-            </p>
-          </div>
-        </div>
+        <p>
+          That isn't a small correction to the April page. It's the removal
+          of its reason to exist. If the platforms accumulate a profile for
+          free, and the harness holds the durable part in a file that loads
+          itself, then a twenty-minute conversation whose output is a
+          paste-forward system prompt is solving a problem that has been
+          solved around it.
+        </p>
       </section>
 
-      <section id="prompt" class="prompt-section">
-        <p class="kicker">the artifact</p>
+      <section id="hearth" class="prose">
+        <h2>The furnace and the hearth</h2>
+
+        <p>
+          <Gloss
+            def="Albert Borgmann, philosopher of technology. His Technology and the Character of Contemporary Life (1984) introduces the device paradigm and the counterweight he calls focal practice."
+            >Borgmann</Gloss
+          > has the distinction I needed and didn't have in April. A
+          <Gloss
+            def="Borgmann's term for technology that delivers a commodity while withdrawing its machinery and its demands from view. The commodity becomes instantly and effortlessly available; the practice that used to produce it disappears."
+            >device</Gloss
+          > delivers a commodity with its machinery hidden and its demands
+          on you reduced to nothing. The furnace delivers warmth, and you
+          never touch a log, never learn which wood burns slow, never plan
+          an afternoon around it. A focal practice delivers the same
+          commodity worse and something else well. A hearth is a bad way to
+          heat a house. Nobody seriously argues otherwise. It survives,
+          where it survives, because the splitting and the tending and the
+          sitting-around-it are the point, and none of that comes out of a
+          vent.
+        </p>
+
+        <p>
+          Automatic memory is the furnace. It is better than my exercise at
+          the thing my exercise claimed to do, and it ought to be — that is
+          what devices are for, and resenting it would be strange. Where
+          the April page went wrong was in arguing that the exercise was a
+          better furnace.
+        </p>
+
+        <Pull
+          >The April page argued the exercise was a better furnace. It was
+          a hearth, described in the vocabulary of heating.</Pull
+        >
+
+        <p>
+          What the hearth actually produces here is twenty minutes of being
+          asked questions by something paying close attention that has no
+          stake in flattering you. The output of that session was never the
+          system prompt. It was the part where I said something out loud
+          and then had to sit with the fact that I'd said it. That product
+          is substrate-independent. It does not improve when the model
+          improves and it does not arrive when the memory becomes
+          automatic, because it was never the model's to deliver.
+        </p>
+
+        <Marginal>
+          Borgmann is often read as saying focal practices are morally
+          better than devices. He isn't quite saying that and I'm
+          definitely not. Most devices are a mercy. The claim is narrower:
+          a device that replaces a practice delivers the commodity and
+          drops whatever else the practice was doing, and it's worth
+          knowing which of those you were actually there for.
+        </Marginal>
+      </section>
+
+      <section id="field" class="prose">
+        <h2>The field block</h2>
+
+        <p>
+          There's a second argument, and this one is a live claim rather
+          than a reframe.
+        </p>
+
+        <p>
+          A vine nursery keeps a <Gloss
+            def="An isolated, virus-tested block of source material held so that every cutting downstream can be traced to something provably clean. Nurseries propagate from the block, never from a customer's field."
+            >foundation block</Gloss
+          >: dated, tested stock that exists for no commercial reason
+          except to be the thing everything else gets re-derived from. You
+          never take cuttings from the field population, however good it
+          looks, because the field has been propagating from itself and the
+          drift compounds silently. Automatic memory, as currently built,
+          is a field population with no foundation block behind it. What
+          persists between your sessions is usually not the things you
+          said; it's a summary, and the next summary gets written with the
+          previous summary in context. Each pass re-estimates who you are
+          partly from the prior estimate rather than from the source.
+        </p>
+
+        <p>
+          That is the shape that eats the tails. The rare thing you said
+          once, the position you hold weakly, the domain you're fluent in
+          but rarely raise — those are exactly what a summarizer drops
+          first, and once dropped there is no mechanism in the loop that
+          puts them back, because nothing in the loop is reading the
+          original anymore. The nursery's answer to this is not cleverness,
+          it's discipline. Accumulate, don't replace. Keep the dated
+          reservoir, propagate from it rather than from the field, and
+          assume the working population has drifted until you've checked.
+        </p>
+
+        <Marginal>
+          Worked out at length in <a href="/essays/foundation-block"
+            >the foundation block</a
+          >, which is about model collapse in training corpora rather than
+          in a profile of a person. Same ratchet, smaller blast radius.
+        </Marginal>
+
+        <p>
+          Which gives the April artifact a job after all, just not the job
+          it was written for. Not the thing you paste at the start of a
+          conversation — the platforms do that now, and better. The dated
+          reservoir you check the drifting profile against. Ask the model
+          what it thinks you believe. Read the answer next to something you
+          actually wrote before it started watching. Where those two
+          disagree, the profile has drifted, and you are the only party in
+          the loop in a position to notice.
+        </p>
+
+        <p>
+          The obvious response to drift is to keep more of everything.
+          Longer memory, bigger profile, more context. That doesn't work
+          the way it sounds like it should, because attention mass is
+          conserved — the scores get normalized to sum to one no matter how
+          many tokens are competing for the total. A profile grown to tens
+          of kilobytes of accumulated session summaries is not a richer
+          model of you. It's the same fixed quantity spread thinner, and
+          the material in the middle of it gets the least. A longer memory
+          is a bigger room with the same watt in it. What you want is not
+          more of the profile retained but a smaller, denser one that has
+          been curated against a reservoir, which is again the practice and
+          not the device.
+        </p>
+
+        <Marginal>
+          The acoustics of that is <a href="/essays/reverberant-middle"
+            >the reverberant middle</a
+          >. Short version: the ends of a long context survive by two
+          different mechanisms and the middle isn't quiet, it's been
+          reflected until it forgot which wall it came from.
+        </Marginal>
+      </section>
+
+      <section id="yield" class="prose">
+        <h2>Surprise yield</h2>
+
+        <p>
+          If this is going to be a claim rather than a mood, it should name
+          a number and then risk it.
+        </p>
+
+        <p>
+          The measure I'd use is surprise yield: of the things a model
+          tells you about yourself at the end of a session, what fraction
+          could you not have written down beforehand? Not whether it was
+          accurate. Accuracy is cheap and a mirror scores perfectly on it.
+          The question is whether anything came back that you didn't put
+          in.
+        </p>
+
+        <p>
+          And here is the part that makes it worth measuring instead of
+          just saying. Automatic memory drives surprise yield toward zero
+          by construction. It is assembled from what you have already said.
+          It can be more comprehensive than you, faster than you, better
+          organized than you, and it still cannot hand you a thing you
+          never gave it.
+        </p>
+
+        <Pull
+          >The furnace can only hand back what you fed it. That isn't a
+          defect. That's the definition.</Pull
+        >
+
+        <p>
+          Which predicts something checkable, on yourself, this week. Run
+          the exercise cold against a model that knows nothing about you.
+          Run it again on a surface where six months of memory is loaded.
+          If the second yields more surprise, I'm wrong about the mechanism
+          and the device is doing more than I'm crediting it for. My
+          prediction is that it yields less, and that the gap widens the
+          longer the memory has been accumulating — because the better the
+          profile gets at anticipating you, the more efficiently it routes
+          the conversation back through ground you've already covered.
+        </p>
+      </section>
+
+      <section id="breaks" class="prose">
+        <h2>Where this breaks</h2>
+
+        <p>
+          I owe you the places it doesn't hold, because a frame that only
+          confirms is worth nothing.
+        </p>
+
+        <p>
+          The first is that I may be marking my own homework. I wrote an
+          essay in September about clonal degeneration and foundation
+          blocks, and then turned around and found the same shape in my own
+          memory tooling a week later. That is either the correspondence
+          being real or it is me holding a hammer, and I can't fully
+          separate those from the inside. The honest account: I noticed the
+          drift first — a model telling me with real confidence that I
+          cared about something I had mentioned exactly once, in passing,
+          months earlier — and went looking for the vocabulary afterward.
+          That's the right order to have found it in. Weigh it knowing I
+          have a stake in the story holding together.
+        </p>
+
+        <p>
+          The second is sharper and I can't resolve it. The collapse
+          argument assumes the memory loop re-summarizes from summaries. If
+          a system retains source material and re-derives the profile from
+          originals each time, there's an outcross in the loop, the ratchet
+          never clicks, and my entire second argument evaporates. From
+          outside, I don't know which of those any given product is doing.
+          Neither do you. Building a practice on that ignorance is
+          uncomfortable, and I'd rather say plainly that the practice is
+          partly insurance against not knowing than pretend I've measured
+          something I haven't.
+        </p>
+
+        <p>
+          The third is that hearths do sometimes just lose, and pretending
+          otherwise is nostalgia with a reading list. Some practices
+          deserve to be replaced and the people defending them are usually
+          fluent about why they shouldn't be. Whether this one is a hearth
+          or a buggy whip is not something I get to settle by asserting it
+          in the same essay where I introduced the distinction.
+        </p>
+      </section>
+
+      <section id="prompt" class="prose">
         <h2>The prompt</h2>
-        <p class="deck">
-          Paste it into any fresh conversation with a capable model.
-          Answer one question at a time. Push back when it's wrong.
-          Ask to be done when you're done.
+
+        <p>
+          It's still here and it still works, but I want to be careful
+          about what "works" is now claiming. It's a piece of text that
+          makes a capable model run a particular kind of conversation. It
+          has no special status. A current model in a decent harness
+          already does a fair amount of what it asks — matching your
+          register, noticing a contradiction, declining to flatter —
+          without being told, which means some meaningful fraction of the
+          instructions below are redundant scaffolding I've left standing
+          because cutting them properly is a separate afternoon and I'd
+          rather show you the artifact as it actually is.
+        </p>
+
+        <p>
+          Use it as a starting point and expect to cut it. Yours should not
+          end up looking like mine.
         </p>
 
         <div class="prompt-block">
-          <button class="copy floating" type="button" data-copy-target="prompt">
+          <button class="copy" type="button" data-copy-target="prompt">
             <span class="copy-label">copy</span>
             <span class="copy-done" aria-hidden="true">copied</span>
           </button>
@@ -260,86 +552,60 @@ Start with the first question. Keep it easy.`;
         </div>
       </section>
 
-      <section id="fence" class="fence">
-        <p class="kicker">a fence</p>
-        <h2>What this is not</h2>
+      <section id="where" class="prose">
+        <h2>Where you are</h2>
+
         <p>
-          Not a personality quiz. Not a coaching intake. Not a vibe
-          check. Not onboarding for an AI assistant.
+          One last thing, and it's the reason this page isn't a funnel.
+          <Gloss
+            def="William Gibson, attributed in various forms from the late 1990s onward. He has said he does not remember first saying it, which is somehow appropriate."
+            >Gibson's line</Gloss
+          > — the future is already here, it's just not evenly distributed
+          — gets quoted as though it's about early adopters being ahead.
+          The useful reading is narrower. At any moment the people you're
+          talking to are standing in genuinely different places with
+          different tools in reach, and advice pitched at the middle of
+          that distribution is wrong for nearly everyone in it.
         </p>
+
         <p>
-          It's <em>epistemological infrastructure</em> — building the
-          shared language and mutual model that lets two minds, one
-          biological and one artificial, do better work together than
-          either could alone.
+          So: if you've never done anything like this, if your relationship
+          with these tools is a box you type into and close, then the
+          exercise is worth twenty minutes on its own terms and you should
+          disregard everything above about drift and reservoirs. That's a
+          problem you don't have yet, and borrowing it early just makes the
+          thing feel like homework.
         </p>
+
         <p>
-          The eureka isn't "wow, the AI knows me." It's
-          <em>"wow, I said something I didn't know I thought, and now
-          we have a word for it."</em>
+          If you have memory switched on and a profile that's been
+          accumulating for months, the exercise is less interesting to you
+          than an audit. Ask the thing what it believes about you. Read
+          that next to something you wrote before it started watching. The
+          gap is the finding, and it's usually more specific and stranger
+          than you expect.
         </p>
-      </section>
 
-      <section id="principles" class="principles">
-        <p class="kicker">for the obsessives</p>
-        <h2>Why it's built this way</h2>
+        <p>
+          And if you're already keeping harness files — if there's a
+          config in the repository you're working in, and you've noticed
+          the model reads you differently depending on which directory you
+          launched from — then this stopped being a question about a prompt
+          a while ago and became a question about where the canonical copy
+          lives and what re-anchors it. I don't have a clean answer. I have
+          a file, a habit of reading it next to what the model says about
+          me, and a suspicion that this is where the next version of this
+          page comes from.
+        </p>
 
-        <details class="principle">
-          <summary>1. Low floor, high ceiling</summary>
-          <div>
-            <p>
-              Every opener is answerable in one breath. The agent's
-              follow-up transforms a casual answer into self-discovery.
-              You never feel tested; the depth emerges, it isn't
-              assigned.
-            </p>
-          </div>
-        </details>
-
-        <details class="principle">
-          <summary>2. Opt-out is data</summary>
-          <div>
-            <p>
-              Skips, hedges, and "pass" responses are first-class
-              signal. They map boundaries, trust thresholds, and
-              protected territory. The agent notes them without
-              pressure and folds them into the calibration. Chasing a
-              skip is a trust violation.
-            </p>
-          </div>
-        </details>
-
-        <details class="principle">
-          <summary>3. Earn the hard questions</summary>
-          <div>
-            <p>
-              Provocative moves — forced tradeoffs, surfacing
-              contradictions, kill-your-darlings scenarios — come
-              after rapport, not before. And even then they should
-              feel like play between colleagues, not interrogation.
-              The progression is coffee → sparring → collaboration.
-            </p>
-          </div>
-        </details>
-
-        <details class="principle">
-          <summary>4. Register evolves</summary>
-          <div>
-            <p>
-              The agent's vocabulary and tone are a live instrument,
-              not a fixed setting. It starts warm and accessible,
-              mirrors your language as it appears, gradually introduces
-              precision as it discovers your conceptual shorthand. By
-              the end, the conversation should sound like two people
-              deep in the same discipline — because it is.
-            </p>
-          </div>
-        </details>
-
-        <p class="credit">
-          Built with Claude, sharpened against a near-miss by a
-          coworker, refined in a loop until the prompt produced the
-          kind of conversation it describes.
+        <p>
+          Which is the honest place to stop. This page was wrong in April
+          in a way I couldn't see until September, and it's presumably
+          wrong now in a way I won't see until spring. That's the argument
+          for keeping both layers rather than shipping a confident
+          replacement. Not humility, exactly. Just the recognition that the
+          old copy is the only thing I'll have to measure the drift
+          against.
         </p>
       </section>
 
@@ -350,513 +616,347 @@ Start with the first question. Keep it easy.`;
 
 <script>
   // copy-to-clipboard for any button[data-copy-target]
-  document.querySelectorAll<HTMLButtonElement>('[data-copy-target]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const target = document.getElementById('prompt-text');
-      if (!target) return;
-      const text = target.innerText;
-      try {
-        await navigator.clipboard.writeText(text);
-        btn.classList.add('is-done');
-        setTimeout(() => btn.classList.remove('is-done'), 1600);
-      } catch {
-        const range = document.createRange();
-        range.selectNodeContents(target);
-        const sel = window.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(range);
-      }
+  document
+    .querySelectorAll<HTMLButtonElement>('[data-copy-target]')
+    .forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const target = document.getElementById('prompt-text');
+        if (!target) return;
+        const text = target.innerText;
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.classList.add('is-done');
+          setTimeout(() => btn.classList.remove('is-done'), 1600);
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(target);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+      });
     });
-  });
 
-  // scroll-synced ToC
-  const tocLinks = Array.from(
-    document.querySelectorAll<HTMLAnchorElement>('.toc a[data-toc]')
+  // scroll-synced table of contents
+  const links = Array.from(
+    document.querySelectorAll<HTMLAnchorElement>('[data-toc]'),
   );
-  const sections = tocLinks
-    .map((link) => document.querySelector(link.getAttribute('href') || ''))
-    .filter((s): s is Element => !!s);
+  const sections = links
+    .map((a) => document.querySelector(a.getAttribute('href') || ''))
+    .filter((el): el is Element => Boolean(el));
 
-  if ('IntersectionObserver' in window && sections.length) {
-    const byId = new Map<string, HTMLAnchorElement>();
-    tocLinks.forEach((l) => {
-      const id = (l.getAttribute('href') || '').slice(1);
-      if (id) byId.set(id, l);
-    });
-
+  if (sections.length > 0 && 'IntersectionObserver' in window) {
+    const seen = new Map<Element, number>();
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          const link = byId.get(entry.target.id);
-          if (!link) return;
-          if (entry.isIntersecting) {
-            tocLinks.forEach((l) => l.classList.remove('is-active'));
-            link.classList.add('is-active');
+          seen.set(entry.target, entry.intersectionRatio);
+        });
+        let best: Element | null = null;
+        let bestRatio = 0;
+        seen.forEach((ratio, el) => {
+          if (ratio > bestRatio) {
+            bestRatio = ratio;
+            best = el;
           }
         });
+        if (!best) return;
+        const id = (best as Element).id;
+        links.forEach((a) => {
+          a.classList.toggle(
+            'is-active',
+            a.getAttribute('href') === `#${id}`,
+          );
+        });
       },
-      { rootMargin: '-20% 0px -60% 0px', threshold: 0 }
+      { rootMargin: '-10% 0px -70% 0px', threshold: [0, 0.25, 0.5, 1] },
     );
-    sections.forEach((s) => observer.observe(s));
+    sections.forEach((el) => observer.observe(el));
   }
 </script>
 
 <style>
   .calibrate {
-    display: grid;
-    grid-template-columns: 1fr;
-    max-width: 1100px;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 4rem 1.5rem 6rem;
-    gap: 3rem;
+    padding: 5rem 1.5rem 6rem;
+    position: relative;
   }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    margin-bottom: 3.5rem;
+  }
+  .masthead h1 {
+    font-family: var(--font-crimson);
+    font-size: 3rem;
+    font-weight: 500;
+    margin: 0 0 0.6rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .dates {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .dates .sep {
+    opacity: 0.5;
+  }
+
+  /* ---------- prose ---------- */
+
+  .prose {
+    margin-bottom: 1rem;
+  }
+  .prose h2 {
+    font-family: var(--font-crimson);
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin: 3.2rem 0 0.9rem;
+    letter-spacing: -0.01em;
+  }
+  .prose p {
+    margin: 1.2em 0;
+  }
+  .prose a {
+    color: var(--text);
+    border-bottom: 1px solid rgba(232, 168, 56, 0.5);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .prose a:hover {
+    color: var(--accent);
+  }
+
+  /* ---------- the april layer ---------- */
+
+  .april-layer {
+    margin: 2rem 0;
+    padding: 1.4rem 1.5rem;
+    border-left: 2px solid var(--border);
+    background: rgba(38, 29, 15, 0.45);
+    color: var(--text-dim);
+    position: relative;
+  }
+  .stamp {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 0.9rem !important;
+  }
+  .april-hed {
+    font-family: var(--font-crimson);
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 500;
+    margin: 0 0 0.6rem !important;
+    letter-spacing: -0.01em;
+  }
+  .april-deck,
+  .april-quote {
+    margin: 0 !important;
+    font-size: 0.97rem;
+    line-height: 1.5;
+  }
+  .april-quote {
+    font-size: 1.05rem;
+  }
+  .april-quote em {
+    color: var(--text);
+    font-style: italic;
+  }
+
+  /* ---------- retrieval ---------- */
+
+  .retrieve {
+    margin: 2.5rem 0 1rem;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 0.2rem 0;
+  }
+  .retrieve > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.85rem 0;
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    transition: color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .retrieve > summary::-webkit-details-marker {
+    display: none;
+  }
+  .retrieve > summary::before {
+    content: '+';
+    color: var(--accent-dim);
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .retrieve[open] > summary::before {
+    content: '\2212';
+  }
+  .retrieve > summary:hover {
+    color: var(--accent);
+  }
+  .retrieved {
+    padding: 0.5rem 0 2rem;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  .retrieved-note {
+    font-family: var(--font-jetbrains);
+    font-size: 0.68rem;
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 1.2rem 0 2rem !important;
+  }
+  .retrieved h3 {
+    font-family: var(--font-crimson);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin: 2rem 0 0.4rem;
+  }
+  .retrieved p {
+    font-size: 0.94rem;
+    line-height: 1.55;
+    margin: 0.9em 0;
+  }
+  .retrieved-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: lowercase;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem !important;
+  }
+  .retrieved-dialogue {
+    border-left: 1px solid var(--border);
+    padding-left: 1rem;
+    color: var(--text-muted);
+  }
+  .retrieved-dialogue b {
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+
+  /* ---------- the prompt ---------- */
+
+  .prompt-block {
+    position: relative;
+    margin: 2rem 0 1rem;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--bg-card);
+  }
+  .prompt-block pre {
+    margin: 0;
+    padding: 2.6rem 1.4rem 1.6rem;
+    overflow-x: auto;
+    max-height: 26rem;
+    overflow-y: auto;
+  }
+  .prompt-block code {
+    font-family: var(--font-jetbrains);
+    font-size: 0.74rem;
+    line-height: 1.75;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .copy {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    z-index: 2;
+    background: var(--bg-button);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-dim);
+    font-family: var(--font-jetbrains);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .copy:hover {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .copy-done {
+    display: none;
+  }
+  .copy.is-done .copy-label {
+    display: none;
+  }
+  .copy.is-done .copy-done {
+    display: inline;
+    color: var(--accent);
+  }
+
+  /* ---------- table of contents ---------- */
 
   .toc {
     display: none;
   }
-
-  @media (min-width: 1080px) {
-    .calibrate {
-      grid-template-columns: 160px 1fr;
-      gap: 4rem;
-      max-width: 1200px;
-    }
+  @media (min-width: 1500px) {
     .toc {
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
-      position: sticky;
-      top: 3rem;
-      align-self: start;
-      font-family: var(--font-jetbrains);
-      font-size: 0.72rem;
-      text-transform: lowercase;
-      letter-spacing: 0.08em;
-      padding-top: 0.4rem;
+      gap: 0.55rem;
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      left: calc(50% - 530px);
+      width: 150px;
     }
     .toc a {
+      font-family: var(--font-jetbrains);
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
       color: var(--text-muted);
       text-decoration: none;
-      border-left: 1px solid var(--border);
-      padding: 0.2rem 0 0.2rem 0.8rem;
+      border-left: 1px solid transparent;
+      padding-left: 0.7rem;
       transition:
         color 0.2s ease,
         border-color 0.2s ease;
     }
-    .toc a:hover,
+    .toc a:hover {
+      color: var(--text-dim);
+    }
     .toc a.is-active {
       color: var(--accent);
-      border-left-color: var(--accent);
-    }
-  }
-
-  .main {
-    max-width: 720px;
-  }
-
-  .kicker {
-    font-family: var(--font-jetbrains);
-    font-size: 0.72rem;
-    letter-spacing: 0.12em;
-    text-transform: lowercase;
-    color: var(--text-muted);
-    margin: 0 0 0.8rem;
-  }
-
-  /* ---------- promise ---------- */
-  .promise h1 {
-    font-family: var(--font-crimson);
-    font-size: 2.8rem;
-    font-weight: 500;
-    line-height: 1.12;
-    letter-spacing: -0.015em;
-    margin: 0 0 1.4rem;
-  }
-  .promise .deck {
-    color: var(--text-dim);
-    font-size: 1.15rem;
-    line-height: 1.55;
-    margin: 0 0 2rem;
-    max-width: 36ch;
-  }
-  .cta {
-    display: flex;
-    align-items: center;
-    gap: 1.4rem;
-    flex-wrap: wrap;
-  }
-  .cta-link {
-    color: var(--text-dim);
-    text-decoration: none;
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
-    border-bottom: 1px solid transparent;
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-  .cta-link:hover {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-  }
-
-  .copy {
-    background: var(--bg-button);
-    color: var(--text);
-    border: 1px solid var(--border);
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
-    letter-spacing: 0.06em;
-    text-transform: lowercase;
-    padding: 0.7rem 1.3rem;
-    border-radius: 3px;
-    cursor: pointer;
-    position: relative;
-    transition:
-      background 0.2s ease,
-      border-color 0.2s ease,
-      color 0.2s ease;
-  }
-  .copy:hover {
-    background: var(--bg-card);
-    border-color: var(--accent-dim);
-    color: var(--accent);
-  }
-  .copy .copy-done {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    color: var(--accent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .copy.is-done .copy-label {
-    opacity: 0;
-  }
-  .copy.is-done .copy-done {
-    opacity: 1;
-  }
-
-  /* ---------- felt moment ---------- */
-  .felt {
-    margin-top: 6rem;
-    padding: 3rem 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-  .felt .question {
-    font-family: var(--font-crimson);
-    font-size: 1.8rem;
-    font-weight: 400;
-    line-height: 1.25;
-    font-style: italic;
-    color: var(--text);
-    margin: 0.6rem 0 2rem;
-  }
-  .felt .instruction {
-    color: var(--text-muted);
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
-    letter-spacing: 0.05em;
-    margin: 0 0 2.5rem;
-  }
-  .reveal {
-    border: none;
-    padding: 0;
-  }
-  .reveal > summary {
-    cursor: pointer;
-    list-style: none;
-    display: inline-block;
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-    padding: 0.55rem 1.1rem;
-    border-radius: 3px;
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-  .reveal > summary::-webkit-details-marker {
-    display: none;
-  }
-  .reveal > summary:hover {
-    color: var(--accent);
-    border-color: var(--accent-dim);
-  }
-  .reveal[open] > summary {
-    opacity: 0.5;
-  }
-  .reveal-body {
-    margin-top: 1.8rem;
-    color: var(--text);
-  }
-  .reveal-body p {
-    margin: 0 0 1.1em;
-    line-height: 1.6;
-  }
-
-  /* ---------- receipts ---------- */
-  .receipts {
-    margin-top: 6rem;
-  }
-  .receipts h2,
-  .prompt-section h2,
-  .fence h2,
-  .principles h2 {
-    font-family: var(--font-crimson);
-    font-size: 1.9rem;
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    margin: 0 0 0.8rem;
-  }
-  .receipts .deck,
-  .prompt-section .deck {
-    color: var(--text-dim);
-    margin: 0 0 2.4rem;
-    font-size: 1.05rem;
-  }
-
-  .transcripts {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-  @media (min-width: 900px) {
-    .transcripts {
-      grid-template-columns: 1fr 1fr;
-      gap: 2.4rem;
-    }
-  }
-
-  .transcript {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 1.6rem 1.6rem 1.2rem;
-    position: relative;
-  }
-  .transcript .label {
-    font-family: var(--font-jetbrains);
-    font-size: 0.7rem;
-    text-transform: lowercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin: 0 0 1.4rem;
-  }
-  .transcript.before .label {
-    color: var(--text-muted);
-  }
-  .transcript.after .label {
-    color: var(--accent-dim);
-  }
-  .transcript .context {
-    font-size: 0.92rem;
-    font-style: italic;
-    color: var(--text-dim);
-    margin: 0 0 1.6rem;
-    line-height: 1.5;
-  }
-
-  .turn {
-    margin: 0 0 1.2rem;
-    position: relative;
-  }
-  .turn .speaker {
-    font-family: var(--font-jetbrains);
-    font-size: 0.68rem;
-    text-transform: lowercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin: 0 0 0.35rem;
-  }
-  .transcript.before .turn:nth-child(odd) .speaker,
-  .transcript.after .turn .speaker {
-    color: var(--text-muted);
-  }
-  .transcript .utterance {
-    margin: 0 0 0.6rem;
-    font-size: 0.98rem;
-    line-height: 1.55;
-  }
-  .transcript.after .turn:has(.speaker:not(:empty)) .speaker {
-    /* keep speaker subdued, let agent turns breathe */
-  }
-  .transcript.after .turn .speaker {
-    color: var(--text-dim);
-  }
-  .transcript.after .turn:first-of-type .speaker,
-  .transcript.after .turn:nth-of-type(even) .speaker {
-    color: var(--accent-dim);
-  }
-  .transcript.after .utterance {
-    color: var(--text);
-  }
-
-  mark.pull {
-    background: none;
-    color: var(--accent);
-    font-family: var(--font-crimson);
-    font-style: italic;
-    font-weight: 500;
-    padding: 0;
-  }
-
-  .marginalia {
-    display: block;
-    margin: 0.6rem 0 0;
-    padding: 0.4rem 0 0.4rem 0.9rem;
-    border-left: 2px solid var(--border);
-    font-family: var(--font-crimson);
-    font-style: italic;
-    font-size: 0.88rem;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-  .marginalia.eureka {
-    border-left-color: var(--accent-dim);
-    color: var(--text);
-  }
-
-  @media (min-width: 1200px) {
-    .transcript.after {
-      overflow: visible;
-    }
-    .transcript.after .turn {
-      padding-right: 0;
-    }
-    .transcript.after .marginalia {
-      position: absolute;
-      right: -240px;
-      top: 0;
-      width: 210px;
-      margin: 0;
-      padding: 0 0 0 0.9rem;
-      border-left: 1px solid var(--border);
-      font-size: 0.82rem;
-    }
-    .transcript.after .marginalia.eureka {
       border-left-color: var(--accent-dim);
     }
   }
 
-  .verdict {
-    margin: 1.6rem 0 0;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border);
-    font-family: var(--font-crimson);
-    font-size: 0.95rem;
-    color: var(--text-dim);
-    line-height: 1.55;
-  }
-  .transcript.after .verdict {
-    color: var(--text);
-  }
-  .verdict em {
-    color: var(--accent);
-    font-style: italic;
-  }
-
-  /* ---------- prompt block ---------- */
-  .prompt-section {
-    margin-top: 6rem;
-  }
-  .prompt-block {
-    position: relative;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-  .prompt-block pre {
-    margin: 0;
-    padding: 2rem 1.8rem 2.2rem;
-    overflow-x: auto;
-    font-family: var(--font-jetbrains);
-    font-size: 0.82rem;
-    line-height: 1.65;
-    color: var(--text);
-    white-space: pre-wrap;
-    word-break: normal;
-  }
-  .copy.floating {
-    position: absolute;
-    top: 0.9rem;
-    right: 0.9rem;
-    z-index: 2;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.72rem;
-    background: var(--bg);
-  }
-
-  /* ---------- fence + principles ---------- */
-  .fence {
-    margin-top: 6rem;
-    max-width: 36em;
-  }
-  .fence p {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    margin: 0 0 1.2em;
-    color: var(--text);
-  }
-  .fence em {
-    color: var(--accent);
-    font-style: italic;
-  }
-
-  .principles {
-    margin-top: 6rem;
-  }
-  .principle {
-    border-top: 1px solid var(--border);
-    padding: 0;
-  }
-  .principle:last-of-type {
-    border-bottom: 1px solid var(--border);
-  }
-  .principle > summary {
-    cursor: pointer;
-    list-style: none;
-    padding: 1.1rem 0;
-    font-family: var(--font-crimson);
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: var(--text);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .principle > summary::-webkit-details-marker {
-    display: none;
-  }
-  .principle > summary::after {
-    content: '+';
-    font-family: var(--font-jetbrains);
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    transition: transform 0.2s ease, color 0.2s ease;
-  }
-  .principle[open] > summary::after {
-    content: '−';
-    color: var(--accent);
-  }
-  .principle > summary:hover {
-    color: var(--accent);
-  }
-  .principle > div {
-    padding: 0 0 1.4rem;
-    color: var(--text-dim);
-  }
-  .principle > div p {
-    margin: 0;
-    line-height: 1.6;
-  }
-  .credit {
-    margin-top: 2.5rem;
-    font-family: var(--font-jetbrains);
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.6;
+  @media (max-width: 640px) {
+    .calibrate {
+      padding: 3.5rem 1.25rem 4rem;
+    }
+    .masthead h1 {
+      font-size: 2.4rem;
+    }
+    .april-hed {
+      font-size: 1.28rem;
+    }
   }
 </style>
