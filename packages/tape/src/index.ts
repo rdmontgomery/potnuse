@@ -24,6 +24,14 @@ export {
   type ProbeReport,
 } from './quotes/aggregator.ts';
 export { poolFor, poolFromLiquidity } from './quotes/synthetic.ts';
+export { decodeMint, fromBase64, toBase58, type MintAccount } from './solana/mint.ts';
+export {
+  SOLANA_RPC,
+  solanaRpc,
+  solanaTokenFacts,
+  topHolderShare,
+  type SolanaTokenFacts,
+} from './solana/facts.ts';
 export {
   barSession,
   type BarEnterOutcome,

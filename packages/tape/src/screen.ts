@@ -21,6 +21,8 @@ export interface ScreenFacts {
   sourceVerified: boolean | null;
   ownerRenounced: boolean | null;
   canMint: boolean | null;
+  /** Whether accounts can be frozen, stranding a holder who cannot then sell. */
+  canFreeze?: boolean | null;
   /** Largest non-pool, non-burn holder as a percent of supply. */
   topHolderPct: number | null;
   holders: number | null;
@@ -148,6 +150,17 @@ export function screen(facts: ScreenFacts, policy: ScreenPolicy): Verdict {
       code: 'mintable',
       message: 'supply can still be minted; your percentage of it is not a fixed quantity',
     });
+  }
+
+  if (facts.canFreeze === true) {
+    findings.push({
+      severity: 'block',
+      code: 'freezable',
+      message:
+        'accounts can be frozen by the issuer; a frozen position is held and unsellable, which is a honeypot with extra steps',
+    });
+  } else if (facts.canFreeze === null) {
+    findings.push(unknown('freeze-unknown', 'freeze authority'));
   }
 
   if (facts.sourceVerified === null) findings.push(unknown('source-unknown', 'source verification'));

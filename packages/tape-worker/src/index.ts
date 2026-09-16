@@ -11,6 +11,9 @@ import {
   runOnce,
   runQuotes,
   screen,
+  solanaRpc,
+  solanaTokenFacts,
+  SOLANA_RPC,
   sqlStore,
   summarize,
   type MarketConfig,
@@ -203,6 +206,16 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
       latencyHaircutBps: num('haircutBps', 30),
     };
 
+    // Authorities are the facts that decide whether a position can be diluted
+    // or stranded, and no price aggregator carries them. Two RPC calls do.
+    const onchain =
+      pair.chain === 'solana' && pair.baseAddress
+        ? await solanaTokenFacts(solanaRpc(SOLANA_RPC, { timeoutMs: 8_000 }), pair.baseAddress, {
+            poolBaseUsd: (pair.liquidityUsd ?? 0) / 2,
+            priceUsd: pair.priceUsd,
+          }).catch(() => null)
+        : null;
+
     const pool = poolFor(pair);
     if (!pool) {
       return {
@@ -221,8 +234,9 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
         quoteVolatilityPct: null,
         sourceVerified: null,
         ownerRenounced: null,
-        canMint: null,
-        topHolderPct: null,
+        canMint: onchain?.canMint ?? null,
+        canFreeze: onchain?.canFreeze ?? null,
+        topHolderPct: onchain?.topHolderPct ?? null,
         holders: null,
         lpLockedPct: null,
         ageMs: null,
@@ -235,6 +249,7 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
       `price   $${pair.priceUsd}`,
       `depth   $${Math.round(pair.liquidityUsd ?? 0).toLocaleString()}`,
       `24h vol $${Math.round(pair.volume24hUsd ?? 0).toLocaleString()}`,
+      ...(onchain ? ['', ...onchain.notes.map((note) => `chain   ${note}`)] : []),
       '',
       ...verdict.findings.map((f) => `${f.severity.padEnd(5)} ${f.code}: ${f.message}`),
     ].join('\n');
