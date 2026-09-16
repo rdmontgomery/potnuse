@@ -33,12 +33,23 @@ if (!entry) throw new Error('care-for-an-esper entry missing');
   .cfe-chrome .pressure h2 {
     color: #5a4f38;
   }
-  .cfe-chrome .pressure a {
+  .cfe-chrome .pressure .thread {
     color: #15110a;
+  }
+  .cfe-chrome .pressure .label {
     border-bottom-color: rgba(21, 17, 10, 0.3);
   }
-  .cfe-chrome .pressure a:hover {
+  .cfe-chrome .pressure .thread:hover .label {
     border-bottom-color: #a3681b;
+  }
+  .cfe-chrome .pressure .when,
+  .cfe-chrome .pressure .hub-title {
+    color: #5a4f38;
+  }
+  /* The hub label masks the threads passing under it, so it has to carry the
+     cream rather than the site's dark body colour. */
+  .cfe-chrome .pressure .hub-title {
+    background: #f4ecd8;
   }
 </style>
 
