@@ -10,6 +10,112 @@ const { def } = Astro.props;
   <span class="gloss-pop" role="tooltip">{def}</span>
 </span>
 
+<script>
+  // Keep the tooltip inside the viewport.
+  //
+  // The popover is centered on the glossed word (left: 50% / translateX(-50%)),
+  // which overflows whenever the word sits near an edge of the reading column.
+  // Worst case is a gloss on the first word of a paragraph: half a 22rem box
+  // lands off the left of the screen on any viewport under ~1040px. Below
+  // 500px the popover docks to the bottom as a fixed bar and needs none of
+  // this; above it, slide the box back on screen and counter-slide the arrow
+  // so it still points at the word.
+  //
+  // Measuring is fussier than it looks, so we do it the blunt way: zero the
+  // shift with transitions frozen, read the true resting rect, then write the
+  // correction back. Two things make the obvious shortcuts wrong. `transform`
+  // is transitioned, so a rect read mid-animation is not the resting position
+  // — subtracting the already-applied shift from it makes repeated passes
+  // compound rather than converge. And computing the origin arithmetically
+  // from the word's own rect breaks on a multi-word gloss that wraps across
+  // two lines, because which fragment `left: 50%` resolves against is up to
+  // the engine. Letting the browser lay it out and reading the answer sidesteps
+  // both. Reads are batched behind writes, so a whole page costs one reflow.
+
+  const MARGIN = 12; // keep this much clear of the viewport edge
+  const DOCKED = '(max-width: 500px)';
+
+  type Pair = { gloss: HTMLElement; pop: HTMLElement };
+
+  function pairsFrom(glosses: HTMLElement[]): Pair[] {
+    const out: Pair[] = [];
+    for (const gloss of glosses) {
+      const pop = gloss.querySelector<HTMLElement>('.gloss-pop');
+      if (pop) out.push({ gloss, pop });
+    }
+    return out;
+  }
+
+  function settle(glosses: HTMLElement[]) {
+    if (glosses.length === 0) return;
+
+    if (window.matchMedia(DOCKED).matches) {
+      glosses.forEach((g) => g.style.removeProperty('--gloss-shift'));
+      return;
+    }
+
+    const pairs = pairsFrom(glosses);
+    if (pairs.length === 0) return;
+
+    // Freeze and zero, so the next read is the true resting position.
+    for (const { gloss, pop } of pairs) {
+      pop.style.transition = 'none';
+      gloss.style.setProperty('--gloss-shift', '0px');
+    }
+
+    const vw = window.innerWidth;
+    const shifts = pairs.map(({ pop }) => {
+      const r = pop.getBoundingClientRect();
+      // Left wins when the box is too wide to satisfy both edges.
+      if (r.left < MARGIN) return MARGIN - r.left;
+      if (r.right > vw - MARGIN) return vw - MARGIN - r.right;
+      return 0;
+    });
+
+    pairs.forEach(({ gloss }, i) => {
+      const shift = Math.round(shifts[i]);
+      if (shift === 0) gloss.style.removeProperty('--gloss-shift');
+      else gloss.style.setProperty('--gloss-shift', `${shift}px`);
+    });
+
+    // Thaw next frame so restoring the transition doesn't animate the reset.
+    requestAnimationFrame(() => {
+      for (const { pop } of pairs) pop.style.removeProperty('transition');
+    });
+  }
+
+  function handle(ev: Event) {
+    const target = ev.target;
+    if (!(target instanceof Element)) return;
+    const gloss = target.closest<HTMLElement>('.gloss');
+    if (gloss) settle([gloss]);
+  }
+
+  // A hidden tooltip is still laid out, so an unplaced one widens the document
+  // and puts a horizontal scrollbar on the page before anyone hovers anything.
+  // Place them all up front, then again once the web fonts have reflowed the
+  // text underneath them.
+  const placeAll = () =>
+    settle(Array.from(document.querySelectorAll<HTMLElement>('.gloss')));
+
+  document.addEventListener('pointerover', handle, { passive: true });
+  document.addEventListener('focusin', handle);
+
+  placeAll();
+  document.fonts?.ready.then(placeAll);
+  window.addEventListener('load', placeAll);
+
+  let resizeTimer: ReturnType<typeof setTimeout>;
+  window.addEventListener(
+    'resize',
+    () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(placeAll, 120);
+    },
+    { passive: true },
+  );
+</script>
+
 <style>
   .gloss {
     position: relative;
@@ -23,10 +129,10 @@ const { def } = Astro.props;
   .gloss-pop {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%) translateY(4px);
+    transform: translateX(calc(-50% + var(--gloss-shift, 0px))) translateY(4px);
     bottom: calc(100% + 0.6rem);
     min-width: 14rem;
-    max-width: 22rem;
+    max-width: min(22rem, calc(100vw - 1.5rem));
     width: max-content;
     padding: 0.7rem 0.9rem;
     background: var(--bg-card);
@@ -50,11 +156,17 @@ const { def } = Astro.props;
     text-align: left;
     letter-spacing: 0;
   }
+  /* The arrow counter-shifts so it keeps pointing at the word, clamped so it
+     can't walk off the end of the box when the shift is large. */
   .gloss-pop::after {
     content: '';
     position: absolute;
     top: 100%;
-    left: 50%;
+    left: clamp(
+      10px,
+      calc(50% - var(--gloss-shift, 0px)),
+      calc(100% - 10px)
+    );
     transform: translateX(-50%);
     width: 0;
     height: 0;
@@ -65,7 +177,11 @@ const { def } = Astro.props;
     content: '';
     position: absolute;
     top: 100%;
-    left: 50%;
+    left: clamp(
+      10px,
+      calc(50% - var(--gloss-shift, 0px)),
+      calc(100% - 10px)
+    );
     transform: translateX(-50%) translateY(-1px);
     width: 0;
     height: 0;
@@ -78,7 +194,7 @@ const { def } = Astro.props;
   .gloss:focus-within .gloss-pop {
     opacity: 1;
     visibility: visible;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(calc(-50% + var(--gloss-shift, 0px))) translateY(0);
   }
   @media (max-width: 500px) {
     .gloss-pop {
