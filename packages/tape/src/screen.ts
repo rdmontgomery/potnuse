@@ -28,6 +28,10 @@ export interface ScreenFacts {
   holders: number | null;
   lpLockedPct: number | null;
   ageMs: number | null;
+  /** Distance from an even value split, in points. Non-zero means not constant-product. */
+  valueSkewPct?: number | null;
+  /** Trades in the last day. Exit depends on someone being on the other side. */
+  trades24h?: number | null;
 }
 
 export type Severity = 'block' | 'warn' | 'note';
@@ -54,6 +58,8 @@ export interface ScreenPolicy {
   maxTopHolderPct?: number;
   minAgeMs?: number;
   maxRoundTripFeeBps?: number;
+  /** Below this many trades a day, getting out depends on luck. */
+  minTrades24h?: number;
 }
 
 const unknown = (code: string, what: string): Finding => ({
@@ -206,6 +212,27 @@ export function screen(facts: ScreenFacts, policy: ScreenPolicy): Verdict {
       code: 'young',
       message: `market is ${Math.round(facts.ageMs / 3_600_000)}h old; almost nothing about it has been tested yet`,
     });
+  }
+
+  if (facts.valueSkewPct !== null && facts.valueSkewPct !== undefined && facts.valueSkewPct > 10) {
+    findings.push({
+      severity: 'warn',
+      code: 'not-constant-product',
+      message:
+        `reported reserves sit ${facts.valueSkewPct.toFixed(0)} points off an even split, so this is concentrated liquidity — ` +
+        'the impact figures above are a constant-product approximation, optimistic near the mid and badly optimistic on a large move',
+    });
+  }
+
+  if (facts.trades24h !== null && facts.trades24h !== undefined) {
+    const floor = policy.minTrades24h ?? 50;
+    if (facts.trades24h < floor) {
+      findings.push({
+        severity: 'warn',
+        code: 'barely-traded',
+        message: `${facts.trades24h} trades in the last day; an exit needs someone on the other side, and there may not be one`,
+      });
+    }
   }
 
   // --- The quote asset is a position too.

@@ -8,6 +8,7 @@ import {
   makePlan,
   poolFor,
   probeToken,
+  valueSkewPct,
   runOnce,
   runQuotes,
   screen,
@@ -261,7 +262,13 @@ async function addMarket(env: Env, store: TapeStore, form: FormData): Promise<Pa
         topHolderPct: onchain?.topHolderPct ?? null,
         holders: null,
         lpLockedPct: null,
-        ageMs: null,
+        // Facts the source already carried and the screen was warning about.
+        ageMs: pair.createdAt ? Date.now() - pair.createdAt : null,
+        valueSkewPct: valueSkewPct(pair),
+        trades24h:
+          pair.buys24h === null || pair.buys24h === undefined
+            ? null
+            : (pair.buys24h ?? 0) + (pair.sells24h ?? 0),
       },
       { intendedSizeUsd: budget / slots },
     );
@@ -271,6 +278,12 @@ async function addMarket(env: Env, store: TapeStore, form: FormData): Promise<Pa
       `price   $${pair.priceUsd}`,
       `depth   $${Math.round(pair.liquidityUsd ?? 0).toLocaleString()}`,
       `24h vol $${Math.round(pair.volume24hUsd ?? 0).toLocaleString()}`,
+      ...(pair.createdAt
+        ? [`age     ${Math.round((Date.now() - pair.createdAt) / 86_400_000)} days`]
+        : []),
+      ...(pair.buys24h !== null && pair.buys24h !== undefined
+        ? [`trades  ${pair.buys24h} buys / ${pair.sells24h ?? 0} sells in 24h`]
+        : []),
       ...(onchain ? ['', ...onchain.notes.map((note) => `chain   ${note}`)] : []),
       '',
       ...verdict.findings.map((f) => `${f.severity.padEnd(5)} ${f.code}: ${f.message}`),

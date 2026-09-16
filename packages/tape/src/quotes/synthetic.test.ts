@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { poolFor, poolFromLiquidity } from './synthetic.ts';
+import { poolFor, poolFromLiquidity, valueSkewPct } from './synthetic.ts';
 import { exitCostBps, maxExitableSize, midPrice, poolDepthUsd } from '../fills.ts';
 import type { PairQuote } from './types.ts';
 
-const pair = (liquidityUsd: number | null, priceUsd: number | null): PairQuote => ({
+const pair = (
+  liquidityUsd: number | null,
+  priceUsd: number | null,
+  reserveBase: number | null = null,
+): PairQuote => ({
+  reserveBase,
   chain: 'solana',
   pairId: 'abc',
   dex: 'raydium',
@@ -62,6 +67,43 @@ describe('reserves from a liquidity figure', () => {
     const pool = poolFromLiquidity(1_000_000, 1, { baseDecimals: 9, quoteDecimals: 9 });
     expect(pool?.baseDecimals).toBe(9);
     expect(midPrice(pool!)).toBeCloseTo(1, 6);
+  });
+});
+
+describe('what the reported reserves actually tell us', () => {
+  // A live Orca Whirlpool: $2.48M of liquidity with 222.4M PENGU on the base
+  // side at $0.006788. That is 61/39 — and for a constant-product pool it
+  // could not be, because both sides hold equal value at the mid by
+  // construction. The skew is the tell that this is concentrated liquidity.
+  const liquidityUsd = 2_481_974.69;
+  const priceUsd = 0.006788;
+  const reserveBase = 222_448_202;
+
+  it('measures how far a pool sits from the shape the model assumes', () => {
+    const skew = valueSkewPct(pair(liquidityUsd, priceUsd, reserveBase))!;
+    expect(skew).toBeGreaterThan(10);
+    expect(skew).toBeLessThan(15);
+  });
+
+  it('reports no skew for a pool that really is evenly split', () => {
+    // 1,000,000 base at $1 against $2M of liquidity is exactly half.
+    expect(valueSkewPct(pair(2_000_000, 1, 1_000_000))).toBeCloseTo(0, 6);
+  });
+
+  it('says nothing rather than claiming evenness when reserves are absent', () => {
+    // Null is not zero, and reporting it as zero would assert something the
+    // source never said.
+    expect(valueSkewPct(pair(2_000_000, 1, null))).toBeNull();
+  });
+
+  it('declines when the figures contradict each other', () => {
+    expect(valueSkewPct(pair(1_000, 1, 5_000))).toBeNull();
+  });
+
+  it('keeps the pool itself an even split, because that is what the model is', () => {
+    const pool = poolFor(pair(liquidityUsd, priceUsd, reserveBase))!;
+    expect(midPrice(pool)).toBeCloseTo(priceUsd, 8);
+    expect(poolDepthUsd(pool, 1)).toBeCloseTo(liquidityUsd / 2, 0);
   });
 });
 

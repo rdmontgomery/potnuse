@@ -46,8 +46,41 @@ export function poolFromLiquidity(
   return { reserveBase, reserveQuote, baseDecimals, quoteDecimals };
 }
 
-/** Reserves for a pair, when it reported enough to build them. */
+/**
+ * Reserves for a pair.
+ *
+ * The even split is not an approximation to be improved on — for a
+ * constant-product pool the two sides hold equal value at the mid price, by
+ * construction. A source reporting an uneven split is therefore not correcting
+ * this estimate; it is telling us the pool is not constant-product.
+ *
+ * See `valueSkewPct`, which is what those reserves are actually good for.
+ */
 export function poolFor(pair: PairQuote): PoolState | null {
   if (pair.liquidityUsd === null || pair.priceUsd === null) return null;
   return poolFromLiquidity(pair.liquidityUsd, pair.priceUsd);
+}
+
+/**
+ * How far the reported reserves sit from an even split, in percentage points.
+ *
+ * Zero means the pool behaves like the constant-product model the fill
+ * estimate assumes. A large number means it does not — concentrated liquidity
+ * holds its two sides in whatever ratio the price has wandered to within the
+ * provider's range, so the impact of a trade near the mid is lower than the
+ * model says and the impact of a large one is very much higher.
+ *
+ * Returns null when the source did not report enough to tell, which is not the
+ * same as an even split and should not be reported as one.
+ */
+export function valueSkewPct(pair: PairQuote): number | null {
+  const reserveBase = pair.reserveBase ?? null;
+  if (reserveBase === null || pair.priceUsd === null || pair.liquidityUsd === null) return null;
+  if (!(reserveBase > 0) || !(pair.priceUsd > 0) || !(pair.liquidityUsd > 0)) return null;
+
+  const baseSideUsd = reserveBase * pair.priceUsd;
+  const share = (baseSideUsd / pair.liquidityUsd) * 100;
+  // Figures that disagree outright say nothing useful about the shape.
+  if (share <= 0 || share >= 100) return null;
+  return Math.abs(share - 50);
 }

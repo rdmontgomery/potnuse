@@ -126,6 +126,42 @@ describe('contract risk', () => {
   });
 });
 
+describe('pool shape and activity', () => {
+  it('warns that a skewed pool is not the shape the impact model assumes', () => {
+    const verdict = screen({ ...clean, valueSkewPct: 11.6 }, policy);
+    const finding = verdict.findings.find((f) => f.code === 'not-constant-product');
+    expect(finding?.severity).toBe('warn');
+    expect(finding?.message).toMatch(/concentrated liquidity/);
+    expect(finding?.message).toMatch(/optimistic/);
+  });
+
+  it('says nothing about shape for a pool that is evenly split', () => {
+    expect(codes({ ...clean, valueSkewPct: 0.4 })).not.toContain('not-constant-product');
+  });
+
+  it('says nothing about shape when the reserves were never reported', () => {
+    // Absent is not even; claiming otherwise asserts something unsaid.
+    expect(codes({ ...clean, valueSkewPct: null })).not.toContain('not-constant-product');
+  });
+
+  it('warns about a pool almost nobody traded', () => {
+    const finding = screen({ ...clean, trades24h: 7 }, policy).findings.find(
+      (f) => f.code === 'barely-traded',
+    );
+    expect(finding?.message).toMatch(/someone on the other side/);
+  });
+
+  it('accepts a busy pool without comment', () => {
+    expect(codes({ ...clean, trades24h: 1_910 })).not.toContain('barely-traded');
+  });
+
+  it('takes the activity floor from the policy', () => {
+    expect(codes({ ...clean, trades24h: 200 }, { ...policy, minTrades24h: 500 })).toContain(
+      'barely-traded',
+    );
+  });
+});
+
 describe('the quote asset is itself a position', () => {
   it('says nothing special about a stablecoin quote', () => {
     expect(codes(clean)).not.toContain('quote-has-beta');
