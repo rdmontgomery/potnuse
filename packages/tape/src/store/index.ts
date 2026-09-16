@@ -7,4 +7,4 @@ export type {
   TapeStore,
 } from './types.ts';
 export { bufferedJournal, memoryStore } from './memory.ts';
-export { sqlStore } from './sql.ts';
+export { sqlCache, sqlStore } from './sql.ts';

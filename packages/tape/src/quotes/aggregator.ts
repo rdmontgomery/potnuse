@@ -1,3 +1,4 @@
+import { cachedFetch, isRefusal, type CachePolicy, type HttpCache } from './cache.ts';
 import { barsIn, byLiquidity, pairsIn } from './parse.ts';
 import type { Bar, PairQuote, QuoteSource } from './types.ts';
 
@@ -53,55 +54,53 @@ export interface FetchResult {
   pairs: PairQuote[];
   bars: Bar[];
   error: string | null;
+  /** True when the source refused — rate limit, forbidden, or upstream error. */
+  refused: boolean;
+  fromCache: boolean;
+}
+
+export interface SourceOptions {
+  timeoutMs?: number;
+  fetchImpl?: typeof fetch;
+  endpoints?: Endpoint[];
+  cache?: HttpCache | null;
+  policy?: CachePolicy;
+  now?: () => number;
 }
 
 async function attempt(
   endpoint: string,
   url: string,
-  opts: { timeoutMs?: number; fetchImpl?: typeof fetch; sampleBytes?: number },
+  opts: SourceOptions & { sampleBytes?: number },
 ): Promise<FetchResult> {
-  const doFetch = opts.fetchImpl ?? fetch;
+  const { entry, fromCache } = await cachedFetch(url, opts);
+  const sample = entry.body.slice(0, opts.sampleBytes ?? 1_200);
   const base: FetchResult = {
     endpoint,
     url,
-    status: null,
-    bytes: 0,
-    sample: '',
+    status: entry.status || null,
+    bytes: entry.body.length,
+    sample,
     pairs: [],
     bars: [],
     error: null,
+    refused: entry.status === 0 || isRefusal(entry.status),
+    fromCache,
   };
 
-  try {
-    const response = await doFetch(url, {
-      headers: { accept: 'application/json' },
-      signal: AbortSignal.timeout(opts.timeoutMs ?? 8_000),
-    });
-    const text = await response.text();
-    const sample = text.slice(0, opts.sampleBytes ?? 1_200);
-
-    if (!response.ok) {
-      return { ...base, status: response.status, bytes: text.length, sample, error: `HTTP ${response.status}` };
-    }
-
-    let payload: unknown;
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      return { ...base, status: response.status, bytes: text.length, sample, error: 'not JSON' };
-    }
-
-    return {
-      ...base,
-      status: response.status,
-      bytes: text.length,
-      sample,
-      pairs: byLiquidity(pairsIn(payload)),
-      bars: barsIn(payload),
-    };
-  } catch (error) {
-    return { ...base, error: error instanceof Error ? error.message : String(error) };
+  if (entry.status === 0) return { ...base, error: entry.body };
+  if (entry.status < 200 || entry.status >= 300) {
+    return { ...base, error: `HTTP ${entry.status}` };
   }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(entry.body);
+  } catch {
+    return { ...base, error: 'not JSON' };
+  }
+
+  return { ...base, pairs: byLiquidity(pairsIn(payload)), bars: barsIn(payload) };
 }
 
 export interface ProbeReport {
@@ -109,6 +108,12 @@ export interface ProbeReport {
   attempts: FetchResult[];
   /** The best pair found anywhere, or null. */
   best: PairQuote | null;
+  /**
+   * Every source refused. Distinct from "nobody knew this token", which is
+   * what the parser failing would mean — blaming the parser for a rate limit
+   * sends someone looking in entirely the wrong place.
+   */
+  allRefused: boolean;
 }
 
 /**
@@ -122,14 +127,19 @@ export interface ProbeReport {
  */
 export async function probeToken(
   token: string,
-  opts: { timeoutMs?: number; fetchImpl?: typeof fetch; endpoints?: Endpoint[] } = {},
+  opts: SourceOptions = {},
 ): Promise<ProbeReport> {
   const endpoints = (opts.endpoints ?? ENDPOINTS).filter((endpoint) => endpoint.pairs);
   const attempts = await Promise.all(
     endpoints.map((endpoint) => attempt(endpoint.name, fill(endpoint.pairs!, { token }), opts)),
   );
   const [best] = byLiquidity(attempts.flatMap((result) => result.pairs));
-  return { token, attempts, best: best ?? null };
+  return {
+    token,
+    attempts,
+    best: best ?? null,
+    allRefused: attempts.length > 0 && attempts.every((result) => result.refused),
+  };
 }
 
 /**
@@ -139,9 +149,7 @@ export async function probeToken(
  * provider being down, rate-limiting, or simply not covering a chain degrades
  * to the next rather than to a failure.
  */
-export function aggregatorSource(
-  opts: { timeoutMs?: number; fetchImpl?: typeof fetch; endpoints?: Endpoint[] } = {},
-): QuoteSource {
+export function aggregatorSource(opts: SourceOptions = {}): QuoteSource {
   const endpoints = opts.endpoints ?? ENDPOINTS;
 
   return {

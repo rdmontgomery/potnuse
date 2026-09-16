@@ -171,6 +171,7 @@ describe('probe page', () => {
         pairCount: 0,
         barCount: 0,
         error: 'ETIMEDOUT',
+        refused: true,
       },
     ],
     best: {
@@ -207,6 +208,23 @@ describe('probe page', () => {
     const out = probePage({ ...view, best: null });
     expect(out).toContain('Nothing usable');
     expect(out).toContain('dexscreener-token');
+  });
+
+  it('blames the rate limit, not the parser, when every source refused', () => {
+    // The parser never saw a body. Saying it could not read one sends someone
+    // looking in entirely the wrong place.
+    const out = probePage({ ...view, best: null, allRefused: true });
+    expect(out).toContain('Every source refused');
+    expect(out).toContain('rate limits, not a parsing problem');
+    expect(out).not.toContain('Nothing usable');
+  });
+
+  it('marks a cached answer so a repeat is not mistaken for a fresh one', () => {
+    const cached = {
+      ...view,
+      attempts: [{ ...view.attempts[0]!, fromCache: true }],
+    };
+    expect(probePage(cached)).toContain('cached');
   });
 
   it('renders an empty body as a marker rather than a blank block', () => {

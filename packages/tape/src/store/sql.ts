@@ -1,5 +1,6 @@
 import type { BankrollState } from '../bankroll.ts';
 import { decodeJson, encodeJson, type JournalEvent } from '../journal.ts';
+import type { HttpCache } from '../quotes/cache.ts';
 import type {
   RunRecord,
   SqlDatabase,
@@ -132,6 +133,42 @@ export function sqlStore(db: SqlDatabase): TapeStore {
         )
         .bind(run.startedAt, run.finishedAt, run.markets, run.observations, run.error)
         .run();
+    },
+  };
+}
+
+/**
+ * An HTTP cache over the same database as everything else.
+ *
+ * Shared deliberately: the cron and the diagnostics page hit the same public
+ * aggregators, which rate-limit by IP, so they are spending one budget and
+ * should see one cache. A probe that reports "rate limited" while the cron
+ * quietly succeeds against its own cache would be lying about the same fact.
+ */
+export function sqlCache(db: SqlDatabase, opts: { now?: () => number } = {}): HttpCache {
+  const now = opts.now ?? Date.now;
+  return {
+    async get(url) {
+      const row = await db
+        .prepare('SELECT body, status, stored_at, expires_at FROM http_cache WHERE url = ?')
+        .bind(url)
+        .first<{ body: string; status: number; stored_at: number; expires_at: number }>();
+      return row
+        ? { body: row.body, status: row.status, storedAt: row.stored_at, expiresAt: row.expires_at }
+        : null;
+    },
+
+    async put(url, entry) {
+      await db
+        .prepare(
+          `INSERT INTO http_cache (url, body, status, stored_at, expires_at) VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(url) DO UPDATE SET body = excluded.body, status = excluded.status,
+             stored_at = excluded.stored_at, expires_at = excluded.expires_at`,
+        )
+        .bind(url, entry.body, entry.status, entry.storedAt, entry.expiresAt)
+        .run();
+      // Indexed sweep, so the table does not grow without bound.
+      await db.prepare('DELETE FROM http_cache WHERE expires_at < ?').bind(now()).run();
     },
   };
 }

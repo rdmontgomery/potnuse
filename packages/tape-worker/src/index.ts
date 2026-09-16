@@ -14,6 +14,7 @@ import {
   solanaRpc,
   solanaTokenFacts,
   SOLANA_RPC,
+  sqlCache,
   sqlStore,
   summarize,
   type MarketConfig,
@@ -80,6 +81,27 @@ function authorized(request: Request, secret: string): boolean {
   if (bearer && sameSecret(bearer, `Bearer ${secret}`)) return true;
   const cookie = cookieToken(request);
   return cookie !== null && sameSecret(cookie, secret);
+}
+
+/**
+ * Shared settings for every call to a public price source.
+ *
+ * Four minutes of freshness and ten of backoff, against a one-minute cron:
+ * one call per source per market per four minutes rather than per minute, and
+ * a refusal costs nothing further for ten. These aggregators rate-limit by IP
+ * and this Worker's egress addresses are shared with other tenants, so part of
+ * the budget is spent by traffic that is not ours.
+ *
+ * The cron, the add form and the diagnostics page all take this, so they
+ * spend one budget and see one cache. A probe reporting "rate limited" while
+ * the cron quietly succeeded would be lying about the same fact.
+ */
+function sourceOpts(env: Env) {
+  return {
+    timeoutMs: 8_000,
+    cache: sqlCache(env.TAPE_DB),
+    policy: { okMs: 4 * 60_000, backoffMs: 10 * 60_000 },
+  };
 }
 
 function deps(store: TapeStore): RunnerDeps {
@@ -161,7 +183,7 @@ async function pageData(store: TapeStore, journalFor?: string | null): Promise<P
  * The identifier is whatever the source issued; nothing here needs to know
  * what venue produced it.
  */
-async function addMarket(store: TapeStore, form: FormData): Promise<PageData['flash']> {
+async function addMarket(env: Env, store: TapeStore, form: FormData): Promise<PageData['flash']> {
   const read = (key: string) => String(form.get(key) ?? '').trim();
   const num = (key: string, fallback: number) => {
     const value = Number(read(key));
@@ -170,7 +192,7 @@ async function addMarket(store: TapeStore, form: FormData): Promise<PageData['fl
 
   try {
     const token = assertTokenId(read('base'));
-    const source = aggregatorSource({ timeoutMs: 8_000 });
+    const source = aggregatorSource(sourceOpts(env));
     const pairs = await source.pairsFor(token);
     const wanted = read('pool');
     const pair = wanted ? pairs.find((p: { pairId: string }) => p.pairId === wanted) : pairs[0];
@@ -279,7 +301,7 @@ export default {
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     if (!env.TAPE_DB) return;
     const store = sqlStore(env.TAPE_DB);
-    const quotes = await runQuotes({ store, source: aggregatorSource({ timeoutMs: 8_000 }) });
+    const quotes = await runQuotes({ store, source: aggregatorSource(sourceOpts(env)) });
     const summary = await runOnce(deps(store));
     console.log(
       JSON.stringify({
@@ -346,7 +368,7 @@ export default {
       let flash: PageData['flash'];
 
       if (url.pathname === '/market') {
-        flash = await addMarket(store, await request.formData());
+        flash = await addMarket(env, store, await request.formData());
       } else if (url.pathname === '/market/deactivate') {
         const id = String((await request.formData()).get('id') ?? '');
         const existing = (await store.activeMarkets()).find((market) => market.id === id);
@@ -369,7 +391,7 @@ export default {
         } as const;
         const result = isQuoteMarket(market?.config)
           ? await enterQuoteMarket(
-              { store, source: aggregatorSource({ timeoutMs: 8_000 }) },
+              { store, source: aggregatorSource(sourceOpts(env)) },
               id,
               unknownFacts,
             )
@@ -389,10 +411,11 @@ export default {
     if (url.pathname === '/probe') {
       const token = url.searchParams.get('token')?.trim();
       if (!token) return html(probePage(null));
-      const report = await probeToken(token, { timeoutMs: 8_000 });
+      const report = await probeToken(token, sourceOpts(env));
       return html(
         probePage({
           token,
+          allRefused: report.allRefused,
           attempts: report.attempts.map((a) => ({
             endpoint: a.endpoint,
             url: a.url,
@@ -402,6 +425,8 @@ export default {
             pairCount: a.pairs.length,
             barCount: a.bars.length,
             error: a.error,
+            refused: a.refused,
+            fromCache: a.fromCache,
           })),
           best: report.best
             ? {
