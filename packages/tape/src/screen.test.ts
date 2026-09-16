@@ -31,6 +31,7 @@ const clean: ScreenFacts = {
   sourceVerified: true,
   ownerRenounced: true,
   canMint: false,
+  canFreeze: false,
   topHolderPct: 4,
   holders: 9_000,
   lpLockedPct: 100,
@@ -78,11 +79,12 @@ describe('unknowns are not passes', () => {
       sourceVerified: null,
       ownerRenounced: null,
       canMint: null,
+      canFreeze: null,
       topHolderPct: null,
     };
     const verdict = screen(dark, policy);
     expect(verdict.outcome).toBe('warn');
-    expect(verdict.findings.filter((f) => f.message.includes('unknown')).length).toBe(5);
+    expect(verdict.findings.filter((f) => f.message.includes('unknown')).length).toBe(6);
   });
 
   it('never reports clear while anything is unknown', () => {
@@ -93,6 +95,18 @@ describe('unknowns are not passes', () => {
 describe('contract risk', () => {
   it('blocks a mintable supply', () => {
     expect(codes({ ...clean, canMint: true })).toContain('mintable');
+  });
+
+  it('blocks a token whose accounts can be frozen', () => {
+    // Holding something you cannot sell is the same loss as being rugged,
+    // arrived at differently.
+    const verdict = screen({ ...clean, canFreeze: true }, policy);
+    expect(verdict.outcome).toBe('block');
+    expect(verdict.findings.find((f) => f.code === 'freezable')?.message).toMatch(/unsellable/);
+  });
+
+  it('warns rather than clears when freeze authority could not be read', () => {
+    expect(codes({ ...clean, canFreeze: null })).toContain('freeze-unknown');
   });
 
   it('blocks unverified source', () => {

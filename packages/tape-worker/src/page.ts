@@ -142,6 +142,7 @@ ${banner}
 
 export interface ProbeView {
   token: string;
+  allRefused?: boolean;
   attempts: {
     endpoint: string;
     url: string;
@@ -151,6 +152,8 @@ export interface ProbeView {
     pairCount: number;
     barCount: number;
     error: string | null;
+    refused?: boolean;
+    fromCache?: boolean;
   }[];
   best: {
     chain: string;
@@ -176,7 +179,7 @@ export function probePage(view: ProbeView | null): string {
         .map(
           (a) => `<tr>
 <td class="mono"><strong>${esc(a.endpoint)}</strong><br><span style="color:var(--ink-faint)">${esc(a.url)}</span></td>
-<td class="mono">${a.error ? `<span style="color:var(--block)">${esc(a.error)}</span>` : esc(String(a.status))}</td>
+<td class="mono">${a.error ? `<span style="color:var(--block)">${esc(a.error)}</span>` : esc(String(a.status))}${a.fromCache ? '<br><span class="pill">cached</span>' : ''}</td>
 <td class="mono">${a.bytes.toLocaleString()}</td>
 <td class="mono">${a.pairCount} / ${a.barCount}</td>
 </tr>
@@ -197,9 +200,13 @@ export function probePage(view: ProbeView | null): string {
           `liquidity  ${view.best.liquidityUsd ?? '—'}`,
         ].join('\n'),
       )}</pre></div>`
-    : view
-      ? `<div class="flash bad"><span class="k">Nothing usable</span><p>No endpoint returned a pair this parser could read. The bodies above are the evidence.</p></div>`
-      : '';
+    : view && view.allRefused
+      ? `<div class="flash warn"><span class="k">Every source refused</span>
+<p>These are rate limits, not a parsing problem &mdash; the parser never saw a body. Public aggregators limit by IP, and this Worker shares its egress addresses with every other tenant, so the budget is partly spent by traffic that is not ours.</p>
+<p>Responses are cached now, including refusals, so retrying immediately will not help and will not hurt. Wait a few minutes, or add an API key to raise the ceiling.</p></div>`
+      : view
+        ? `<div class="flash bad"><span class="k">Nothing usable</span><p>The sources answered but no endpoint returned a pair this parser could read. The bodies above are the evidence.</p></div>`
+        : '';
 
   return shell(
     'Tape Runner',

@@ -25,6 +25,22 @@ export {
 } from './quotes/aggregator.ts';
 export { poolFor, poolFromLiquidity } from './quotes/synthetic.ts';
 export {
+  cachedFetch,
+  isRefusal,
+  memoryCache,
+  type CacheEntry,
+  type CachePolicy,
+  type HttpCache,
+} from './quotes/cache.ts';
+export { decodeMint, fromBase64, toBase58, type MintAccount } from './solana/mint.ts';
+export {
+  SOLANA_RPC,
+  solanaRpc,
+  solanaTokenFacts,
+  topHolderShare,
+  type SolanaTokenFacts,
+} from './solana/facts.ts';
+export {
   barSession,
   type BarEnterOutcome,
   type BarPaperConfig,
@@ -151,6 +167,7 @@ export {
 export {
   bufferedJournal,
   memoryStore,
+  sqlCache,
   sqlStore,
   type RunRecord,
   type SqlDatabase,
