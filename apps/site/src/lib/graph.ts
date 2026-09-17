@@ -40,11 +40,17 @@ const STATIC_NODES: Omit<Node, 'backlinks'>[] = [
     slug: 'calibrate',
     title: 'calibrate',
     state: 'germinating',
-    date: '2026-04-29T00:00:00.000Z',
-    connects: ['dsl-hobbies', 'mumford-magick'],
-    tags: ['llm', 'prompt', 'epistemology', 'exercise'],
+    date: '2026-09-16T00:00:00.000Z',
+    connects: [
+      'dsl-hobbies',
+      'mumford-magick',
+      'foundation-block',
+      'reverberant-middle',
+      'care-for-an-esper',
+    ],
+    tags: ['llm', 'memory', 'borgmann', 'drift', 'exercise', 'palimpsest'],
     description:
-      'A conversation protocol for teaching an LLM how you think. Not a personality quiz — epistemological infrastructure.',
+      'An exercise for teaching a language model how you think, written in April and overwritten in September. Both layers kept, because the old copy is the only thing that measures the drift.',
     url: '/calibrate',
   },
 ];
