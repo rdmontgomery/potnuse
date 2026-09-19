@@ -8,4 +8,9 @@ import mdx from '@astrojs/mdx';
 // When we add a server route (agentic tooling, etc.), re-add the cloudflare adapter.
 export default defineConfig({
   integrations: [react(), mdx()],
+  markdown: {
+    // Warm dark theme; the background is overridden in prose CSS so code blocks
+    // sit on --bg-card rather than punching a black hole in the page.
+    shikiConfig: { theme: 'vesper', wrap: false },
+  },
 });
