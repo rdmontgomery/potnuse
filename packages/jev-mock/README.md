@@ -105,6 +105,56 @@ Every operational dashboard you own would call that an improvement.
   not calibrated, for comparison. On a calibrated stream the closed form lands
   within half a percent of it.
 
+## Building your own eval suite
+
+`eval.ts` is the other half: the tools for auditing a model you cannot inspect,
+on the only distribution that matters, which is yours.
+
+The premise worth stating plainly — **recalibration needs nothing from the model
+except a good ordering.** Ordering is what preference training preserves, so a
+hot vendor, a general LLM's `logprobs` and a well-behaved RLCD model are all the
+same input to a local calibration layer. They differ only in how many labels it
+takes to fix them.
+
+| labels used to fit | isotonic, in sample | isotonic, held out | Platt, held out |
+| --- | --- | --- | --- |
+| untouched | — | 0.0786 | 0.0786 |
+| 100 | 0.0000 | 0.0629 | 0.0387 |
+| 400 | 0.0000 | 0.0405 | 0.0268 |
+| 1,000 | 0.0000 | 0.0319 | 0.0231 |
+| 4,000 | 0.0000 | 0.0233 | 0.0237 |
+| 10,000 | 0.0000 | 0.0236 | 0.0215 |
+
+Resolution across that same fix went 0.1274 to 0.1299 — unmoved, as a monotone
+map requires. You can buy honesty locally; you cannot buy intelligence locally.
+
+Note the in-sample column: isotonic reports `0.0000` at every sample size,
+because it fits the empirical frequencies exactly. Any calibration report that
+does not hold out is reporting that zero.
+
+- `wilson`, `reliabilityTable` — per-bin Wilson intervals and an `offDiagonal`
+  flag. At 40 items per bin the 95% interval is ~0.30 wide. Honest stream: 1 of
+  10 bins flagged. Overconfident: 8 of 10.
+- `platt`, `isotonic`, `applyRecalibration` — Platt below ~1,000 labels (two
+  parameters, correctly specified when the distortion is a temperature);
+  isotonic above ~4,000.
+- `split` — fit/test discipline, non-optional.
+- `stratifiedSample` — allocate a labelling budget across the forecast axis
+  rather than uniformly. Your threshold lives in one decile; spend there.
+- `report`, `gate` — gate a version bump on reliability *and* resolution, never
+  accuracy. A model that always reports the base rate is perfectly calibrated
+  and perfectly useless, which is why ECE alone is a bad gate.
+- `power` — how many labels you need, by simulation. Catching a 15%-hot vendor
+  at a 5% false-alarm budget: 63% detection at n=250, 100% at n=1,000.
+
+Score each question id separately. A twenty-question panel is twenty forecasters
+sharing an invoice, and averaging their reliability curves averages a weather
+forecaster and a sommelier.
+
+Known gap: score questions are scored as top-1 correctness, which discards the
+ordinal structure. The right instrument is the ranked probability score — the
+Brier score over the cumulative distribution. Not implemented.
+
 ## Running it
 
 ```

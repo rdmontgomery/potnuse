@@ -222,6 +222,67 @@ That is the argument for the mock, and it is the argument for keeping a labelled
 
 ---
 
+### running your own eval suite
+
+Everything above assumes you can measure the vendor. You cannot inspect Jev's training data, its reward, or its logits, and the benchmark it ships was run on its distribution rather than yours. What you *can* observe is a stream of your own decisions with outcomes attached. That turns out to be enough, and it is enough in a stronger way than I expected when I started.
+
+<Pull>Calibration is something you can manufacture. You do not have to buy it.</Pull>
+
+Here is the inversion. Recalibration — fitting a monotone map from reported probability to observed frequency — needs nothing from the model except that its *ordering* be good. Ordering is precisely what preference training preserves, per the algebra three sections up. So a hot vendor, an RLHF-tuned general model with a `logprobs` field, and a well-behaved RLCD model are all the same input to a local calibration layer, and they differ only in how many labels the layer needs to fix them. RLCD is a convenience. It is not a moat.
+
+Over the same overconfident stream, held out properly:
+
+| labels used to fit | isotonic, in sample | isotonic, held out | Platt, held out |
+| --- | --- | --- | --- |
+| untouched | — | 0.0786 | 0.0786 |
+| 100 | 0.0000 | 0.0629 | 0.0387 |
+| 400 | 0.0000 | 0.0405 | 0.0268 |
+| 1,000 | 0.0000 | 0.0319 | 0.0231 |
+| 4,000 | 0.0000 | 0.0233 | 0.0237 |
+| 10,000 | 0.0000 | 0.0236 | 0.0215 |
+
+Four hundred labels cut the calibration error by two thirds. And resolution over the same split went 0.1274 to 0.1299 — unmoved, as it must be, because a monotone map cannot reorder anything. **You can buy honesty locally. You cannot buy intelligence locally.** That division is worth internalizing before you negotiate with any model vendor about accuracy.
+
+Stare at the second column, though, because it is the most important number on this page. Isotonic regression's in-sample calibration error is `0.0000` at *every* sample size — a hundred labels or ten thousand, it fits the empirical frequencies exactly and reports perfection. Any calibration report that does not hold out is reporting that zero. I would guess most internal ones do.
+
+So, the protocol, in the order it actually has to happen.
+
+**Sample by the model's confidence, not by class.** Uniform random labelling spends most of its budget in the confident bulk, where you already agree with the model and where nothing is at stake. Your threshold lives in one specific decile; that is where the labels belong. `stratifiedSample` allocates a fixed budget per forecast bin, which costs nothing and roughly triples the information per label near the cut.
+
+**Score each question id separately.** This is the mistake I would have made. Every question you send is its own forecaster with its own reliability curve, and a wide panel of twenty questions is twenty models sharing an invoice. Averaging their reliability is averaging a weather forecaster and a sommelier. Per-question, always — and then your escalation policy can escalate on the two questions that are badly calibrated while trusting the other eighteen.
+
+**Put error bars on the diagram.** A Wilson interval per bin, every time. At forty items in a bin the 95% interval is about 0.30 wide, which is wider than any miscalibration anyone is arguing about, and a reliability diagram without them is a Rorschach test. With them, the honest stream flags 1 bin of 10 as off-diagonal and the overconfident one flags 8 — a conclusion rather than a vibe.
+
+**Then pick a fitter by budget.** Platt scaling below about a thousand labels: two parameters, and it is the correctly specified model when the distortion is a temperature, which per the RLHF algebra it very often is. Isotonic above a few thousand: non-parametric, fixes shapes Platt cannot, overfits viciously when starved. The crossover in the table is around 4,000.
+
+**Know your power before you run the test.** Simulate it rather than trusting a formula. Fixing the false-alarm budget at 5% first, then asking how often a 15%-overconfident vendor gets caught:
+
+| labelled items | false alarms | detection |
+| --- | --- | --- |
+| 250 | 7% | 63% |
+| 1,000 | 7% | 100% |
+| 4,000 | 7% | 100% |
+
+A thousand labels is the answer for a distortion that size. Two hundred and fifty is a coin flip dressed as diligence.
+
+**Gate the release on reliability and resolution, never accuracy.** Accuracy is a ranking statistic evaluated at one threshold, and it moves last. Four gates on the same criteria — reliability under 0.002, resolution over 0.08, at least 2,000 labels:
+
+```
+honest         PASS
+overconfident  FAIL  reliability 0.00564 exceeds 0.002
+thin sample    FAIL  only 500 labelled items; 2000 needed to distinguish
+                     signal from binning noise; reliability 0.00268 exceeds 0.002
+always 0.5     FAIL  resolution 0.0000 below 0.08: honest but uninformative
+```
+
+The last row is the Goodhart trap and it is why ECE alone is a bad gate: a model that reports the base rate for everything is perfectly calibrated and perfectly useless. Reliability and resolution have to be read together or you will optimize your way into a very honest coin. The third row is the noise floor caught in the act — at n=500 even the honest model trips a reliability threshold, which is why the sample-size guard fires first and the gate declines to have an opinion.
+
+**Pin the version, and keep the canary running forever.** `jev-latest` is an alias and aliases move; a threshold is calibrated against a specific model version and nothing guarantees it survives a bump. Pin to `jev-1.13.0` or whatever is current, log every decision with its probability, sample a slice for labelling on a schedule, and alarm on the reliability term rather than on accuracy. Your own distribution drifts too — recalibration is a maintained artifact, not a one-time fix, and the fit you made in March is a claim about March's traffic.
+
+<Marginal>This is unfashionable and I think it is right: the eval suite you need for a decision model is a hundred lines of scoring code and a labelling budget, not a framework. The scoring rules are nineteenth-century. Murphy's decomposition is 1973. Nothing here needed a vendor.</Marginal>
+
+---
+
 ### which parts of a repo are shaped like this
 
 The reason I wanted the mock before the API key: I have work repos and I do not know which of their decision points are System One shaped. The signature turns out to be fairly crisp.
@@ -236,15 +297,17 @@ My own repo passes that screen in exactly one place I did not expect and fails i
 
 ### where the numbers came from, and what I still doubt
 
-The code is `packages/jev-mock` in this repo: the wire protocol, both mocks, the scoring rules, the Murphy decomposition, the policy algebra, and thirteen tests that assert the things claimed above. `pnpm --filter @rdm/jev-mock demo` regenerates every table on this page. Nothing in it makes a network call and there is no API key anywhere near it.
+The code is `packages/jev-mock` in this repo: the wire protocol, both mocks, the scoring rules, the Murphy decomposition, the policy algebra, the eval kit — Wilson intervals, Platt, isotonic, stratified label allocation, the release gate, power by simulation — and twenty-five tests that assert the things claimed above. `pnpm --filter @rdm/jev-mock demo` regenerates every table on this page. Nothing in it makes a network call and there is no API key anywhere near it.
 
-Four things I am not confident about.
+Five things I am not confident about.
 
 The performance claims are the vendor's, on the vendor's benchmark, and the one independent replication I found came in an order of magnitude below the headline while still supporting the direction. Treat 40-200x as "very fast" and nothing more precise.
 
 The `confidence` field on choice and score answers is documented only as "derived from the probability distribution." I implemented it as one minus normalized entropy, which has the right monotonicity and is certainly not their formula. More importantly: it is a spread statistic, not a forecast, and it is *not* the quantity RLCD calibrates. Do not put it in a threshold. Threshold the probability.
 
 At least one third-party client documents the boolean primitive's P(true) as explicitly *uncalibrated*, which — if it is accurate rather than a client author hedging — is a substantial asterisk on the simplest and most attractive primitive in the API. I could not resolve it against the primary docs.
+
+Score questions get scored here as top-1 correctness against top-1 probability, which throws away the ordinal structure that made a rubric worth using. The right instrument for an ordered outcome is the ranked probability score — the Brier score applied to the cumulative distribution — and it would catch a model that puts its mass two levels away while top-1 accuracy shrugs. The package does not implement it. That is a gap, not a judgment.
 
 And the RLHF-as-temperature derivation assumes the reward correlates with the model's own confidence. It is a clean special case, not the general one; real reward models are not `log pi_ref`. The claim that survives regardless is the weaker and still sufficient one: the optimal KL-constrained policy is a monotone reweighting of the reference, monotone reweightings preserve ranking, and every ranking metric in your evaluation suite is therefore structurally incapable of seeing what happened to your probabilities.
 

@@ -6,6 +6,13 @@
 
 import {
   abstainBand,
+  applyRecalibration,
+  gate,
+  isotonic,
+  platt,
+  power,
+  reliabilityTable,
+  split,
   brier,
   calibratedJev,
   type Costs,
@@ -15,6 +22,7 @@ import {
   logLoss,
   murphy,
   type Pair,
+  rng,
   shapeOnlyJev,
   sweep,
   threshold,
@@ -107,13 +115,61 @@ for (const [label, t] of [
   );
 }
 
+console.log('\n--- recalibrating a hot vendor in your own layer -----------------');
+const spoiled = await streamOf(0.5, 20000);
+const held = spoiled.slice(10000, 12000);
+console.log('untouched held-out ECE', f(ece(held)));
+console.log('labels   iso in-sample   iso held-out   Platt held-out');
+for (const nFit of [100, 400, 1000, 4000, 10000]) {
+  const fit = spoiled.slice(0, nFit);
+  console.log(
+    `${String(nFit).padStart(6)}   ${f(ece(applyRecalibration(fit, isotonic(fit))))}        ${f(ece(applyRecalibration(held, isotonic(fit))))}       ${f(ece(applyRecalibration(held, platt(fit))))}`,
+  );
+}
+const { fit: fitHalf, test: testHalf } = split(spoiled);
+const fixed = applyRecalibration(testHalf, platt(fitHalf));
+console.log('resolution before', f(murphy(testHalf).resolution), 'after', f(murphy(fixed).resolution));
+
+console.log('\n--- bins that are off the diagonal by more than noise ------------');
+for (const [label, t] of [['honest', 1], ['T=0.5 ', 0.5]] as const) {
+  const table = reliabilityTable(await streamOf(t, 8000));
+  console.log(`${label}  ${table.filter((b) => b.offDiagonal).length} of 10 bins flagged`);
+}
+
+console.log('\n--- how many labels to catch 15% overconfidence ------------------');
+console.log('n       false alarms   detection');
+for (const n of [250, 1000, 4000]) {
+  const r = await power(
+    (k, seed) => streamOf(1, k, seed),
+    (k, seed) => streamOf(0.5, k, seed),
+    n,
+    30,
+  );
+  console.log(
+    `${String(n).padStart(5)}   ${(r.falsePositiveRate * 100).toFixed(0).padStart(6)}%       ${(r.detectionRate * 100).toFixed(0).padStart(5)}%`,
+  );
+}
+
+console.log('\n--- the release gate --------------------------------------------');
+const g = { maxReliability: 0.002, minResolution: 0.08, minSamples: 2000 };
+for (const [label, pairs] of [
+  ['honest        ', await streamOf(1, 8000)],
+  ['overconfident ', await streamOf(0.5, 8000)],
+  ['thin sample   ', await streamOf(1, 500)],
+  ['always 0.5    ', Array.from({ length: 4000 }, (_, i) => ({ p: 0.5, y: (i % 2) as 0 | 1 }))],
+] as const) {
+  const r = gate(pairs, g);
+  console.log(`${label} ${r.pass ? 'PASS' : 'FAIL'}  ${r.reasons.join('; ')}`);
+}
+
 console.log('\n--- and the shape-only mock, for contrast ------------------------');
 const shape = shapeOnlyJev({ seed: 11 });
+const coin = rng(99);
 const shapePairs: Pair[] = [];
 for (let i = 0; i < 20000; i++) {
   const { answers: a } = await shape.decide(`ticket ${i}`, question);
   // Nothing ties the forecast to the outcome, so the outcome is a coin flip.
-  shapePairs.push({ p: a.urgent.probability, y: Math.random() < 0.5 ? 1 : 0 });
+  shapePairs.push({ p: a.urgent.probability, y: coin() < 0.5 ? 1 : 0 });
 }
 const sm = murphy(shapePairs);
 console.log(
