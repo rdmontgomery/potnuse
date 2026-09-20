@@ -1,0 +1,336 @@
+---
+import Module6Behold from './Module6Behold';
+import Module6Derive from './Module6Derive';
+import Module6Operate from './Module6Operate';
+import Module6Prompts from './Module6Prompts';
+---
+
+<div class="m m6">
+  <section class="m-block m6-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Inside the diatonic walls, chromaticism is the act of momentarily
+      stepping outside. The simplest move is the <em>secondary
+      dominant</em>: pick any chord in the key, build its own dominant
+      in front of it, and you've borrowed the leading-tone of another
+      key for one chord only. Watch the V/V slip into a I–V–I and
+      pull the V more strongly toward home.
+    </p>
+    <Module6Behold client:visible />
+  </section>
+
+  <section class="m-block m6-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      Two main vocabularies live here. <strong>Secondary dominants</strong>{' '}
+      (V/V, V/vi, V/ii…) tonicize any non-tonic chord — borrowing its
+      leading-tone for one chord. <strong>Modal mixture</strong>{' '}
+      borrows chords from the parallel minor (iv, ♭VI, ♭VII), injecting
+      darker color without leaving the key proper. The <em>Neapolitan
+      sixth</em> is a special predominant — ♭II in first inversion —
+      sitting at the boundary between the two.
+    </p>
+    <Module6Derive client:visible />
+  </section>
+
+  <section class="m-block m6-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Switch between four four-chord progressions to A/B the same
+      diatonic spine against three chromatic deviations. The chord
+      slots glow as each one rings; the caption underneath spells out
+      what borrowed motion you just heard.
+    </p>
+    <Module6Operate client:visible />
+  </section>
+
+  <section class="m-block m6-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      One vocabulary card, one ear card.
+    </p>
+    <Module6Prompts client:visible />
+  </section>
+
+  <section class="m-block m6-block m-bridge m6-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      Chromaticism still anchors to a key. The neo-Riemannian view
+      drops the key entirely and asks: what's the shortest path from
+      one triad to another, regardless of where you started? Next:
+      <em>P, L, R</em> on the Tonnetz.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 6 specific rules. */
+
+  /* Behold ---------------------------------------------------------------- */
+  .m6-behold {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-width: 360px;
+    margin: 0 auto;
+  }
+  .m6-behold-staff {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem;
+    transition: border-color 0.3s ease;
+    line-height: 0;
+  }
+  .m6-behold-staff.chromatic {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .m6-behold-staff svg {
+    display: block;
+  }
+  .m6-behold-track {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .m6-behold-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3rem;
+    padding: 0.35rem 0.55rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    opacity: 0.45;
+    transition:
+      opacity 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+  .m6-behold-step.active {
+    opacity: 1;
+    border-color: var(--accent);
+    background: rgba(232, 168, 56, 0.1);
+  }
+  .m6-behold-step.chromatic .m6-step-label {
+    color: var(--accent);
+    font-style: italic;
+  }
+  .m6-step-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .m6-behold-caption {
+    font-size: 0.9rem !important;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0 !important;
+    line-height: 1.5 !important;
+    max-width: 38ch;
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m6-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m6-chord-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 540px;
+  }
+  .m6-chord-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .m6-chord-origin {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .m6-chord-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: stretch;
+    width: 100%;
+  }
+  .m6-chord-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.4rem 0.55rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m6-chord-btn:hover:not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m6-chord-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m6-derive-staff {
+    background: #f5efe0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem;
+    line-height: 0;
+  }
+  .m6-derive-staff svg {
+    display: block;
+    margin: 0 auto;
+  }
+  .m6-derive-caption {
+    text-align: center;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    max-width: 50ch;
+    line-height: 1.55 !important;
+  }
+  .m6-derive-caption strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m6-operate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m6-prog-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .m6-prog-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.45rem 0.7rem;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m6-prog-btn:hover:not(.active):not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m6-prog-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m6-prog-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .m6-prog-display {
+    display: flex;
+    gap: 0.45rem;
+  }
+  .m6-prog-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.4rem;
+    padding: 0.5rem 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .m6-prog-step.ringing {
+    background: rgba(232, 168, 56, 0.12);
+    border-color: var(--accent);
+  }
+  .m6-prog-roman {
+    font-family: var(--font-jetbrains);
+    font-size: 0.9rem;
+    color: var(--accent);
+  }
+  .m6-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+  }
+  .m6-operate-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m6-operate-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .m6-operate-caption {
+    font-size: 0.92rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 46ch;
+    line-height: 1.55 !important;
+  }
+
+  @media (max-width: 480px) {
+    .m6-chord-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,29 @@
+---
+title: pentimento
+date: 2026-05-14
+state: seedling
+connects: [ladder, allons-jouer]
+tags: [music, blues, complexity, reduction]
+description: A sliding scale of musical complexity. Strip a 12-bar blues to its bones, then add layers back to a virtuoso.
+---
+
+A slider that morphs a song from skeleton to virtuoso. At the bottom: chord roots in the bass, guide tones held in the lead — barely there. At the top: walking bass with chromatic approaches, rootless extension voicings, fills sketched in the call-and-response gaps. Pull the slider mid-playback and the current measure rings out; the next downbeat picks up the new layer.
+
+[Slide a 12-bar blues →](/experiments/pentimento)
+
+## why the name
+
+Pentimento is the painter's term for an earlier brushstroke that shows through a finished layer — a regret, a reconsideration, still legible. The slider here is a pentimento in reverse: the bones aren't hidden under the performance, they *are* the performance, and the layers above them are choices about how much to add.
+
+## why a blues
+
+12-bar blues is the most efficient form for this idea. The structure *is* the skeleton — I-IV-V over twelve bars, nothing else required — so the floor of the slider has somewhere to land that still feels like the song. The ceiling has a hundred years of recorded improvisations to draw vocabulary from. C.C. Rider is old enough to be unencumbered, simple enough that the head melody survives reduction to whole notes, and rich enough that virtuoso fills don't feel forced.
+
+## where it might grow
+
+- Shenandoah next — different axis. The high end of that slider isn't fills, it's reharmonization. Same UI, different musical work underneath.
+- A "ghost" layer on the staff: render the next tier's notes faintly in place so you can see where the complexity hides before you slide into it.
+- Continuous interpolation between tiers (currently snapped) — would need every note to carry a window, not just a tier index.
+- A playhead and tempo control. For now, the audio plays; the staff stands still.
+
+This stays its own thing rather than collapsing into [ladder](/experiments/ladder) or [allons-jouer](/allons-jouer) because the shape of the work is different. Ladder asks *what note is this?* Allons-jouer asks *can you play this phrase?* Pentimento asks *how much of this is the song, and how much is the player?* — a question the slider answers by letting you put the line wherever you want.

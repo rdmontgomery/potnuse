@@ -1,0 +1,402 @@
+---
+import Base from '@/layouts/Base.astro';
+import ModuleSection from '@/components/curriculum/ModuleSection.astro';
+import PersistentStaff from '@/components/curriculum/PersistentStaff.astro';
+import Module0 from '@/components/curriculum/Module0.astro';
+import Module1 from '@/components/curriculum/Module1.astro';
+import Module2 from '@/components/curriculum/Module2.astro';
+import Module3 from '@/components/curriculum/Module3.astro';
+import Module4 from '@/components/curriculum/Module4.astro';
+import Module5 from '@/components/curriculum/Module5.astro';
+import Module6 from '@/components/curriculum/Module6.astro';
+import Module7 from '@/components/curriculum/Module7.astro';
+import Module8 from '@/components/curriculum/Module8.astro';
+import Module9 from '@/components/curriculum/Module9.astro';
+import Module10 from '@/components/curriculum/Module10.astro';
+import Module11 from '@/components/curriculum/Module11.astro';
+
+// The spine of the curriculum: twelve modules from Z_12 to active matter.
+// Order is firm; pace is the user's. Module 0 is the only one with content in
+// this scaffold; the rest stand as placeholders.
+// Each module carries a `lens` describing what the spine should read
+// out of the running chorale phrase for that module. PersistentStaff
+// observes which section is most-in-view and surfaces the lens above
+// its staff, so the sidebar tracks the active concept rather than
+// staying frozen on the page-load reduction.
+const MODULES = [
+  {
+    title: 'The Equal-Tempered Group',
+    kicker:
+      'Z_12 from the keyboard up. Pitch class as quotient, transposition as group action.',
+    lens: 'soprano pitches of the chorale as pcs on the clock',
+  },
+  {
+    title: 'Spectral Foundations',
+    kicker:
+      'The overtone series justifies the triad before Roman numerals name it.',
+    lens: 'the chorale’s bass note as a stack of partials',
+  },
+  {
+    title: 'Intervals and Generators',
+    kicker: 'Why fifths circle: gcd(7, 12) = 1.',
+    lens: 'chord-root motion as walks on the cycle of fifths',
+  },
+  {
+    title: 'Scales as Subsets',
+    kicker:
+      'The diatonic scale as the maximally even seven-subset. Modes as rotations.',
+    lens: 'the chorale’s diatonic set, viewed as one mode of seven',
+  },
+  {
+    title: 'Triads and Roman Numerals',
+    kicker:
+      'Tertian stacking from spectral logic; figured-bass numerals on top.',
+    lens: 'triads from each scale degree under the soprano line',
+  },
+  {
+    title: 'Functional Harmony',
+    kicker: 'T–PD–D–T as orbit structure. Cadence as energy minimization.',
+    lens: 'function tags on the chorale’s four-bar phrase',
+  },
+  {
+    title: 'Chromatic Harmony',
+    kicker:
+      'Secondary dominants as local tonicization. Neapolitan, augmented sixths, modal mixture.',
+    lens: 'borrowed and tonicizing chords against the diatonic backdrop',
+  },
+  {
+    title: 'Neo-Riemannian Theory',
+    kicker: 'P, L, R as involutions. The Tonnetz as torus triangulation.',
+    lens: 'consonant-triad transformations: P, L, R as moves',
+  },
+  {
+    title: 'Orbifold Geometry of Voice Leading',
+    kicker:
+      'Tymoczko’s Tⁿ/Sₙ. Efficient voice leading as geodesic motion.',
+    lens: 'voice-leading distances as paths in the orbifold',
+  },
+  {
+    title: 'Statistical Tonality',
+    kicker:
+      'Krumhansl–Schmuckler probe tones. Key-finding by correlation.',
+    lens: 'pc-distribution of the phrase against the major/minor profiles',
+  },
+  {
+    title: 'Schenkerian Reduction',
+    kicker: 'Foreground, middleground, background. The Ursatz, formalized.',
+    lens: 'the chorale at each reduction level — the spine’s native job',
+  },
+  {
+    title: 'Music as Active Matter',
+    kicker:
+      'Tonality as order parameter. Modulation as phase transition.',
+    lens: 'tonality as a slow-relaxing order parameter under perturbation',
+  },
+];
+---
+
+<Base
+  title="curriculum"
+  description="Twelve scrolling modules that derive music theory from the math up — Z_12 to active matter."
+>
+  <article class="curriculum">
+    <header class="hero">
+      <p class="hero-eyebrow">curriculum</p>
+      <h1 class="hero-title">
+        Music theory <em>derived,</em><br />not defined.
+      </h1>
+      <p class="hero-sub">
+        Twelve modules, one anchor chorale, one scrolling page. The math is the
+        ladder; the music is the ceiling. Behold first, prompt later. The
+        slider down the right edge is the spine — every module rebinds it
+        to the current example.
+      </p>
+      <p class="hero-meta">
+        <span>scroll to begin</span>
+        <span class="hero-meta-divider">·</span>
+        <span>or jump to <a href="/practice">practice</a></span>
+      </p>
+    </header>
+
+    <div class="layout">
+      <main class="sections">
+        {
+          MODULES.map((m, i) => {
+            const props = { index: i, title: m.title, kicker: m.kicker, lens: m.lens };
+            if (i === 0) {
+              return (
+                <ModuleSection {...props}>
+                  <Module0 />
+                </ModuleSection>
+              );
+            }
+            if (i === 1) {
+              return (
+                <ModuleSection {...props}>
+                  <Module1 />
+                </ModuleSection>
+              );
+            }
+            if (i === 2) {
+              return (
+                <ModuleSection {...props}>
+                  <Module2 />
+                </ModuleSection>
+              );
+            }
+            if (i === 3) {
+              return (
+                <ModuleSection {...props}>
+                  <Module3 />
+                </ModuleSection>
+              );
+            }
+            if (i === 4) {
+              return (
+                <ModuleSection {...props}>
+                  <Module4 />
+                </ModuleSection>
+              );
+            }
+            if (i === 5) {
+              return (
+                <ModuleSection {...props}>
+                  <Module5 />
+                </ModuleSection>
+              );
+            }
+            if (i === 6) {
+              return (
+                <ModuleSection {...props}>
+                  <Module6 />
+                </ModuleSection>
+              );
+            }
+            if (i === 7) {
+              return (
+                <ModuleSection {...props}>
+                  <Module7 />
+                </ModuleSection>
+              );
+            }
+            if (i === 8) {
+              return (
+                <ModuleSection {...props}>
+                  <Module8 />
+                </ModuleSection>
+              );
+            }
+            if (i === 9) {
+              return (
+                <ModuleSection {...props}>
+                  <Module9 />
+                </ModuleSection>
+              );
+            }
+            if (i === 10) {
+              return (
+                <ModuleSection {...props}>
+                  <Module10 />
+                </ModuleSection>
+              );
+            }
+            if (i === 11) {
+              return (
+                <ModuleSection {...props}>
+                  <Module11 />
+                </ModuleSection>
+              );
+            }
+            return (
+              <ModuleSection {...props}>
+                <p class="placeholder">
+                  Module {i} placeholder. Content lands here once the section
+                  pattern stabilizes around Module 0.
+                </p>
+                <p class="placeholder">
+                  Each section will have five parts in order: Behold, Derive,
+                  Operate, Prompt, Bridge.
+                </p>
+              </ModuleSection>
+            );
+          })
+        }
+      </main>
+
+      <div class="spine-col">
+        <PersistentStaff />
+      </div>
+    </div>
+
+    <footer class="hero">
+      <p class="hero-sub">
+        End of the spine. <a href="/practice">/practice</a> is where due cards
+        come back — always with their instrument.
+      </p>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .curriculum {
+    /* Hero + module columns sit inside a single page container. */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .hero {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 0 2rem;
+    text-align: left;
+  }
+  .hero-eyebrow {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent-dim);
+    margin: 0 0 0.75rem;
+  }
+  .hero-title {
+    font-family: var(--font-crimson);
+    font-weight: 500;
+    font-size: clamp(2rem, 7vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    margin: 0 0 1.25rem;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-family: var(--font-crimson);
+    font-size: 1.1rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    margin: 0 0 1rem;
+  }
+  .hero-meta {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin: 1.25rem 0 0;
+  }
+  .hero-meta a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .hero-meta a:hover {
+    color: var(--accent-dim);
+  }
+  /* Shared module chrome — typography and rhythm common to every
+     module's content. Extracting it here means the per-module .astro
+     files only need to declare their own interactive bits; the
+     five-block rhythm is a default that future modules can override
+     by adding their own selectors, not by copy-pasting 60 lines. */
+  :global(.m) {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+  :global(.m-block) {
+    color: var(--text);
+  }
+  :global(.m-eyebrow) {
+    font-family: var(--font-jetbrains);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    margin: 0 0 0.85rem;
+  }
+  :global(.m p) {
+    font-family: var(--font-crimson);
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin: 0 0 1rem;
+  }
+  :global(.m p em) {
+    font-style: italic;
+  }
+  :global(.m p strong) {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  :global(.m code) {
+    font-family: var(--font-jetbrains);
+    font-size: 0.85em;
+    color: var(--accent-dim);
+    background: var(--bg-card);
+    padding: 0.05em 0.4em;
+    border-radius: 2px;
+  }
+  :global(.m-bridge p) {
+    border-left: 2px solid var(--accent-dim);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-dim);
+  }
+  :global(.m-prompt-intro) {
+    font-size: 0.95rem !important;
+    color: var(--text-dim) !important;
+  }
+  :global(.m-prompts) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .hero-meta-divider {
+    margin: 0 0.5rem;
+  }
+
+  /* Two-column layout: sections scroll, spine sticks. On mobile collapses to
+     a single column with the spine sticky at the top of the viewport. */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .sections {
+    min-width: 0;
+  }
+  .spine-col {
+    /* Sticky to the grid container (.layout), which is tall enough on both
+       mobile and desktop to give the staff a real travel distance. order:-1
+       puts the spine above the sections on mobile; on desktop it moves into
+       the right column via the grid media query below. */
+    position: sticky;
+    top: 0;
+    align-self: start;
+    z-index: 5;
+    order: -1;
+    min-width: 0;
+    /* Soften the bottom edge of the staff card against the dark page bg as
+       prose scrolls underneath it. */
+    background: linear-gradient(
+      to bottom,
+      var(--bg) 85%,
+      rgba(26, 18, 7, 0)
+    );
+  }
+  .placeholder {
+    font-style: italic;
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 960px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+      column-gap: 2.5rem;
+    }
+    .spine-col {
+      order: 0;
+    }
+  }
+</style>

@@ -1,0 +1,426 @@
+---
+// Module 1: Spectral Foundations. Same five-block rhythm as Module 0.
+// Behold the overtones, derive the triad from partials 4-5-6, operate an
+// additive-synthesis sandbox, answer two multiple-choice prompts, bridge
+// into Module 2.
+import Module1Behold from './Module1Behold';
+import Module1Derive from './Module1Derive';
+import Module1Operate from './Module1Operate';
+import Module1Prompts from './Module1Prompts';
+---
+
+<div class="m m1">
+  <section class="m-block m1-block">
+    <p class="m-eyebrow">behold</p>
+    <p>
+      Play any low note and listen close. You hear a single pitch — but
+      the string itself is vibrating at every integer multiple of its
+      fundamental at once. Those overtones are the rest of the chord
+      already inside the note. Here are the first eight partials of low
+      C; tap any row to hear it alone.
+    </p>
+    <Module1Behold client:visible />
+  </section>
+
+  <section class="m-block m1-block">
+    <p class="m-eyebrow">derive</p>
+    <p>
+      The first few partials above the fundamental hand you the
+      ingredients of the triad: octave (×2), perfect fifth (×3), next
+      octave (×4), major third (×5), next fifth (×6). Stack partials
+      <strong>4, 5, 6</strong> together — that's a <em>major triad</em>,
+      regardless of which fundamental you picked. The chord is a fact of
+      the spectrum, not a theory we imposed.
+    </p>
+    <Module1Derive client:visible />
+  </section>
+
+  <section class="m-block m1-block">
+    <p class="m-eyebrow">operate</p>
+    <p>
+      Now build a tone partial by partial. Toggle the harmonics on and
+      off and listen to the timbre change. The pitch stays the same —
+      the ear's name for it doesn't move — but the <em>color</em> shifts
+      as partials enter and leave the recipe. Timbre is harmonic
+      content.
+    </p>
+    <Module1Operate client:visible />
+  </section>
+
+  <section class="m-block m1-block">
+    <p class="m-eyebrow">prompt</p>
+    <p class="m-prompt-intro">
+      Two cards on the spectrum. Same "unsure" rule applies — honesty
+      brings the card back around sooner.
+    </p>
+    <Module1Prompts client:visible />
+  </section>
+
+  <section class="m-block m1-block m-bridge m1-bridge">
+    <p class="m-eyebrow">bridge</p>
+    <p>
+      The fifth came in second, the third came in fifth. Two intervals,
+      already. Next: why do <em>fifths</em>, specifically, link into a
+      cycle that visits every pitch class once? The answer is one short
+      identity in Z<sub>12</sub>.
+    </p>
+  </section>
+</div>
+
+<style is:global>
+  /* Module 1 specific rules — Behold / Derive / Operate interactive
+     bits. Chrome (.m, .m-block, .m-eyebrow, .m p, .m-bridge p,
+     .m-prompts, .m-prompt-intro) lives in curriculum/index.astro. */
+
+  /* Behold ---------------------------------------------------------------- */
+  .m1-behold {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.55rem;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+  .m1-partial {
+    display: grid;
+    grid-template-columns: 2rem 1fr 3rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .m1-partial:hover {
+    border-color: var(--accent-dim);
+  }
+  .m1-partial.triad {
+    border-color: var(--accent-dim);
+    background: rgba(232, 168, 56, 0.06);
+  }
+  .m1-partial.active {
+    border-color: var(--accent);
+    background: rgba(232, 168, 56, 0.18);
+  }
+  .m1-partial-n {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .m1-partial-note {
+    font-family: var(--font-crimson);
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .m1-partial-note sup {
+    font-size: 0.6em;
+    color: var(--accent);
+    margin-left: 0.1em;
+  }
+  .m1-partial.triad .m1-partial-note {
+    color: var(--accent);
+  }
+  .m1-partial-ratio {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .m1-behold-foot {
+    font-size: 0.82rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    text-align: center;
+    margin: 0.7rem 0 0 !important;
+    line-height: 1.45 !important;
+  }
+  .m1-behold-foot strong {
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .m1-behold-foot sup {
+    color: var(--accent);
+  }
+
+  /* Derive ---------------------------------------------------------------- */
+  .m1-derive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m1-fund-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m1-fund-label {
+    font-family: var(--font-jetbrains);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+  }
+  .m1-fund-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .m1-fund-btn {
+    font-family: var(--font-jetbrains);
+    font-size: 0.75rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.35rem 0.65rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m1-fund-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .m1-fund-btn:hover:not(.active) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .m1-derive-caption {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-dim);
+    margin: 0 !important;
+    font-size: 0.95rem !important;
+    max-width: 38ch;
+  }
+  .m1-derive-caption strong {
+    font-family: var(--font-jetbrains);
+    font-size: 0.9rem;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .m1-derive-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.45rem 1.1rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .m1-derive-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m1-derive-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+
+  /* Operate --------------------------------------------------------------- */
+  .m1-operate {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    margin: 1rem 0;
+    padding: 1.25rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .m1-toggle-row {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .m1-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    width: 3rem;
+    padding: 0.5rem 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .m1-toggle:hover {
+    border-color: var(--accent-dim);
+  }
+  .m1-toggle-n {
+    font-family: var(--font-jetbrains);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .m1-toggle-dot {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    line-height: 1;
+  }
+  .m1-toggle.on .m1-toggle-dot {
+    color: var(--accent);
+  }
+  .m1-toggle.triad {
+    border-color: var(--accent-dim);
+  }
+  .m1-toggle.triad.on {
+    background: rgba(232, 168, 56, 0.1);
+  }
+  .m1-operate-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .m1-operate-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .m1-operate-play:hover {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .m1-operate-play.on {
+    background: var(--bg);
+    color: var(--accent);
+  }
+  .m1-operate-play.on:hover {
+    background: var(--bg-button);
+  }
+  .m1-operate-caption {
+    font-size: 0.9rem !important;
+    font-style: italic;
+    color: var(--text-dim) !important;
+    margin: 0 !important;
+    text-align: center;
+    max-width: 40ch;
+    line-height: 1.5 !important;
+  }
+
+  /* Multiple-choice + identify-by-ear instruments ----------------------- */
+  .multiple-choice-instrument,
+  .identify-by-ear-instrument {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .ear-controls {
+    display: flex;
+    justify-content: center;
+  }
+  .ear-play {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    background: var(--accent);
+    color: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 0.5rem 1.4rem;
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .ear-play:hover:not(:disabled) {
+    background: var(--accent-dim);
+    border-color: var(--accent-dim);
+  }
+  .ear-play:disabled {
+    cursor: default;
+    background: var(--bg-button);
+    color: var(--text-dim);
+    border-color: var(--border);
+  }
+  .ear-play.on {
+    background: var(--bg);
+    color: var(--accent);
+  }
+  .mc-choices[aria-disabled='true'] .mc-choice {
+    opacity: 0.45;
+  }
+  .mc-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .mc-choice {
+    font-family: var(--font-crimson);
+    font-size: 1rem;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.6rem 0.9rem;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .mc-choice:hover:not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+  .mc-choice.selected {
+    border-color: var(--accent);
+  }
+  .mc-choice.correct {
+    background: rgba(232, 168, 56, 0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .mc-choice.wrong {
+    background: rgba(186, 70, 70, 0.08);
+    border-color: rgba(186, 70, 70, 0.5);
+    color: var(--text);
+  }
+  .mc-choice:disabled {
+    cursor: default;
+  }
+</style>
