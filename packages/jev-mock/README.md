@@ -31,7 +31,7 @@ const { answers } = await jev.decide('Help! My payouts have been failing for 3 d
 });
 
 answers.team.choice;          // 'billing'  — typed to the keys you supplied
-answers.urgent.probability;   // 0.93       — P(yes)
+answers.urgent.probability;   // 0.93       — P(yes); TypeSafe calls this a noul
 answers.anger.score;          // 1.13       — fractional position on the rubric
 ```
 
@@ -154,6 +154,15 @@ forecaster and a sommelier.
 Known gap: score questions are scored as top-1 correctness, which discards the
 ordinal structure. The right instrument is the ranked probability score — the
 Brier score over the cumulative distribution. Not implemented.
+
+## Figures
+
+`pnpm --filter @rdm/jev-mock figures` regenerates the three charts in the
+write-up as Astro components under `apps/site/src/components/faking-calibration/`
+— the temperature curve, the reliability diagram with Wilson intervals, and the
+cost bowl. Palette (amber / blue / rose) is validated against the site's card
+surface for colorblind separation; identity is fixed across figures, with amber
+the honest model and rose the overconfident one.
 
 ## Running it
 

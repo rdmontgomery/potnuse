@@ -1,38 +1,36 @@
 ---
 title: faking calibration
-date: 2026-09-19
+date: 2026-09-20
 state: seedling
 connects: [calibrate, toner-tu-map, reverberant-middle, dsl-hobbies]
 tags: [llm, calibration, decision-theory, rlhf, order-parameter, typescript]
-description: A local mock for TypeSafe's Jev, built by inverting the generative order so the fake probabilities are honest by construction — and a knob that makes them lie on purpose.
+description: TypeSafe's Jev returns a decision and a probability instead of prose. A local mock that fakes the probability honestly, a knob that makes it lie, and the arithmetic that turns an honest number into a threshold.
 ---
 
 import Gloss from '@/components/Gloss.astro';
 import Pull from '@/components/Pull.astro';
 import Marginal from '@/components/Marginal.astro';
+import Temperature from '@/components/faking-calibration/Temperature.astro';
+import Reliability from '@/components/faking-calibration/Reliability.astro';
+import Cost from '@/components/faking-calibration/Cost.astro';
 
-TypeSafe came out of stealth on 15 September with $40M and a model called Jev, and the pitch reads like a category error until it doesn't: an AI model that cannot write. You hand it a state and a set of typed questions; it hands back a choice, a rubric position, or a probability. No prose, ever. Seventy to five hundred milliseconds end to end, against three to three hundred seconds for a frontier model, at $0.042 per million input tokens with output priced at zero.
+ChatGPT launched a wave of generative AI that was, for a good while, a fancy chatbot. Structured outputs changed that. Underneath, these models are one black box that takes unstructured input and speaks two languages: free text, for humans, and structured output, for machines.
 
-<Marginal>Vendor numbers, and worth holding loosely: 68% on a four-workflow in-house benchmark, 40-200x faster, 400x cheaper. *Every* got roughly 25x faster and 580x cheaper than Claude Fable 5.1 on extraction — directionally corroborating, an order of magnitude off the headline.</Marginal>
+TypeSafe cut out the half that talks to humans. Jev shipped on 15 September and it cannot write a sentence. You hand it some state and a list of typed questions; it hands back a choice, a rubric position, or a probability, in seventy to five hundred milliseconds, at four cents per million input tokens with output free.
 
-The speed is the advertisement. The interesting part is the second number in every answer.
+<Marginal>Vendor numbers, held loosely: 68% on a four-workflow in-house benchmark, 40-200x faster than a frontier model, 400x cheaper. *Every* measured 25x faster and 580x cheaper than Claude Fable 5.1 on extraction — same direction, an order of magnitude off the headline.</Marginal>
 
-Jev is trained with something TypeSafe calls <Gloss def="Reinforcement Learning for Calibrated Decisions. The reward is not whether a human liked the answer but whether the probability attached to it was honest.">RLCD</Gloss> — reinforcement learning for calibrated decisions — and the claim is not that the model is smart. It is that when the model says 0.8, it is right about 80% of the time. That is a claim about a *distribution*, not about a response, and it is the first thing a vendor has offered to be contractually wrong about since softmax outputs started being called confidences.
-
-<Pull>The speed is the advertisement. The interesting part is the second number in every answer.</Pull>
-
-I do not have an API key. So I built the mock first, which turned out to be the more instructive exercise, because you cannot fake a calibrated model without understanding what calibration actually is.
+The speed is the advertisement. The part worth your attention is the second number in every answer.
 
 ---
 
-### what the thing looks like on the wire
+### what it returns
 
-One POST to `/v1/systemone`, a state, and a bag of questions under ids you choose. Three primitives.
+One POST, some state, and a bag of questions under ids you pick.
 
 ```json
 {
   "state": "Help! My payouts have been failing for 3 days.",
-  "model": "jev-latest",
   "questions": {
     "urgent": { "type": "boolean", "instructions": "Does this convey urgency?" },
     "team": {
@@ -53,262 +51,165 @@ One POST to `/v1/systemone`, a state, and a bag of questions under ids you choos
 }
 ```
 
-A boolean returns P(yes) — TypeSafe's own docs call this primitive a `noul`, a portmanteau of *no* and *null*, which is either charming or a sign that someone lost an argument. A choice returns the argmax plus the full distribution over your option keys. A score returns a *fractional* position on your rubric: the probability-weighted mean index, so 1.78 on a three-level scale means the mass sits mostly on the top level and not that level 1.78 exists.
+The yes/no primitive returns P(yes) rather than a verdict. TypeSafe calls it a `noul`, which is Bernoulli filed down to one syllable — one trial, one probability. A choice returns the argmax plus the whole distribution over your keys. A score returns a fractional position on your rubric: 1.78 on a three-level scale means the weight sits near the top, not that level 1.78 exists.
 
-<Marginal>Cardinality limits are enforced server-side: 2 to 255 choice options, 2 to 10 score levels, 64k tokens per request of which the state plus the longest question may use 32k. Enforce them locally and you never pay a round trip to learn you wrote a one-level rubric.</Marginal>
+<Marginal>Limits worth enforcing locally so you never pay a round trip to learn them: 2 to 255 choice options, 2 to 10 score levels, 64k tokens a request.</Marginal>
 
-Questions are evaluated in parallel and in isolation against the same state. That is the design decision with real consequences: a twenty-question request is one round trip at very nearly the price of one question, but no question can see another's answer. You do not get chains. You get a wide, flat, cheap panel of independent judgments and you compose them in code — which is exactly the shape of a decision layer that used to be four hundred lines of regex and a lookup table.
+Every question is answered in parallel and in isolation against the same state. A twenty-question request costs one round trip and nearly the price of one question, and no question can see another's answer. You get a wide flat panel of independent judgments, and you compose them yourself. Which is to say: the four hundred lines of regex and lookup tables in your routing layer, with a probability attached to each branch.
 
-The type safety is genuine but narrower than the marketing suggests. The model cannot return an option you did not define, because the valid outputs are the schema. It can absolutely return the *wrong* option. "Cannot hallucinate" means "cannot emit an unparseable answer," which is a real and useful property and is not the same as being right.
+Type safety here is real but narrower than the pitch. The model cannot return an option you never defined, because your schema *is* the output space. It can absolutely return the wrong one. "Cannot hallucinate" means "cannot emit something unparseable," and that is not the same as being right.
 
 ---
 
-### calibration is not RLHF with better manners
+### what the second number promises
 
-Here is where the data-science framing earns its keep, because the difference between <Gloss def="Reinforcement Learning from Human Feedback. Humans compare pairs of model outputs; a reward model learns to score them; the policy is optimized against that score.">RLHF</Gloss> and RLCD is not a matter of degree. The two objectives are blind to different things, and one of them is blind to the number you were going to threshold on.
+A model is <Gloss def="Among all the items a model called 80% likely, about 80% of them come true. A property of a long run of predictions, never of a single one.">calibrated</Gloss> when its 0.8 means 0.8 — over the items it labelled 0.8, it is right about four times in five. Not more often, which would make it needlessly timid, and not less, which would make it a liar.
 
-Start with what RLHF optimizes. Raters see two completions and pick one. A reward model `r` is fit to those comparisons under a Bradley-Terry likelihood: the probability that *a* beats *b* is the logistic of `r(a) - r(b)`. Then the policy is optimized to maximize expected reward with a KL leash back to the reference model. That constrained problem has a closed-form optimum, and it is worth writing down because everything follows from its shape:
+The standard measure is <Gloss def="Expected calibration error. Bucket the predictions by what they claimed, ask what actually happened inside each bucket, and average the gaps, weighting each bucket by how many predictions landed in it.">ECE</Gloss>, and it is exactly as literal as it sounds. Sort the predictions into ten buckets by what they claimed. In the bucket that said 0.8, count how often the thing happened. Average the gaps. Zero means every bucket kept its promise.
+
+TypeSafe trains for this directly, with a method they call RLCD — reinforcement learning for calibrated decisions. The reward is not whether a human liked the answer. It is whether the number attached to it was honest.
+
+That is a strange thing to sell, and a new one. Every softmax output for a decade has been called a confidence and almost none of them were.
+
+---
+
+### why preference training cannot get you there
+
+Here is the mechanism, and it is worth the four lines of algebra because everything downstream follows from it.
+
+<Gloss def="Reinforcement learning from human feedback. Raters compare pairs of outputs, a reward model learns to score them, and the policy is tuned to maximize that score.">RLHF</Gloss> starts from comparisons. Raters see two answers and pick one; a reward model learns to score them. Then the policy is tuned to maximize that score while a KL penalty keeps it near where it started. That problem has a closed-form answer:
 
 ```
 pi*(y) is proportional to pi_ref(y) * exp(r(y) / beta)
 ```
 
-An exponential tilt of the reference distribution. Now notice what happens in the case where the reward correlates with the model's own confidence — which it does, because raters prefer answers that sound assured. Set `r(y) = log pi_ref(y)` and the optimum becomes
+Take the case where the reward tracks the model's own confidence — raters do prefer answers that sound sure — so that `r(y) = log pi_ref(y)`. Substitute, and the optimum becomes
 
 ```
 pi*(y) is proportional to pi_ref(y)^(1 + 1/beta)
 ```
 
-which is a *temperature sharpening* of the original distribution, with `T = beta / (1 + beta)`, strictly below 1.
+Every probability raised to a power above one, then renormalized. That operation has a name: <Gloss def="Raising every probability to a power and renormalizing. Powers above one push the big probabilities toward 1 and the small ones toward 0; powers below one flatten everything toward an even split.">temperature sharpening</Gloss>. It pushes confident beliefs toward the corners and makes the model sound surer than it is.
 
-<Pull>RLHF-induced overconfidence is not an implementation defect. It is the functional form of the solution.</Pull>
+<Temperature />
 
-That is not a bug in someone's PPO loop. That is the shape of the answer. And a temperature sharpening is a strictly monotone map on the probabilities, which means it leaves the *ordering* of items completely intact while moving every number. So the ranking quality of an RLHF-tuned model can be excellent, and its probabilities can be garbage, and no preference-based objective can tell the difference — because preferences only ever saw orderings.
+<Pull>RLHF overconfidence is not a bug in someone's training loop. It is the shape of the solution.</Pull>
 
-<Marginal>The empirical receipt is public: the GPT-4 technical report's reliability diagram shows the pretrained base model sitting near the diagonal on multiple-choice, and the post-RLHF model bowing badly overconfident. Same weights, same knowledge, worse probabilities.</Marginal>
+Now look at what the curve preserves. It bends, but it never crosses itself: an item the model ranked above another still ranks above it. Sharpening moves every number and reorders nothing.
 
-RLCD points at the other term. Train against a <Gloss def="A loss whose unique minimizer is the true conditional probability — log loss and the Brier score are the canonical examples. You cannot improve your score by shading the number you report.">strictly proper scoring rule</Gloss> and honesty about uncertainty stops being a side effect and becomes the gradient. The formal separation is Murphy's decomposition of the Brier score:
+<Marginal>The receipt is public. GPT-4's technical report shows the pretrained model sitting near the diagonal on multiple choice and the post-RLHF model bowing badly overconfident. Same weights, same knowledge, worse probabilities.</Marginal>
 
-```
-Brier = reliability - resolution + uncertainty
-```
-
-**Reliability** asks whether the number is honest — the squared gap between what you claimed and what happened, binned. **Resolution** asks whether the number is informative — how far your bins depart from the base rate. **Uncertainty** is the outcome's own variance and nobody's fault.
-
-A preference objective can only buy resolution. A proper scoring rule buys both. That is the entire difference, and it is measurable, which means it is mockable.
+Which is fatal for your evaluation suite, because AUC is a function of the ordering. So is top-1 accuracy. So is F1 at a fixed threshold. So is a human comparing two answers. Every instrument you own measures the thing that did not change.
 
 ---
 
-### why `Math.random()` is the wrong mock
+### mocking it, honestly
 
-The obvious move is to return the right JSON shape with random numbers in it. Do that and your client parses, your branches are reachable, your CI is green, and you have learned nothing, because a uniform random probability is uncalibrated *by construction*. Over 20,000 items my shape-only mock scores ECE 0.25 and resolution 0.0001. Valid JSON, zero information.
+I have a beta key. I built the mock first anyway, and I would do it again: to know whether a real model's probabilities are any good you need a known-honest baseline to compare them against, and the only way to get one is to manufacture it.
 
-That mock still has a job — contract tests, error paths, the wiring. It is simply the wrong instrument for the question you actually care about, which is: *what number do I compare this probability against, and what happens to my costs when the vendor's calibration drifts?*
+The obvious approach fails. Return the right JSON with `Math.random()` in the probability field and your client parses, your branches fire, CI goes green — and you have learned nothing, because a random probability is uncorrelated with the truth by construction. Mine scores ECE 0.249 with a discrimination of 0.0001. Valid JSON, zero information.
 
-So invert the generative order. A real model meets an item whose answer is already fixed and forms a belief about it. I cannot do that without a model. But I can draw the belief from a prior and then draw the truth *from the belief*:
+So invert the order things are generated in. A real model meets an item whose answer is already fixed and forms a belief about it. I cannot do that without a model. But I can draw the belief from a prior and then draw the truth *from the belief*:
 
 ```ts
 // belief first...
-const belief = beta(r, 0.45, 0.45);
+const belief = beta(rand, 0.45, 0.45);
 // ...then the truth, sampled from it.
-const actual = r() < belief;
+const actual = rand() < belief;
 ```
 
-The stream that comes out is exactly as honest as it claims to be — calibration is a fixed point of that procedure, not an approximation to it. For choice and score questions it generalizes to a Dirichlet with concentration below 1, so most items are easy and a few are genuinely ambiguous, then a categorical draw from that simplex point for the latent truth. Top-1 correctness against top-1 probability is the pair you score.
+Calibration is now a fixed point of the procedure rather than something I approximated. Among the items where `belief` came out 0.8, `actual` lands true 80% of the time, because that is literally how it was drawn.
 
-And because the mock knows the truth it invented, it logs it:
+Choice and score questions work the same way one dimension up. Instead of a single probability I draw a whole opinion — a list of numbers summing to one, one per option — from a <Gloss def="A distribution over probability vectors. Draw from it and you get a full set of numbers that sum to 1: an entire opinion, rather than a single probability.">Dirichlet</Gloss>, with its concentration set below 1 so most items come out lopsided and a few are genuinely a toss-up. Then the latent answer gets drawn from that opinion. Same trick, same fixed point.
+
+And because the mock invented the truth, it can keep it:
 
 ```ts
 const jev = calibratedJev({ seed: 42 });
 for (const ticket of tickets) await jev.decide(ticket, questions);
 
-const pairs = jev.log.map((o) => o.pair);   // { p, y }[]
-murphy(pairs);
-// { reliability: 0.00007, resolution: 0.1317, uncertainty: 0.2500,
-//   brier: 0.1183, baseRate: 0.5029 }
+murphy(jev.log.map((o) => o.pair));
+// { reliability: 0.00007, resolution: 0.1317, ... }
 ```
 
-You now have an oracle. Not an oracle about tickets — the mock knows nothing about tickets — an oracle about *your decision layer*, which is the part you are actually writing.
+Those two numbers are <Gloss def="Allan Murphy, 1973. The Brier score splits into reliability minus resolution plus an irreducible term: honesty, informativeness, and the weather's own variance.">Murphy's split</Gloss> of a forecast's quality. Reliability asks whether the number is honest. Resolution asks whether it is informative — a model that says "60%" to everything can be perfectly honest and perfectly useless. They move independently, and that independence is the whole argument.
 
 ---
 
 ### the knob that makes it lie
 
-One parameter, and it is the reason the whole exercise is worth doing. `temperature` distorts every reported probability and leaves the latent truth alone. Below 1 sharpens; above 1 flattens. It is, by the algebra three sections up, the functional form of RLHF's overconfidence — which makes "simulate a vendor whose confidence runs hot" and "simulate a preference-tuned model" the same line of code.
+One parameter distorts the reported probability and leaves the hidden truth alone. It is the sharpening from the RLHF algebra, which means simulating a hot vendor and simulating a preference-tuned model are the same line of code.
 
 ```ts
 const hot = calibratedJev({ seed: 42, temperature: 0.5 });
 ```
 
-Twenty thousand boolean items, same seed, same latent truths, only the reported number distorted:
+Twenty thousand items, same seed, same latent truths, only the reported number bent:
 
-| T | ECE | reliability | resolution | Brier | log loss |
-| --- | --- | --- | --- | --- | --- |
-| 1.0 (honest) | 0.0065 | 0.00007 | 0.1317 | 0.1175 | 0.3652 |
-| 0.5 (hot) | 0.0739 | 0.00638 | 0.1290 | 0.1255 | 0.4328 |
-| 2.5 (cold) | 0.1280 | 0.01924 | 0.1308 | 0.1372 | 0.4351 |
-
-Reliability moves by a factor of 91 and 275. Resolution moves by 2% and 0.7%. The analytic claim — a monotone distortion preserves ordering and destroys honesty — falls out of the simulation as a number you can put in a test assertion.
-
-<Pull>Reliability moves by a factor of 91. Resolution moves by 2%.</Pull>
-
-Which is the punchline for anyone who has ever evaluated a classifier with <Gloss def="Area under the ROC curve. A pure ranking statistic: it depends only on the order of the scores, never on their values.">AUC</Gloss> and shipped the threshold. AUC is a function of the ordering. It cannot see the column that just moved two orders of magnitude. Neither can top-1 accuracy, neither can F1 at a fixed threshold, and neither can a human rater comparing two answers.
-
-The reliability diagram shows the classic S-bend:
-
-```
-honest:                                    T = 0.5:
-0.0-0.1  obs=0.04  gap=+0.00  n=4506       0.0-0.1  obs=0.08  gap=+0.06  n=6970
-0.1-0.2  obs=0.14  gap=-0.00  n=1732       0.1-0.2  obs=0.31  gap=+0.16  n=1069
-0.2-0.3  obs=0.25  gap=+0.00  n=1380       0.2-0.3  obs=0.36  gap=+0.11  n=752
-0.3-0.4  obs=0.35  gap=+0.01  n=1229       0.3-0.4  obs=0.44  gap=+0.09  n=647
-0.4-0.5  obs=0.46  gap=+0.01  n=1144       0.4-0.5  obs=0.50  gap=+0.05  n=553
-0.5-0.6  obs=0.56  gap=+0.01  n=1238       0.5-0.6  obs=0.56  gap=+0.01  n=640
-0.6-0.7  obs=0.66  gap=+0.01  n=1253       0.6-0.7  obs=0.57  gap=-0.08  n=649
-0.7-0.8  obs=0.77  gap=+0.02  n=1386       0.7-0.8  obs=0.64  gap=-0.11  n=786
-0.8-0.9  obs=0.85  gap=-0.01  n=1685       0.8-0.9  obs=0.73  gap=-0.12  n=1097
-0.9-1.0  obs=0.97  gap=+0.00  n=4447       0.9-1.0  obs=0.92  gap=-0.06  n=6837
-```
-
-One more thing the mock is good for, and it is the thing that will actually bite you: ECE has a finite-sample noise floor of roughly `1/sqrt(n)`.
-
-| n | ECE (honest) | ECE (T = 0.5) |
-| --- | --- | --- |
-| 500 | 0.0349 | 0.0920 |
-| 2,000 | 0.0165 | 0.0784 |
-| 8,000 | 0.0105 | 0.0688 |
-| 20,000 | 0.0065 | 0.0739 |
-
-At n=500 a perfectly honest model scores 0.035 and a badly overconfident one scores 0.092 — a factor of 2.6, on a metric whose variance at that sample size is most of the signal. If you plan to verify a vendor's calibration claim before you trust a threshold to it, budget for thousands of labelled items, not hundreds. Quoting an ECE without a sample size is quoting nothing.
-
----
-
-### what the honest number is actually for
-
-Here is the payoff, and it is not accuracy. With a calibrated probability, the decision threshold stops being a tuning knob and becomes algebra.
-
-Acting when you should not costs `cFP`. Failing to act when you should costs `cFN`. Expected cost of acting is `(1-p) * cFP`; of not acting, `p * cFN`. Act when the first is smaller:
-
-```
-p > cFP / (cFP + cFN)
-```
-
-Symmetric costs give you 0.5, which is why 0.5 is everywhere and why it is almost always wrong. A false negative four times worse than a false positive gives you 0.2. Over that same honest stream:
-
-| threshold | source | cost per item |
-| --- | --- | --- |
-| 0.20 | closed form from the cost matrix | 0.2875 |
-| 0.17 | grid search over 20k labelled items | 0.2862 |
-| 0.50 | reflex | 0.4276 |
-
-The closed form lands within half a percent of an exhaustive sweep and needs **no labelled data at all**. That is the whole product. Not the 200x speedup — the fact that a number derived from your finance team's cost estimates is portable across every question you ask, survives a model version bump, and does not require a labelled holdout per task.
-
-<Marginal>This is the Neyman-Pearson move recast as expected-cost minimization, and it is a hundred years old. What is new is a vendor willing to ship the likelihood ratio instead of making you estimate it.</Marginal>
-
-Add a human and you get a band instead of a threshold. Escalation costs a flat `cE` regardless of truth, so it wins in the middle where both mistakes are expensive in expectation: reject below `cE/cFN`, act above `1 - cE/cFP`, escalate between. And if those cross, there is no band — a person costs more than the mistakes they would prevent, and the honest policy is to decide every item in code. That inversion is the number to bring to the meeting where someone says "we should keep a human in the loop" as though it were free.
-
-Now hold the band fixed and swap in the overconfident model. Costs of 5, 20, and 1:
-
-| | escalated | false positives | false negatives | cost per item |
-| --- | --- | --- | --- | --- |
-| honest | 53.0% | 387 | 59 | 0.686 |
-| T = 0.5 | 30.1% | 824 | 369 | 0.876 |
-
-<Pull>The overconfident model halves your review queue and costs you 28% more. Every dashboard you own reports that as a win.</Pull>
-
-Same items. Same latent truths. Same policy. The overconfident model escalates 23 points less — the queue shrinks, the automation rate climbs, the operations dashboard turns green — and the realized cost goes up 28%. There is no alert for this. Nothing throws. The JSON validates. Your contract tests pass. The only instrument that catches it is a reliability diagram over a labelled sample, which is precisely the artifact nobody builds because the API is typed and typed feels like safe.
-
-That is the argument for the mock, and it is the argument for keeping a labelled canary set in production forever.
-
----
-
-### running your own eval suite
-
-Everything above assumes you can measure the vendor. You cannot inspect Jev's training data, its reward, or its logits, and the benchmark it ships was run on its distribution rather than yours. What you *can* observe is a stream of your own decisions with outcomes attached. That turns out to be enough, and it is enough in a stronger way than I expected when I started.
-
-<Pull>Calibration is something you can manufacture. You do not have to buy it.</Pull>
-
-Here is the inversion. Recalibration — fitting a monotone map from reported probability to observed frequency — needs nothing from the model except that its *ordering* be good. Ordering is precisely what preference training preserves, per the algebra three sections up. So a hot vendor, an RLHF-tuned general model with a `logprobs` field, and a well-behaved RLCD model are all the same input to a local calibration layer, and they differ only in how many labels the layer needs to fix them. RLCD is a convenience. It is not a moat.
-
-Over the same overconfident stream, held out properly:
-
-| labels used to fit | isotonic, in sample | isotonic, held out | Platt, held out |
+| temperature | ECE | reliability | resolution |
 | --- | --- | --- | --- |
-| untouched | — | 0.0786 | 0.0786 |
-| 100 | 0.0000 | 0.0629 | 0.0387 |
-| 400 | 0.0000 | 0.0405 | 0.0268 |
-| 1,000 | 0.0000 | 0.0319 | 0.0231 |
-| 4,000 | 0.0000 | 0.0233 | 0.0237 |
-| 10,000 | 0.0000 | 0.0236 | 0.0215 |
+| 1.0, honest | 0.0065 | 0.00007 | 0.1317 |
+| 0.5, overconfident | 0.0739 | 0.00638 | 0.1290 |
+| 2.5, underconfident | 0.1280 | 0.01924 | 0.1308 |
 
-Four hundred labels cut the calibration error by two thirds. And resolution over the same split went 0.1274 to 0.1299 — unmoved, as it must be, because a monotone map cannot reorder anything. **You can buy honesty locally. You cannot buy intelligence locally.** That division is worth internalizing before you negotiate with any model vendor about accuracy.
+Honesty degrades by a factor of 91 and then 275. Informativeness moves by two percent. Plotted against what actually happened:
 
-Stare at the second column, though, because it is the most important number on this page. Isotonic regression's in-sample calibration error is `0.0000` at *every* sample size — a hundred labels or ten thousand, it fits the empirical frequencies exactly and reports perfection. Any calibration report that does not hold out is reporting that zero. I would guess most internal ones do.
-
-So, the protocol, in the order it actually has to happen.
-
-**Sample by the model's confidence, not by class.** Uniform random labelling spends most of its budget in the confident bulk, where you already agree with the model and where nothing is at stake. Your threshold lives in one specific decile; that is where the labels belong. `stratifiedSample` allocates a fixed budget per forecast bin, which costs nothing and roughly triples the information per label near the cut.
-
-**Score each question id separately.** This is the mistake I would have made. Every question you send is its own forecaster with its own reliability curve, and a wide panel of twenty questions is twenty models sharing an invoice. Averaging their reliability is averaging a weather forecaster and a sommelier. Per-question, always — and then your escalation policy can escalate on the two questions that are badly calibrated while trusting the other eighteen.
-
-**Put error bars on the diagram.** A Wilson interval per bin, every time. At forty items in a bin the 95% interval is about 0.30 wide, which is wider than any miscalibration anyone is arguing about, and a reliability diagram without them is a Rorschach test. With them, the honest stream flags 1 bin of 10 as off-diagonal and the overconfident one flags 8 — a conclusion rather than a vibe.
-
-**Then pick a fitter by budget.** Platt scaling below about a thousand labels: two parameters, and it is the correctly specified model when the distortion is a temperature, which per the RLHF algebra it very often is. Isotonic above a few thousand: non-parametric, fixes shapes Platt cannot, overfits viciously when starved. The crossover in the table is around 4,000.
-
-**Know your power before you run the test.** Simulate it rather than trusting a formula. Fixing the false-alarm budget at 5% first, then asking how often a 15%-overconfident vendor gets caught:
-
-| labelled items | false alarms | detection |
-| --- | --- | --- |
-| 250 | 7% | 63% |
-| 1,000 | 7% | 100% |
-| 4,000 | 7% | 100% |
-
-A thousand labels is the answer for a distortion that size. Two hundred and fifty is a coin flip dressed as diligence.
-
-**Gate the release on reliability and resolution, never accuracy.** Accuracy is a ranking statistic evaluated at one threshold, and it moves last. Four gates on the same criteria — reliability under 0.002, resolution over 0.08, at least 2,000 labels:
-
-```
-honest         PASS
-overconfident  FAIL  reliability 0.00564 exceeds 0.002
-thin sample    FAIL  only 500 labelled items; 2000 needed to distinguish
-                     signal from binning noise; reliability 0.00268 exceeds 0.002
-always 0.5     FAIL  resolution 0.0000 below 0.08: honest but uninformative
-```
-
-The last row is the Goodhart trap and it is why ECE alone is a bad gate: a model that reports the base rate for everything is perfectly calibrated and perfectly useless. Reliability and resolution have to be read together or you will optimize your way into a very honest coin. The third row is the noise floor caught in the act — at n=500 even the honest model trips a reliability threshold, which is why the sample-size guard fires first and the gate declines to have an opinion.
-
-**Pin the version, and keep the canary running forever.** `jev-latest` is an alias and aliases move; a threshold is calibrated against a specific model version and nothing guarantees it survives a bump. Pin to `jev-1.13.0` or whatever is current, log every decision with its probability, sample a slice for labelling on a schedule, and alarm on the reliability term rather than on accuracy. Your own distribution drifts too — recalibration is a maintained artifact, not a one-time fix, and the fit you made in March is a claim about March's traffic.
-
-<Marginal>This is unfashionable and I think it is right: the eval suite you need for a decision model is a hundred lines of scoring code and a labelling budget, not a framework. The scoring rules are nineteenth-century. Murphy's decomposition is 1973. Nothing here needed a vendor.</Marginal>
+<Reliability />
 
 ---
 
-### which parts of a repo are shaped like this
+### how confident is confident enough
 
-The reason I wanted the mock before the API key: I have work repos and I do not know which of their decision points are System One shaped. The signature turns out to be fairly crisp.
+This is the part that pays for the rest, so let me put it in money.
 
-It fits when the judgment is one a competent person could make at a glance, there are many independent such judgments over the same state, the output is consumed by code rather than read by a human, the cost matrix is asymmetric and roughly known, and no text needs to come out. Routing. Triage. Pre-flight screens. Rubric scoring of things another system produced. Anywhere you currently have a pile of heuristics with a comment above them reading `// TODO: this is a classifier`.
+You are auto-approving refunds. Approve one you shouldn't and you are out five dollars. Deny one you should have approved and the customer churns, which costs you twenty. Now: how sure does the model have to be before you approve automatically?
 
-It does not fit when you need generation, when the judgment requires chaining one conclusion into the next, when it needs arithmetic or counting — Jev publishes its own jaggedness list and those are on it, do them in code — or when the decision is singular and high-stakes enough that you would want a human regardless. And it emphatically does not fit where you have no way to ever learn the ground truth, because then the calibrated probability is a number you can never audit, and an unauditable probability is a vibe with a decimal point.
+The answer is 20%, and it is arithmetic rather than taste. Approving costs you five dollars times the chance you are wrong. Denying costs twenty times the chance *you* are wrong. Set them equal and the crossover sits at five over twenty-five. Below 20% confidence, denial is the cheaper mistake; above it, approval is.
 
-My own repo passes that screen in exactly one place I did not expect and fails it in the two places I assumed it would win. Which is what a two-day mock is for.
+<Pull>The threshold is not a tuning knob. It is your cost matrix, divided.</Pull>
+
+<Cost />
+
+Which is the product, and it is not the 200x speedup. A number derived from your finance team's estimates, portable across every question you ask, holding steady when the model version bumps, requiring no labelled holdout per task. The grid search in that chart needed twenty thousand labelled tickets to find 0.17. The arithmetic needed two numbers you already had and landed within half a percent of it.
+
+None of which works if the probability is dishonest. Feed the same threshold an overconfident model and it approves things it should have escalated. Holding one fixed escalation policy and swapping only the model's honesty: the calibrated one sends 53% of tickets to a human and costs $0.69 each; the overconfident one sends 30% and costs $0.88. It halves your review queue and raises your costs by 28%, and every dashboard you own reports that as a win.
+
+<Marginal>Add a human and the threshold becomes a band: escalate in the middle where both mistakes are expensive, decide at the edges. If the flat cost of a person exceeds the mistakes they'd prevent, the band collapses and the honest answer is to decide everything in code. Worth computing before the meeting where someone proposes a human in the loop as though it were free.</Marginal>
 
 ---
 
-### where the numbers came from, and what I still doubt
+### auditing the real thing
 
-The code is `packages/jev-mock` in this repo: the wire protocol, both mocks, the scoring rules, the Murphy decomposition, the policy algebra, the eval kit — Wilson intervals, Platt, isotonic, stratified label allocation, the release gate, power by simulation — and twenty-five tests that assert the things claimed above. `pnpm --filter @rdm/jev-mock demo` regenerates every table on this page. Nothing in it makes a network call and there is no API key anywhere near it.
+Now the key comes out of the drawer, and the question changes: is *this* model's 0.8 worth 0.8, on my traffic?
 
-Five things I am not confident about.
+The reassuring answer is that you do not entirely need it to be. Fitting a correction from reported probability to observed frequency requires nothing from the model except a decent ordering — and ordering is precisely what survives every distortion in this piece. A hot vendor, a general LLM's log-probs, and a well-behaved RLCD model are the same input to a local correction layer. They differ only in how many labels it takes.
 
-The performance claims are the vendor's, on the vendor's benchmark, and the one independent replication I found came in an order of magnitude below the headline while still supporting the direction. Treat 40-200x as "very fast" and nothing more precise.
+Four hundred labelled tickets took my overconfident stream from 0.079 to 0.027, with resolution unmoved at 0.13. You can buy honesty locally. You cannot buy intelligence locally.
 
-The `confidence` field on choice and score answers is documented only as "derived from the probability distribution." I implemented it as one minus normalized entropy, which has the right monotonicity and is certainly not their formula. More importantly: it is a spread statistic, not a forecast, and it is *not* the quantity RLCD calibrates. Do not put it in a threshold. Threshold the probability.
+Below a thousand labels, fit two parameters — Platt scaling, which is the exact inverse of a temperature and therefore the right shape for this failure. Above a few thousand, isotonic regression handles curves Platt cannot. And hold out, always: isotonic's in-sample ECE is 0.0000 at every sample size, a hundred labels or ten thousand, because it fits the observed frequencies exactly. Any calibration report without a holdout is printing that zero.
 
-At least one third-party client documents the boolean primitive's P(true) as explicitly *uncalibrated*, which — if it is accurate rather than a client author hedging — is a substantial asterisk on the simplest and most attractive primitive in the API. I could not resolve it against the primary docs.
+A few things I would have got wrong without simulating them first. Spend the labelling budget across the confidence range rather than uniformly at random, because uniform sampling buries most of it in the confident bulk while your threshold lives in one decile. Score each question id separately — a twenty-question panel is twenty forecasters sharing an invoice, and averaging their reliability averages a weather forecaster and a sommelier. Put intervals on every bucket, since at forty items a bucket the 95% band is 0.30 wide and anything narrower than that is pareidolia. Budget a thousand labels to catch a 15% overconfidence at a 5% false-alarm rate; two hundred and fifty catches it 63% of the time, which is diligence theater.
 
-Score questions get scored here as top-1 correctness against top-1 probability, which throws away the ordinal structure that made a rubric worth using. The right instrument for an ordered outcome is the ranked probability score — the Brier score applied to the cumulative distribution — and it would catch a model that puts its mass two levels away while top-1 accuracy shrugs. The package does not implement it. That is a gap, not a judgment.
+Then gate the version bump on honesty *and* informativeness together, never accuracy. A model that reports the base rate to everything sails through any calibration check alone. Pin the model version, because aliases move and your thresholds were calibrated against a specific one. Keep a labelled canary running forever, because your own traffic drifts and a correction fitted in March is a claim about March.
 
-And the RLHF-as-temperature derivation assumes the reward correlates with the model's own confidence. It is a clean special case, not the general one; real reward models are not `log pi_ref`. The claim that survives regardless is the weaker and still sufficient one: the optimal KL-constrained policy is a monotone reweighting of the reference, monotone reweightings preserve ranking, and every ranking metric in your evaluation suite is therefore structurally incapable of seeing what happened to your probabilities.
+<Marginal>Unfashionable, and I think right: this needs a hundred lines of scoring code and a labelling budget, not a framework. The scoring rules are nineteenth-century. Murphy's decomposition is 1973.</Marginal>
 
-<Marginal>There is a page on this site called <a href="/calibrate">calibrate</a>, about tuning a working language between a person and a model. It uses the word in the loose sense — mutual adjustment. This piece uses it in the strict sense — a reliability diagram on the diagonal. I am no longer sure the loose sense is a metaphor for the strict one rather than the other way around.</Marginal>
+---
+
+### which parts of a codebase want this
+
+The screen is tighter than I expected. It fits where a competent person could make the call at a glance, where there are many such calls over the same state, where code consumes the answer instead of a human reading it, where the costs of being wrong are lopsided and roughly known, and — the one that eliminates most candidates — where you will eventually learn the truth. A probability you can never check is a vibe with a decimal point.
+
+It does not fit where you need prose, where one judgment feeds the next, or where the work is arithmetic and counting. Jev publishes its own list of weaknesses and those are on it. Do them in code.
+
+My own repos pass in one place I did not expect and fail in the two I assumed would win. Which is what two days of mocking is for, and why the key is still in the drawer.
+
+---
+
+### where the numbers came from
+
+`packages/jev-mock` in this repo: the wire protocol, both mocks, the scoring rules, the cost arithmetic, the audit kit, the figures on this page, and twenty-five tests asserting the claims above. `pnpm --filter @rdm/jev-mock demo` regenerates every table. No network calls, no key.
+
+Four things I am not sure of. The performance claims are the vendor's on the vendor's benchmark, and the one independent replication came in an order of magnitude below the headline while agreeing on direction. The `confidence` field on choice answers is documented only as "derived from the probability distribution" — I implemented it as one minus normalized entropy, which has the right shape and is certainly not their formula, and it is a spread statistic rather than a forecast, so keep it out of your thresholds. At least one third-party client documents the yes/no primitive's probability as explicitly uncalibrated, which if accurate is a large asterisk on the most attractive thing in the API, and I could not resolve it against the primary docs. And score questions get graded here on top-1 correctness, which throws away the ordinal structure that made a rubric worth using; the right instrument is the ranked probability score, and it is not implemented.
+
+<Marginal>There is a page on this site called <a href="/calibrate">calibrate</a>, about tuning a working language between a person and a model. It uses the word loosely — mutual adjustment. This piece uses it strictly — a diagram on the diagonal. I am no longer sure which one is the metaphor.</Marginal>

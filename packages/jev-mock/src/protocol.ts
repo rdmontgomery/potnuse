@@ -7,11 +7,11 @@
  * that swapping the mock for the real client is a one-line change.
  *
  * Two naming conventions are in the wild for the yes/no primitive. TypeSafe's
- * own docs call it a `noul` (a portmanteau of "no" and "null") and put the
- * probability of yes in a `noul` field; several third-party clients expose the
- * same primitive as `boolean` with a `probability` field. We model the
- * `boolean` spelling and carry `noul` as an alias on the answer, because the
- * distinction is cosmetic and the ambiguity is not ours to resolve.
+ * own docs call it a `noul` — a contraction of Bernoulli, which is exactly what
+ * it is: one trial, one probability — and put P(yes) in a `noul` field. Several
+ * third-party clients expose the same primitive as `boolean` with a
+ * `probability` field. We model the `boolean` spelling and carry `noul` as an
+ * alias on the answer.
  */
 
 /** Cardinality limits the API enforces. Enforce them locally and you never pay
