@@ -4,3 +4,4 @@ export * from './calibration.ts';
 export * from './mock.ts';
 export * from './policy.ts';
 export * from './eval.ts';
+export * from './contest.ts';

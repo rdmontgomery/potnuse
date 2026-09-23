@@ -66,46 +66,72 @@ const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 const clamp = (p: number, eps = 1e-6) => Math.min(1 - eps, Math.max(eps, p));
 
 /**
- * Platt scaling: fit `sigmoid(a * logit(p) + b)` by Newton-Raphson on the log
- * loss. Two parameters, so it works on a few hundred labels, and it is exactly
- * the inverse of the temperature distortion in `mock.ts` — which is why it
- * repairs an RLHF-shaped overconfidence almost completely.
+ * Platt scaling: fit `sigmoid(a * logit(p) + b)` to the labels. Two parameters,
+ * so it works on a few hundred labels, and it is exactly the inverse of the
+ * temperature distortion in `mock.ts`, which is why it repairs an RLHF-shaped
+ * overconfidence almost completely.
  *
  * Being a monotone map, it cannot change the ranking, and therefore cannot
- * change resolution. It buys back reliability only. That is the correct
- * division of labor: the vendor sells you discrimination, you manufacture
- * honesty locally.
+ * change resolution. It buys back reliability only.
+ *
+ * Two details from Platt (1999) that matter in practice, both learned the hard
+ * way here: the 0/1 targets are smoothed to (N+ + 1)/(N+ + 2) and 1/(N- + 2),
+ * which keeps a small, nearly separable sample from driving the slope to
+ * infinity; and Newton's method is damped with a backtracking line search,
+ * because on extreme logits the Hessian weights collapse toward zero and an
+ * undamped step can land arbitrarily far away. Without both, a cooled model's
+ * log-probs made this fit get worse as labels were added.
  */
-export function platt(pairs: readonly Pair[], iterations = 60): Recalibrator {
-  let a = 1;
-  let b = 0;
+export function platt(pairs: readonly Pair[], iterations = 100): Recalibrator {
   const xs = pairs.map(({ p }) => logit(clamp(p)));
-  const ys = pairs.map(({ y }) => y as number);
+  const nPos = pairs.reduce((s, { y }) => s + y, 0);
+  const nNeg = pairs.length - nPos;
+  const hi = (nPos + 1) / (nPos + 2);
+  const lo = 1 / (nNeg + 2);
+  const ts = pairs.map(({ y }) => (y === 1 ? hi : lo));
+
+  const loss = (a: number, b: number) => {
+    let l = 0;
+    for (let i = 0; i < xs.length; i++) {
+      const z = a * xs[i]! + b;
+      // log(1 + e^z) - t*z, written to stay finite for large |z|.
+      l += (z > 0 ? z + Math.log1p(Math.exp(-z)) : Math.log1p(Math.exp(z))) - ts[i]! * z;
+    }
+    return l;
+  };
+
+  // Start from the constant model at the smoothed base rate, as Platt does.
+  let a = 0;
+  let b = Math.log((nPos + 1) / (nNeg + 1));
+  let current = loss(a, b);
 
   for (let it = 0; it < iterations; it++) {
-    let g0 = 0;
-    let g1 = 0;
-    let h00 = 0;
-    let h01 = 0;
-    let h11 = 0;
+    let g0 = 0, g1 = 0, h00 = 1e-12, h01 = 0, h11 = 1e-12;
     for (let i = 0; i < xs.length; i++) {
       const x = xs[i]!;
       const mu = sigmoid(a * x + b);
-      const r = mu - ys[i]!;
-      const w = Math.max(mu * (1 - mu), 1e-9);
-      g0 += r * x;
-      g1 += r;
-      h00 += w * x * x;
-      h01 += w * x;
-      h11 += w;
+      const r = mu - ts[i]!;
+      const w = mu * (1 - mu);
+      g0 += r * x; g1 += r;
+      h00 += w * x * x; h01 += w * x; h11 += w;
     }
     const det = h00 * h11 - h01 * h01;
-    if (!Number.isFinite(det) || Math.abs(det) < 1e-12) break;
+    if (!Number.isFinite(det) || det <= 0) break;
     const da = (h11 * g0 - h01 * g1) / det;
     const db = (h00 * g1 - h01 * g0) / det;
-    a -= da;
-    b -= db;
-    if (Math.abs(da) + Math.abs(db) < 1e-10) break;
+
+    let step = 1;
+    let next = loss(a - da, b - db);
+    while (!(next <= current) && step > 1e-10) {
+      step /= 2;
+      next = loss(a - step * da, b - step * db);
+    }
+    if (!(next <= current)) break;
+    a -= step * da;
+    b -= step * db;
+    const improved = current - next;
+    current = next;
+    if (improved < 1e-12 * Math.max(1, Math.abs(current))) break;
   }
 
   return (p: number) => sigmoid(a * logit(clamp(p)) + b);
