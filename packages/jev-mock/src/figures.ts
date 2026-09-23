@@ -13,7 +13,7 @@
  * overconfident one, blue is the underconfident one.
  */
 
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { calibratedJev } from './mock.ts';
 import { evaluate, threshold, type Costs } from './policy.ts';
@@ -74,7 +74,7 @@ function legend(rows: { label: string; color: string; note?: string; dashed?: bo
   const x = M.left + PW + 12;
   return rows
     .map((row, i) => {
-      const y = M.top + 12 + i * 34;
+      const y = M.top + 12 + i * 42;
       return (
         `<line x1="${x}" y1="${y - 4}" x2="${x + 14}" y2="${y - 4}" stroke="${row.color}" stroke-width="2.5" stroke-linecap="round"${row.dashed ? ' stroke-dasharray="4 3"' : ''} />` +
         `<text x="${x}" y="${y + 14}" class="key" fill="${row.color}">${row.label}</text>` +
@@ -133,6 +133,10 @@ const temper = (p: number, t: number) => sigmoid(logit(Math.min(0.9995, Math.max
 
 function figureTemperature(): string {
   const xs = Array.from({ length: 121 }, (_, i) => i / 120);
+  // Derived, never typed: an earlier version hardcoded 0.92 and 0.62 here
+  // while placing the dots at 0.94 and 0.64.
+  const hot = temper(0.8, 0.5).toFixed(2);
+  const cold = temper(0.8, 2.5).toFixed(2);
   const curve = (t: number) => xs.map((x) => [x, temper(x, t)] as [number, number]);
 
   const inner = `  <svg class="fig" viewBox="0 0 ${W} ${H}" role="img"
@@ -141,20 +145,20 @@ function figureTemperature(): string {
     <path d="${path(xs.map((x) => [x, x] as [number, number]))}" fill="none" stroke="${HONEST}" stroke-width="2" stroke-dasharray="5 4" />
     <path class="series" d="${path(curve(0.5))}" stroke="${HOT}"><title>temperature 0.5, overconfident</title></path>
     <path class="series" d="${path(curve(2.5))}" stroke="${COLD}"><title>temperature 2.5, underconfident</title></path>
-    <circle cx="${n2(sx(0.8))}" cy="${n2(sy(temper(0.8, 0.5)))}" r="4.5" fill="${HOT}" stroke="var(--bg)" stroke-width="2"><title>believes 0.80, reports 0.92</title></circle>
+    <circle cx="${n2(sx(0.8))}" cy="${n2(sy(temper(0.8, 0.5)))}" r="4.5" fill="${HOT}" stroke="var(--bg)" stroke-width="2"><title>believes 0.80, reports ${hot}</title></circle>
     <circle cx="${n2(sx(0.8))}" cy="${n2(sy(0.8))}" r="4.5" fill="${HONEST}" stroke="var(--bg)" stroke-width="2"><title>believes 0.80, reports 0.80</title></circle>
-    <circle cx="${n2(sx(0.8))}" cy="${n2(sy(temper(0.8, 2.5)))}" r="4.5" fill="${COLD}" stroke="var(--bg)" stroke-width="2"><title>believes 0.80, reports 0.62</title></circle>
+    <circle cx="${n2(sx(0.8))}" cy="${n2(sy(temper(0.8, 2.5)))}" r="4.5" fill="${COLD}" stroke="var(--bg)" stroke-width="2"><title>believes 0.80, reports ${cold}</title></circle>
     ${legend([
-      { label: 'T = 0.5', color: HOT, note: 'says 0.92' },
+      { label: 'T = 0.5', color: HOT, note: `says ${hot}` },
       { label: 'T = 1', color: HONEST, note: 'says 0.80', dashed: true },
-      { label: 'T = 2.5', color: COLD, note: 'says 0.62' },
+      { label: 'T = 2.5', color: COLD, note: `says ${cold}` },
     ])}
     <line x1="${n2(sx(0.8))}" y1="${M.top}" x2="${n2(sx(0.8))}" y2="${M.top + PH}" class="ref" opacity="0.45" />
   </svg>`;
 
   return component(
     inner,
-    'One knob. Below 1 the curve bends toward the corners &mdash; every belief gets pushed nearer 0 or 1, so the model sounds surer than it is. Above 1 it sags toward the middle and the model hedges everything. Three models that genuinely believe 0.8 report 0.92, 0.80 and 0.62. All three rank the same items in the same order.',
+    `A yes/no model's stated probability against what it believes, at three temperatures. Cooling bends the curve toward the corners and heating flattens it toward the middle, so the same belief of 0.8 comes out as ${hot}, 0.80 or ${cold}, and because no curve ever turns back on itself, all three rank every item in the same order.`,
   );
 }
 
@@ -202,13 +206,13 @@ async function figureReliability(): Promise<string> {
     ${drawn}
     ${legend([
       { label: 'honest', color: HONEST, note: 'on the line' },
-      { label: 'T = 0.5', color: HOT, note: 'crosses it' },
+      { label: 'cooled', color: HOT, note: 'T = 0.5' },
     ])}
   </svg>`;
 
   return component(
     inner,
-    'Twenty thousand yes/no calls, bucketed by the probability the model reported. Vertical bars are 95% intervals &mdash; without them this chart is a Rorschach test. Amber sits on the diagonal. Rose crosses it: in the 0.1 bucket things happen 31% of the time, and in the 0.85 bucket only 73%. It is wrong in both directions at once, which is what sounding confident looks like from the outside.',
+    'The same twenty thousand yes/no calls, bucketed by what the model reported, with how often the thing actually happened in each bucket and a 95% interval around it. The honest model sits on the dashed diagonal. The cooled one crosses it, so that in the bucket where it said about 0.15 things happened 31% of the time, and where it said about 0.85 they happened 73% of the time, which is what sounding sure looks like from the outside: wrong in both directions at once.',
   );
 }
 
@@ -269,9 +273,183 @@ async function figureCost(): Promise<string> {
   );
 }
 
+
+// --- the same three logits at three temperatures -----------------------------
+
+function figureSoftmax(): string {
+  const logits = [2, 1, 0];
+  const temps: [number, string, string][] = [
+    [0.5, 'T = 0.5, cooled', HOT],
+    [1, 'T = 1', HONEST],
+    [2.5, 'T = 2.5, heated', COLD],
+  ];
+  const Wd = 660, Hd = 300, top = 58, bottom = 52, gapPanel = 26, left = 24;
+  const panelW = (Wd - left * 2 - gapPanel * 2) / 3;
+  const plotH = Hd - top - bottom;
+  const barW = 34, barGap = (panelW - barW * 3) / 4;
+
+  const panels = temps
+    .map(([t, label, color], k) => {
+      const x0 = left + k * (panelW + gapPanel);
+      const e = logits.map((l) => Math.exp(l / t));
+      const sum = e.reduce((a, b) => a + b, 0);
+      const ps = e.map((v) => v / sum);
+      const bars = ps
+        .map((p, i) => {
+          const x = x0 + barGap + i * (barW + barGap);
+          const h = p * plotH;
+          const y = top + plotH - h;
+          return (
+            `<path d="M${n2(x)} ${n2(top + plotH)} V${n2(y + 4)} Q${n2(x)} ${n2(y)} ${n2(x + 4)} ${n2(y)} H${n2(x + barW - 4)} Q${n2(x + barW)} ${n2(y)} ${n2(x + barW)} ${n2(y + 4)} V${n2(top + plotH)} Z" fill="${color}" opacity="${i === 0 ? 1 : 0.7}"><title>${label}: option ${'ABC'[i]} (logit ${logits[i]}) = ${p.toFixed(3)}</title></path>` +
+            `<text x="${n2(x + barW / 2)}" y="${n2(y - 7)}" class="tick mid" fill="var(--text)">${p.toFixed(2)}</text>` +
+            `<text x="${n2(x + barW / 2)}" y="${top + plotH + 17}" class="tick mid">${'ABC'[i]}</text>`
+          );
+        })
+        .join('');
+      return (
+        `<text x="${n2(x0 + panelW / 2)}" y="${top - 26}" class="key mid" fill="${color}">${label}</text>` +
+        `<line x1="${n2(x0)}" y1="${top + plotH}" x2="${n2(x0 + panelW)}" y2="${top + plotH}" class="axis" />` +
+        bars
+      );
+    })
+    .join('\n    ');
+
+  const inner = `  <svg class="fig" viewBox="0 0 ${Wd} ${Hd}" role="img"
+    aria-label="Three options with logits 2, 1 and 0, turned into probabilities at three temperatures. Cooled, the favorite takes 0.87. At one it takes 0.67. Heated it takes 0.47. The order never changes.">
+    ${panels}
+    <text x="${Wd / 2}" y="${Hd - 12}" class="label mid">three options with logits 2, 1 and 0</text>
+  </svg>`;
+
+  return component(
+    inner,
+    'The same three scores through softmax at three temperatures. The favorite is the favorite every time; what changes is how loudly the distribution says so.',
+  );
+}
+
+// --- where the mock's beliefs come from --------------------------------------
+
+function figureBeta(): string {
+  // Beta(0.45, 0.45) density, normalized numerically so no gamma function is needed.
+  const a = 0.45;
+  const xs = Array.from({ length: 399 }, (_, i) => (i + 1) / 400);
+  const raw = xs.map((x) => Math.pow(x, a - 1) * Math.pow(1 - x, a - 1));
+  // Integrate on a much finer grid for the constant; the endpoints are singular
+  // but integrable, and a midpoint rule on 200k cells is plenty.
+  let z = 0;
+  const CELLS = 200_000;
+  for (let i = 0; i < CELLS; i++) {
+    const x = (i + 0.5) / CELLS;
+    z += Math.pow(x, a - 1) * Math.pow(1 - x, a - 1) / CELLS;
+  }
+  const dens = raw.map((v) => v / z);
+  const yMax = 3; // the U climbs past this at both edges, as the prose says
+  const pts = xs.map((x, i) => [x, Math.min(dens[i]! / yMax, 1.02)] as [number, number]);
+  const area = `M${n2(sx(pts[0]![0]))} ${n2(sy(0))} ` + pts.map(([x, y]) => `L${n2(sx(x))} ${n2(sy(y))}`).join(' ') + ` L${n2(sx(pts.at(-1)![0]))} ${n2(sy(0))} Z`;
+
+  const shade = (lo: number, hi: number, op: number) => {
+    const seg = pts.filter(([x]) => x >= lo && x <= hi);
+    return `<path d="M${n2(sx(lo))} ${n2(sy(0))} ` + seg.map(([x, y]) => `L${n2(sx(x))} ${n2(sy(y))}`).join(' ') + ` L${n2(sx(hi))} ${n2(sy(0))} Z" fill="${HONEST}" opacity="${op}" />`;
+  };
+
+  const yTicks = [0, 1, 2, 3]
+    .map((v) => `<text x="${M.left - 10}" y="${n2(sy(v / yMax)) + 4}" class="tick end">${v}</text><line x1="${M.left}" y1="${n2(sy(v / yMax))}" x2="${M.left + PW}" y2="${n2(sy(v / yMax))}" class="grid" />`)
+    .join('');
+
+  const inner = `  <svg class="fig" viewBox="0 0 ${W} ${H}" role="img"
+    aria-label="The density of a beta distribution with both parameters 0.45: a U shape, high at both edges and low in the middle.">
+    <defs><clipPath id="beta-clip"><rect x="${M.left}" y="${M.top}" width="${PW}" height="${PH}" /></clipPath></defs>
+    ${frame({ xLabel: 'the belief the mock draws for an item', yLabel: 'density', yTicks: false })}
+    ${yTicks}
+    <g clip-path="url(#beta-clip)">
+      <path d="${area}" fill="${HONEST}" opacity="0.06" />
+      ${shade(0.0025, 0.1, 0.42)}${shade(0.9, 0.9975, 0.42)}${shade(0.4, 0.6, 0.3)}
+      <path class="series" d="${path(pts)}" stroke="${HONEST}" />
+    </g>
+    <text x="${n2(sx(0.05))}" y="${n2(sy(0.62))}" class="key mid" fill="var(--text)">sure</text>
+    <text x="${n2(sx(0.95))}" y="${n2(sy(0.62))}" class="key mid" fill="var(--text)">sure</text>
+    <text x="${n2(sx(0.5))}" y="${n2(sy(0.31))}" class="key mid" fill="var(--text)">a toss-up</text>
+    <text x="${n2(sx(0.5))}" y="${n2(sy(0.31)) + 15}" class="note mid">about 1 in 8</text>
+    <text x="${n2(sx(0.5))}" y="${n2(sy(0.62))}" class="note mid">shaded edges: about 2 in 5 items</text>
+  </svg>`;
+
+  return component(
+    inner,
+    'Beta(0.45, 0.45), the prior the mock draws its beliefs from. Both parameters below one bend the density into a U, so most items are easy calls one way or the other and a thin middle band is genuinely uncertain.',
+  );
+}
+
+// --- the contest ---------------------------------------------------------------
+
+function figureContest(): string {
+  const data = JSON.parse(readFileSync(new URL('../data/contest-curve.json', import.meta.url), 'utf8')) as {
+    curve: Record<string, { n: number; cost: number }[]>;
+    oracle: number;
+    approveAll: number;
+  };
+  const Wc = 660, Hc = 400, Mc = { top: 34, right: 150, bottom: 50, left: 66 };
+  const PWc = Wc - Mc.left - Mc.right, PHc = Hc - Mc.top - Mc.bottom;
+  const lx = (n: number) => Mc.left + ((Math.log10(n) - Math.log10(40)) / (Math.log10(5000) - Math.log10(40))) * PWc;
+  const yLo = 0.32, yHi = 0.45;
+  const ly = (c: number) => Mc.top + (1 - (Math.min(c, yHi) - yLo) / (yHi - yLo)) * PHc;
+
+  const line = (key: string, color: string, dash: string, label: string) => {
+    const pts = data.curve[key]!;
+    const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${n2(lx(p.n))} ${n2(ly(p.cost))}`).join(' ');
+    const dots = pts
+      .map((p) => `<circle cx="${n2(lx(p.n))}" cy="${n2(ly(p.cost))}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="2"><title>${label}, ${p.n} labels: $${p.cost.toFixed(3)} a ticket</title></circle>`)
+      .join('');
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-dasharray="${dash}" />${dots}`;
+  };
+
+  const ref = (c: number, label: string, dash: string) =>
+    `<line x1="${Mc.left}" y1="${n2(ly(c))}" x2="${Mc.left + PWc}" y2="${n2(ly(c))}" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="${dash}" />` +
+    `<text x="${Mc.left + PWc + 10}" y="${n2(ly(c)) + 4}" class="note">${label}</text>`;
+
+  const xTicks = [50, 100, 200, 400, 1000, 4000]
+    .map((n) => `<text x="${n2(lx(n))}" y="${Mc.top + PHc + 20}" class="tick mid">${n}</text><line x1="${n2(lx(n))}" y1="${Mc.top}" x2="${n2(lx(n))}" y2="${Mc.top + PHc}" class="grid" />`)
+    .join('');
+  const yTicks = [0.33, 0.36, 0.39, 0.42, 0.45]
+    .map((c) => `<text x="${Mc.left - 10}" y="${n2(ly(c)) + 4}" class="tick end">$${c.toFixed(2)}</text><line x1="${Mc.left}" y1="${n2(ly(c))}" x2="${Mc.left + PWc}" y2="${n2(ly(c))}" class="grid" />`)
+    .join('');
+
+  const keyX = Mc.left + PWc + 12;
+  const key = (y: number, color: string, dash: string, a: string, b: string) =>
+    `<line x1="${keyX}" y1="${y}" x2="${keyX + 18}" y2="${y}" stroke="${color}" stroke-width="2.5" stroke-dasharray="${dash}" />` +
+    `<text x="${keyX}" y="${y + 16}" class="key" fill="${color}">${a}</text>` +
+    `<text x="${keyX}" y="${y + 30}" class="note">${b}</text>`;
+
+  const inner = `  <svg class="fig" viewBox="0 0 ${Wc} ${Hc}" role="img"
+    aria-label="Cost per ticket against the number of labels used to recalibrate, for three models. The Jev-like model ends lowest, near the oracle. The LLM read through log-probs ends just under approving everything. The same LLM read through stated confidence ends at about the cost of approving everything.">
+    <defs><clipPath id="contest-clip"><rect x="${Mc.left}" y="${Mc.top - 6}" width="${PWc}" height="${PHc + 6}" /></clipPath></defs>
+    ${xTicks}${yTicks}
+    <line x1="${Mc.left}" y1="${Mc.top + PHc}" x2="${Mc.left + PWc}" y2="${Mc.top + PHc}" class="axis" />
+    <line x1="${Mc.left}" y1="${Mc.top}" x2="${Mc.left}" y2="${Mc.top + PHc}" class="axis" />
+    ${ref(data.approveAll, 'approve everything', '5 4')}
+    ${ref(data.oracle, 'a model that knew', '2 4')}
+    <g clip-path="url(#contest-clip)">
+      ${line('llmVerbal', HOT, '5 4', 'LLM, stated confidence')}
+      ${line('llmLogprob', HOT, '', 'LLM, log-probs')}
+      ${line('jevLike', HONEST, '', 'Jev-like')}
+    </g>
+    ${key(Mc.top + 132, HONEST, '', 'Jev-like', 'knows the most')}
+    ${key(Mc.top + 178, HOT, '', 'LLM, log-probs', 'cooled by tuning')}
+    ${key(Mc.top + 224, HOT, '5 4', 'same LLM, asked', 'for a confidence')}
+    <text x="${n2(Mc.left + PWc / 2)}" y="${Hc - 10}" class="label mid">labelled tickets used to recalibrate (log scale)</text>
+    <text x="12" y="${n2(Mc.top + PHc / 2)}" class="label mid" transform="rotate(-90 12 ${n2(Mc.top + PHc / 2)})">cost per ticket, 200,000 held out</text>
+  </svg>`;
+
+  return component(
+    inner,
+    'The same recalibration loop, Platt scaling on a growing set of labelled tickets, applied to all three models and scored on two hundred thousand tickets it never saw. Each point averages thirty draws of the labelled set. The two red lines are one model read out two ways.',
+  );
+}
+
 // --- write ------------------------------------------------------------------
 
 const figures: [string, string][] = [
+  ['Softmax.astro', figureSoftmax()],
+  ['Beta.astro', figureBeta()],
+  ['Contest.astro', figureContest()],
   ['Temperature.astro', figureTemperature()],
   ['Reliability.astro', await figureReliability()],
   ['Cost.astro', await figureCost()],

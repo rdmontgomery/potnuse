@@ -164,12 +164,91 @@ cost bowl. Palette (amber / blue / rose) is validated against the site's card
 surface for colorblind separation; identity is fixed across figures, with amber
 the honest model and rose the overconfident one.
 
+## The contest: three models, one known truth
+
+`contest.ts` builds a refund queue (92% legitimate, 8% abuse, $5 for an
+approved abuse, $20 for a denied customer, so approve at P(legit) >= 0.2) on a
+probit latent, and gives three models noisy views of it. Each model's honest
+belief is a closed-form Bayes posterior, so all three start calibrated by
+construction; then each is bent the way real models get bent:
+
+| model | how much it knows | distortion |
+| --- | --- | --- |
+| `jevLike` | most (tau 0.5) | trained at a 50% base rate |
+| `llmLogprob` | less (tau 1.2) | log-probs cooled to T = 0.5 |
+| `llmVerbal` | same as `llmLogprob` | asked for a confidence; answers collapse to 12 values |
+
+The knowledge ordering is set by construction. What the contest measures is
+what that knowledge is worth at a given cost ratio, and what one recalibration
+loop can and cannot give back. At 4,000 labels, scored on 200,000 held out:
+
+| model | reliability | resolution | cost per ticket |
+| --- | --- | --- | --- |
+| oracle | 0.00001 | 0.037 | $0.333 |
+| Jev-like, Platt | 0.00005 | 0.033 | $0.353 |
+| Jev-like, prior shift only, **no labels** | 0.00001 | 0.033 | $0.354 |
+| LLM log-probs, Platt | 0.00007 | 0.022 | $0.393 |
+| LLM stated, isotonic | — | 0.019 | $0.395 |
+| LLM stated, Platt | 0.00132 | 0.019 | $0.404 |
+| approve everything | — | — | $0.403 |
+
+```
+pnpm --filter @rdm/jev-mock contest   # every number above, ~30s
+```
+
+Resolution identity, checked here at a 92% base rate: for a calibrated
+forecaster resolution equals Var(p) at any base rate. Only the closed form
+1/(4(2a+1)) is specific to the symmetric beta; for Beta(a, b) it is
+ab / ((a+b)^2 (a+b+1)). Ten equal bins under-measure it when the mass bunches
+into one bin (2.6% low for the LLM posterior here).
+
+## Practice
+
+What the simulations taught, kept here rather than in the write-up.
+
+**Spend labels across the confidence range**, not uniformly at random. Uniform
+sampling buries the budget in the confident bulk while your threshold lives in
+one decile (`stratifiedSample`).
+
+**Score each question id separately.** A twenty-question panel is twenty
+forecasters sharing an invoice, and averaging their reliability averages a
+weather forecaster and a sommelier.
+
+**Put intervals on every bucket.** At forty items a bucket the 95% band is 0.30
+wide.
+
+**Budget labels by simulation** (`power`). Catching a 15% overconfidence at a
+5% false-alarm rate takes about a thousand; two hundred and fifty catches it 63%
+of the time.
+
+**A count needs more labels than a decision.** Platt on 400 labels left
+decisions within 2.5% of their best cost but tripled the error of a weekly count
+built by summing probabilities, because a decision forgives any bias on the
+right side of the threshold and a sum forgives nothing.
+
+**Gate a version bump on reliability and resolution together**, never accuracy.
+A model that reports the base rate to everything passes any calibration check
+alone. Pin the model version; aliases move and thresholds are calibrated to one.
+Keep a labelled canary running, because a correction fitted in March is a claim
+about March's traffic.
+
+**Where a decision model fits.** A competent person could make the call at a
+glance; there are many such calls over the same state; code consumes the answer
+rather than a person reading it; the costs of being wrong are lopsided and
+roughly known; and, the filter most candidates fail, you will eventually learn
+the truth. A probability you can never check cannot be calibrated. It does not
+fit where you need prose, where one judgment feeds the next, or where the work
+is arithmetic or counting of items in the input, which Jev's own jaggedness
+list names as weaknesses.
+
 ## Running it
 
 ```
-pnpm --filter @rdm/jev-mock demo        # regenerates every number quoted above
+pnpm --filter @rdm/jev-mock demo        # the mock, the knob, the thresholds
+pnpm --filter @rdm/jev-mock contest     # the three-model contest
+pnpm --filter @rdm/jev-mock figures     # every chart in the write-up
 pnpm --filter @rdm/jev-mock typecheck
-pnpm test                              # tests live in src/mock.test.ts
+pnpm test                              # 31 tests in src/*.test.ts
 ```
 
 ## What this is not
