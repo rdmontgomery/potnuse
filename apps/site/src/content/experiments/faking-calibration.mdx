@@ -17,6 +17,7 @@ import Beta from '@/components/faking-calibration/Beta.astro';
 import Reliability from '@/components/faking-calibration/Reliability.astro';
 import Cost from '@/components/faking-calibration/Cost.astro';
 import Contest from '@/components/faking-calibration/Contest.astro';
+import Loop from '@/components/faking-calibration/Loop.astro';
 
 {/*
   STEVENS SECTION GOES HERE, as is, from the other session's draft.
@@ -31,9 +32,9 @@ import Contest from '@/components/faking-calibration/Contest.astro';
 
 None of this is new, which is the embarrassing part.
 
-Weather forecasters were first to care, because a forecast gets checked every single day, and they've been calibrated for decades in the plain sense that when they say 30% it rains on about 30% of those days, a fact I learned long after learning to distrust the weather. Machine learning came to it late and sideways, when people started asking classifiers for probabilities they weren't designed to produce, and the 2005 benchmark is the one worth remembering: boosted trees and SVMs squash their outputs toward the middle, naive Bayes flings them toward the corners, and plain logistic regression comes out calibrated almost by accident, because it's trained by minimizing log loss, and log loss is a proper scoring rule, which is a machine for extracting honest probabilities. Then deep networks got large, Guo and colleagues found that the bigger, more accurate ones had quietly become less honest, and the fix they proposed was a single number called temperature, and to see why that word is not a metaphor we need a detour through a gas.
+Weather forecasters were first to care, because a forecast gets checked every single day, and they've been calibrated for decades in the plain sense that when they say 30% it rains on about 30% of those days, a fact I learned long after learning to distrust the weather. Machine learning came to it late and sideways, when people started asking classifiers for probabilities they weren't designed to produce, and [the 2005 benchmark](https://doi.org/10.1145/1102351.1102430) is the one worth remembering: boosted trees and SVMs squash their outputs toward the middle, naive Bayes flings them toward the corners, and plain logistic regression comes out calibrated almost by accident, because it's trained by minimizing log loss, and log loss is a [proper scoring rule](https://en.wikipedia.org/wiki/Scoring_rule), which is a machine for extracting honest probabilities. Then deep networks got large, [Guo and colleagues](https://arxiv.org/abs/1706.04599) found that the bigger, more accurate ones had quietly become less honest, and the fix they proposed was a single number called temperature, and to see why that word is not a metaphor we need a detour through a gas.
 
-<Marginal>Niculescu-Mizil and Caruana, "Predicting Good Probabilities with Supervised Learning" (ICML 2005). Guo, Pleiss, Sun and Weinberger, "On Calibration of Modern Neural Networks" (ICML 2017). The forecasters' tools came from their own journals: Glenn Brier's score in 1950, Allan Murphy's decomposition of it in 1973.</Marginal>
+<Marginal>Niculescu-Mizil and Caruana, [Predicting Good Probabilities with Supervised Learning](https://doi.org/10.1145/1102351.1102430) (ICML 2005). Guo, Pleiss, Sun and Weinberger, [On Calibration of Modern Neural Networks](https://arxiv.org/abs/1706.04599) (ICML 2017). The forecasters' tools came from their own journals: [Glenn Brier's score](https://en.wikipedia.org/wiki/Brier_score) in 1950, and Allan Murphy's decomposition of it in 1973.</Marginal>
 
 ---
 
@@ -51,12 +52,12 @@ What physics gives you for free is an intuition for what temperature does. Heat 
 
 Nothing about the options changed, and neither did their order, since the favorite is the favorite at every temperature. What changed is how loudly the distribution announces its favorite, and if that distribution is also what the model reports as its confidence, temperature is a dial on how sure the model sounds that has no connection to how much it knows.
 
-This matters because of what happens to most models after pretraining. The step is called preference tuning, usually some variant of RLHF, and the vocabulary it borrows from reinforcement learning makes it sound more exotic than it is. The model's distribution over possible answers gets called a policy. Human raters look at pairs of answers and pick the better one, and a second model, the reward model, learns to predict their picks, so that it can give any answer a score. Then the original model is nudged toward answers that score well, with one restraint: it pays a penalty for drifting too far from the model it started as, measured by KL divergence, which is a standard yardstick for how different two probability distributions are, and a single number, $$\beta$$, sets how heavy that penalty is.
+This matters because of what happens to most models after pretraining. The step is called preference tuning, usually some variant of RLHF, and the vocabulary it borrows from reinforcement learning makes it sound more exotic than it is. The model's distribution over possible answers gets called a policy. Human raters look at pairs of answers and pick the better one, and a second model, the reward model, learns to predict their picks, so that it can give any answer a score. Then the original model is nudged toward answers that score well, with one restraint: it pays a penalty for drifting too far from the model it started as, measured by [KL divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) (Kullback–Leibler), which is a standard yardstick for how different two probability distributions are, and a single number, $$\beta$$, sets how heavy that penalty is.
 
 That optimization has an exact solution,
 
 $$
-\text{new}(y) \;\propto\; \text{old}(y)\, \exp\!\big(\text{reward}(y)/\beta\big),
+\text{new}(y) \;\propto\; \text{old}(y)\, e^{\,\text{reward}(y)/\beta},
 $$
 
 and to a physicist it's another Boltzmann factor, with reward playing the part of negative energy and $$\beta$$ playing temperature, multiplied onto the distribution the model already had. Now suppose raters tend to reward answers that sound confident, and push that to its limit, where the reward simply is the model's own log-probability. Substitute and the solution becomes
@@ -67,11 +68,11 @@ $$
 
 and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to $$T = \beta/(1+\beta)$$, which is below one for any positive $$\beta$$. It's a caricature, since real rewards are only partly about confidence, but the direction survives a partial version: whatever share of the reward tracks the model's own confidence cools it by that much. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
 
-<Marginal>The same closed form is the starting point of Rafailov and colleagues' DPO paper (NeurIPS 2023), where it appears without the thermodynamics.</Marginal>
+<Marginal>The same closed form is the starting point of Rafailov and colleagues' [DPO paper](https://arxiv.org/abs/2305.18290) (NeurIPS 2023), where it appears without the thermodynamics.</Marginal>
 
 <Temperature />
 
-Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive. Accuracy, top-1, AUC, F1 at a threshold, and a human preferring one answer to another are all ordinal statistics, so every one of them is unmoved by exactly the transformation preference tuning applies, and the GPT-4 technical report shows the result on real weights: the pretrained model near the diagonal on a multiple-choice benchmark, the post-trained model bowed away from it, same knowledge, worse probabilities.
+Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive. Accuracy, top-1, AUC, F1 at a threshold, and a human preferring one answer to another are all ordinal statistics, so every one of them is unmoved by exactly the transformation preference tuning applies.
 
 ---
 
@@ -88,7 +89,7 @@ That makes it calibrated by construction, since among the items where it believe
 
 <Beta />
 
-The U keeps climbing past the edges of the chart, and at 0.45 a bit over two items in five get a belief above 0.9 or below 0.1, while about one in eight lands between 0.4 and 0.6. The part I didn't expect is that the choice has a closed form in <Gloss def="Allan Murphy, a meteorologist, split the Brier score in 1973 into three parts: reliability, how honest the forecasts are; resolution, how informative they are; and uncertainty, how hard the weather was to begin with.">Murphy's terms</Gloss>. For a calibrated forecaster, resolution, the measure of how informative the forecasts are, works out to the variance of its beliefs, and a symmetric beta with both parameters equal to $$a$$ has variance $$1/\big(4(2a+1)\big)$$, which for $$a = 0.45$$ is 0.1316. The simulation below measured 0.1317. So the mock has exactly two knobs and they map one-to-one onto Murphy's two terms: the shape of the beta sets how much the model knows, and the temperature from the last section sets how honestly it says so.
+The U keeps climbing past the edges of the chart, and at 0.45 a bit over two items in five get a belief above 0.9 or below 0.1, while about one in eight lands between 0.4 and 0.6. The part I didn't expect is that the choice has a closed form in <Gloss def="Allan Murphy, a meteorologist, split the Brier score in 1973 into three parts: reliability, how honest the forecasts are; resolution, how informative they are; and uncertainty, how hard the weather was to begin with.">Murphy's terms</Gloss>. For a calibrated forecaster, resolution (the measure of how informative the forecasts are) works out to the variance of its beliefs, and a symmetric beta with both parameters equal to $$a$$ has variance $$1/\big(4(2a+1)\big)$$, which for $$a = 0.45$$ is 0.1316. The simulation below measured 0.1317. So the mock has exactly two knobs and they map one-to-one onto Murphy's two terms: the shape of the beta sets how much the model knows, and the temperature from the last section sets how honestly it says so.
 
 Turn only the second knob, leaving every hidden truth where it was, and run twenty thousand items on the same seed:
 
@@ -100,7 +101,7 @@ Turn only the second knob, leaving every hidden truth where it was, and run twen
 | 0.5, cooled | 0.0739 | 0.00638 | 0.1290 |
 | 2.5, heated | 0.1280 | 0.01924 | 0.1308 |
 
-Reliability, where zero means perfectly honest, gets about ninety times worse cooled and nearly three hundred times worse heated, and resolution stays within two percent of the value the beta promised, because the temperature never touched what the model believed, only what it said.
+Reliability (where zero means perfectly honest) gets about ninety times worse cooled and nearly three hundred times worse heated, and resolution stays within two percent of the value the beta promised, because the temperature never touched what the model believed, only what it claimed.
 
 <Reliability />
 
@@ -108,7 +109,7 @@ Reliability, where zero means perfectly honest, gets about ninety times worse co
 
 ### how sure is sure enough
 
-An honest probability is worth having because of what you can do with it that you can't do with a confident-sounding one, and the first of those is deciding, which in software usually means comparing the number to a threshold. Most thresholds are chosen the way 0.5 is chosen, by reflex, or the way 0.7 is chosen, by someone once. With an honest probability the threshold stops being a matter of taste, and the way to see it is to draw the table that decision theory keeps in its head and rarely puts on paper.
+An honest probability is worth having because of what you can do with it that you can't do with a confident-sounding one, and the first of those is deciding, which in software usually means comparing the number to a threshold. Most thresholds are chosen the way 0.5 is chosen (by reflex) or the way 0.7 is chosen (by someone once). With an honest probability the threshold stops being a matter of taste, and the way to see it is to draw the table that decision theory keeps in its head and rarely puts on paper.
 
 Say you run refunds, and a model tells you how likely each request is to be legitimate. You can approve or deny, and the request either was legitimate or it wasn't, so there are four things that can happen, with what you did down the side and what was true across the top, and each of them has a price:
 
@@ -134,9 +135,7 @@ All of which rests on one assumption, that when the model says 0.2 it means 0.2.
 
 ### a model that only answers
 
-ChatGPT brought on a wave of generative AI that was, for a good while, a fancy chatbot, and structured outputs are what changed that. Underneath, these models are one black box that takes unstructured input and speaks two languages: free text, for people, and structured output, for machines. TypeSafe's Jev, which came out of stealth on 15 September, keeps the second language and drops the first, so it can't write a sentence. You give it some state and a set of typed questions, and it gives back a choice, a position on a rubric, or a probability, in somewhere between seventy and five hundred milliseconds, at four cents per million input tokens, with output free.
-
-<Marginal>The speed and price figures are TypeSafe's, on TypeSafe's own four-workflow benchmark. The one independent measurement I found, from *Every*, came in at about 25 times faster and 580 times cheaper than Claude Fable 5.1 on extraction, which agrees on direction and is an order of magnitude off the headline.</Marginal>
+ChatGPT brought on a wave of GenAI that really was just a fancy chatbot, until structured outputs came along. All these models are a black box that accepts unstructured input and does two things: talk to humans (free text) and talk to machines (structured output). [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) cut out the part that talks to humans and improved the use of the part that talks to machines. You give it some state and a set of typed questions, and it gives back a choice, a position on a rubric, or a probability.
 
 A request is a single POST carrying the state and the questions, each under an id you choose:
 
@@ -161,15 +160,15 @@ A request is a single POST carrying the state and the questions, each under an i
 }
 ```
 
-The yes/no question returns the probability of yes, and TypeSafe calls it a `noul`, which is Bernoulli filed down to one syllable, one trial with one probability. A choice returns the favorite along with the whole distribution over the options you listed. All the questions in a request are answered in parallel and in isolation against the same state, so twenty questions cost one round trip and not much more than one question, and no question can see another's answer, which leaves the combining to you. The typing is real but narrower than the pitch: the model can't return an option you didn't define, because your schema is the whole output space, but it can certainly return the wrong one, and "can't hallucinate" means "can't produce something unparseable," which isn't the same as being right.
+The yes/no question returns the probability of yes, and TypeSafe calls it a `noul`, which is Bernoulli filed down to one syllable (one trial, one probability). A choice returns the favorite along with the whole distribution over the options you listed. All the questions in a request are answered in parallel and in isolation against the same state, so twenty questions cost one round trip and not much more than one question, and no question can see another's answer, which leaves the combining to you. The typing is real but narrower than the pitch: the model can't return an option you didn't define, because your schema is the whole output space, but it can certainly return the wrong one, and "can't hallucinate" means "can't produce something unparseable," which isn't the same as being right.
 
-What TypeSafe is actually selling is the second number. They train with a method they call RLCD, reinforcement learning for calibrated decisions, in which the reward isn't whether a rater liked the answer but whether the probability attached to it was honest, which, if it means what it says, is a proper scoring rule wearing reinforcement learning's clothes. Everything above is the case for wanting that. Read carefully, it's also a case that honesty is worth less than it sounds.
+What TypeSafe is actually selling is the second number. They train with a method they call RLCD (reinforcement learning for calibrated decisions), in which the reward isn't whether a rater liked the answer but whether the probability attached to it was honest, which, if it means what it says, is a proper scoring rule wearing reinforcement learning's clothes. Everything above is the case for wanting that. Read carefully, it's also a case that honesty is worth less than it sounds.
 
-Recalibrating a model means fitting a monotone map from what it says to how often it turns out right, and a monotone map can't reorder anything, so it can't touch resolution, which lives entirely in the ordering. That doesn't make models equivalent once they've been recalibrated. It makes them comparable, by stripping off the part that's cheap to repair and leaving the part that isn't. What you actually buy from a model is resolution, and what you buy from a model that already sits near the diagonal is label efficiency, since two parameters and a few hundred labels can straighten a small bend where a large one needs a more flexible fit and thousands.
+Honesty turns out to be the cheap part, and the next section puts a price on it. Recalibrating a model means learning, from some of your own labelled examples, a map from what the model says to how often it turns out right. That map is monotone (it can stretch the numbers but never swap two of them), so it can't change which items the model ranks above which, and resolution lives entirely in that ranking. Recalibration therefore doesn't make models equally good. It makes them comparable: once two models are both honest, the one that ranks your items better is the better model, and nothing you fit on your side changes which one that is. The same goes for a frontier model read through its log-probabilities, which recalibrates just as well. What a model really sells you is resolution. What a model that arrives already calibrated adds on top is label efficiency (it needs fewer labels, sometimes none, to become honest on your traffic), where a badly bent one needs a more flexible fit and thousands of labels.
 
 There's one more place Jev might earn its keep, and it has nothing to do with training. Not every frontier API exposes log-probabilities, so the honest baseline from a general model is often to ask it how confident it is and take the number it says, and stated confidences pile up on a handful of round values like 0.8, 0.9 and 0.95. Items that share a value can never be told apart again, by any recalibration, so if ties destroy resolution, a model that returns a real probability has an edge that no amount of fitting on your side can give back. That's a claim that can be tested, so I tested it.
 
-<Marginal>Xiong and colleagues (ICLR 2024) found stated confidences clustering between 80 and 100 percent, mostly in multiples of five.</Marginal>
+<Marginal>[Xiong and colleagues](https://arxiv.org/abs/2306.13063) (ICLR 2024) found stated confidences clustering between 80 and 100 percent, mostly in multiples of five.</Marginal>
 
 ---
 
@@ -183,15 +182,22 @@ Before any repair, the Jev-like model is the worst of the three. Believing half 
 
 The Jev-like model's trouble is the cheapest miscalibration there is. When only the base rate differs between training and use, the correction is exact and needs no labelled examples at all: add the difference between the two base rates in log-odds, here 2.44, to every logit. That one number takes it from $1.07 a ticket to $0.354 and its reliability from 0.053 to 0.00001, from the worst model in the contest to about two cents off the oracle, without looking at a single labelled ticket. (If you don't know the base rate it was trained at, it can be estimated from unlabelled traffic; here I assumed you did.)
 
-Then the same loop for all three. Take some number of labelled tickets, fit Platt scaling, which is just two parameters, a slope and an intercept on the logit, and score the result on two hundred thousand tickets the fit never saw, averaging thirty draws of the labelled set at each size:
+Then the same loop for all three. Take some number of labelled tickets, fit [Platt scaling](https://en.wikipedia.org/wiki/Platt_scaling) (a logistic regression on the model's own logit, so just two parameters, a slope and an intercept), and score the result on two hundred thousand tickets the fit never saw, averaging thirty draws of the labelled set at each size:
 
 <Contest />
 
-At four thousand labels the two continuous readouts have both become honest, with reliability of 0.00005 for the Jev-like model and 0.00007 for the LLM's log-probs, and their costs have spread out in the order of what each model knew: $0.353 and $0.393 a ticket, against resolutions of 0.033 and 0.022. The stated-confidence readout never quite gets there. Two parameters can't fit twelve steps, so it stalls at a reliability of 0.0013 and at $0.404 never beats approving everyone, and even a step-shaped fit, isotonic regression, brings it only to $0.395, level with the log-probs and no further.
+At four thousand labels the two continuous readouts have both become honest, with reliability of 0.00005 for the Jev-like model and 0.00007 for the LLM's log-probs, and their costs have spread out in the order of what each model knew: $0.353 and $0.393 a ticket, against resolutions of 0.033 and 0.022. The stated-confidence readout never quite gets there. Two parameters can't fit twelve steps, so it stalls at a reliability of 0.0013 and at $0.404 never beats approving everyone, and even a step-shaped fit ([isotonic regression](https://en.wikipedia.org/wiki/Isotonic_regression)) brings it only to $0.395, level with the log-probs and no further.
 
-The result I didn't expect runs the other way. Before any fitting, the stated confidences were the more honest of the two LLM readouts, with a reliability of 0.0011 against 0.0021 for the cooled log-probs, which matches what's been reported for real preference-tuned models, and they end up worth no more, because honesty was the part that was cheap to fix.
+The result I didn't expect runs the other way, and it isn't on the chart, which starts after the first fifty labels. Before any fitting at all, the stated confidences were the more honest of the two LLM readouts. Rounding caps them at 0.95 and 0.05, so they can't be as extreme as the cooled log-probabilities, which run right out to the corners, and a readout that can't be extreme can't be extremely overconfident. But the same rounding throws away part of the ranking, and the ranking is the part that's worth money:
 
-<Marginal>Tian and colleagues, "Just Ask for Calibration" (EMNLP 2023), found that for preference-tuned models, stated confidences were often better calibrated than the token probabilities.</Marginal>
+| same LLM, read out as | reliability, before fitting | reliability, after 4,000 labels | resolution | cost per ticket |
+|---|---:|---:|---:|---:|
+| log-probabilities, cooled | 0.0021 | 0.00007 | 0.022 | $0.393 |
+| a stated confidence | 0.0011 | 0.0013 | 0.019 | $0.404 |
+
+The stated confidence started out more honest, which matches what's been reported for real preference-tuned models, and ended less honest and more expensive, because honesty was the cheap part to fix and the ranking it gave up can't be fixed at all.
+
+<Marginal>[Tian and colleagues](https://arxiv.org/abs/2305.14975), "Just Ask for Calibration" (EMNLP 2023), found that for preference-tuned models, stated confidences were often better calibrated than the token probabilities.</Marginal>
 
 How much resolution is worth depends on the prices. Holding a wrongly denied customer at $20 and changing what an approved abuse costs, here is the share of the oracle's savings over approving everything that each model captures once it's been recalibrated:
 
@@ -203,9 +209,39 @@ How much resolution is worth depends on the prices. Holding a wrongly denied cus
 
 At five dollars abuse is cheap enough that the right move is to approve nearly everyone, so a model earns its keep only on the requests it can be sure are abuse, and being sure is exactly what resolution is, which is why the gap between the models is widest there.
 
-So the prediction mostly held: reliability converged, cost followed resolution, and the Jev-like model's lead is whatever its resolution buys at your prices. The part about ties held more weakly than I expected. Rounding cost the LLM about a seventh of its resolution and, with the right fitter, almost nothing at the decision. But my rounding is the kindest version there is, a clean snap of the log-probability to the nearest round number, and real stated confidences also wobble from one asking to the next, which I didn't model, so the penalty here is a floor rather than an estimate.
+So the contest came out the way the last section's argument said it would: reliability converged, cost followed resolution, and the Jev-like model's lead is whatever its resolution buys at your prices. The claim about ties held more weakly than I expected. Rounding cost the LLM about a seventh of its resolution and, with the right fitter, almost nothing at the decision. But my rounding is the kindest version there is (a clean snap of the log-probability to the nearest round number), and real stated confidences also wobble from one asking to the next, which I didn't model, so the penalty here is a floor rather than an estimate.
 
-For Jev itself the loop is the one above: Platt scaling per question id on the yes/no probability, and a single temperature per question on choice distributions, fitted on labelled rows from your own traffic and checked on rows the fit never saw.
+---
+
+### the loop, in production
+
+Everything so far happened once, on a fixed pile of labels. In production the traffic keeps changing, the model gets new versions, and a map fitted in March describes March, so the fitting has to become a loop, and the loop has four parts.
+
+<Loop />
+
+The first is the serving path, and it's small. The model returns a raw probability, a table you maintain turns it into an honest one, and the cost table turns that into a decision:
+
+```ts
+// what Jev said
+const raw = answers[question].probability;
+// fitted on your labels, one row per question
+const { slope, intercept } = calibration[question];
+// what it means
+const p = sigmoid(slope * logit(raw) + intercept);
+// from the cost table
+const approve = p >= threshold[question];
+log({ ticket, question, modelVersion, raw, p, approve });
+```
+
+The calibration table has one row per question id (per question, not per model, because each question is its own forecaster with its own bend), and for a choice question the row is a single temperature instead of a slope and an intercept. The thresholds come from each question's cost table, and they only mean what they say because the line above them made the probability honest.
+
+The second part is the annotation queue, and it's where most versions of this go wrong. The natural source of labels is review work people already do: someone looks at a denied refund and either upholds it or reverses it. But that only ever produces labels for the requests you acted on, so you learn how often your denials were right and never how many abusive requests you waved through, and the failure that costs the most (the threshold quietly drifting while abuse slips under it) is the one those labels can't see. The fix is to send a small random sample of everything, two or three percent, including requests you approved without a second look, to the same queue, and to record how each item got there, so the random ones can be weighted back up to stand for all the traffic they were drawn from. Label each item per question rather than per ticket, since "this denial was wrong" is a fact about the abuse question and not about the ticket's other answers.
+
+The third part is refitting. On a schedule, or when something changes, fit each question's row again on the labels that have accumulated, hold back the most recent slice to check the new fit against rows it never saw, and publish it only if it does better on those rows than the one it would replace.
+
+The fourth part decides when to refit, and it needs no labels at all. Keep the distribution of raw probabilities from the period you last fitted on, and compare each day's against it (the population stability index is the usual measure). A new model version or a shift in your traffic moves it immediately, long before enough labels arrive to show the damage, and that's the signal to pull the queue's labels forward and refit. Pin the model version in the meantime, because an alias that moves to a new release moves every probability your table was fitted to.
+
+<Marginal>Each piece has a runnable counterpart in `packages/jev-mock` in this site's repository: Platt per question and the checks in TypeScript, and a sketch of the queue, the weights and the drift monitor as SQL.</Marginal>
 
 ---
 
@@ -223,29 +259,6 @@ The title is a pun that turns out to be literal. If a model's probabilities are 
 | count the requests you denied at 0.2 | 151.1 |
 | sum the Jev-like model's, unrepaired | 280.5 |
 
-Two things in that table surprised me. Counting the requests you denied, which is what most dashboards do, is nearly useless, because at these prices you only deny the handful you're sure about, so you count ten when there were a hundred and sixty. And a count is far less forgiving than a decision. Four hundred labels left the Jev-like model's decisions within 2.5% of their best cost, but its counting error was three times the floor, because a decision forgives any bias that lands on the right side of the threshold and a sum forgives nothing.
+Two things in that table surprised me. Counting the requests you denied, which is what most dashboards do, is nearly useless, because at these prices you only deny the handful you're sure about, so you count ten when there were a hundred and sixty. And a count is far less forgiving than a decision. Four hundred labels left the Jev-like model's decisions within 2.5% of their best cost but left its counting error at three times the floor, because a decision forgives any bias that lands on the right side of the threshold and a sum forgives nothing.
 
-Counting is the clearest case but not the only one. An honest probability can be multiplied by what's at stake instead of compared to a threshold, which lets one model price decisions of very different sizes, and the probabilities in the review band add up to tomorrow's review queue, which is a staffing forecast that comes free.
-
----
-
-### what I'm still unsure of
-
-Most of this rests on simulations I built to be well behaved, which is both their point and their limit.
-
-The performance numbers are TypeSafe's, on TypeSafe's benchmark, and the one independent measurement came in an order of magnitude lower while agreeing on direction. The Jev-like model's lead in the contest is one I gave it, so the contest says what resolution is worth and nothing about whether Jev has more of it than the model you'd otherwise use, which only your own labelled data can tell you. The `confidence` field on choice answers is documented only as derived from the distribution; it measures spread rather than forecasting anything, and it shouldn't go near a threshold.
-
-{/*
-  HOLD until Rick has talked to Patrick: this is a finding about his project.
-  The analysis is in packages/jev-mock/field-report.
-
-The one piece of real evidence I have is a set of recorded Jev judgments against a table with planted defects. It looks the way this piece would predict for a strong but imperfect model, honest at the extremes and overconfident in the middle, and so uneven across question ids that the least reliable question was three hundred times worse than the most, with both of the worst traced to questions that were worded badly rather than to the model. It's also fourteen defects in one table, which makes it suggestive and nothing more.
-*/}
-
-Score questions get graded here on whether the top level was right, which throws away the order that makes a rubric worth having; the right tool for an ordered answer is the ranked probability score, and I haven't built it. Everything else on this page, every table and chart, regenerates from `packages/jev-mock` in this site's repository.
-
----
-
-### the other calibrate
-
-There's a page on this site called <a href="/calibrate">calibrate</a> that has nothing to do with any of this. It's a prompt for tuning a working language between a person and a model, and it uses the word loosely, for the adjustment that happens as two parties learn what the other means by "sure." This piece uses the word strictly, for a diagram that sits on its diagonal. Having written both, I'm less certain than I was that the loose sense is the metaphor, since a reliability diagram is what it looks like when one side's "sure" has been checked against the world often enough that the other side can take it at its word, and that is most of what a working language is.
+The other thing that opens up is prices that vary. The cost table had a single price for an approved abuse, five dollars, but real refunds come in every size, and an honest probability lets each request get its own threshold instead of sharing one. Approving a request risks its amount times the chance it's abuse, and denying it risks the twenty-dollar customer times the chance it was legitimate, so the cutoff for a five-dollar refund is $$5/(5+20) = 0.2$$, the cutoff for a two-hundred-dollar refund is $$200/(200+20) \approx 0.91$$, and one model, read honestly, handles both. A probability that only ranks can't do that; each price band would need its own threshold tuned on its own labels, and you'd never quite trust any of them.

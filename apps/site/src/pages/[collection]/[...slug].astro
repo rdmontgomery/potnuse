@@ -176,8 +176,12 @@ const { Content } = await render(entry);
   }
   .prose :global(.katex-display) {
     margin: 1.4em 0;
-    overflow-x: auto;
-    overflow-y: hidden;
+  }
+  /* Crimson Pro sets old-style figures; KaTeX's are lining, so 0.1316 beside
+     a = 0.45 looked like two sizes of number. Posts with math get lining
+     figures throughout; posts without keep the old-style ones. */
+  .prose:has(:global(.katex)) {
+    font-variant-numeric: lining-nums;
   }
   .prose :global(strong) {
     font-weight: 600;

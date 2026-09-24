@@ -19,6 +19,9 @@ export default defineConfig({
     // so math is always $$...$$ (inline when it sits inside a line of text,
     // display when it sits on lines of its own).
     remarkPlugins: [[remarkMath, { singleDollarTextMath: false }]],
+    // rehype-katex renders with its own KaTeX (0.16.x). The stylesheet the post
+    // imports must come from the same line: 0.18 renamed .base to .katex-base,
+    // and a mismatched pair wraps superscripts and flattens subscripts.
     rehypePlugins: [rehypeKatex],
   },
 });

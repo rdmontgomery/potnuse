@@ -444,12 +444,64 @@ function figureContest(): string {
   );
 }
 
+
+// --- the production loop, as a flow diagram -----------------------------------
+
+function figureLoop(): string {
+  const Wl = 660, Hl = 330;
+  const bw = 140, bh = 66, top = 34, bottom = 222;
+  const cols = [4, 176, 348, 516];
+  const box = (x: number, y: number, title: string, note: string, accent: boolean, dashed = false) =>
+    `<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="5" fill="var(--bg-card)" stroke="${accent ? HONEST : 'var(--text-muted)'}" stroke-width="1.5"${dashed ? ' stroke-dasharray="4 3"' : ''} />` +
+    `<text x="${x + bw / 2}" y="${y + 27}" class="key mid" fill="var(--text)">${title}</text>` +
+    `<text x="${x + bw / 2}" y="${y + 46}" class="note mid">${note}</text>`;
+  const arrow = (d: string, color: string, dashed = false) =>
+    `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.6"${dashed ? ' stroke-dasharray="4 3"' : ''} marker-end="url(#${color === HONEST ? 'ah-amber' : 'ah-muted'})" />`;
+  const mid = top + bh / 2, midB = bottom + bh / 2;
+
+  const inner = `  <svg class="fig" viewBox="0 0 ${Wl} ${Hl}" role="img"
+    aria-label="The serving path runs left to right along the top: Jev's raw probability, a calibration table, a threshold from the cost table, and the decision, which is logged. The feedback path runs right to left along the bottom: an annotation queue of acted-on items plus a small random sample, labels per question, and a refit checked on held-back rows, which updates the calibration table. A drift monitor watches the raw probabilities and says when to refit.">
+    <defs>
+      <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${HONEST}" /></marker>
+      <marker id="ah-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)" /></marker>
+    </defs>
+    <text x="16" y="20" class="note">serving, every request</text>
+    <text x="16" y="${Hl - 8}" class="note">feedback, on a schedule or when drift says so</text>
+    ${box(cols[0]!, top, 'Jev', 'raw probability', true)}
+    ${box(cols[1]!, top, 'calibration table', 'a row per question', true)}
+    ${box(cols[2]!, top, 'threshold', 'from the costs', true)}
+    ${box(cols[3]!, top, 'decision', 'logged', true)}
+    ${arrow(`M${cols[0]! + bw} ${mid} H${cols[1]! - 2}`, HONEST)}
+    ${arrow(`M${cols[1]! + bw} ${mid} H${cols[2]! - 2}`, HONEST)}
+    ${arrow(`M${cols[2]! + bw} ${mid} H${cols[3]! - 2}`, HONEST)}
+    ${box(cols[3]!, bottom, 'annotation queue', 'acted on + 2–3%', false)}
+    ${box(cols[2]!, bottom, 'labels', 'per question', false)}
+    ${box(cols[1]!, bottom, 'refit', 'held-back check', false)}
+    ${box(cols[0]!, bottom, 'drift monitor', 'needs no labels', false, true)}
+    ${arrow(`M${cols[3]! + bw / 2} ${top + bh} V${bottom - 2}`, 'var(--text-muted)')}
+    ${arrow(`M${cols[3]!} ${midB} H${cols[2]! + bw + 2}`, 'var(--text-muted)')}
+    ${arrow(`M${cols[2]!} ${midB} H${cols[1]! + bw + 2}`, 'var(--text-muted)')}
+    ${arrow(`M${cols[1]! + bw / 2} ${bottom} V${top + bh + 2}`, 'var(--text-muted)')}
+    ${arrow(`M${cols[0]! + bw / 2} ${top + bh} V${bottom - 2}`, 'var(--text-muted)', true)}
+    ${arrow(`M${cols[0]! + bw} ${midB} H${cols[1]! - 2}`, 'var(--text-muted)', true)}
+    <text x="${cols[1]! + bw / 2 + 8}" y="${(top + bh + bottom) / 2 + 4}" class="note">new table</text>
+    <text x="${cols[3]! + bw / 2 - 8}" y="${(top + bh + bottom) / 2 + 4}" class="note" text-anchor="end">to review</text>
+    <text x="${cols[0]! + bw / 2 + 8}" y="${(top + bh + bottom) / 2 + 4}" class="note">watches raw</text>
+  </svg>`;
+
+  return component(
+    inner,
+    'The top row runs on every request. The bottom row runs on a schedule, or sooner when the drift monitor, which needs no labels, sees the raw probabilities move.',
+  );
+}
+
 // --- write ------------------------------------------------------------------
 
 const figures: [string, string][] = [
   ['Softmax.astro', figureSoftmax()],
   ['Beta.astro', figureBeta()],
   ['Contest.astro', figureContest()],
+  ['Loop.astro', figureLoop()],
   ['Temperature.astro', figureTemperature()],
   ['Reliability.astro', await figureReliability()],
   ['Cost.astro', await figureCost()],
