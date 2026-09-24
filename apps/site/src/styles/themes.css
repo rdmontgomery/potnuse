@@ -32,6 +32,8 @@
   --danger: #e07a68;
   --danger-bg: #6b3a30;
   --danger-ink: #f0d6cc;
+  --good: #7aab5a;
+  --bad: #c77a5a;
 }
 
 /* derived once, from whichever palette is active */
@@ -173,4 +175,6 @@
   --danger: #a8452f;
   --danger-bg: #f0d0c4;
   --danger-ink: #5a2418;
+  --good: #3f7a2a;
+  --bad: #a8452f;
 }

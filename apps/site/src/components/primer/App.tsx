@@ -390,18 +390,18 @@ const LOCALES: Record<Lang, Locale> = {
   },
 };
 
-// ---------- Palette ----------
+// ---------- Palette: the active site theme's tokens ----------
 const PAL = {
-  bg: '#1a1207',
-  bgCard: '#261d0f',
-  bgButton: '#332814',
-  border: '#3d2e1a',
-  accent: '#e8a838',
-  good: '#7aab5a',
-  bad: '#c77a5a',
-  text: '#f0e6d2',
-  textDim: '#aea189',
-  textMuted: '#968365',
+  bg: 'var(--bg)',
+  bgCard: 'var(--bg-card)',
+  bgButton: 'var(--bg-button)',
+  border: 'var(--border)',
+  accent: 'var(--accent)',
+  good: 'var(--good)',
+  bad: 'var(--bad)',
+  text: 'var(--text)',
+  textDim: 'var(--text-dim)',
+  textMuted: 'var(--text-muted)',
   serif: "'Crimson Pro', Georgia, serif",
   mono: "'JetBrains Mono', ui-monospace, 'SF Mono', monospace",
 };
@@ -969,11 +969,11 @@ function PrimerInner() {
           let scale = 1;
           if (showCorrect) {
             bg = PAL.good; border = PAL.good; fg = PAL.bg;
-            shadow = '0 0 26px rgba(122,171,90,0.5), inset 0 -2px 0 rgba(0,0,0,0.25)';
+            shadow = '0 0 26px color-mix(in srgb, var(--good) 50%, transparent), inset 0 -2px 0 rgba(0,0,0,0.25)';
             scale = 1.04;
           } else if (showWrong) {
             bg = PAL.bad; border = PAL.bad; fg = PAL.bg;
-            shadow = '0 0 26px rgba(199,122,90,0.45), inset 0 -2px 0 rgba(0,0,0,0.25)';
+            shadow = '0 0 26px color-mix(in srgb, var(--bad) 45%, transparent), inset 0 -2px 0 rgba(0,0,0,0.25)';
           }
 
           const label = opt.kind === 'letter' ? opt.exemplar : opt.word;
@@ -1037,8 +1037,8 @@ function PrimerInner() {
             const isWrong = feedback === 'incorrect' && tile && tile.letter !== correctLetter;
             let border = PAL.border;
             let bg: string = PAL.bg;
-            if (isRight) { border = PAL.good; bg = 'rgba(122,171,90,0.18)'; }
-            else if (isWrong) { border = PAL.bad; bg = 'rgba(199,122,90,0.18)'; }
+            if (isRight) { border = PAL.good; bg = 'color-mix(in srgb, var(--good) 18%, transparent)'; }
+            else if (isWrong) { border = PAL.bad; bg = 'color-mix(in srgb, var(--bad) 18%, transparent)'; }
             return (
               <div
                 key={i}
