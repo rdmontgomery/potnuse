@@ -158,11 +158,22 @@ Brier score over the cumulative distribution. Not implemented.
 ## Figures
 
 `pnpm --filter @rdm/jev-mock figures` regenerates the three charts in the
-write-up as Astro components under `apps/site/src/components/faking-calibration/`
+write-up as Astro components under `apps/site/src/components/a-probability-you-can-count-on/`
 — the temperature curve, the reliability diagram with Wilson intervals, and the
 cost bowl. Palette (amber / blue / rose) is validated against the site's card
 surface for colorblind separation; identity is fixed across figures, with amber
 the honest model and rose the overconfident one.
+
+## The calibration-loop skill
+
+`skills/calibration-loop/` is a Claude Code skill that sets up the production
+loop from the write-up in someone else's repository: an inventory of the
+decisions and their costs, a per-question calibration table, cost-derived
+thresholds, a decision log, an annotation queue with a weighted random audit,
+refitting against held-back rows, and a label-free drift monitor. Its
+`reference/loop.ts` and `reference/schema.sql` are self-contained and tested
+here (`src/skill-reference.test.ts`, and the SQL against DuckDB). To use it,
+copy the folder into a repo's `.claude/skills/`.
 
 ## The contest: three models, one known truth
 
@@ -186,7 +197,7 @@ loop can and cannot give back. At 4,000 labels, scored on 200,000 held out:
 | --- | --- | --- | --- |
 | oracle | 0.00001 | 0.037 | $0.333 |
 | Jev-like, Platt | 0.00005 | 0.033 | $0.353 |
-| Jev-like, prior shift only, **no labels** | 0.00001 | 0.033 | $0.354 |
+| Jev-like, base-rate correction only, **no labels** | 0.00001 | 0.033 | $0.354 |
 | LLM log-probs, Platt | 0.00007 | 0.022 | $0.393 |
 | LLM stated, isotonic | — | 0.019 | $0.395 |
 | LLM stated, Platt | 0.00132 | 0.019 | $0.404 |
@@ -248,7 +259,7 @@ pnpm --filter @rdm/jev-mock demo        # the mock, the knob, the thresholds
 pnpm --filter @rdm/jev-mock contest     # the three-model contest
 pnpm --filter @rdm/jev-mock figures     # every chart in the write-up
 pnpm --filter @rdm/jev-mock typecheck
-pnpm test                              # 31 tests in src/*.test.ts
+pnpm test                              # 38 tests in src/*.test.ts
 ```
 
 ## What this is not

@@ -119,6 +119,9 @@ console.log('\n=== counting: how many abusive requests came in this week? ===');
 // 100 weeks of 2,000 tickets. Summing honest probabilities is counting.
 const WEEK = 2000;
 const fitJ = platt(pairsOf(data.jevLike, fitIdx.slice(0, 400)));
+// Counting decisions is judged with a well-fitted model, so its failure is the
+// method's and not the fit's.
+const fitCC = platt(pairsOf(data.jevLike, fitIdx.slice(0, 4000)));
 const weeks = Math.floor(testIdx.length / WEEK);
 let errSum = 0, errRaw = 0, errCC = 0, errLLMraw = 0, errOracle = 0, errShift = 0;
 for (let w = 0; w < Math.min(100, weeks); w++) {
@@ -126,7 +129,7 @@ for (let w = 0; w < Math.min(100, weeks); w++) {
   const truth = ids.reduce((s, i) => s + (1 - data.y[i]!), 0);
   const sumCal = ids.reduce((s, i) => s + (1 - fitJ(data.jevLike[i]!)), 0);
   const sumRaw = ids.reduce((s, i) => s + (1 - data.jevLike[i]!), 0);
-  const cc = ids.reduce((s, i) => s + (fitJ(data.jevLike[i]!) < T ? 1 : 0), 0);
+  const cc = ids.reduce((s, i) => s + (fitCC(data.jevLike[i]!) < T ? 1 : 0), 0);
   const llmRaw = ids.reduce((s, i) => s + (1 - data.llmLogprob[i]!), 0);
   const oracle = ids.reduce((s, i) => s + (1 - data.oracle[i]!), 0);
   const shiftedSum = ids.reduce((s, i) => s + (1 - shiftPrior(data.jevLike[i]!, data.priorShift)), 0);
@@ -187,4 +190,40 @@ console.log('abuse costs  threshold   approve-all   oracle    Jev-like   LLM log
     );
   }
   console.log('(percent = share of the oracle\'s savings over approving everything that each model captures)');
+}
+
+console.log('\n=== for the write-up: savings in cents, count bias, count spread ===');
+{
+  const fits = {
+    jev: platt(pairsOf(data.jevLike, fitIdx.slice(0, 4000))),
+    lp: platt(pairsOf(data.llmLogprob, fitIdx.slice(0, 4000))),
+    vb: isotonic(pairsOf(data.llmVerbal, fitIdx.slice(0, 4000))),
+  };
+  for (const abuse of [5, 20, 50]) {
+    const costs = { falsePositive: abuse, falseNegative: 20 };
+    const t = threshold(costs);
+    const all = testIdx.reduce((s, i) => s + (data.y[i] === 0 ? abuse : 0), 0) / testIdx.length;
+    const c = (ps: number[]) => evaluate(testIdx.map((i, k) => ({ p: ps[k]!, y: data.y[i]! })), costs, at(t)).costPerItem;
+    const saved = (x: number) => ((all - x) * 100).toFixed(1) + '¢';
+    const or = c(testIdx.map((i) => data.oracle[i]!));
+    console.log(`$${abuse}: approve-all ${money(all)}  perfect saves ${saved(or)}  jev ${saved(c(testIdx.map((i) => fits.jev(data.jevLike[i]!))))}  lp ${saved(c(testIdx.map((i) => fits.lp(data.llmLogprob[i]!))))}  stated ${saved(c(testIdx.map((i) => fits.vb(data.llmVerbal[i]!))))}`);
+  }
+  const f400 = platt(pairsOf(data.jevLike, fitIdx.slice(0, 400)));
+  const meanAbuseTrue = testIdx.reduce((s, i) => s + (1 - data.y[i]!), 0) / testIdx.length;
+  const meanAbuse400 = testIdx.reduce((s, i) => s + (1 - f400(data.jevLike[i]!)), 0) / testIdx.length;
+  console.log(`Platt-400 average P(abuse) ${(meanAbuse400 * 100).toFixed(2)}% vs true ${(meanAbuseTrue * 100).toFixed(2)}%  -> ${((meanAbuse400 - meanAbuseTrue) * WEEK).toFixed(1)} requests a week`);
+  let sdSum = 0, denied = 0, n = 0;
+  for (let w = 0; w < W; w++) {
+    const ids = testIdx.slice(w * WEEK, (w + 1) * WEEK);
+    sdSum += Math.sqrt(ids.reduce((s, i) => s + data.oracle[i]! * (1 - data.oracle[i]!), 0));
+    denied += ids.filter((i) => fits.jev(data.jevLike[i]!) < T).length; n++;
+  }
+  console.log(`weekly count sd from the true probabilities: ${(sdSum / W).toFixed(1)}  (mean abs of a normal is 0.8 sd = ${(0.798 * sdSum / W).toFixed(1)})`);
+  console.log(`requests denied per week at 0.2: ${(denied / n).toFixed(1)}`);
+  const abusiveIds = testIdx.filter((i) => data.y[i] === 0);
+  const bands = [[0, 0.2], [0.2, 0.5], [0.5, 0.8], [0.8, 1.01]] as const;
+  for (const [lo, hi] of bands) {
+    const k = abusiveIds.filter((i) => { const pa = 1 - fits.jev(data.jevLike[i]!); return pa >= lo && pa < hi; }).length;
+    console.log(`abusive requests with calibrated P(abuse) in [${lo}, ${hi}): ${((k / abusiveIds.length) * 100).toFixed(0)}%`);
+  }
 }

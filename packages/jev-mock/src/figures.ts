@@ -20,7 +20,7 @@ import { evaluate, threshold, type Costs } from './policy.ts';
 import { reliabilityTable } from './eval.ts';
 import type { Pair } from './calibration.ts';
 
-const OUT = resolve(import.meta.dirname, '../../../apps/site/src/components/faking-calibration');
+const OUT = resolve(import.meta.dirname, '../../../apps/site/src/components/a-probability-you-can-count-on');
 
 const HONEST = '#c98500';
 const HOT = '#d55181';

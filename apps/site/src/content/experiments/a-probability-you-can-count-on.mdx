@@ -2,6 +2,7 @@
 title: a probability you can count on
 date: 2026-09-23
 state: seedling
+toc: true
 connects: [calibrate, toner-tu-map, reverberant-middle, dsl-hobbies]
 tags: [llm, calibration, measurement, decision-theory, rlhf, typescript]
 description: Softmax is a Boltzmann distribution, preference tuning cools it, and a cooled model's probabilities stop meaning what they say. What that costs, how to repair it on your own data, and what TypeSafe's Jev is really selling.
@@ -11,13 +12,13 @@ import Gloss from '@/components/Gloss.astro';
 import Pull from '@/components/Pull.astro';
 import Marginal from '@/components/Marginal.astro';
 import 'katex/dist/katex.min.css';
-import Softmax from '@/components/faking-calibration/Softmax.astro';
-import Temperature from '@/components/faking-calibration/Temperature.astro';
-import Beta from '@/components/faking-calibration/Beta.astro';
-import Reliability from '@/components/faking-calibration/Reliability.astro';
-import Cost from '@/components/faking-calibration/Cost.astro';
-import Contest from '@/components/faking-calibration/Contest.astro';
-import Loop from '@/components/faking-calibration/Loop.astro';
+import Softmax from '@/components/a-probability-you-can-count-on/Softmax.astro';
+import Temperature from '@/components/a-probability-you-can-count-on/Temperature.astro';
+import Beta from '@/components/a-probability-you-can-count-on/Beta.astro';
+import Reliability from '@/components/a-probability-you-can-count-on/Reliability.astro';
+import Cost from '@/components/a-probability-you-can-count-on/Cost.astro';
+import Contest from '@/components/a-probability-you-can-count-on/Contest.astro';
+import Loop from '@/components/a-probability-you-can-count-on/Loop.astro';
 
 {/*
   STEVENS SECTION GOES HERE, as is, from the other session's draft.
@@ -180,7 +181,7 @@ The Jev-like model sees through the thinnest noise, so it knows the most, and it
 
 Before any repair, the Jev-like model is the worst of the three. Believing half of all customers might be frauds, it denies anyone it isn't sure about and costs $1.07 a ticket, against $0.40 for approving everyone and ignoring the model entirely. The two LLM readouts sit right at that $0.40, and a model that somehow saw the hidden score exactly would cost $0.33, so the whole prize at these prices is seven cents a ticket.
 
-The Jev-like model's trouble is the cheapest miscalibration there is. When only the base rate differs between training and use, the correction is exact and needs no labelled examples at all: add the difference between the two base rates in log-odds, here 2.44, to every logit. That one number takes it from $1.07 a ticket to $0.354 and its reliability from 0.053 to 0.00001, from the worst model in the contest to about two cents off the oracle, without looking at a single labelled ticket. (If you don't know the base rate it was trained at, it can be estimated from unlabelled traffic; here I assumed you did.)
+The Jev-like model's trouble is the cheapest miscalibration there is. It isn't that it was calibrated on your data; it was calibrated on someone else's, where half the requests were abuse, and the only thing wrong is that its sense of how common abuse is (its prior, or base rate) is off. When only the base rate differs between training and use, the correction is exact and needs no labelled examples at all: add the difference between the two base rates in log-odds, here 2.44, to every logit. Call it the base-rate correction. That one number takes it from $1.07 a ticket to $0.354 and its reliability from 0.053 to 0.00001, from the worst model in the contest to about two cents off the oracle, without looking at a single labelled ticket. (If you don't know the base rate it was trained at, it can be estimated from unlabelled traffic; here I assumed you did.)
 
 Then the same loop for all three. Take some number of labelled tickets, fit [Platt scaling](https://en.wikipedia.org/wiki/Platt_scaling) (a logistic regression on the model's own logit, so just two parameters, a slope and an intercept), and score the result on two hundred thousand tickets the fit never saw, averaging thirty draws of the labelled set at each size:
 
@@ -199,13 +200,15 @@ The stated confidence started out more honest, which matches what's been reporte
 
 <Marginal>[Tian and colleagues](https://arxiv.org/abs/2305.14975), "Just Ask for Calibration" (EMNLP 2023), found that for preference-tuned models, stated confidences were often better calibrated than the token probabilities.</Marginal>
 
-How much resolution is worth depends on the prices. Holding a wrongly denied customer at $20 and changing what an approved abuse costs, here is the share of the oracle's savings over approving everything that each model captures once it's been recalibrated:
+How much resolution is worth depends on the prices. Take approving everyone as the baseline, since it needs no model at all, and a model that saw the hidden score exactly as the best anyone could do. The gap between them is all the money any model could save you, and the question is how much of that gap each recalibrated model actually closes. Holding a wrongly denied customer at $20 and changing what an approved abuse costs, here is what each saves per ticket, with its share of the possible savings in parentheses:
 
-| an approved abuse costs | threshold | Jev-like | LLM, log-probs | LLM, stated |
+| an approved abuse costs | a perfect model saves | Jev-like saves | LLM, log-probs saves | LLM, stated saves |
 |---|---:|---:|---:|---:|
-| $5 | 0.20 | 67% | 14% | 14% |
-| $20 | 0.50 | 84% | 40% | 37% |
-| $50 | 0.71 | 89% | 56% | 56% |
+| $5 | 7.1¢ | 4.7¢ (67%) | 1.0¢ (14%) | 1.0¢ (14%) |
+| $20 | 59.9¢ | 50.5¢ (84%) | 23.7¢ (40%) | 21.9¢ (37%) |
+| $50 | $2.21 | $1.97 (89%) | $1.24 (56%) | $1.24 (56%) |
+
+So at five dollars the Jev-like model saves 4.7 of the 7.1 cents a ticket that were there to be saved, which is 67%.
 
 At five dollars abuse is cheap enough that the right move is to approve nearly everyone, so a model earns its keep only on the requests it can be sure are abuse, and being sure is exactly what resolution is, which is why the gap between the models is widest there.
 
@@ -241,24 +244,32 @@ The third part is refitting. On a schedule, or when something changes, fit each 
 
 The fourth part decides when to refit, and it needs no labels at all. Keep the distribution of raw probabilities from the period you last fitted on, and compare each day's against it (the population stability index is the usual measure). A new model version or a shift in your traffic moves it immediately, long before enough labels arrive to show the damage, and that's the signal to pull the queue's labels forward and refit. Pin the model version in the meantime, because an alias that moves to a new release moves every probability your table was fitted to.
 
-<Marginal>Each piece has a runnable counterpart in `packages/jev-mock` in this site's repository: Platt per question and the checks in TypeScript, and a sketch of the queue, the weights and the drift monitor as SQL.</Marginal>
+<Marginal>There's a [Claude Code skill](https://github.com/rdmontgomery/potnuse/tree/main/packages/jev-mock/skills/calibration-loop) that sets this loop up in your own repository, with tested reference code for every part in TypeScript and SQL. Copy the folder into your repo's `.claude/skills/`. The simulations behind this piece are [in the same package](https://github.com/rdmontgomery/potnuse/tree/main/packages/jev-mock).</Marginal>
 
 ---
 
 ### what opens up
 
-The title is a pun that turns out to be literal. If a model's probabilities are honest, adding them up counts things. Ask how many of this week's two thousand refund requests were abuse, and the sum of the model's probabilities of abuse is an estimate of that number with nobody labelling anything, because each honest probability is exactly the share of a request you should expect to be abusive. Over a hundred simulated weeks, averaging 161 abusive requests each:
+The title is a pun that turns out to be literal. If a model's probabilities are honest, adding them up counts things.
+
+Say you want to know how many of this week's two thousand refund requests were abuse, without anyone reviewing all two thousand. An honest probability is exactly the share of a request you should expect to be abusive, so a request at 30% contributes 0.3 of an abusive request to the total, a hundred requests at 30% contribute thirty, and summing every request's probability of abuse estimates the week's count. The table below runs that for a hundred simulated weeks, each with about 161 abusive requests, and reports how far each method's count lands from the true one, on average:
 
 | how you count | average miss, in requests |
 |---|---:|
-| sum the true probabilities (the floor, set by luck) | 7.0 |
-| sum the Jev-like model's, prior shifted, no labels | 7.0 |
+| sum the true probabilities (the best possible) | 7.0 |
+| sum the Jev-like model's, base-rate corrected, no labels | 7.0 |
 | sum the Jev-like model's, Platt on 4,000 labels | 8.5 |
 | sum the Jev-like model's, Platt on 400 labels | 21.8 |
 | sum the cooled LLM's, unrepaired | 65.2 |
-| count the requests you denied at 0.2 | 151.1 |
+| count the requests you denied | 130.1 |
 | sum the Jev-like model's, unrepaired | 280.5 |
 
-Two things in that table surprised me. Counting the requests you denied, which is what most dashboards do, is nearly useless, because at these prices you only deny the handful you're sure about, so you count ten when there were a hundred and sixty. And a count is far less forgiving than a decision. Four hundred labels left the Jev-like model's decisions within 2.5% of their best cost but left its counting error at three times the floor, because a decision forgives any bias that lands on the right side of the threshold and a sum forgives nothing.
+Even perfect knowledge misses by seven, because which of the uncertain requests actually turn out to be abuse is luck. The base-rate-corrected model matches that floor without a single label.
+
+Counting the requests you denied, which is what most dashboards show, misses by 130, and the reason is the threshold. At these prices you only deny a request when you're at least 80% sure it's abuse, and only about one abusive request in five looks that clear; the rest look somewhat suspicious (30% here, 60% there) and get approved, correctly, because denying them would turn away too many real customers. So the denial count sees about 31 requests a week out of 161, while the sum gives each of the other 130 its partial share.
+
+A count is also far less forgiving than a decision. The model fitted on 400 labels thinks abuse runs at 7.0% when it really runs at 8.1%, a bias of about one point on every request. That barely changes any decisions, because it only matters for requests sitting right at the threshold, so its decisions cost within 2.5% of the best. But a sum adds that point up across all two thousand requests, and one point on two thousand is the 22 requests a week it misses by.
 
 The other thing that opens up is prices that vary. The cost table had a single price for an approved abuse, five dollars, but real refunds come in every size, and an honest probability lets each request get its own threshold instead of sharing one. Approving a request risks its amount times the chance it's abuse, and denying it risks the twenty-dollar customer times the chance it was legitimate, so the cutoff for a five-dollar refund is $$5/(5+20) = 0.2$$, the cutoff for a two-hundred-dollar refund is $$200/(200+20) \approx 0.91$$, and one model, read honestly, handles both. A probability that only ranks can't do that; each price band would need its own threshold tuned on its own labels, and you'd never quite trust any of them.
+
+And each band, like each week's count, is a random variable rather than a number. Honest probabilities give you its expected value by summing them, $$\sum_i p_i$$, and its variance almost as cheaply, $$\sum_i p_i(1-p_i)$$, which for a week of refunds is about 8.6 requests of standard deviation and is exactly where the floor of seven in the counting table comes from. If that sentence made someone on your team sit up, it's worth having one of your nerds read [Cosma Shalizi's lecture notes](https://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/).

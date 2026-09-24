@@ -10,6 +10,9 @@ const nodeSchema = z.object({
   connects: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   description: z.string().optional(),
+  // Floating table of contents built from the ### headings. Opt-in: short
+  // pieces don't need one, and it only shows where the left gutter has room.
+  toc: z.boolean().default(false),
 });
 
 const exchangeSchema = nodeSchema.extend({
