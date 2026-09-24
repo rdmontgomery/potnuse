@@ -1,13 +1,14 @@
 ---
-// Reading order for the three calibration posts, shown at the top of each.
+// Reading order for the calibration posts, shown at the top of each.
+// Two numbered posts, plus a background post for readers who want the why.
 interface Props {
-  current: 1 | 2 | 3;
+  current: 1 | 2 | 'background';
 }
 const { current } = Astro.props;
 const parts = [
-  { n: 1, label: 'thresholds', href: '/experiments/confidence-has-a-temperature' },
-  { n: 2, label: 'the contest', href: '/experiments/what-jev-is-selling' },
-  { n: 3, label: 'production', href: '/experiments/probability-you-can-count-on' },
+  { n: 1, label: '1. decisions', href: '/experiments/what-jev-is-selling' },
+  { n: 2, label: '2. production', href: '/experiments/probability-you-can-count-on' },
+  { n: 'background', label: 'background: temperature', href: '/experiments/confidence-has-a-temperature' },
 ];
 ---
 
@@ -17,9 +18,9 @@ const parts = [
       <>
         {i > 0 && <span class="dot">·</span>}
         {p.n === current ? (
-          <span class="here" aria-current="page">{p.n}. {p.label}</span>
+          <span class="here" aria-current="page">{p.label}</span>
         ) : (
-          <a href={p.href}>{p.n}. {p.label}</a>
+          <a href={p.href}>{p.label}</a>
         )}
       </>
     ))

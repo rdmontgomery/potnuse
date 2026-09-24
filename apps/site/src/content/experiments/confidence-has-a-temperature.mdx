@@ -3,57 +3,32 @@ title: confidence has a temperature
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: "An honest probability turns a decision into arithmetic: the right threshold is the price of one mistake over the price of both. Most of what models report as confidence can be trusted to rank things but not to mean what it says, because softmax is a Boltzmann distribution and some kinds of tuning can cool it, moving every number without changing which answer comes first. The threshold lands in the wrong place, and the usual accuracy metrics don't notice."
+tldr: "Most of what models report as confidence can be trusted to rank things but not to mean what it says, because softmax is a Boltzmann distribution and some kinds of tuning can cool it, moving every number without changing which answer comes first. Every threshold set on its numbers lands in the wrong place, and the usual accuracy metrics don't notice."
 connects: [what-jev-is-selling, probability-you-can-count-on, calibrate, toner-tu-map, reverberant-middle]
 tags: [llm, calibration, decision-theory, measurement, rlhf, statistical-mechanics]
-description: What an honest probability is worth, and why most model confidence isn't one. The arithmetic of a threshold, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. The first of three posts.
+description: Why most model confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. Background for the calibration series.
 ---
 
 import Gloss from '@/components/Gloss.astro';
 import Marginal from '@/components/Marginal.astro';
 import 'katex/dist/katex.min.css';
 import Series from '@/components/calibration/Series.astro';
-import Cost from '@/components/calibration/Cost.astro';
 import Softmax from '@/components/calibration/Softmax.astro';
 import Temperature from '@/components/calibration/Temperature.astro';
 import Beta from '@/components/calibration/Beta.astro';
 import Reliability from '@/components/calibration/Reliability.astro';
 
-<Series current={1} />
+<Series current="background" />
 
-Say you run refunds, and a model tells you how likely each request is to be legitimate. You can approve or deny, and the request either was legitimate or it wasn't, so there are four things that can happen, with what you did down the side and what was true across the top, and each of them has a price:
+This is the background to [what Jev is selling](/experiments/what-jev-is-selling), for anyone who wants the why. That post turns an honest probability into a threshold on a refund queue and shows what a cooled model costs there. This one is why a model's confidence usually isn't a probability in the first place, why the knob that bends it is called temperature, and why preference tuning can turn it down.
 
-| | legitimate | abusive |
-|---|---:|---:|
-| approve | $0 | $5 |
-| deny | $20 | $0 |
-
-The two right calls cost nothing. Approving an abusive request loses the five dollars you refunded, and denying a legitimate one loses a customer, which I'll price at twenty. Now take a request the model puts at 0.2, one chance in five that it's legitimate. Approve it and four times out of five you're out five dollars, which averages to four dollars. Deny it and one time out of five you've turned away a twenty-dollar customer, which also averages to four dollars. At 0.2 the two choices cost exactly the same, above it approving is cheaper, below it denying is, and so 0.2 is the threshold: the price of one mistake over the price of both, $$5/(5+20)$$, arrived at without looking at a single labelled example.
-
-That arithmetic is the whole reason to want a probability instead of a score. It also rests entirely on the model's 0.2 meaning one in five, and most of the time it doesn't.
-
----
-
-### how sure is sure enough
-
-Most thresholds are chosen the way 0.5 is chosen (by reflex) or the way 0.7 is chosen (by someone once). To check the arithmetic I needed a model whose honesty I could set exactly, which no real model offers, so I built a fake one that generates things in the reverse of the natural order. A real model meets an item whose answer is already fixed and forms a belief about it. The mock draws the belief first, then flips a coin weighted by that belief to decide what's true:
-
-```js
-const belief = beta(rand, 0.45, 0.45);
-const actual = rand() < belief;
-```
-
-That makes it calibrated by construction, since among the items where it believed 0.8 the event happens 80% of the time, because that's how the event was drawn. Here it is running a refund queue at every threshold from zero to one:
-
-<Cost />
-
-The floor of the bowl sits where the table said it would. Reaching for 0.5 out of habit costs about half again as much, on every ticket, for as long as nobody revisits it.
+The short version: two models can rank every item in exactly the same order and still need different thresholds to make the same decisions, because a model's confidence is a number of a particular kind, and most of the time it isn't the kind it looks like.
 
 ---
 
 ### what kind of number
 
-In 1946 the psychologist [S. S. Stevens](https://en.wikipedia.org/wiki/Level_of_measurement) sorted measurements by what you can do to the numbers without changing what they mean. An ordinal scale (finishing places in a race, star ratings) survives anything that keeps the order, so you can sort the numbers but not meaningfully average them. Interval and ratio scales (Celsius, weight) survive less and so support more arithmetic. A probability sits past the end of his list. It survives no transformation at all, because 0.8 has to mean four times in five, and anything that moves it to 0.9 has changed what it claims. That's what lets you compare it to a threshold worked out from prices, and it's what makes it fragile, because most of what models report as confidence can only be trusted as an ordinal score, a number that ranks things correctly and means nothing else, written with a percent sign.
+In 1946 the psychologist [S. S. Stevens](https://en.wikipedia.org/wiki/Level_of_measurement) sorted measurements by what you can do to the numbers without changing what they mean. An ordinal scale (finishing places in a race, star ratings) survives anything that keeps the order, so you can sort the numbers but not meaningfully average them. Interval and ratio scales (Celsius, weight) survive less and so support more arithmetic. A probability sits past the end of his list. It survives no transformation at all, because 0.8 has to mean four times in five, and anything that moves it to 0.9 has changed what it claims. That's what lets you compare it to a threshold worked out from prices, as the refund queue does, and it's what makes it fragile, because most of what models report as confidence can only be trusted as an ordinal score, a number that ranks things correctly and means nothing else, written with a percent sign.
 
 <Marginal>None of this is new. Weather forecasters have been calibrated for decades, since a forecast gets checked every day, and their tools came from their own journals: [Glenn Brier's score](https://en.wikipedia.org/wiki/Brier_score) in 1950, Allan Murphy's decomposition of it in 1973. Machine learning came to it late and sideways. Niculescu-Mizil and Caruana's [2005 benchmark](https://doi.org/10.1145/1102351.1102430) found boosted trees and SVMs squashing their outputs toward the middle, naive Bayes flinging them toward the corners, and logistic regression calibrated almost by accident, because log loss is a [proper scoring rule](https://en.wikipedia.org/wiki/Scoring_rule). Then [Guo and colleagues](https://arxiv.org/abs/1706.04599) (ICML 2017) found that bigger, more accurate deep networks had quietly become less honest, and proposed a single number called temperature as the fix.</Marginal>
 
@@ -77,7 +52,7 @@ Nothing about the options changed, and neither did their order, since the favori
 
 Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive.
 
-Now put it back in the refund queue. Cool a probability of 0.3 to $$T = 0.5$$ and it becomes about 0.155, which lands on the other side of 0.2. Run the cooled mock through the same queue at 0.2 and it costs $1.59 a ticket against the honest model's $1.44, and a heated one ($$T = 2.5$$) costs $1.88. Neither knows any less than the honest model. The cooled one's own cheapest threshold is down near 0.04, where it costs $1.43, but nothing in the arithmetic would send you there, and only labelled examples could.
+Now put it back in [the refund queue](/experiments/what-jev-is-selling), where approving an abusive request costs five dollars, turning away a customer costs twenty, and the threshold works out to 0.2. Cool a probability of 0.3 to $$T = 0.5$$ and it becomes about 0.155, which lands on the other side of 0.2. Run a cooled copy of the fake model described further down through that queue at 0.2 and it costs $1.59 a ticket against the honest model's $1.44, and a heated one ($$T = 2.5$$) costs $1.88. Neither knows any less than the honest model. The cooled one's own cheapest threshold is down near 0.04, where it costs $1.43, but nothing in the arithmetic would send you there, and only labelled examples could.
 
 Anything that depends only on the ordering survives cooling: which answer ranks first, a human preferring one answer to another, and for a yes/no question the AUC and accuracy at 0.5, since cooling never moves a probability across one half. So the metrics most people check first can't see the thing that just cost about eleven percent.
 
@@ -107,7 +82,14 @@ and raising a Boltzmann distribution to a power is the same as dividing its temp
 
 ### measuring it
 
-The mock has exactly two knobs. The `beta(0.45, 0.45)` decides where its beliefs come from, which amounts to deciding how smart it is: both parameters below one bend the distribution into a U, a model that is usually confident one way or the other with a thin band of genuine toss-ups, which is roughly what a competent classifier looks like from the inside. The temperature decides how honestly it says what it believes.
+To watch this happen at scale I needed a model whose honesty I could set exactly, which no real model offers, so I built a fake one that generates things in the reverse of the natural order. A real model meets an item whose answer is already fixed and forms a belief about it. The mock draws the belief first, then flips a coin weighted by that belief to decide what's true:
+
+```js
+const belief = beta(rand, 0.45, 0.45);
+const actual = rand() < belief;
+```
+
+That makes it calibrated by construction, since among the items where it believed 0.8 the event happens 80% of the time, because that's how the event was drawn. It has exactly two knobs. The `beta(0.45, 0.45)` decides where its beliefs come from, which amounts to deciding how smart it is: both parameters below one bend the distribution into a U, a model that is usually confident one way or the other with a thin band of genuine toss-ups, which is roughly what a competent classifier looks like from the inside. The temperature decides how honestly it says what it believes.
 
 <Beta />
 
@@ -135,4 +117,4 @@ Reliability gets about ninety times worse cooled and nearly three hundred times 
 
 A word on the metaphor running through these posts. When I say a model is honest, I mean calibrated: its stated probabilities match how often things happen, over a population of items. That's an empirical relationship between numbers and outcomes, not a claim about what the model believes or whether it means what it says.
 
-A model whose confidence runs cool or hot still ranks your items as well as it ever did, so nothing that measures ranking will flag it, and every threshold you set on its numbers is quietly in the wrong place. The [next post](/experiments/what-jev-is-selling) runs three bent models through a refund queue, repairs them with a few hundred labels or with none, and asks what that leaves TypeSafe's Jev actually selling. The [third](/experiments/probability-you-can-count-on) is the loop that keeps a model honest in production.
+A model whose confidence runs cool or hot still ranks your items as well as it ever did, so nothing that measures ranking will flag it, and every threshold you set on its numbers is quietly in the wrong place. [What Jev is selling](/experiments/what-jev-is-selling) runs three bent models through a refund queue and repairs them with a few hundred labels or with none, and [a probability you can count on](/experiments/probability-you-can-count-on) is the loop that keeps a model honest in production.

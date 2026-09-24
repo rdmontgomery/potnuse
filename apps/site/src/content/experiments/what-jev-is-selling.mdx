@@ -3,29 +3,50 @@ title: what jev is selling
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: "On a simulated refund queue, the model that knew the most started out costing the most, one number with no labels fixed it, and after recalibration cost followed what each model could tell apart rather than how honest it started. Honesty is the cheap part. TypeSafe's Jev promises calibrated probabilities out of the box, which buys day-one decisions and fewer labels, but what it's worth still depends on what it can tell apart on your traffic."
+tldr: "An honest probability turns a decision into arithmetic: the right threshold is the price of one mistake over the price of both. On a simulated refund queue, the model that knew the most started out costing the most, one number with no labels fixed it, and after recalibration cost followed what each model could tell apart rather than how honest it started. Honesty is the cheap part. TypeSafe's Jev promises calibrated probabilities out of the box, which buys day-one decisions and fewer labels, but what it's worth still depends on what it can tell apart on your traffic."
 connects: [confidence-has-a-temperature, probability-you-can-count-on, dsl-hobbies]
 tags: [llm, calibration, decision-theory, jev, typescript]
-description: A three-model contest on a simulated refund queue, what a few hundred labels can and can't repair, and what that leaves TypeSafe's Jev actually selling. The second of three posts.
+description: How an honest probability becomes a threshold, a three-model contest on a simulated refund queue, and what that leaves TypeSafe's Jev actually selling. The first of two posts, with a background post on why model confidence runs hot or cold.
 ---
 
 import Gloss from '@/components/Gloss.astro';
 import Marginal from '@/components/Marginal.astro';
 import 'katex/dist/katex.min.css';
 import Series from '@/components/calibration/Series.astro';
+import Cost from '@/components/calibration/Cost.astro';
 import Contest from '@/components/calibration/Contest.astro';
 
-<Series current={2} />
+<Series current={1} />
 
 I ran three models over a simulated refund queue. Before any repair, the one that knew the most was the worst of the three: $1.07 a ticket, against $0.40 for approving everyone and ignoring the model entirely. One number, with no labels at all, took it to $0.354, two cents off a model that could see the truth. After four thousand labels the LLM's log-probabilities had become honest too, and what separated the models was no longer how honest each had started but what each could tell apart. Honesty turned out to be the cheap part, and that changes what a model like TypeSafe's Jev, whose pitch is honest probabilities, is actually selling.
 
-[The first post](/experiments/confidence-has-a-temperature) set up the arithmetic: when a model is <Gloss def="Among all the items it called 80% likely, about 80% come true. A property of a long run of predictions, never of one.">calibrated</Gloss>, the right threshold is the price of one mistake over the price of both, and a model whose confidence has been cooled or heated puts that threshold in the wrong place without ranking anything differently. It also introduced two measures from weather forecasting that carry through here: reliability, how far a model's stated probabilities sit from what actually happens (zero is perfectly honest), and resolution, how much the outcomes differ between the items a model scores differently.
+A model is <Gloss def="Among all the items it called 80% likely, about 80% come true. A property of a long run of predictions, never of one.">calibrated</Gloss>, or honest in the loose sense these posts use, when its 0.8 really means four times in five. Two measures from weather forecasting carry through: reliability is how far a model's stated probabilities sit from what actually happens (zero is perfectly honest), and resolution is how informative they are, how much the outcomes differ between the items a model scores differently. Calibration is always about a population of items, never about any one answer.
 
+---
+
+### how sure is sure enough
+
+Say you run refunds, and a model tells you how likely each request is to be legitimate. You can approve or deny, and the request either was legitimate or it wasn't, so there are four things that can happen, with what you did down the side and what was true across the top, and each of them has a price:
+
+| | legitimate | abusive |
+|---|---:|---:|
+| approve | $0 | $5 |
+| deny | $20 | $0 |
+
+The two right calls cost nothing. Approving an abusive request loses the five dollars you refunded, and denying a legitimate one loses a customer, which I'll price at twenty. Now take a request the model puts at 0.2, one chance in five that it's legitimate. Approve it and four times out of five you're out five dollars, which averages to four dollars. Deny it and one time out of five you've turned away a twenty-dollar customer, which also averages to four dollars. At 0.2 the two choices cost exactly the same, above it approving is cheaper, below it denying is, and so 0.2 is the threshold: the price of one mistake over the price of both, $$5/(5+20)$$, arrived at without looking at a single labelled example.
+
+Most thresholds are chosen the way 0.5 is chosen (by reflex) or the way 0.7 is chosen (by someone once). To check the arithmetic I built a fake model that is honest by construction: it draws a belief first, then flips a coin weighted by that belief to decide what's true, so among the items where it believed 0.8 the event happens 80% of the time. Here it is running a refund queue at every threshold from zero to one:
+
+<Cost />
+
+The floor of the bowl sits where the table said it would. Reaching for 0.5 out of habit costs about half again as much, on every ticket, for as long as nobody revisits it.
+
+All of which rests on one assumption, that when the model says 0.2 it means 0.2, and most of what models report as confidence can be trusted to rank things and not much else. Some kinds of tuning cool a model's confidence, pushing every number toward the corners without changing which item ranks above which. Cool a probability of 0.3 and it can come out near 0.155, on the other side of 0.2. Run a cooled copy of the fake model through the same queue and it costs $1.59 a ticket against the honest one's $1.44, while knowing exactly as much; its own cheapest threshold is down near 0.04, and nothing in the arithmetic would send you there. Accuracy and AUC don't notice, because they only look at the ranking. [The background post](/experiments/confidence-has-a-temperature) is why models end up like this, and why the word for it is temperature.
 ---
 
 ### the contest
 
-A fair comparison needs a queue where the truth is known and several models can look at it, so I built a refund queue in which 92% of requests are legitimate and 8% are abuse, priced with the table from the first post (five dollars for approving an abusive request, twenty for turning a customer away), which puts the threshold at 0.2. Every ticket gets a hidden score that decides whether it's legitimate, and each model sees that score through a layer of noise, thin for a model that knows a lot and thick for one that knows less. Because the noise is Gaussian, the correct belief for each model has a closed form, so every model starts out honest by construction, and then I bend each one the way real models get bent. It's worth being plain about what that means: I set how much each model knows. What the contest measures is what that knowledge is worth at these prices, and what one recalibration loop can and can't give back.
+A fair comparison needs a queue where the truth is known and several models can look at it, so I built a refund queue in which 92% of requests are legitimate and 8% are abuse, priced with the table above, which puts the threshold at 0.2. Every ticket gets a hidden score that decides whether it's legitimate, and each model sees that score through a layer of noise, thin for a model that knows a lot and thick for one that knows less. Because the noise is Gaussian, the correct belief for each model has a closed form, so every model starts out honest by construction, and then I bend each one the way real models get bent. It's worth being plain about what that means: I set how much each model knows. What the contest measures is what that knowledge is worth at these prices, and what one recalibration loop can and can't give back.
 
 The Jev-like model sees through the thinnest noise, so it knows the most, and it reports honestly, except that it was trained somewhere half the requests were abuse, so it's honest about a world that isn't yours. The second is a general LLM read through its log-probabilities, which sees through thicker noise and has been cooled to $$T = 0.5$$, the way preference-tuned models are often measured to be. The third is the same LLM with the same beliefs, asked instead to state its confidence, which it does in round numbers from a short list, so that its answers collapse onto twelve values.
 
@@ -129,4 +150,4 @@ The way I'd put the whole bargain: calibrated probabilities let software connect
 
 ### where this goes
 
-Everything here happened once, on a fixed pile of labels. The [third post](/experiments/probability-you-can-count-on) is what it takes to keep a model honest when traffic changes and model versions move, and what an honest probability lets you do besides decide, starting with counting.
+Everything here happened once, on a fixed pile of labels. The [next post](/experiments/probability-you-can-count-on) is what it takes to keep a model honest when traffic changes and model versions move, and what an honest probability lets you do besides decide, starting with counting. [The background post](/experiments/confidence-has-a-temperature) is for anyone who wants the why: what kind of number a probability is, the Boltzmann distribution hiding inside softmax, and how preference tuning can cool a model without changing what it knows.
