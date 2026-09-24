@@ -1,12 +1,15 @@
 ---
+import '@/styles/themes.css';
+import { AUTO, THEMES, type ThemeName } from '@/lib/themes';
+
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   type?: 'website' | 'article';
-  /** Pin the page to one theme and hide the toggle. For pages whose own
-      palette or canvas only works in one of them. */
-  theme?: 'dark' | 'light';
+  /** Pin the page to one theme and hide the picker. For pages whose own
+      palette lives in JS or canvas and only matches that one. */
+  theme?: ThemeName;
 }
 
 const {
@@ -23,6 +26,7 @@ const ogImage = new URL(image, SITE).toString();
 const ogType = type ?? (Astro.url.pathname === '/' ? 'website' : 'article');
 const ogDesc =
   description ?? 'a garden with the workshop door left ajar';
+const themeNames = THEMES.map((t) => t.name);
 const displayTitle =
   title === 'potnuse' ? 'rdmontgomery.com' : `${title} — rdmontgomery.com`;
 ---
@@ -31,24 +35,22 @@ const displayTitle =
 <html lang="en" data-theme={theme} data-theme-pinned={theme ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
-    <script is:inline>
-      // Runs before first paint so a light-mode reader never sees a dark
-      // flash. An explicit choice wins; otherwise follow the system.
-      (function () {
-        var root = document.documentElement;
-        if (root.hasAttribute('data-theme-pinned')) return;
+    <script is:inline define:vars={{ themeNames, AUTO }}>
+      // Runs before first paint so nobody sees the wrong palette flash.
+      // A stored pick wins; "auto" (or nothing) follows the system.
+      var root = document.documentElement;
+      if (!root.hasAttribute('data-theme-pinned')) {
         var stored = null;
         try {
           stored = localStorage.getItem('theme');
         } catch (e) {}
-        var mq = window.matchMedia('(prefers-color-scheme: light)');
         root.dataset.theme =
-          stored === 'light' || stored === 'dark'
+          themeNames.indexOf(stored) >= 0
             ? stored
-            : mq.matches
-              ? 'light'
-              : 'dark';
-      })();
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? AUTO.light
+              : AUTO.dark;
+      }
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -89,41 +91,80 @@ const displayTitle =
 
     {
       !theme && (
-        <button
-          type="button"
-          class="theme-toggle"
-          aria-label="switch colour theme"
-          title="switch colour theme"
-        >
-          <svg viewBox="0 0 16 16" aria-hidden="true">
-            <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.25" />
-            <path d="M8 1.75 A6.25 6.25 0 0 1 8 14.25 Z" fill="currentColor" />
-          </svg>
-        </button>
+        <>
+          <button
+            type="button"
+            class="theme-toggle"
+            popovertarget="theme-menu"
+            aria-label="colour theme"
+            title="colour theme"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.25" />
+              <path d="M8 1.75 A6.25 6.25 0 0 1 8 14.25 Z" fill="currentColor" />
+            </svg>
+          </button>
+          <div id="theme-menu" class="theme-menu" popover aria-label="colour theme">
+            <button type="button" data-pick="auto" aria-pressed="false">
+              <span class="swatch auto" aria-hidden="true">
+                <span data-theme={AUTO.dark} />
+                <span data-theme={AUTO.light} />
+              </span>
+              auto
+            </button>
+            {THEMES.map((t) => (
+              <button type="button" data-pick={t.name} aria-pressed="false">
+                <span class="swatch" data-theme={t.name} aria-hidden="true" />
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </>
       )
     }
 
     <script>
+      import { AUTO } from '@/lib/themes';
+
       const root = document.documentElement;
-      const toggle = document.querySelector('.theme-toggle');
-      if (toggle) {
-        toggle.addEventListener('click', () => {
-          const next = root.dataset.theme === 'light' ? 'dark' : 'light';
-          root.dataset.theme = next;
-          try {
-            localStorage.setItem('theme', next);
-          } catch {}
+      const menu = document.getElementById('theme-menu');
+      const light = window.matchMedia('(prefers-color-scheme: light)');
+
+      const stored = () => {
+        try {
+          return localStorage.getItem('theme');
+        } catch {
+          return null;
+        }
+      };
+      const systemTheme = () => (light.matches ? AUTO.light : AUTO.dark);
+
+      function mark() {
+        const pick = stored() ?? 'auto';
+        menu?.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b) => {
+          const on = b.dataset.pick === pick;
+          b.setAttribute('aria-pressed', String(on));
         });
-        // Until the reader picks, track the system as it changes.
-        window
-          .matchMedia('(prefers-color-scheme: light)')
-          .addEventListener('change', (ev) => {
-            let stored = null;
-            try {
-              stored = localStorage.getItem('theme');
-            } catch {}
-            if (!stored) root.dataset.theme = ev.matches ? 'light' : 'dark';
-          });
+      }
+
+      if (menu) {
+        mark();
+        menu.addEventListener('click', (ev) => {
+          const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-pick]');
+          if (!btn) return;
+          const pick = btn.dataset.pick!;
+          try {
+            if (pick === 'auto') localStorage.removeItem('theme');
+            else localStorage.setItem('theme', pick);
+          } catch {}
+          root.dataset.theme = pick === 'auto' ? systemTheme() : pick;
+          mark();
+          menu.hidePopover();
+        });
+        // On auto, track the system as it changes.
+        light.addEventListener('change', () => {
+          if (!stored()) root.dataset.theme = systemTheme();
+        });
       }
     </script>
 
@@ -290,66 +331,6 @@ const displayTitle =
       :root {
         --font-crimson: 'Crimson Pro', Georgia, 'Iowan Old Style', serif;
         --font-jetbrains: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
-        color-scheme: dark;
-        /* Every colour here shares one amber hue, so luminance is the only
-           channel separating them. Text tokens hold WCAG AA (4.5:1) against
-           --bg-card; check new ones before adding them. */
-        --bg: #1a1207;
-        --bg-card: #261d0f;
-        --bg-button: #332814;
-        --accent: #e8a838;
-        --accent-dim: #b87a1e;
-        --text: #f0e6d2;
-        --text-dim: #aea189;
-        --text-muted: #968365;
-        --border: #3d2e1a;
-        --rule: rgba(240, 230, 210, 0.1);
-        --rule-strong: rgba(240, 230, 210, 0.18);
-        --underline: rgba(232, 168, 56, 0.5);
-        --underline-dim: rgba(158, 142, 114, 0.6);
-        --shadow: rgba(0, 0, 0, 0.45);
-        --glow: #f0e6d2;
-        --danger: #c87060;
-        --danger-bg: #6b3a30;
-        --danger-ink: #f0d6cc;
-        /* collection marks: sigil, backlinks, rhizome */
-        --c-essays: #e8a838;
-        --c-experiments: #7fb069;
-        --c-exchanges: #c48ac9;
-        --c-page: #9e8e72;
-        /* figure series */
-        --viz-amber: #c98500;
-        --viz-rose: #d55181;
-        --viz-blue: #3987e5;
-      }
-      :root[data-theme='light'] {
-        color-scheme: light;
-        --bg: #f5eedf;
-        --bg-card: #ece2cc;
-        --bg-button: #e2d5b8;
-        --accent: #8f5600;
-        --accent-dim: #7f5b22;
-        --text: #241a0c;
-        --text-dim: #5c4c33;
-        --text-muted: #6e5e44;
-        --border: #d3c29e;
-        --rule: rgba(36, 26, 12, 0.12);
-        --rule-strong: rgba(36, 26, 12, 0.22);
-        --underline: rgba(143, 86, 0, 0.45);
-        --underline-dim: rgba(92, 76, 51, 0.5);
-        --shadow: rgba(60, 40, 10, 0.18);
-        /* dark ink can't glow on paper; freshness reads as warm light */
-        --glow: #e8a838;
-        --danger: #a8452f;
-        --danger-bg: #f0d0c4;
-        --danger-ink: #5a2418;
-        --c-essays: #9a6200;
-        --c-experiments: #4c7a33;
-        --c-exchanges: #8a4a92;
-        --c-page: #7d6c50;
-        --viz-amber: #946000;
-        --viz-rose: #b8325f;
-        --viz-blue: #1f68c4;
       }
       * {
         box-sizing: border-box;
@@ -400,8 +381,75 @@ const displayTitle =
         width: 1rem;
         height: 1rem;
       }
+      .theme-menu {
+        position: fixed;
+        inset: 3.3rem 0.9rem auto auto;
+        margin: 0;
+        padding: 0.35rem;
+        min-width: 10.5rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-dim);
+        box-shadow: 0 8px 24px var(--shadow);
+        font-family: var(--font-jetbrains);
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+      }
+      .theme-menu button {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 0;
+        border-radius: 4px;
+        background: none;
+        color: inherit;
+        font: inherit;
+        letter-spacing: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .theme-menu button:hover,
+      .theme-menu button:focus-visible {
+        background: var(--bg-button);
+        color: var(--text);
+        outline: none;
+      }
+      .theme-menu button[aria-pressed='true'] {
+        color: var(--accent);
+      }
+      .theme-menu button[data-pick='auto'] {
+        margin-bottom: 0.2rem;
+        border-bottom: 1px solid var(--border);
+        border-radius: 4px 4px 0 0;
+      }
+      /* each swatch wears its own palette: ground, with an accent dot */
+      .swatch {
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: radial-gradient(
+          circle,
+          var(--accent) 0 28%,
+          var(--bg) 32%
+        );
+      }
+      .swatch.auto {
+        display: flex;
+        overflow: hidden;
+        background: none;
+      }
+      .swatch.auto > span {
+        flex: 1;
+        background: var(--bg);
+      }
       @media print {
-        .theme-toggle {
+        .theme-toggle,
+        .theme-menu {
           display: none;
         }
       }

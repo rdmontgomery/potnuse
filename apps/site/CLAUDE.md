@@ -64,6 +64,12 @@ Bespoke pages will drift from the template over time. That's fine — Rick and I
 - **Emojis.** Not in content, not in code, not in commit messages — unless Rick explicitly asks.
 - **Over-Pulling.** A pullquote every paragraph kills the effect. Reserve for the genuinely load-bearing lines.
 
+## Colour
+
+Palettes live in `src/styles/themes.css`, one block per theme, all setting the same tokens (`--bg`, `--text-muted`, `--accent`, `--c-<collection>`, `--viz-*`, …). Readers pick one from the corner menu; `auto` follows the system, blueprint by night and whiteprint by day. The list in `src/lib/themes.ts` drives the menu and the pre-paint script, so a new theme needs an entry in both, and its text tokens must hold 4.5:1 against its `--bg-card`.
+
+Use tokens, not hex, in shared components and figures. A page whose palette is baked into JS or canvas pins itself with `<Base theme="sepia">`, which hides the picker. Current pins: rhizome, primer, ladder, necromantic-circle, allons-jouer, care-for-an-esper.
+
 ## Commands
 
 - `pnpm dev` — local dev server at localhost:4321

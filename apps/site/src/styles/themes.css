@@ -1,0 +1,176 @@
+/* Site palettes. Each one sets the same tokens; pick with data-theme on
+   <html>. Selectors are bare attributes, not :root-only, so the menu's
+   swatches can wear a palette locally.
+
+   Text tokens (--text, --text-dim, --text-muted, --accent) hold WCAG AA,
+   4.5:1, against --bg-card. Check a new palette before adding it. */
+
+/* blueprint: the default, and the no-JS fallback */
+:root,
+[data-theme='blueprint'] {
+  color-scheme: dark;
+  --bg: #0f2238;
+  --bg-card: #15304d;
+  --bg-button: #1b3a5c;
+  --accent: #f08a4b;
+  --accent-dim: #d9804c;
+  --text: #eef2f5;
+  --text-dim: #b3c3d3;
+  --text-muted: #8fa4ba;
+  --border: #25476b;
+  --c-essays: #f08a4b;
+  --c-experiments: #7fd1c7;
+  --c-exchanges: #d7a6f0;
+  --c-page: #8fa4ba;
+  --viz-amber: #f2b84b;
+  --viz-rose: #f07a5a;
+  --viz-blue: #8fc9ff;
+
+  /* scheme tokens, overridden below for light palettes */
+  --shadow: rgba(0, 0, 0, 0.45);
+  --glow: var(--text);
+  --danger: #e07a68;
+  --danger-bg: #6b3a30;
+  --danger-ink: #f0d6cc;
+}
+
+/* derived once, from whichever palette is active */
+:root {
+  --rule: color-mix(in srgb, var(--text) 10%, transparent);
+  --rule-strong: color-mix(in srgb, var(--text) 18%, transparent);
+  --underline: color-mix(in srgb, var(--accent) 50%, transparent);
+  --underline-dim: color-mix(in srgb, var(--text-dim) 55%, transparent);
+}
+
+/* whiteprint: diazo blue ink on white stock, red-pencil markups */
+[data-theme='whiteprint'] {
+  --bg: #f3f5f7;
+  --bg-card: #e7ecf1;
+  --bg-button: #dae2ea;
+  --accent: #b0461a;
+  --accent-dim: #8c3d1c;
+  --text: #12284a;
+  --text-dim: #2f4a72;
+  --text-muted: #4a6186;
+  --border: #c3cfdc;
+  --c-essays: #b0461a;
+  --c-experiments: #0e7068;
+  --c-exchanges: #6f45a8;
+  --c-page: #4a6186;
+  --viz-amber: #8a5a00;
+  --viz-rose: #b0461a;
+  --viz-blue: #1f5cbf;
+}
+
+/* sepia: the original amber */
+[data-theme='sepia'] {
+  --bg: #1a1207;
+  --bg-card: #261d0f;
+  --bg-button: #332814;
+  --accent: #e8a838;
+  --accent-dim: #b87a1e;
+  --text: #f0e6d2;
+  --text-dim: #aea189;
+  --text-muted: #968365;
+  --border: #3d2e1a;
+  --c-essays: #e8a838;
+  --c-experiments: #7fb069;
+  --c-exchanges: #c48ac9;
+  --c-page: #9e8e72;
+  --viz-amber: #c98500;
+  --viz-rose: #d55181;
+  --viz-blue: #3987e5;
+}
+
+/* parchment: sepia's daylight half */
+[data-theme='parchment'] {
+  --bg: #f5eedf;
+  --bg-card: #ece2cc;
+  --bg-button: #e2d5b8;
+  --accent: #8f5600;
+  --accent-dim: #7f5b22;
+  --text: #241a0c;
+  --text-dim: #5c4c33;
+  --text-muted: #6e5e44;
+  --border: #d3c29e;
+  --c-essays: #9a6200;
+  --c-experiments: #4c7a33;
+  --c-exchanges: #8a4a92;
+  --c-page: #7d6c50;
+  --viz-amber: #946000;
+  --viz-rose: #b8325f;
+  --viz-blue: #1f68c4;
+}
+
+/* frenchmen: neon on wet asphalt, 2am */
+[data-theme='frenchmen'] {
+  --bg: #111318;
+  --bg-card: #191c23;
+  --bg-button: #22262f;
+  --accent: #ff5c93;
+  --accent-dim: #e0568a;
+  --text: #ece8e1;
+  --text-dim: #b1ada6;
+  --text-muted: #908c86;
+  --border: #2b2f39;
+  --c-essays: #ff5c93;
+  --c-experiments: #45d0dc;
+  --c-exchanges: #ffcf4a;
+  --c-page: #908c86;
+  --viz-amber: #ffcf4a;
+  --viz-rose: #ff5c93;
+  --viz-blue: #45d0dc;
+}
+
+/* cinnabar: the alchemist's pigments, vermilion, orpiment, verdigris */
+[data-theme='cinnabar'] {
+  --bg: #0e1511;
+  --bg-card: #152019;
+  --bg-button: #1c2a21;
+  --accent: #ee5a42;
+  --accent-dim: #d8604c;
+  --text: #e6ecdf;
+  --text-dim: #aab8a6;
+  --text-muted: #8a9a86;
+  --border: #26372c;
+  --c-essays: #ee5a42;
+  --c-experiments: #7fb3a8;
+  --c-exchanges: #d9b44a;
+  --c-page: #8a9a86;
+  --viz-amber: #d9b44a;
+  --viz-rose: #ee5a42;
+  --viz-blue: #7fb3a8;
+}
+
+/* rubric: black ink, vermilion headings, a scholar's edition */
+[data-theme='rubric'] {
+  --bg: #f3f2ee;
+  --bg-card: #e9e8e2;
+  --bg-button: #dddcd4;
+  --accent: #c02a1c;
+  --accent-dim: #8e2a20;
+  --text: #16161a;
+  --text-dim: #45454d;
+  --text-muted: #5b5b63;
+  --border: #cfcec6;
+  --c-essays: #c02a1c;
+  --c-experiments: #2b44c9;
+  --c-exchanges: #8a5a00;
+  --c-page: #5b5b63;
+  --viz-amber: #8a5a00;
+  --viz-rose: #c02a1c;
+  --viz-blue: #2b44c9;
+}
+
+/* light palettes: dark ink can't glow on paper, so freshness reads as
+   warm light; shadows and danger states flip too */
+[data-theme='whiteprint'],
+[data-theme='parchment'],
+[data-theme='rubric'] {
+  color-scheme: light;
+  --shadow: rgba(20, 30, 50, 0.18);
+  --glow: var(--accent);
+  --danger: #a8452f;
+  --danger-bg: #f0d0c4;
+  --danger-ink: #5a2418;
+}
