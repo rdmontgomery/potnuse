@@ -149,6 +149,6 @@ The way I'd put the whole bargain: calibrated probabilities let software connect
 
 ### where this goes
 
-A guess, and I'll flag it as one: Jev won't have this lane to itself for long. The idea behind RLCD, rewarding a model for honest probabilities instead of for pleasing a rater, doesn't look hard to copy, and the large providers already have the models. I'd expect them to ship something like Jev in their own families, or at least to expose log-probabilities more widely, which, as the contest showed, gets a general model most of the way once you recalibrate it on your own labels. Either way the lesson holds: whoever's model you start with, the calibration that counts is the one you fit on your traffic.
+Jev's first contender posted on X two hours after the announcement. Open-source versions are multiplying. The main providers will have their own soon. So build the recalibration loop now. It works on whichever model wins.
 
 Everything here happened once, on a fixed pile of labels. The [next post](/experiments/probability-you-can-count-on) is what it takes to keep a model honest when traffic changes and model versions move, and what an honest probability lets you do besides decide, starting with counting. [A physicist's intuition](/experiments/confidence-has-a-temperature) is for anyone who wants the why: what kind of number a probability is, the Boltzmann distribution hiding inside softmax, and how preference tuning can cool a model without changing what it knows.
