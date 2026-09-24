@@ -13,6 +13,8 @@ const nodeSchema = z.object({
   // Floating table of contents built from the ### headings. Opt-in: short
   // pieces don't need one, and it only shows where the left gutter has room.
   toc: z.boolean().default(false),
+  // A few sentences under the title for readers deciding whether to read on.
+  tldr: z.string().optional(),
 });
 
 const exchangeSchema = nodeSchema.extend({
