@@ -6,7 +6,7 @@ toc: true
 tldr: "Most of what models report as confidence can be trusted to rank things but not to mean what it says, because softmax is a Boltzmann distribution and some kinds of tuning can cool it, moving every number without changing which answer comes first. Every threshold set on its numbers lands in the wrong place, and the usual accuracy metrics don't notice."
 connects: [what-jev-is-selling, probability-you-can-count-on, calibrate, toner-tu-map, reverberant-middle]
 tags: [llm, calibration, decision-theory, measurement, rlhf, statistical-mechanics]
-description: Why most model confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. Background for the calibration series.
+description: Why most model confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. A physicist's intuition for the calibration series.
 ---
 
 import Gloss from '@/components/Gloss.astro';
@@ -18,9 +18,9 @@ import Temperature from '@/components/calibration/Temperature.astro';
 import Beta from '@/components/calibration/Beta.astro';
 import Reliability from '@/components/calibration/Reliability.astro';
 
-<Series current="background" />
+<Series current="intuition" />
 
-This is the background to [what Jev is selling](/experiments/what-jev-is-selling), for anyone who wants the why. That post turns an honest probability into a threshold on a refund queue and shows what a cooled model costs there. This one is why a model's confidence usually isn't a probability in the first place, why the knob that bends it is called temperature, and why preference tuning can turn it down.
+This is a physicist's companion to [what Jev is selling](/experiments/what-jev-is-selling), for anyone who wants the why. That post turns an honest probability into a threshold on a refund queue and shows what a cooled model costs there. This one is why a model's confidence usually isn't a probability in the first place, why the knob that bends it is called temperature, and why preference tuning can turn it down.
 
 The short version: two models can rank every item in exactly the same order and still need different thresholds to make the same decisions, because a model's confidence is a number of a particular kind, and most of the time it isn't the kind it looks like.
 

@@ -1,14 +1,14 @@
 ---
 // Reading order for the calibration posts, shown at the top of each.
-// Two numbered posts, plus a background post for readers who want the why.
+// Two numbered posts, plus a physicist's-intuition post for readers who want the why.
 interface Props {
-  current: 1 | 2 | 'background';
+  current: 1 | 2 | 'intuition';
 }
 const { current } = Astro.props;
 const parts = [
   { n: 1, label: '1. decisions', href: '/experiments/what-jev-is-selling' },
   { n: 2, label: '2. production', href: '/experiments/probability-you-can-count-on' },
-  { n: 'background', label: 'background: temperature', href: '/experiments/confidence-has-a-temperature' },
+  { n: 'intuition', label: "a physicist's intuition", href: '/experiments/confidence-has-a-temperature' },
 ];
 ---
 
