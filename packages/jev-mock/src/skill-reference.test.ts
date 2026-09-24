@@ -2,7 +2,7 @@
 // hands to other repos is known to work.
 import { describe, expect, it } from 'vitest';
 import {
-  applyCalibration, applyTemperature, calibratedMock, compareOnHoldout, decide,
+  applyCalibration, applyTemperature, calibrationKey, calibratedMock, compareOnHoldout, decide,
   fitPlatt, fitTemperature, psi, reliability, selectForReview, thresholdFromCosts,
   type CalibrationRow, type Decision, type Labelled,
 } from '../skills/calibration-loop/reference/loop.ts';
@@ -78,5 +78,13 @@ describe('calibration-loop reference', () => {
       return { probs: cooled, truth };
     });
     expect(fitTemperature(rows)).toBeCloseTo(2, 0);
+  });
+
+  it('gives a reworded question a new calibration key', () => {
+    const a = calibrationKey('abuse', { instructions: 'Is this refund abusive?' }, 'jev-1.13.0');
+    const b = calibrationKey('abuse', { instructions: 'Is this refund request fraudulent?' }, 'jev-1.13.0');
+    const c = calibrationKey('abuse', { instructions: 'Is this refund abusive?' }, 'jev-1.14.0');
+    expect(a).toBe(calibrationKey('abuse', { instructions: 'Is this refund abusive?' }, 'jev-1.13.0'));
+    expect(new Set([a, b, c]).size).toBe(3);
   });
 });

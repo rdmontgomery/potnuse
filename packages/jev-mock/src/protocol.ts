@@ -6,12 +6,11 @@
  * Nothing here talks to TypeSafe. This is the contract a mock has to honor so
  * that swapping the mock for the real client is a one-line change.
  *
- * Two naming conventions are in the wild for the yes/no primitive. TypeSafe's
- * own docs call it a `noul` — a contraction of Bernoulli, which is exactly what
- * it is: one trial, one probability — and put P(yes) in a `noul` field. Several
- * third-party clients expose the same primitive as `boolean` with a
- * `probability` field. We model the `boolean` spelling and carry `noul` as an
- * alias on the answer.
+ * The yes/no primitive is a `noul` (a contraction of Bernoulli: one trial, one
+ * probability). The request says `"type": "noul"` and the answer carries P(yes)
+ * in a `noul` field, per TypeSafe's API reference. Some third-party clients
+ * expose it as `boolean` with a `probability` field; that is their wrapper, not
+ * the wire format.
  */
 
 /** Cardinality limits the API enforces. Enforce them locally and you never pay
@@ -23,8 +22,8 @@ export const LIMITS = {
   maxScoreLevels: 10,
 } as const;
 
-export interface BooleanQuestion {
-  type: 'boolean';
+export interface NoulQuestion {
+  type: 'noul';
   instructions: string;
   /** Optional gloss on what each side means. Either side may be omitted. */
   criteria?: { true?: string; false?: string };
@@ -44,14 +43,12 @@ export interface ScoreQuestion {
   criteria: readonly string[];
 }
 
-export type Question = BooleanQuestion | ChoiceQuestion | ScoreQuestion;
+export type Question = NoulQuestion | ChoiceQuestion | ScoreQuestion;
 
-export interface BooleanAnswer {
-  type: 'boolean';
+export interface NoulAnswer {
+  type: 'noul';
   /** P(yes), in [0, 1]. There is no separate confidence: the value *is* the
    *  belief. 0.5 means the model split its bet, not that the truth is middling. */
-  probability: number;
-  /** Alias for `probability`, matching TypeSafe's own field name. */
   noul: number;
 }
 
@@ -76,15 +73,15 @@ export interface ScoreAnswer {
   confidence: number;
 }
 
-export type Answer = BooleanAnswer | ChoiceAnswer | ScoreAnswer;
+export type Answer = NoulAnswer | ChoiceAnswer | ScoreAnswer;
 
 /** Maps a question set to its answer set, keeping the ids and narrowing each
  *  answer to the type its question asked for. This is the part worth having in
  *  TypeScript: the caller branches on `answers.tone.choice` and the compiler
  *  knows `tone` is a choice. */
 export type Answers<Q extends Record<string, Question>> = {
-  [K in keyof Q]: Q[K] extends BooleanQuestion
-    ? BooleanAnswer
+  [K in keyof Q]: Q[K] extends NoulQuestion
+    ? NoulAnswer
     : Q[K] extends ChoiceQuestion
       ? ChoiceAnswer
       : Q[K] extends ScoreQuestion

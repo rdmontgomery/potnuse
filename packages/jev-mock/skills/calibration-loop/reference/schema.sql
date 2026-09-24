@@ -5,7 +5,8 @@
 -- calibrated one: refitting needs what the model actually said.
 CREATE TABLE IF NOT EXISTS decisions (
   item_id        VARCHAR   NOT NULL,
-  question       VARCHAR   NOT NULL,   -- the question id; each is its own forecaster
+  question       VARCHAR   NOT NULL,   -- the question id
+  definition_hash VARCHAR  NOT NULL,   -- hash of instructions/criteria: a reworded question is a new forecaster
   model_version  VARCHAR   NOT NULL,   -- pinned, never an alias like "latest"
   raw            DOUBLE    NOT NULL,   -- what the model reported
   p              DOUBLE    NOT NULL,   -- after the calibration table
@@ -26,16 +27,17 @@ CREATE TABLE IF NOT EXISTS labels (
   PRIMARY KEY (item_id, question)
 );
 
--- One row per question id: the map from raw to honest.
+-- One row per question definition on one model version: the map from raw to honest.
 CREATE TABLE IF NOT EXISTS calibration (
   question       VARCHAR   NOT NULL,
+  definition_hash VARCHAR  NOT NULL,
   model_version  VARCHAR   NOT NULL,
   slope          DOUBLE,              -- yes/no questions (Platt)
   intercept      DOUBLE,
-  temperature    DOUBLE,              -- choice questions
+  temperature    DOUBLE,              -- choice questions (a first fix, not a general one)
   fitted_on      INTEGER   NOT NULL,  -- number of labels
   published_at   TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (question, model_version)
+  PRIMARY KEY (question, definition_hash, model_version)
 );
 
 -- The review queue: everything acted on, plus a deterministic random audit of
@@ -75,8 +77,10 @@ SELECT b.question,
 FROM b JOIN base USING (question)
 GROUP BY b.question;
 
--- Drift, no labels: population stability index of raw probabilities, last 7
--- days against the 28 days before that. Above 0.25, refit.
+-- Drift alarm, no labels: population stability index of raw probabilities,
+-- last 7 days against the 28 days before that. Above 0.25, investigate and
+-- pull fresh labels forward. It can't see calibration decay that leaves the
+-- score histogram unchanged; reliability_by_question on audit rows can.
 -- Postgres: replace least(9, floor(...)) with least(9, floor(...))::int and
 -- now() - INTERVAL '7 days' works the same.
 CREATE OR REPLACE VIEW drift_by_question AS

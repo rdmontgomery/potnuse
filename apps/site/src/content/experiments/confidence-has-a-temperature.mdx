@@ -3,19 +3,26 @@ title: confidence has a temperature
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: A probability is the one kind of number that survives no transformation, and most of what models report as confidence is really just a ranking with a percent sign. Softmax is a Boltzmann distribution, preference tuning cools it, and cooling changes every number a model reports without changing which answer it ranks first, so accuracy, AUC and human raters never notice. A fake model built backwards (belief first, truth second) shows it exactly.
+tldr: "Most of what models report as confidence can be trusted to rank things but not to mean what it says, and a probability is the one kind of number that has to mean exactly what it says. Softmax is a Boltzmann distribution, and some kinds of tuning can cool it, moving every number a model reports without changing which answer comes first, which is why the usual accuracy metrics don't notice."
 connects: [what-jev-is-selling, probability-you-can-count-on, calibrate, toner-tu-map, reverberant-middle]
 tags: [llm, calibration, measurement, rlhf, statistical-mechanics]
-description: Why a model's confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how preference tuning cools a model without changing what it knows. The first of three posts.
+description: Why a model's confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. The first of three posts.
 ---
 
 import Gloss from '@/components/Gloss.astro';
 import Marginal from '@/components/Marginal.astro';
 import 'katex/dist/katex.min.css';
+import Series from '@/components/a-probability-you-can-count-on/Series.astro';
 import Softmax from '@/components/a-probability-you-can-count-on/Softmax.astro';
 import Temperature from '@/components/a-probability-you-can-count-on/Temperature.astro';
 import Beta from '@/components/a-probability-you-can-count-on/Beta.astro';
 import Reliability from '@/components/a-probability-you-can-count-on/Reliability.astro';
+
+<Series current={1} />
+
+Two models can make exactly the same predictions, ranking every item in the same order, and still need different thresholds to make the same decisions. The reason is that a model's confidence is a number of a particular kind, and most of the time it isn't the kind it looks like.
+
+---
 
 ### what kind of number
 
@@ -63,13 +70,13 @@ $$
 \text{new}(y) \;\propto\; \text{old}(y)^{1 + 1/\beta},
 $$
 
-and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to $$T = \beta/(1+\beta)$$, which is below one for any positive $$\beta$$. It's a caricature, since real rewards are only partly about confidence, but the direction survives a partial version: whatever share of the reward tracks the model's own confidence cools it by that much. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
+and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to $$T = \beta/(1+\beta)$$, which is below one for any positive $$\beta$$. It's a caricature, and the takeaway is narrow: this toy reward shows one way preference optimization can sharpen probabilities without making the predictions any better. Real preference tuning also changes which answers a model prefers, so it isn't just a temperature. Whether tuned models end up overconfident in practice is an empirical question, and the measurements say they often do: [Tian and colleagues](https://arxiv.org/abs/2305.14975) found the token probabilities of preference-tuned models poorly calibrated where the pretrained ones had been well calibrated. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
 
 <Marginal>The same closed form is the starting point of Rafailov and colleagues' [DPO paper](https://arxiv.org/abs/2305.18290) (NeurIPS 2023), where it appears without the thermodynamics.</Marginal>
 
 <Temperature />
 
-Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive. Accuracy, top-1, AUC, F1 at a threshold, and a human preferring one answer to another are all ordinal statistics, so every one of them is unmoved by exactly the transformation preference tuning applies.
+Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive. Anything that depends only on the ordering survives it: which answer ranks first, a human preferring one answer to another, and for a yes/no question the AUC and accuracy at 0.5, since cooling never moves a probability across one half. What doesn't survive is a decision made at any other threshold. Cool a probability of 0.3 to $$T = 0.5$$ and it becomes about 0.155, which lands on the other side of a threshold of 0.2, so thresholded accuracy and F1 change even though the ranking didn't.
 
 ---
 
@@ -106,4 +113,6 @@ Reliability (where zero means perfectly honest) gets about ninety times worse co
 
 ### where this goes
 
-A model whose confidence runs cool or hot still ranks your items as well as it ever did, so nothing in the usual evaluation will flag it, and every threshold you set on its numbers is quietly in the wrong place. The [next post](/experiments/what-jev-is-selling) puts that in money: how to pick a threshold when the probability is honest, what TypeSafe's Jev is actually selling, and what a few hundred labels can and can't repair. The [third](/experiments/probability-you-can-count-on) is the loop that keeps a model honest in production.
+A word on the metaphor running through these posts. When I say a model is honest, I mean calibrated: its stated probabilities match how often things happen, over a population of items. That's an empirical relationship between numbers and outcomes, not a claim about what the model believes or whether it means what it says.
+
+A model whose confidence runs cool or hot still ranks your items as well as it ever did, so nothing that measures ranking will flag it, and every threshold you set on its numbers is quietly in the wrong place. The [next post](/experiments/what-jev-is-selling) puts that in money: how to pick a threshold when the probability is honest, what TypeSafe's Jev is actually selling, and what a few hundred labels can and can't repair. The [third](/experiments/probability-you-can-count-on) is the loop that keeps a model honest in production.

@@ -227,3 +227,27 @@ console.log('\n=== for the write-up: savings in cents, count bias, count spread 
     console.log(`abusive requests with calibrated P(abuse) in [${lo}, ${hi}): ${((k / abusiveIds.length) * 100).toFixed(0)}%`);
   }
 }
+
+console.log('\n=== counting, root-mean-square miss (the expected count minimizes squared error) ===');
+{
+  const f400 = platt(pairsOf(data.jevLike, fitIdx.slice(0, 400)));
+  const f4k = platt(pairsOf(data.jevLike, fitIdx.slice(0, 4000)));
+  const rows: [string, (ids: number[]) => number][] = [
+    ['sum the true probabilities', (ids) => ids.reduce((s, i) => s + (1 - data.oracle[i]!), 0)],
+    ['Jev-like, base-rate corrected', (ids) => ids.reduce((s, i) => s + (1 - shiftPrior(data.jevLike[i]!, data.priorShift)), 0)],
+    ['Jev-like, Platt on 4,000', (ids) => ids.reduce((s, i) => s + (1 - f4k(data.jevLike[i]!)), 0)],
+    ['Jev-like, Platt on 400', (ids) => ids.reduce((s, i) => s + (1 - f400(data.jevLike[i]!)), 0)],
+    ['cooled LLM, unrepaired', (ids) => ids.reduce((s, i) => s + (1 - data.llmLogprob[i]!), 0)],
+    ['count denials (4,000 fit)', (ids) => ids.filter((i) => f4k(data.jevLike[i]!) < T).length],
+    ['Jev-like, unrepaired', (ids) => ids.reduce((s, i) => s + (1 - data.jevLike[i]!), 0)],
+  ];
+  for (const [label, est] of rows) {
+    let sq = 0;
+    for (let w = 0; w < W; w++) {
+      const ids = testIdx.slice(w * WEEK, (w + 1) * WEEK);
+      const truth = ids.reduce((s, i) => s + (1 - data.y[i]!), 0);
+      sq += (est(ids) - truth) ** 2;
+    }
+    console.log(`${label.padEnd(32)} rms miss ${Math.sqrt(sq / W).toFixed(1)}`);
+  }
+}

@@ -16,7 +16,7 @@ import {
 } from './index.ts';
 
 const questions = {
-  urgent: { type: 'boolean', instructions: 'Does this convey urgency?' },
+  urgent: { type: 'noul', instructions: 'Does this convey urgency?' },
   team: {
     type: 'choice',
     instructions: 'Which team should handle this?',
@@ -69,7 +69,7 @@ describe('protocol', () => {
 describe('shape-only mock', () => {
   it('returns the right answer type for every question type', async () => {
     const { answers } = await shapeOnlyJev({ seed: 7 }).decide('a ticket', questions);
-    expect(answers.urgent.probability).toBeGreaterThanOrEqual(0);
+    expect(answers.urgent.noul).toBeGreaterThanOrEqual(0);
     expect(Object.keys(answers.team.probabilities)).toEqual(['billing', 'technical', 'sales']);
     expect(answers.team.choice).toBeOneOf(['billing', 'technical', 'sales']);
     expect(answers.anger.score).toBeGreaterThanOrEqual(0);
@@ -90,7 +90,7 @@ describe('shape-only mock', () => {
     for (const s of states.slice(0, 2000)) {
       const { answers } = await mock.decide(s, { urgent: questions.urgent });
       // Truth is independent of the forecast here — that is the defect.
-      pairs.push({ p: answers.urgent.probability, y: Math.random() < 0.5 ? 1 : 0 });
+      pairs.push({ p: answers.urgent.noul, y: Math.random() < 0.5 ? 1 : 0 });
     }
     expect(ece(pairs)).toBeGreaterThan(0.15);
   });

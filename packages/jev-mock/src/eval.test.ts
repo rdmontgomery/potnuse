@@ -17,7 +17,7 @@ import {
 } from './index.ts';
 
 const question = {
-  urgent: { type: 'boolean', instructions: 'Does this convey urgency?' },
+  urgent: { type: 'noul', instructions: 'Does this convey urgency?' },
 } as const;
 
 async function streamOf(temperature: number, n: number, seed = 42): Promise<Pair[]> {

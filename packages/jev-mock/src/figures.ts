@@ -166,7 +166,7 @@ function figureTemperature(): string {
 
 async function stream(temperature: number, n: number): Promise<Pair[]> {
   const mock = calibratedJev({ seed: 42, temperature });
-  const q = { urgent: { type: 'boolean' as const, instructions: 'Does this convey urgency?' } };
+  const q = { urgent: { type: 'noul' as const, instructions: 'Does this convey urgency?' } };
   for (let i = 0; i < n; i++) await mock.decide(`ticket ${i}`, q);
   return mock.log.map((o) => o.pair);
 }
@@ -431,8 +431,8 @@ function figureContest(): string {
       ${line('llmLogprob', HOT, '', 'LLM, log-probs')}
       ${line('jevLike', HONEST, '', 'Jev-like')}
     </g>
-    ${key(Mc.top + 132, HONEST, '', 'Jev-like', 'knows the most')}
-    ${key(Mc.top + 178, HOT, '', 'LLM, log-probs', 'cooled by tuning')}
+    ${key(Mc.top + 132, HONEST, '', 'Jev-like', 'synthetic, knows most')}
+    ${key(Mc.top + 178, HOT, '', 'LLM, log-probs', 'synthetic, cooled')}
     ${key(Mc.top + 224, HOT, '5 4', 'same LLM, asked', 'for a confidence')}
     <text x="${n2(Mc.left + PWc / 2)}" y="${Hc - 10}" class="label mid">labelled tickets used to recalibrate (log scale)</text>
     <text x="12" y="${n2(Mc.top + PHc / 2)}" class="label mid" transform="rotate(-90 12 ${n2(Mc.top + PHc / 2)})">cost per ticket, 200,000 held out</text>
@@ -440,7 +440,7 @@ function figureContest(): string {
 
   return component(
     inner,
-    'The same recalibration loop, Platt scaling on a growing set of labelled tickets, applied to all three models and scored on two hundred thousand tickets it never saw. Each point averages thirty draws of the labelled set. The two red lines are one model read out two ways.',
+    'Three synthetic models, not measurements of Jev or any LLM. The same recalibration loop, Platt scaling on a growing set of labelled tickets, applied to each and scored on two hundred thousand tickets it never saw. Each point averages thirty draws of the labelled set. The two red lines are one model read out two ways.',
   );
 }
 
@@ -460,7 +460,7 @@ function figureLoop(): string {
   const mid = top + bh / 2, midB = bottom + bh / 2;
 
   const inner = `  <svg class="fig" viewBox="0 0 ${Wl} ${Hl}" role="img"
-    aria-label="The serving path runs left to right along the top: Jev's raw probability, a calibration table, a threshold from the cost table, and the decision, which is logged. The feedback path runs right to left along the bottom: an annotation queue of acted-on items plus a small random sample, labels per question, and a refit checked on held-back rows, which updates the calibration table. A drift monitor watches the raw probabilities and says when to refit.">
+    aria-label="The serving path runs left to right along the top: Jev's raw probability, a calibration table, a threshold from the cost table, and the decision, which is logged. The feedback path runs right to left along the bottom: an annotation queue of acted-on items plus a small random sample, labels per question, and a refit checked on held-back rows, which updates the calibration table. A drift alarm watches the raw probabilities and flags changes worth investigating.">
     <defs>
       <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="${HONEST}" /></marker>
       <marker id="ah-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--text-muted)" /></marker>
@@ -477,7 +477,7 @@ function figureLoop(): string {
     ${box(cols[3]!, bottom, 'annotation queue', 'acted on + 2–3%', false)}
     ${box(cols[2]!, bottom, 'labels', 'per question', false)}
     ${box(cols[1]!, bottom, 'refit', 'held-back check', false)}
-    ${box(cols[0]!, bottom, 'drift monitor', 'needs no labels', false, true)}
+    ${box(cols[0]!, bottom, 'drift alarm', 'needs no labels', false, true)}
     ${arrow(`M${cols[3]! + bw / 2} ${top + bh} V${bottom - 2}`, 'var(--text-muted)')}
     ${arrow(`M${cols[3]!} ${midB} H${cols[2]! + bw + 2}`, 'var(--text-muted)')}
     ${arrow(`M${cols[2]!} ${midB} H${cols[1]! + bw + 2}`, 'var(--text-muted)')}
@@ -491,7 +491,7 @@ function figureLoop(): string {
 
   return component(
     inner,
-    'The top row runs on every request. The bottom row runs on a schedule, or sooner when the drift monitor, which needs no labels, sees the raw probabilities move.',
+    'The top row runs on every request. The bottom row runs on a schedule, and sooner when the drift alarm sees the raw probabilities move. The alarm needs no labels but can miss a change in what outcomes follow a score, which is why the random audit keeps running either way.',
   );
 }
 

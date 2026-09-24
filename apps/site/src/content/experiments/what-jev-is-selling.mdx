@@ -3,7 +3,7 @@ title: what jev is selling
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: TypeSafe's Jev answers typed questions with probabilities instead of prose, and what it's really selling is that those probabilities are honest. Honesty turns out to be cheap to repair on your own labels (sometimes with no labels at all), and once a probability is honest the right threshold is the price of one mistake over the price of both. What recalibration can't buy is resolution, how well a model ranks your items, so a pre-calibrated model saves you labels rather than making you money; in a simulated refund queue, what it's worth depends on your prices.
+tldr: "Calibrated probabilities let software connect predictions to costs, so the right threshold becomes the price of one mistake over the price of both. TypeSafe's Jev promises to make those probabilities cheaper and easier to get, but their value still depends on what the model can tell apart and on whether its calibration holds on your traffic, which a simulated refund queue makes concrete."
 connects: [confidence-has-a-temperature, probability-you-can-count-on, dsl-hobbies]
 tags: [llm, calibration, decision-theory, jev, typescript]
 description: TypeSafe's Jev returns a decision and a probability instead of prose. What that's worth, how to turn an honest probability into a threshold, and a three-model contest on a simulated refund queue. The second of three posts.
@@ -12,10 +12,13 @@ description: TypeSafe's Jev returns a decision and a probability instead of pros
 import Gloss from '@/components/Gloss.astro';
 import Marginal from '@/components/Marginal.astro';
 import 'katex/dist/katex.min.css';
+import Series from '@/components/a-probability-you-can-count-on/Series.astro';
 import Cost from '@/components/a-probability-you-can-count-on/Cost.astro';
 import Contest from '@/components/a-probability-you-can-count-on/Contest.astro';
 
-Most of what a model reports as confidence can be trusted to rank things and not much else. A model is <Gloss def="Among all the items it called 80% likely, about 80% come true. A property of a long run of predictions, never of one.">calibrated</Gloss> when its 0.8 really means four times in five, and [the first post](/experiments/confidence-has-a-temperature) in this series explains why most aren't: preference tuning cools a model's confidence the way lowering a gas's temperature sharpens a Boltzmann distribution, moving every number without changing which answer comes first. Two measures from weather forecasting carry through this post. Reliability is how far a model's stated probabilities sit from what actually happens (zero is perfectly honest), and resolution is how informative they are, which lives entirely in how well the model ranks things.
+<Series current={2} />
+
+Most of what a model reports as confidence can be trusted to rank things and not much else. A model is <Gloss def="Among all the items it called 80% likely, about 80% come true. A property of a long run of predictions, never of one.">calibrated</Gloss> when its 0.8 really means four times in five, and [the first post](/experiments/confidence-has-a-temperature) in this series explains why most aren't: some kinds of tuning can cool a model's confidence the way lowering a gas's temperature sharpens a Boltzmann distribution, moving every number without changing which answer comes first, and tuned models measured in practice are often overconfident. Two measures from weather forecasting carry through this post. Reliability is how far a model's stated probabilities sit from what actually happens (zero is perfectly honest), and resolution is how informative they are: how much the outcomes differ between the items a model scores differently. Calibration in these posts is always about a population of items, never about any one answer.
 
 
 ---
@@ -24,14 +27,17 @@ Most of what a model reports as confidence can be trusted to rank things and not
 
 ChatGPT brought on a wave of GenAI that really was just a fancy chatbot, until structured outputs came along. All these models are a black box that accepts unstructured input and does two things: talk to humans (free text) and talk to machines (structured output). [TypeSafe's Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev) cut out the part that talks to humans and improved the use of the part that talks to machines. You give it some state and a set of typed questions, and it gives back a choice, a position on a rubric, or a probability.
 
+#### the request
+
 A request is a single POST carrying the state and the questions, each under an id you choose:
 
 ```json
 {
   "state": "Help! My payouts have been failing for 3 days.",
+  "model": "jev-latest",
   "questions": {
     "urgent": {
-      "type": "boolean",
+      "type": "noul",
       "instructions": "Does this convey urgency?"
     },
     "team": {
@@ -47,11 +53,29 @@ A request is a single POST carrying the state and the questions, each under an i
 }
 ```
 
-The yes/no question returns the probability of yes, and TypeSafe calls it a `noul`, which is Bernoulli filed down to one syllable (one trial, one probability). A choice returns the favorite along with the whole distribution over the options you listed. All the questions in a request are answered in parallel and in isolation against the same state, so twenty questions cost one round trip and not much more than one question, and no question can see another's answer, which leaves the combining to you. The typing is real but narrower than the pitch: the model can't return an option you didn't define, because your schema is the whole output space, but it can certainly return the wrong one, and "can't hallucinate" means "can't produce something unparseable," which isn't the same as being right.
+The yes/no question type is called a `noul`, which is Bernoulli filed down to one syllable (one trial, one probability), and its answer comes back in a field of the same name: `answers.urgent.noul` is the probability of yes. A choice returns the favorite along with the whole distribution over the options you listed, plus a `confidence` field that summarizes how concentrated that distribution is; it isn't the probability that the favorite is right, and it shouldn't go anywhere near a threshold. ([TypeSafe's API reference](https://docs.typesafe.ai/api) has the full shapes.)
 
-What TypeSafe is actually selling is the second number. They train with a method they call RLCD (reinforcement learning for calibrated decisions), in which the reward isn't whether a rater liked the answer but whether the probability attached to it was honest, which, if it means what it says, is a proper scoring rule wearing reinforcement learning's clothes. [The first post](/experiments/confidence-has-a-temperature) in this series is the case for wanting that: most models' confidence is cooled by preference tuning until it ranks well and means little. Read carefully, it's also a case that honesty is worth less than it sounds.
+All the questions in a request are answered in parallel and in isolation against the same state, so twenty questions cost one round trip and not much more than one question, and no question can see another's answer, which leaves the combining to you.
 
-Honesty turns out to be the cheap part, and the last section of this post puts a price on it. Recalibrating a model means learning, from some of your own labelled examples, a map from what the model says to how often it turns out right. That map is monotone (it can stretch the numbers but never swap two of them), so it can't change which items the model ranks above which, and resolution lives entirely in that ranking. Recalibration therefore doesn't make models equally good. It makes them comparable: once two models are both honest, the one that ranks your items better is the better model, and nothing you fit on your side changes which one that is. The same goes for a frontier model read through its log-probabilities, which recalibrates just as well. What a model really sells you is resolution. What a model that arrives already calibrated adds on top is label efficiency (it needs fewer labels, sometimes none, to become honest on your traffic), where a badly bent one needs a more flexible fit and thousands of labels.
+The typing is real but narrower than the pitch. The model can't return an option you didn't define, because your schema is the whole output space, but it can certainly return the wrong one, and "can't hallucinate" means "can't produce something unparseable," which isn't the same as being right.
+
+#### what's being sold
+
+What TypeSafe is actually selling is the second number. They train with a method they call RLCD (reinforcement learning for calibrated decisions), and the description says the reward is whether the probability attached to an answer was honest rather than whether a rater liked it. My guess is that it's something like a proper scoring rule in reinforcement learning's clothes, but the objective isn't published, so that's an interpretation and not a description.
+
+It's also worth knowing what TypeSafe's launch numbers measure. Their workflow evaluations score each model against the averaged answers of two large frontier models rather than against what actually happened, so they measure agreement with those models, and the launch post reports no calibration metric at all. Neither says whether Jev's probabilities match outcomes on your traffic; only your own labels can.
+
+<Marginal>The evaluation method is described in [TypeSafe's launch post](https://typesafe.ai/blog/introducing-system-one-models-and-jev) and picked apart in several independent write-ups since.</Marginal>
+
+The way I'd put the whole bargain: calibrated probabilities let software connect predictions to costs and to expected counts. Jev promises to make those probabilities cheaper and easier to get, but what they're worth still depends on what the model can tell apart and on whether its calibration holds on your traffic.
+
+#### what honesty is worth
+
+Honesty turns out to be the cheap part, and the last section of this post puts a price on it. Recalibrating a model means learning, from some of your own labelled examples, a map from what the model says to how often it turns out right. A map that keeps distinct scores distinct (and the usual ones are monotone: they stretch the numbers but never swap two of them) can't change which items the model tells apart, which is what resolution measures; only merging scores together, by rounding or by a fitter that creates ties, throws that information away. So recalibration doesn't make models equally good. It makes them comparable, by stripping off the part that's cheap to repair and leaving the part that isn't. The same goes for a frontier model read through its log-probabilities, which recalibrates just as well.
+
+What a model sells you, underneath, is what it can tell apart. What a model that arrives already calibrated adds is two things: it needs fewer labels (sometimes none) to become honest on your traffic, where a badly bent one needs a more flexible fit and thousands of labels, and it makes sensible decisions from the first day, before any of those labels exist, which can be worth real money on its own.
+
+#### what ties cost
 
 There's one more place Jev might earn its keep, and it has nothing to do with training. Not every frontier API exposes log-probabilities, so the honest baseline from a general model is often to ask it how confident it is and take the number it says, and stated confidences pile up on a handful of round values like 0.8, 0.9 and 0.95. Items that share a value can never be told apart again, by any recalibration, so if ties destroy resolution, a model that returns a real probability has an edge that no amount of fitting on your side can give back. That's a claim that can be tested, so I tested it.
 
@@ -84,13 +108,15 @@ All of which rests on one assumption, that when the model says 0.2 it means 0.2.
 
 A fair comparison needs a queue where the truth is known and several models can look at it, so I built a refund queue in which 92% of requests are legitimate and 8% are abuse, priced with the table from the last section, which puts the threshold at 0.2. Every ticket gets a hidden score that decides whether it's legitimate, and each model sees that score through a layer of noise, thin for a model that knows a lot and thick for one that knows less. Because the noise is Gaussian, the correct belief for each model has a closed form, so every model starts out honest by construction, and then I bend each one the way real models get bent. It's worth being plain about what that means: I set how much each model knows. What the contest measures is what that knowledge is worth at these prices, and what one recalibration loop can and can't give back.
 
-The Jev-like model sees through the thinnest noise, so it knows the most, and it reports honestly, except that it was trained somewhere half the requests were abuse, so it's honest about a world that isn't yours. The second is a general LLM read through its log-probabilities, which sees through thicker noise and has been cooled to $$T = 0.5$$, the way preference tuning tends to leave a model. The third is the same LLM with the same beliefs, asked instead to state its confidence, which it does in round numbers from a short list, so that its answers collapse onto twelve values.
+The Jev-like model sees through the thinnest noise, so it knows the most, and it reports honestly, except that it was trained somewhere half the requests were abuse, so it's honest about a world that isn't yours. The second is a general LLM read through its log-probabilities, which sees through thicker noise and has been cooled to $$T = 0.5$$, the way preference-tuned models are often measured to be. The third is the same LLM with the same beliefs, asked instead to state its confidence, which it does in round numbers from a short list, so that its answers collapse onto twelve values.
 
 Before any repair, the Jev-like model is the worst of the three. Believing half of all customers might be frauds, it denies anyone it isn't sure about and costs $1.07 a ticket, against $0.40 for approving everyone and ignoring the model entirely. The two LLM readouts sit right at that $0.40, and a model that somehow saw the hidden score exactly would cost $0.33, so the whole prize at these prices is seven cents a ticket.
 
-The Jev-like model's trouble is the cheapest miscalibration there is. It isn't that it was calibrated on your data; it was calibrated on someone else's, where half the requests were abuse, and the only thing wrong is that its sense of how common abuse is (its prior, or base rate) is off. When only the base rate differs between training and use, the correction is exact and needs no labelled examples at all: add the difference between the two base rates in log-odds, here 2.44, to every logit. Call it the base-rate correction. That one number takes it from $1.07 a ticket to $0.354 and its reliability from 0.053 to 0.00001, from the worst model in the contest to about two cents off the oracle, without looking at a single labelled ticket. (If you don't know the base rate it was trained at, it can be estimated from unlabelled traffic; here I assumed you did.)
+The Jev-like model's trouble is the cheapest miscalibration there is. It isn't that it was calibrated on your data; it was calibrated on someone else's, where half the requests were abuse, and the only thing wrong is that its sense of how common abuse is (its prior, or base rate) is off. When only the base rate differs between training and use (more precisely, when the share of abuse changes but abusive and legitimate requests each still look the way they did in training, which statisticians call label shift), the correction is exact and needs no labelled examples at all: add the difference between the two base rates in log-odds, here 2.44, to every logit. Call it the base-rate correction. That one number takes it from $1.07 a ticket to $0.354 and its reliability from 0.053 to 0.00001, from the worst model in the contest to about two cents off the oracle, without looking at a single labelled ticket. Here I assumed you know both base rates. If you don't, estimating the new one from unlabelled traffic is possible but needs its own assumptions and some labelled reference data; [Lipton, Wang and Smola](https://proceedings.mlr.press/v80/lipton18a.html) is the place to start.
 
 Then the same loop for all three. Take some number of labelled tickets, fit [Platt scaling](https://en.wikipedia.org/wiki/Platt_scaling) (a logistic regression on the model's own logit, so just two parameters, a slope and an intercept), and score the result on two hundred thousand tickets the fit never saw, averaging thirty draws of the labelled set at each size:
+
+These are synthetic models, not measurements of Jev or of any LLM. How much each one knows, and each one's flaws (including the Jev-like model's wrong base rate, which says nothing about whether the real Jev has one), were assigned by construction.
 
 <Contest />
 
@@ -103,7 +129,7 @@ The result I didn't expect runs the other way, and it isn't on the chart, which 
 | log-probabilities, cooled | 0.0021 | 0.00007 | 0.022 | $0.393 |
 | a stated confidence | 0.0011 | 0.0013 | 0.019 | $0.404 |
 
-The stated confidence started out more honest, which matches what's been reported for real preference-tuned models, and ended less honest and more expensive, because honesty was the cheap part to fix and the ranking it gave up can't be fixed at all.
+The stated confidence started out more honest, which matches what's been reported for real preference-tuned models, and ended less honest and more expensive, because honesty was the cheap part to fix and the distinctions its rounding threw away can't be recovered at all.
 
 <Marginal>[Tian and colleagues](https://arxiv.org/abs/2305.14975), "Just Ask for Calibration" (EMNLP 2023), found that for preference-tuned models, stated confidences were often better calibrated than the token probabilities.</Marginal>
 
@@ -118,9 +144,9 @@ How much resolution is worth depends on the prices. Take approving everyone as t
 
 So at five dollars the Jev-like model saves 4.7 of the 7.1 cents a ticket that were there to be saved, which is 67%.
 
-At five dollars abuse is cheap enough that the right move is to approve nearly everyone, so a model earns its keep only on the requests it can be sure are abuse, and being sure is exactly what resolution is, which is why the gap between the models is widest there.
+At five dollars abuse is cheap enough that the right move is to approve nearly everyone, so a model earns its keep only on the requests it can be sure are abuse, and telling those few apart from everything else is what the Jev-like model's extra information buys, which is why the gap between the models is widest there.
 
-So the contest came out the way the argument at the top of this post said it would: reliability converged, cost followed resolution, and the Jev-like model's lead is whatever its resolution buys at your prices. The claim about ties held more weakly than I expected. Rounding cost the LLM about a seventh of its resolution and, with the right fitter, almost nothing at the decision. But my rounding is the kindest version there is (a clean snap of the log-probability to the nearest round number), and real stated confidences also wobble from one asking to the next, which I didn't model, so the penalty here is a floor rather than an estimate.
+So in this setup the contest came out the way the argument at the top of this post said it would: reliability converged, cost followed resolution, and the Jev-like model's lead is whatever its extra information buys at your prices. That's a result about this setup, not a rule for picking models. Resolution is an average over every threshold, and one model can separate cases better overall while another does better right at the boundary your prices care about, so compare candidates at your own threshold, on your own labels. The claim about ties held more weakly than I expected. Rounding cost the LLM about a seventh of its resolution and, with the right fitter, almost nothing at the decision. But my rounding is the kindest version there is (a clean snap of the log-probability to the nearest round number), and real stated confidences also wobble from one asking to the next, which I didn't model, so the penalty here is a floor rather than an estimate.
 
 ---
 

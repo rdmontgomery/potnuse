@@ -1,0 +1,51 @@
+---
+// Reading order for the three calibration posts, shown at the top of each.
+interface Props {
+  current: 1 | 2 | 3;
+}
+const { current } = Astro.props;
+const parts = [
+  { n: 1, label: 'foundations', href: '/experiments/confidence-has-a-temperature' },
+  { n: 2, label: 'decisions', href: '/experiments/what-jev-is-selling' },
+  { n: 3, label: 'production', href: '/experiments/probability-you-can-count-on' },
+];
+---
+
+<nav class="series" aria-label="series">
+  {
+    parts.map((p, i) => (
+      <>
+        {i > 0 && <span class="dot">·</span>}
+        {p.n === current ? (
+          <span class="here" aria-current="page">{p.n}. {p.label}</span>
+        ) : (
+          <a href={p.href}>{p.n}. {p.label}</a>
+        )}
+      </>
+    ))
+  }
+</nav>
+
+<style>
+  .series {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin: 0 0 2.2rem;
+  }
+  .series a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .series a:hover {
+    color: var(--accent);
+  }
+  .series .here {
+    color: var(--accent);
+  }
+  .series .dot {
+    margin: 0 0.6em;
+  }
+</style>

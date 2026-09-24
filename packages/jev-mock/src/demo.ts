@@ -29,7 +29,7 @@ import {
 } from './index.ts';
 
 const question = {
-  urgent: { type: 'boolean', instructions: 'Does this convey urgency?' },
+  urgent: { type: 'noul', instructions: 'Does this convey urgency?' },
 } as const;
 
 async function streamOf(temperature: number, n: number, seed = 42): Promise<Pair[]> {
@@ -44,7 +44,7 @@ console.log('\n--- one call, three question types ------------------------------
 const { answers, usage } = await calibratedJev({ seed: 3 }).decide(
   'Help! My payouts have been failing for 3 days.',
   {
-    urgent: { type: 'boolean', instructions: 'Does this convey urgency?' },
+    urgent: { type: 'noul', instructions: 'Does this convey urgency?' },
     team: {
       type: 'choice',
       instructions: 'Which team should handle this?',
@@ -169,7 +169,7 @@ const shapePairs: Pair[] = [];
 for (let i = 0; i < 20000; i++) {
   const { answers: a } = await shape.decide(`ticket ${i}`, question);
   // Nothing ties the forecast to the outcome, so the outcome is a coin flip.
-  shapePairs.push({ p: a.urgent.probability, y: coin() < 0.5 ? 1 : 0 });
+  shapePairs.push({ p: a.urgent.noul, y: coin() < 0.5 ? 1 : 0 });
 }
 const sm = murphy(shapePairs);
 console.log(

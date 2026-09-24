@@ -13,7 +13,7 @@ import { calibratedJev } from '@rdm/jev-mock';
 const jev = calibratedJev({ seed: 1 });
 
 const { answers } = await jev.decide('Help! My payouts have been failing for 3 days.', {
-  urgent: { type: 'boolean', instructions: 'Does this convey urgency?' },
+  urgent: { type: 'noul', instructions: 'Does this convey urgency?' },
   team: {
     type: 'choice',
     instructions: 'Which team should handle this?',
@@ -31,7 +31,7 @@ const { answers } = await jev.decide('Help! My payouts have been failing for 3 d
 });
 
 answers.team.choice;          // 'billing'  — typed to the keys you supplied
-answers.urgent.probability;   // 0.93       — P(yes); TypeSafe calls this a noul
+answers.urgent.noul;   // 0.93       — P(yes); TypeSafe calls this a noul
 answers.anger.score;          // 1.13       — fractional position on the rubric
 ```
 
@@ -170,7 +170,7 @@ the honest model and rose the overconfident one.
 loop from the write-up in someone else's repository: an inventory of the
 decisions and their costs, a per-question calibration table, cost-derived
 thresholds, a decision log, an annotation queue with a weighted random audit,
-refitting against held-back rows, and a label-free drift monitor. Its
+refitting against held-back rows, and a label-free drift alarm (which flags change but, unlike the random audit, can't test calibration). Its
 `reference/loop.ts` and `reference/schema.sql` are self-contained and tested
 here (`src/skill-reference.test.ts`, and the SQL against DuckDB). To use it,
 copy the folder into a repo's `.claude/skills/`.
@@ -259,7 +259,7 @@ pnpm --filter @rdm/jev-mock demo        # the mock, the knob, the thresholds
 pnpm --filter @rdm/jev-mock contest     # the three-model contest
 pnpm --filter @rdm/jev-mock figures     # every chart in the write-up
 pnpm --filter @rdm/jev-mock typecheck
-pnpm test                              # 38 tests in src/*.test.ts
+pnpm test                              # 39 tests in src/*.test.ts
 ```
 
 ## What this is not

@@ -17,7 +17,7 @@
 import {
   type Answer,
   type Answers,
-  type BooleanAnswer,
+  type NoulAnswer,
   type ChoiceAnswer,
   type Question,
   type ScoreAnswer,
@@ -166,9 +166,9 @@ export function shapeOnlyJev(options: MockOptions = {}): SystemOne {
 }
 
 function uniformAnswer(r: Rng, q: Question): Answer {
-  if (q.type === 'boolean') {
+  if (q.type === 'noul') {
     const p = r();
-    return { type: 'boolean', probability: p, noul: p } satisfies BooleanAnswer;
+    return { type: 'noul', noul: p } satisfies NoulAnswer;
   }
   if (q.type === 'choice') {
     const keys = Object.keys(q.criteria);
@@ -206,21 +206,20 @@ export function calibratedJev(options: MockOptions = {}): CalibratedMock {
       for (const [id, q] of Object.entries(questions)) {
         const r = rng(itemSeed(opts.seed, state, id));
 
-        if (q.type === 'boolean') {
+        if (q.type === 'noul') {
           // belief first...
           const belief = beta(r, opts.booleanPrior[0], opts.booleanPrior[1]);
           // ...then the truth, drawn from it.
           const actual = r() < belief;
           const reportedP = temper(belief, opts.temperature);
           answers[id] = {
-            type: 'boolean',
-            probability: reportedP,
+            type: 'noul',
             noul: reportedP,
-          } satisfies BooleanAnswer;
+          } satisfies NoulAnswer;
           log.push({
             state,
             questionId: id,
-            type: 'boolean',
+            type: 'noul',
             actual,
             reported: reportedP >= 0.5,
             pair: { p: reportedP, y: actual ? 1 : 0 },

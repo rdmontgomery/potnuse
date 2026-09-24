@@ -10,7 +10,7 @@
  *   queue       selectForReview (acted-on items + a weighted random audit)
  *   refit       fitPlatt, fitTemperature, compareOnHoldout
  *   checks      reliability (weighted Murphy terms + ECE)
- *   drift       psi (label-free)
+ *   drift       psi (label-free; an alarm, not a calibration test)
  *   testing     calibratedMock (a fake model whose honesty you set exactly)
  */
 
@@ -33,11 +33,22 @@ export interface Labelled {
 
 // --- serving ----------------------------------------------------------------
 
-/** One row per question id. Yes/no questions get a slope and intercept on the
- *  logit (Platt); choice questions get a single temperature. */
+/** One row per question definition on one model version: see calibrationKey.
+ *  Yes/no questions get a slope and intercept on the logit (Platt); choice
+ *  questions get a single temperature, a good first fix but not a general one. */
 export type CalibrationRow =
   | { kind: 'platt'; slope: number; intercept: number; fittedOn: number; modelVersion: string }
   | { kind: 'temperature'; temperature: number; fittedOn: number; modelVersion: string };
+
+/**
+ * The key a calibration row lives under. Rewording a question makes it a new
+ * forecaster even if its id is unchanged, and a new model version bends
+ * differently, so both go into the key. `definition` is whatever defines the
+ * question: instructions, criteria, options.
+ */
+export function calibrationKey(questionId: string, definition: unknown, modelVersion: string): string {
+  return `${questionId}:${hash01(JSON.stringify(definition)).toString(36).slice(2, 10)}:${modelVersion}`;
+}
 
 export function applyCalibration(row: CalibrationRow | undefined, raw: number): number {
   if (!row || row.kind !== 'platt') return raw; // unfitted: pass through, and say so in the log
@@ -239,7 +250,9 @@ export function reliability(pairs: readonly { p: number; y: 0 | 1; weight?: numb
 // --- drift ----------------------------------------------------------------------
 
 /** Population stability index between two samples of raw probabilities. No
- *  labels. Under 0.1 quiet, 0.1-0.25 watch, above 0.25 refit. */
+ *  labels. Under 0.1 quiet, 0.1-0.25 watch, above 0.25 investigate and pull
+ *  fresh labels forward. An alarm, not a calibration test: calibration can
+ *  decay with an unchanged histogram, so keep the random audit running. */
 export function psi(baseline: readonly number[], current: readonly number[], buckets = 10): number {
   const hist = (xs: readonly number[]) => {
     const h = new Array(buckets).fill(0.5); // Laplace, so empty buckets don't divide by zero
