@@ -158,7 +158,7 @@ Brier score over the cumulative distribution. Not implemented.
 ## Figures
 
 `pnpm --filter @rdm/jev-mock figures` regenerates the three charts in the
-write-up as Astro components under `apps/site/src/components/a-probability-you-can-count-on/`
+write-up as Astro components under `apps/site/src/components/calibration/`
 — the temperature curve, the reliability diagram with Wilson intervals, and the
 cost bowl. Palette (amber / blue / rose) is validated against the site's card
 surface for colorblind separation; identity is fixed across figures, with amber
