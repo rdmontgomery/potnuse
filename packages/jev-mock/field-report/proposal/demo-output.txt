@@ -1,0 +1,75 @@
+
+=== sem_calibrate('sem_dispositions')  — per-probe honesty and the cutoff to use ===
+┌──────────────────────┬───────────┬─────────┬────────┬───┬──────────────────┬──────────────────┬──────────────────────┐
+│       probe_id       │ judgments │ defects │  ece   │ … │ fitted_threshold │ shrunk_threshold │        basis         │
+│       varchar        │  double   │ double  │ double │ … │      double      │      double      │       varchar        │
+├──────────────────────┼───────────┼─────────┼────────┼───┼──────────────────┼──────────────────┼──────────────────────┤
+│ row_is_test_data     │      40.0 │     4.0 │ 0.5355 │ … │             0.95 │            0.937 │ too few defects to … │
+│ unit_ambiguous       │      80.0 │     4.0 │ 0.2488 │ … │             0.38 │            0.747 │ too few defects to … │
+│ category_product_mi… │      40.0 │     2.0 │  0.223 │ … │             0.72 │            0.888 │ too few defects to … │
+│ status_timeline_inc… │      40.0 │     4.0 │  0.105 │ … │             0.79 │            0.883 │ too few defects to … │
+│ geo_inconsistent     │      40.0 │     4.0 │ 0.0778 │ … │             0.93 │             0.93 │ too few defects to … │
+│ embedded_pii         │      40.0 │     2.0 │ 0.0325 │ … │             0.94 │            0.932 │ too few defects to … │
+│ multiple_values_in_… │      80.0 │     2.0 │   0.03 │ … │             0.93 │             0.93 │ too few defects to … │
+│ mojibake             │     100.0 │     4.0 │ 0.0273 │ … │             0.97 │            0.943 │ too few defects to … │
+│ operational_note_in… │     120.0 │     2.0 │ 0.0199 │ … │             0.99 │            0.942 │ too few defects to … │
+└──────────────────────┴───────────┴─────────┴────────┴───┴──────────────────┴──────────────────┴──────────────────────┘
+  9 rows                                                                                          10 columns (7 shown)
+
+
+=== sem_probe_health('sem_dispositions')  — the diagnostic for the catalog ===
+┌────────────────────────────────┬─────────┬─────────────┬────────────┬────────────────────────────────────────────────┐
+│            probe_id            │ defects │ reliability │ separation │                    verdict                     │
+│            varchar             │ double  │   double    │   double   │                    varchar                     │
+├────────────────────────────────┼─────────┼─────────────┼────────────┼────────────────────────────────────────────────┤
+│ unit_ambiguous                 │     4.0 │      0.1166 │      -0.31 │ INVERTED: clean values outrank real defects. … │
+│ row_is_test_data               │     4.0 │     0.32948 │       0.11 │ SUSPECT WORDING: far less honest than its pee… │
+│ status_timeline_inconsistent   │     4.0 │     0.03364 │       0.14 │ WEAK: separates, but with no margin. A small … │
+│ category_product_mismatch      │     2.0 │     0.06037 │       0.46 │ healthy                                        │
+│ geo_inconsistent               │     4.0 │     0.01377 │       0.54 │ healthy                                        │
+│ embedded_pii                   │     2.0 │     0.00106 │       0.91 │ healthy                                        │
+│ mojibake                       │     4.0 │     0.00075 │       0.92 │ healthy                                        │
+│ operational_note_in_data_field │     2.0 │      0.0004 │       0.93 │ healthy                                        │
+│ multiple_values_in_one_field   │     2.0 │     0.00091 │       0.95 │ healthy                                        │
+└────────────────────────────────┴─────────┴─────────────┴────────────┴────────────────────────────────────────────────┘
+
+
+=== sem_thresholds()  — from declared cost alone, no labels ===
+┌──────────────────┬───────────────────────┬────────────────┐
+│     probe_id     │ misses_per_false_flag │ cost_threshold │
+│     varchar      │         int32         │     double     │
+├──────────────────┼───────────────────────┼────────────────┤
+│ embedded_pii     │                   200 │          0.005 │
+│ geo_inconsistent │                    30 │         0.0323 │
+│ row_is_test_data │                    15 │         0.0625 │
+│ mojibake         │                     5 │         0.1667 │
+└──────────────────┴───────────────────────┴────────────────┘
+
+
+=== sem_reliability('sem_dispositions', probe := 'row_is_test_data') ===
+┌───────────┬────────┬─────────┬──────────┬────────┬────────┐
+│ bucket_lo │   n    │ claimed │ happened │   lo   │   hi   │
+│  double   │ double │ double  │  double  │ double │ double │
+├───────────┼────────┼─────────┼──────────┼────────┼────────┤
+│       0.4 │   13.0 │   0.475 │      0.0 │    0.0 │  0.228 │
+│       0.5 │   11.0 │   0.535 │      0.0 │    0.0 │  0.259 │
+│       0.6 │    2.0 │    0.67 │      0.0 │    0.0 │  0.658 │
+│       0.7 │    5.0 │   0.756 │      0.0 │    0.0 │  0.434 │
+│       0.8 │    5.0 │   0.818 │      0.0 │    0.0 │  0.434 │
+│       0.9 │    4.0 │    0.96 │      1.0 │   0.51 │    1.0 │
+└───────────┴────────┴─────────┴──────────┴────────┴────────┘
+
+
+=== sem_drift('drifted', 'sem_dispositions')  — label-free tripwire ===
+┌──────────────────────────────┬────────┬─────────────┐
+│           probe_id           │  psi   │   verdict   │
+│           varchar            │ double │   varchar   │
+├──────────────────────────────┼────────┼─────────────┤
+│ category_product_mismatch    │ 3.8108 │ recalibrate │
+│ unit_ambiguous               │ 0.5386 │ recalibrate │
+│ row_is_test_data             │ 0.5166 │ recalibrate │
+│ status_timeline_inconsistent │ 0.4679 │ recalibrate │
+│ geo_inconsistent             │ 0.2126 │ watch       │
+│ mojibake                     │    0.0 │ stable      │
+└──────────────────────────────┴────────┴─────────────┘
+

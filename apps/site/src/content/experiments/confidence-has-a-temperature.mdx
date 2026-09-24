@@ -1,0 +1,118 @@
+---
+title: confidence has a temperature
+date: 2026-09-24
+state: seedling
+toc: true
+tldr: "Most of what models report as confidence can be trusted to rank things but not to mean what it says, and a probability is the one kind of number that has to mean exactly what it says. Softmax is a Boltzmann distribution, and some kinds of tuning can cool it, moving every number a model reports without changing which answer comes first, which is why the usual accuracy metrics don't notice."
+connects: [what-jev-is-selling, probability-you-can-count-on, calibrate, toner-tu-map, reverberant-middle]
+tags: [llm, calibration, measurement, rlhf, statistical-mechanics]
+description: Why a model's confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. The first of three posts.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Marginal from '@/components/Marginal.astro';
+import 'katex/dist/katex.min.css';
+import Series from '@/components/a-probability-you-can-count-on/Series.astro';
+import Softmax from '@/components/a-probability-you-can-count-on/Softmax.astro';
+import Temperature from '@/components/a-probability-you-can-count-on/Temperature.astro';
+import Beta from '@/components/a-probability-you-can-count-on/Beta.astro';
+import Reliability from '@/components/a-probability-you-can-count-on/Reliability.astro';
+
+<Series current={1} />
+
+Two models can make exactly the same predictions, ranking every item in the same order, and still need different thresholds to make the same decisions. The reason is that a model's confidence is a number of a particular kind, and most of the time it isn't the kind it looks like.
+
+---
+
+### what kind of number
+
+In 1946 the psychologist [S. S. Stevens](https://en.wikipedia.org/wiki/Level_of_measurement) sorted measurements into four kinds of scale, according to what you can do to the numbers without changing what they mean. A nominal scale (jersey numbers) survives any relabeling. An ordinal scale (finishing places in a race, star ratings) survives anything that keeps the order, so you can square the numbers or take their logs and first place is still first. An interval scale (temperature in Celsius) survives only stretching and shifting, and a ratio scale (weight, money) only stretching. The fewer transformations a scale survives, the more arithmetic it supports: you can sort ordinal numbers but not meaningfully average them, you can average Celsius temperatures but can't say 20° is twice as warm as 10°, and weights let you do both.
+
+A probability sits past the end of his list. It survives no transformation at all, because 0.8 has to mean four times in five, and anything that moves it to 0.9 has changed what it claims. That's what makes it so useful, since you can add probabilities up to count things, multiply them by prices, and compare them to a threshold worked out from what mistakes cost. It's also what makes it fragile, because most of what models report as confidence can only be trusted as an ordinal score, a number that ranks things correctly and means nothing else, written with a percent sign.
+
+---
+
+### older than my career
+
+None of this is new, which is the embarrassing part.
+
+Weather forecasters were first to care, because a forecast gets checked every single day, and they've been calibrated for decades in the plain sense that when they say 30% it rains on about 30% of those days, a fact I learned long after learning to distrust the weather. Machine learning came to it late and sideways, when people started asking classifiers for probabilities they weren't designed to produce, and [the 2005 benchmark](https://doi.org/10.1145/1102351.1102430) is the one worth remembering: boosted trees and SVMs squash their outputs toward the middle, naive Bayes flings them toward the corners, and plain logistic regression comes out calibrated almost by accident, because it's trained by minimizing log loss, and log loss is a [proper scoring rule](https://en.wikipedia.org/wiki/Scoring_rule), which is a machine for extracting honest probabilities. Then deep networks got large, [Guo and colleagues](https://arxiv.org/abs/1706.04599) found that the bigger, more accurate ones had quietly become less honest, and the fix they proposed was a single number called temperature, and to see why that word is not a metaphor we need a detour through a gas.
+
+<Marginal>Niculescu-Mizil and Caruana, [Predicting Good Probabilities with Supervised Learning](https://doi.org/10.1145/1102351.1102430) (ICML 2005). Guo, Pleiss, Sun and Weinberger, [On Calibration of Modern Neural Networks](https://arxiv.org/abs/1706.04599) (ICML 2017). The forecasters' tools came from their own journals: [Glenn Brier's score](https://en.wikipedia.org/wiki/Brier_score) in 1950, and Allan Murphy's decomposition of it in 1973.</Marginal>
+
+---
+
+### temperature
+
+Every classifier that hands you a probability over options, from a 2005 neural net to whatever you called this morning, ends in the same operation. It gives each option a score, called a logit, which can be any real number, and then turns the scores into probabilities by exponentiating each one and dividing by the total, so that bigger scores become bigger probabilities, everything comes out positive, and the whole thing sums to one. Machine learning calls this softmax. Physics has called it the Boltzmann distribution since the 1870s, when Ludwig Boltzmann showed that a molecule in a gas at temperature $$T$$ sits in a state of energy $$E$$ with probability proportional to $$e^{-E/k_B T}$$, so that low-energy states are likelier and temperature sets how much likelier. Read the logit as a negative energy and softmax is Boltzmann at $$T = 1$$, and the temperature slider in every LLM API is the same $$T$$, dividing the logits before the exponential:
+
+$$
+p_i = \frac{e^{z_i/T}}{\sum_j e^{z_j/T}}
+$$
+
+What physics gives you for free is an intuition for what temperature does. Heat a system and the differences between energies stop mattering, so it wanders through every state almost evenly; cool it and it settles into its lowest state and stays there. Here are the same three logits, 2, 1 and 0, at three temperatures:
+
+<Softmax />
+
+Nothing about the options changed, and neither did their order, since the favorite is the favorite at every temperature. What changed is how loudly the distribution announces its favorite, and if that distribution is also what the model reports as its confidence, temperature is a dial on how sure the model sounds that has no connection to how much it knows.
+
+This matters because of what happens to most models after pretraining. The step is called preference tuning, usually some variant of RLHF, and the vocabulary it borrows from reinforcement learning makes it sound more exotic than it is. The model's distribution over possible answers gets called a policy. Human raters look at pairs of answers and pick the better one, and a second model, the reward model, learns to predict their picks, so that it can give any answer a score. Then the original model is nudged toward answers that score well, with one restraint: it pays a penalty for drifting too far from the model it started as, measured by [KL divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) (Kullback–Leibler), which is a standard yardstick for how different two probability distributions are, and a single number, $$\beta$$, sets how heavy that penalty is.
+
+That optimization has an exact solution,
+
+$$
+\text{new}(y) \;\propto\; \text{old}(y)\, e^{\,\text{reward}(y)/\beta},
+$$
+
+and to a physicist it's another Boltzmann factor, with reward playing the part of negative energy and $$\beta$$ playing temperature, multiplied onto the distribution the model already had. Now suppose raters tend to reward answers that sound confident, and push that to its limit, where the reward simply is the model's own log-probability. Substitute and the solution becomes
+
+$$
+\text{new}(y) \;\propto\; \text{old}(y)^{1 + 1/\beta},
+$$
+
+and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to $$T = \beta/(1+\beta)$$, which is below one for any positive $$\beta$$. It's a caricature, and the takeaway is narrow: this toy reward shows one way preference optimization can sharpen probabilities without making the predictions any better. Real preference tuning also changes which answers a model prefers, so it isn't just a temperature. Whether tuned models end up overconfident in practice is an empirical question, and the measurements say they often do: [Tian and colleagues](https://arxiv.org/abs/2305.14975) found the token probabilities of preference-tuned models poorly calibrated where the pretrained ones had been well calibrated. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
+
+<Marginal>The same closed form is the starting point of Rafailov and colleagues' [DPO paper](https://arxiv.org/abs/2305.18290) (NeurIPS 2023), where it appears without the thermodynamics.</Marginal>
+
+<Temperature />
+
+Read up from 0.8 on the horizontal axis and three models that believe the same thing report 0.94, 0.80 and 0.64. The curves bend, but none of them ever turns back on itself, so any item ranked above another stays above it, and cooling changes every number while changing no ordering. That's the thread back to Stevens: cooling is a transformation an ordinal scale shrugs off and a probability can't survive. Anything that depends only on the ordering survives it: which answer ranks first, a human preferring one answer to another, and for a yes/no question the AUC and accuracy at 0.5, since cooling never moves a probability across one half. What doesn't survive is a decision made at any other threshold. Cool a probability of 0.3 to $$T = 0.5$$ and it becomes about 0.155, which lands on the other side of a threshold of 0.2, so thresholded accuracy and F1 change even though the ranking didn't.
+
+---
+
+### a model where the truth is known
+
+To watch this happen at scale I needed a model whose honesty I could set exactly, which no real model offers, so I built a fake one that generates things in the reverse of the natural order. A real model meets an item whose answer is already fixed and forms a belief about it. The mock draws the belief first, then flips a coin weighted by that belief to decide what's true:
+
+```js
+const belief = beta(rand, 0.45, 0.45);
+const actual = rand() < belief;
+```
+
+That makes it calibrated by construction, since among the items where it believed 0.8 the event happens 80% of the time, because that's how the event was drawn. The `beta(0.45, 0.45)` decides where beliefs come from, which amounts to deciding how smart the fake model is. A beta distribution lives between 0 and 1 and its two parameters set its shape: both equal to 1 gives a flat line, every belief equally likely; both above 1 gives a hump in the middle, a model that is mostly unsure; both below 1 bends it into a U, a model that is usually confident one way or the other with a thin band of genuine toss-ups, which is roughly what a competent classifier looks like from the inside.
+
+<Beta />
+
+The U keeps climbing past the edges of the chart, and at 0.45 a bit over two items in five get a belief above 0.9 or below 0.1, while about one in eight lands between 0.4 and 0.6. The part I didn't expect is that the choice has a closed form in <Gloss def="Allan Murphy, a meteorologist, split the Brier score in 1973 into three parts: reliability, how honest the forecasts are; resolution, how informative they are; and uncertainty, how hard the weather was to begin with.">Murphy's terms</Gloss>. For a calibrated forecaster, resolution (the measure of how informative the forecasts are) works out to the variance of its beliefs, and a symmetric beta with both parameters equal to $$a$$ has variance $$1/\big(4(2a+1)\big)$$, which for $$a = 0.45$$ is 0.1316. The simulation below measured 0.1317. So the mock has exactly two knobs and they map one-to-one onto Murphy's two terms: the shape of the beta sets how much the model knows, and the temperature from the last section sets how honestly it says so.
+
+Turn only the second knob, leaving every hidden truth where it was, and run twenty thousand items on the same seed:
+
+<Marginal>ECE, expected calibration error, is the plainest of these: sort the predictions into ten buckets by what they claimed, check how often the thing actually happened in each bucket, and average the gaps, weighting each bucket by how many predictions landed in it.</Marginal>
+
+| temperature | ECE | reliability | resolution |
+|---|---:|---:|---:|
+| 1.0, honest | 0.0065 | 0.00007 | 0.1317 |
+| 0.5, cooled | 0.0739 | 0.00638 | 0.1290 |
+| 2.5, heated | 0.1280 | 0.01924 | 0.1308 |
+
+Reliability (where zero means perfectly honest) gets about ninety times worse cooled and nearly three hundred times worse heated, and resolution stays within two percent of the value the beta promised, because the temperature never touched what the model believed, only what it claimed.
+
+<Reliability />
+
+---
+
+### where this goes
+
+A word on the metaphor running through these posts. When I say a model is honest, I mean calibrated: its stated probabilities match how often things happen, over a population of items. That's an empirical relationship between numbers and outcomes, not a claim about what the model believes or whether it means what it says.
+
+A model whose confidence runs cool or hot still ranks your items as well as it ever did, so nothing that measures ranking will flag it, and every threshold you set on its numbers is quietly in the wrong place. The [next post](/experiments/what-jev-is-selling) puts that in money: how to pick a threshold when the probability is honest, what TypeSafe's Jev is actually selling, and what a few hundred labels can and can't repair. The [third](/experiments/probability-you-can-count-on) is the loop that keeps a model honest in production.

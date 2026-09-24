@@ -5,12 +5,10 @@ interface Props {
 const { def } = Astro.props;
 ---
 
-<span class="gloss" tabindex="0">
-  <slot />
-  <span class="gloss-pop" role="tooltip">{def}</span>
-</span>
-
-<script>
+<!-- No whitespace anywhere from here to <script>. Astro emits the script tag
+     where the component is used, so a line break inside .gloss or between it
+     and the script renders as a space before the next character: "term ." -->
+<span class="gloss" tabindex="0"><slot /><span class="gloss-pop" role="tooltip">{def}</span></span><script>
   // Keep the tooltip inside the viewport.
   //
   // The popover is centered on the glossed word (left: 50% / translateX(-50%)),
