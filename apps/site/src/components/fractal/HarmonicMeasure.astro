@@ -1,0 +1,138 @@
+---
+// The harmonic measure: where the field actually lives on a charged fractal
+// conductor. Tips scream; the interior is screened. We approximate "exposure"
+// by depth (the deepest segments are the outer tips) plus a radial term, and
+// color the stroke by it. Schematic, but it makes the point the DLA people
+// proved exactly: most of the surface area you bought never sees the field.
+type Seg = { x1: number; y1: number; x2: number; y2: number; d: number };
+
+function htree(x: number, y: number, len: number, depth: number, horiz: boolean, max: number, out: Seg[]) {
+  if (depth > max) return;
+  if (horiz) {
+    const x1 = x - len / 2, x2 = x + len / 2;
+    out.push({ x1, y1: y, x2, y2: y, d: depth });
+    const n = len / Math.SQRT2;
+    htree(x1, y, n, depth + 1, false, max, out);
+    htree(x2, y, n, depth + 1, false, max, out);
+  } else {
+    const y1 = y - len / 2, y2 = y + len / 2;
+    out.push({ x1: x, y1, x2: x, y2, d: depth });
+    const n = len / Math.SQRT2;
+    htree(x, y1, n, depth + 1, true, max, out);
+    htree(x, y2, n, depth + 1, true, max, out);
+  }
+}
+
+const S = 320;
+const max = 5;
+const segs: Seg[] = [];
+htree(S / 2, S / 2, S * 0.46, 1, true, max, segs);
+
+// exposure score: deeper (outer) + farther from center = more field
+const cx = S / 2, cy = S / 2;
+const scored = segs.map((s) => {
+  const mx = (s.x1 + s.x2) / 2, my = (s.y1 + s.y2) / 2;
+  const r = Math.hypot(mx - cx, my - cy) / (S * 0.5);
+  const e = Math.min(1, 0.25 * (s.d / max) + 0.85 * r);
+  return { ...s, e };
+});
+// amber (hot) -> deep brown (screened)
+function color(e: number) {
+  // lerp from #3d2e1a (cold) to #ffcf6b (hot) through accent
+  const cold = [0x3d, 0x2e, 0x1a];
+  const hot = [0xff, 0xd9, 0x84];
+  const c = cold.map((a, i) => Math.round(a + (hot[i] - a) * Math.pow(e, 0.8)));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+---
+
+<figure class="fig">
+  <div class="stage">
+    <svg viewBox={`0 0 ${S} ${S}`} role="img" aria-label="harmonic measure on an H-tree">
+      <defs>
+        <filter id="hm-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.4" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      {
+        scored
+          .slice()
+          .sort((a, b) => a.e - b.e)
+          .map((s) => (
+            <line
+              x1={s.x1}
+              y1={s.y1}
+              x2={s.x2}
+              y2={s.y2}
+              stroke={color(s.e)}
+              stroke-width={s.e > 0.6 ? 2 : 1.4}
+              stroke-linecap="round"
+              filter={s.e > 0.72 ? 'url(#hm-glow)' : undefined}
+            />
+          ))
+      }
+    </svg>
+    <svg viewBox="0 0 30 320" class="bar" aria-hidden="true">
+      <defs>
+        <linearGradient id="hm-scale" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#3d2e1a" />
+          <stop offset="55%" stop-color="#b87a1e" />
+          <stop offset="100%" stop-color="#ffd984" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="20" width="12" height="280" fill="url(#hm-scale)" rx="2" />
+      <text x="18" y="26" class="sc">field</text>
+      <text x="18" y="304" class="sc">~0</text>
+    </svg>
+  </div>
+  <figcaption>
+    The same Laplace equation that <em>grows</em> a diffusion-limited cluster also decides where a charged
+    electrode&rsquo;s field goes &mdash; it&rsquo;s called the harmonic measure, and on a fractal it&rsquo;s wildly uneven.
+    The tips do almost all the stimulating; the interior branches are electrostatically screened by their
+    own neighbors. You can pay for surface area the field will never reach.
+  </figcaption>
+</figure>
+
+<style>
+  .fig {
+    margin: 2.4em 0;
+  }
+  .stage {
+    display: flex;
+    gap: 0.4rem;
+    align-items: stretch;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem;
+  }
+  .stage > svg:first-child {
+    flex: 1;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+  }
+  .bar {
+    width: 56px;
+    height: auto;
+    flex: 0 0 56px;
+  }
+  .sc {
+    fill: var(--text-muted);
+    font-family: var(--font-jetbrains);
+    font-size: 9px;
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.8rem;
+    letter-spacing: 0.01em;
+    max-width: 60ch;
+  }
+</style>

@@ -1,0 +1,271 @@
+---
+// The morphology ladder Rick found on PMMA: heat the polymer, and the freed
+// short chains crystallize into different fractal forms depending on the local
+// cooling rate (DeltaT = Tm - Tc). Large DeltaT (fast, cool edge) -> dendritic
+// arms at ~90 degrees. Intermediate DeltaT -> diffusion-limited islands. Small
+// DeltaT (near the glass transition) -> faceted, compact crystals.
+// Three build-time SVGs, one slider, the dimension readout moving with it.
+// Grounded in dissertation Fig. 3.13.
+
+function mulberry32(a: number) {
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const VB = 150;
+const id = 'dtl-' + '37a9c2';
+
+// --- dendritic: long backbone, two generations of ~90-degree branches ---
+type L = { x1: number; y1: number; x2: number; y2: number; w: number };
+function dendritic(seed: number) {
+  const rnd = mulberry32(seed);
+  const lines: L[] = [];
+  function arm(x: number, y: number, ang: number, len: number, w: number, depth: number) {
+    if (depth > 3 || len < 4) return;
+    const x2 = x + Math.cos(ang) * len;
+    const y2 = y + Math.sin(ang) * len;
+    lines.push({ x1: x, y1: y, x2, y2, w });
+    // children branch at roughly right angles, the electrodeposited-silver look
+    const sign = rnd() < 0.5 ? 1 : -1;
+    arm(x2, y2, ang, len * 0.74, Math.max(0.6, w * 0.78), depth + 1);
+    arm((x + x2) / 2, (y + y2) / 2, ang + sign * (Math.PI / 2), len * 0.5, Math.max(0.5, w * 0.6), depth + 1);
+    arm((x + x2) / 2, (y + y2) / 2, ang - sign * (Math.PI / 2), len * 0.42, Math.max(0.5, w * 0.6), depth + 1);
+  }
+  const prim = 4;
+  for (let i = 0; i < prim; i++) {
+    const a = (i / prim) * Math.PI * 2 + Math.PI / 4;
+    arm(VB / 2, VB / 2, a, 30, 2.2, 0);
+  }
+  return lines;
+}
+
+// --- DLA island: random-walk aggregate, the intermediate morphology ---
+function dla(seed: number, particles: number, grid: number) {
+  const rnd = mulberry32(seed);
+  const occ = new Set<string>();
+  const c = grid >> 1;
+  const key = (x: number, y: number) => `${x},${y}`;
+  occ.add(key(c, c));
+  const pts: [number, number][] = [[c, c]];
+  let maxR = 1;
+  const near = (x: number, y: number) =>
+    occ.has(key(x + 1, y)) || occ.has(key(x - 1, y)) || occ.has(key(x, y + 1)) || occ.has(key(x, y - 1));
+  for (let p = 0; p < particles; p++) {
+    const spawnR = Math.min(maxR + 4, c - 2);
+    const a = rnd() * Math.PI * 2;
+    let x = Math.round(c + spawnR * Math.cos(a));
+    let y = Math.round(c + spawnR * Math.sin(a));
+    const killR = spawnR + 8;
+    let steps = 0;
+    while (steps++ < 4000) {
+      if (near(x, y)) {
+        occ.add(key(x, y));
+        pts.push([x, y]);
+        maxR = Math.max(maxR, Math.hypot(x - c, y - c));
+        break;
+      }
+      const d = (rnd() * 4) | 0;
+      if (d === 0) x++;
+      else if (d === 1) x--;
+      else if (d === 2) y++;
+      else y--;
+      if (Math.hypot(x - c, y - c) > killR) {
+        const a2 = rnd() * Math.PI * 2;
+        x = Math.round(c + spawnR * Math.cos(a2));
+        y = Math.round(c + spawnR * Math.sin(a2));
+      }
+    }
+  }
+  return { pts, c };
+}
+const grid = 101;
+const island = dla(20110714, 900, grid);
+const isc = VB / grid;
+
+// --- faceted: compact, near-square crystals (small DeltaT) ---
+function faceted(seed: number) {
+  const rnd = mulberry32(seed);
+  const sq: { x: number; y: number; s: number; r: number }[] = [];
+  const n = 5;
+  for (let i = 0; i < n; i++) {
+    const s = 16 + rnd() * 20;
+    sq.push({
+      x: 30 + rnd() * (VB - 60),
+      y: 30 + rnd() * (VB - 60),
+      s,
+      r: (rnd() - 0.5) * 0.5,
+    });
+  }
+  return sq;
+}
+const facets = faceted(3);
+
+const den = dendritic(11);
+
+const stops = [
+  { key: 'dendritic', label: 'dendritic', sub: 'large ΔT — fast cooling, the sample edge', dim: 'D ≈ 1.7' },
+  { key: 'dla', label: 'DLA islands', sub: 'intermediate ΔT — the warmer center', dim: 'D ≈ 1.6' },
+  { key: 'faceted', label: 'faceted crystals', sub: 'small ΔT — near the glass transition', dim: 'D → 2' },
+];
+---
+
+<figure class="fig">
+  <div class="panel">
+    <div class="stage">
+      <svg viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label="PMMA surface morphology" data-morph="dendritic">
+        {den.map((l) => (
+          <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="var(--accent)" stroke-width={l.w} stroke-linecap="round" />
+        ))}
+      </svg>
+      <svg viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label="PMMA surface morphology" data-morph="dla" hidden>
+        {island.pts.map(([x, y]) => (
+          <rect x={(x - 0.5) * isc} y={(y - 0.5) * isc} width={isc * 1.2} height={isc * 1.2} fill="var(--accent)" />
+        ))}
+      </svg>
+      <svg viewBox={`0 0 ${VB} ${VB}`} role="img" aria-label="PMMA surface morphology" data-morph="faceted" hidden>
+        {facets.map((f) => (
+          <rect
+            x={f.x - f.s / 2}
+            y={f.y - f.s / 2}
+            width={f.s}
+            height={f.s}
+            fill="var(--accent)"
+            transform={`rotate(${(f.r * 180) / Math.PI} ${f.x} ${f.y})`}
+          />
+        ))}
+      </svg>
+    </div>
+
+    <div class="hud">
+      <div class="readout">
+        <span id={`${id}-label`} class="label">dendritic</span>
+        <span id={`${id}-dim`} class="dim">D &asymp; 1.7</span>
+        <span id={`${id}-sub`} class="sub">large &Delta;T &mdash; fast cooling, the sample edge</span>
+      </div>
+      <label class="slider">
+        <span class="ends">fast &middot; large &Delta;T</span>
+        <input id={`${id}-range`} type="range" min="0" max="2" step="1" value="0" aria-label="cooling rate" />
+        <span class="ends">slow &middot; small &Delta;T</span>
+      </label>
+    </div>
+  </div>
+  <figcaption>
+    The same heated polymer, three forms, set by nothing but how fast it cooled. I never deposited the
+    antimony that was supposed to make this an electrode &mdash; the fractal was the PMMA reorganizing itself.
+    Slide the cooling rate. (Dissertation Fig. 3.13.)
+  </figcaption>
+</figure>
+
+<script is:inline define:vars={{ id, stops }}>
+  (function () {
+    const range = document.getElementById(id + '-range');
+    if (!range) return;
+    const svgs = Array.from(document.querySelectorAll('[data-morph]'));
+    const labelEl = document.getElementById(id + '-label');
+    const dimEl = document.getElementById(id + '-dim');
+    const subEl = document.getElementById(id + '-sub');
+
+    function show(i) {
+      const s = stops[i];
+      svgs.forEach((el) => {
+        if (el.getAttribute('data-morph') === s.key) el.removeAttribute('hidden');
+        else el.setAttribute('hidden', '');
+      });
+      labelEl.textContent = s.label;
+      dimEl.textContent = s.dim;
+      subEl.textContent = s.sub;
+    }
+    range.addEventListener('input', function () {
+      show(Math.max(0, Math.min(2, parseInt(range.value, 10) || 0)));
+    });
+    show(0);
+  })();
+</script>
+
+<style>
+  .fig {
+    margin: 2.6em 0;
+  }
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.9rem;
+  }
+  .stage {
+    background: #1a1207;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+  }
+  .stage svg {
+    width: 100%;
+    max-width: 360px;
+    height: auto;
+    display: block;
+  }
+  .stage svg[hidden] {
+    display: none;
+  }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.4rem;
+    margin-top: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .readout {
+    display: grid;
+    gap: 0.15rem;
+  }
+  .readout .label {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .readout .dim {
+    font-family: var(--font-jetbrains);
+    font-size: 0.78rem;
+    color: var(--accent);
+  }
+  .readout .sub {
+    font-family: var(--font-jetbrains);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+  }
+  .slider {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    min-width: 220px;
+  }
+  .slider .ends {
+    font-family: var(--font-jetbrains);
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .slider input {
+    flex: 1;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  figcaption {
+    font-family: var(--font-jetbrains);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    margin-top: 0.85rem;
+    letter-spacing: 0.01em;
+    max-width: 60ch;
+  }
+</style>
