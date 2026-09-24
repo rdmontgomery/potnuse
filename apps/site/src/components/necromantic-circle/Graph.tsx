@@ -14,8 +14,8 @@ const PALETTE = {
   accent: '#e8a838',
   accentDim: '#b87a1e',
   text: '#f0e6d2',
-  textDim: '#9e8e72',
-  textMuted: '#6b5d48',
+  textDim: '#aea189',
+  textMuted: '#968365',
   mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 };
 

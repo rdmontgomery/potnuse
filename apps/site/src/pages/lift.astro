@@ -893,8 +893,8 @@ import Base from '@/layouts/Base.astro';
     color: var(--bg);
   }
   .pill[data-form='rough'].is-active {
-    background: #6b3a30;
-    color: #f0d6cc;
+    background: var(--danger-bg);
+    color: var(--danger-ink);
   }
 
   .notes {
@@ -966,8 +966,8 @@ import Base from '@/layouts/Base.astro';
     border-color: var(--accent-dim);
   }
   .btn.ghost.danger:hover {
-    color: #c87060;
-    border-color: #6b3a30;
+    color: var(--danger);
+    border-color: var(--danger-bg);
   }
   .btn.file {
     display: inline-flex;
@@ -1172,8 +1172,8 @@ import Base from '@/layouts/Base.astro';
     color: var(--text-dim);
   }
   .log-row.rough .log-tag {
-    color: #c89a8e;
-    border-color: #6b3a30;
+    color: var(--danger);
+    border-color: var(--danger-bg);
   }
   .log-del {
     background: none;
@@ -1185,7 +1185,7 @@ import Base from '@/layouts/Base.astro';
     line-height: 1;
   }
   .log-del:hover {
-    color: #c87060;
+    color: var(--danger);
   }
   .log-notes {
     margin: 0.55rem 0 0;

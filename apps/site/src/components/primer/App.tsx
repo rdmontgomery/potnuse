@@ -400,8 +400,8 @@ const PAL = {
   good: '#7aab5a',
   bad: '#c77a5a',
   text: '#f0e6d2',
-  textDim: '#9e8e72',
-  textMuted: '#6b5d48',
+  textDim: '#aea189',
+  textMuted: '#968365',
   serif: "'Crimson Pro', Georgia, serif",
   mono: "'JetBrains Mono', ui-monospace, 'SF Mono', monospace",
 };

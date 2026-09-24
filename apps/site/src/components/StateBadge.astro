@@ -8,10 +8,10 @@ interface Props {
 const { state } = Astro.props;
 
 const COLORS: Record<NodeState, string> = {
-  seedling: '#9e8e72',
-  germinating: '#e8a838',
-  stable: '#f0e6d2',
-  fossil: '#6b5d48',
+  seedling: 'var(--text-dim)',
+  germinating: 'var(--accent)',
+  stable: 'var(--text)',
+  fossil: 'var(--text-muted)',
 };
 ---
 
