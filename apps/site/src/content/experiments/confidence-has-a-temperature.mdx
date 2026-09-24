@@ -3,7 +3,7 @@ title: confidence has a temperature
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: "Most of what models report as confidence can be trusted to rank things but not to mean what it says, because softmax is a Boltzmann distribution and some kinds of tuning can cool it, moving every number without changing which answer comes first. Every threshold set on its numbers lands in the wrong place, and the usual accuracy metrics don't notice."
+tldr: "A model's confidence can rank things correctly and still be wrong as a percentage. Preference tuning tends to make models sound surer without making them know more. It's the same math as cooling a gas, and accuracy metrics can't see it."
 connects: [what-jev-is-selling, probability-you-can-count-on, calibrate, toner-tu-map, reverberant-middle]
 tags: [llm, calibration, decision-theory, measurement, rlhf, statistical-mechanics]
 description: Why most model confidence isn't a probability. Stevens' scales of measurement, the Boltzmann distribution hiding inside softmax, and how tuning can cool a model without changing what it knows. A physicist's intuition for the calibration series.

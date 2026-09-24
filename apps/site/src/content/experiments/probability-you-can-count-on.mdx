@@ -3,7 +3,7 @@ title: a probability you can count on
 date: 2026-09-24
 state: seedling
 toc: true
-tldr: "Keeping a model's probabilities honest in production takes four parts: a calibration table per question, an annotation queue with a small random audit, refits checked on held-back labels, and an alarm for when things shift. Once the probabilities are honest, summing them estimates counts that counting decisions gets badly wrong, though the error bars need more care than the estimate."
+tldr: "Honest probabilities go stale as traffic and models change, so keeping them honest is a loop: audit a random slice, refit, watch for drift. The payoff is that you can add them up. Summing them estimated a week's abuse to within 9 requests; counting denials missed by 130."
 connects: [confidence-has-a-temperature, what-jev-is-selling, calibrate]
 tags: [llm, calibration, mlops, decision-theory, claude-code]
 description: The production loop that keeps a model's probabilities honest, and what honest probabilities let you do besides decide. The second of two posts, with a Claude Code skill that sets the loop up in your own repo.
