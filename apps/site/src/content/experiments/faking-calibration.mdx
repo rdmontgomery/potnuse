@@ -10,6 +10,7 @@ description: Softmax is a Boltzmann distribution, preference tuning cools it, an
 import Gloss from '@/components/Gloss.astro';
 import Pull from '@/components/Pull.astro';
 import Marginal from '@/components/Marginal.astro';
+import 'katex/dist/katex.min.css';
 import Softmax from '@/components/faking-calibration/Softmax.astro';
 import Temperature from '@/components/faking-calibration/Temperature.astro';
 import Beta from '@/components/faking-calibration/Beta.astro';
@@ -38,7 +39,11 @@ Weather forecasters were first to care, because a forecast gets checked every si
 
 ### temperature
 
-Every classifier that hands you a probability over options, from a 2005 neural net to whatever you called this morning, ends in the same operation. It gives each option a score, called a logit, which can be any real number, and then turns the scores into probabilities by exponentiating each one and dividing by the total, so that bigger scores become bigger probabilities, everything comes out positive, and the whole thing sums to one. Machine learning calls this softmax. Physics has called it the Boltzmann distribution since the 1870s, when Ludwig Boltzmann showed that a molecule in a gas at temperature T sits in a state of energy E with probability proportional to exp(−E/kT), so that low-energy states are likelier and temperature sets how much likelier. Read the logit as a negative energy and softmax is Boltzmann at T = 1, and the temperature slider in every LLM API is the same T, dividing the logits before the exponential.
+Every classifier that hands you a probability over options, from a 2005 neural net to whatever you called this morning, ends in the same operation. It gives each option a score, called a logit, which can be any real number, and then turns the scores into probabilities by exponentiating each one and dividing by the total, so that bigger scores become bigger probabilities, everything comes out positive, and the whole thing sums to one. Machine learning calls this softmax. Physics has called it the Boltzmann distribution since the 1870s, when Ludwig Boltzmann showed that a molecule in a gas at temperature $$T$$ sits in a state of energy $$E$$ with probability proportional to $$e^{-E/k_B T}$$, so that low-energy states are likelier and temperature sets how much likelier. Read the logit as a negative energy and softmax is Boltzmann at $$T = 1$$, and the temperature slider in every LLM API is the same $$T$$, dividing the logits before the exponential:
+
+$$
+p_i = \frac{e^{z_i/T}}{\sum_j e^{z_j/T}}
+$$
 
 What physics gives you for free is an intuition for what temperature does. Heat a system and the differences between energies stop mattering, so it wanders through every state almost evenly; cool it and it settles into its lowest state and stays there. Here are the same three logits, 2, 1 and 0, at three temperatures:
 
@@ -46,9 +51,21 @@ What physics gives you for free is an intuition for what temperature does. Heat 
 
 Nothing about the options changed, and neither did their order, since the favorite is the favorite at every temperature. What changed is how loudly the distribution announces its favorite, and if that distribution is also what the model reports as its confidence, temperature is a dial on how sure the model sounds that has no connection to how much it knows.
 
-This matters because of what happens to most models after pretraining. The step is called preference tuning, usually some variant of RLHF, and the vocabulary it borrows from reinforcement learning makes it sound more exotic than it is. The model's distribution over possible answers gets called a policy. Human raters look at pairs of answers and pick the better one, and a second model, the reward model, learns to predict their picks, so that it can give any answer a score. Then the original model is nudged toward answers that score well, with one restraint: it pays a penalty for drifting too far from the model it started as, measured by KL divergence, which is a standard yardstick for how different two probability distributions are, and a single number, β, sets how heavy that penalty is.
+This matters because of what happens to most models after pretraining. The step is called preference tuning, usually some variant of RLHF, and the vocabulary it borrows from reinforcement learning makes it sound more exotic than it is. The model's distribution over possible answers gets called a policy. Human raters look at pairs of answers and pick the better one, and a second model, the reward model, learns to predict their picks, so that it can give any answer a score. Then the original model is nudged toward answers that score well, with one restraint: it pays a penalty for drifting too far from the model it started as, measured by KL divergence, which is a standard yardstick for how different two probability distributions are, and a single number, $$\beta$$, sets how heavy that penalty is.
 
-That optimization has an exact solution, new(y) ∝ old(y) × exp(reward(y)/β), and to a physicist it's another Boltzmann factor, with reward playing the part of negative energy and β playing temperature, multiplied onto the distribution the model already had. Now suppose raters tend to reward answers that sound confident, and push that to its limit, where the reward simply is the model's own log-probability. Substitute and the solution becomes new(y) ∝ old(y)^(1+1/β), and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to T = β/(1+β), which is below one for any positive β. It's a caricature, since real rewards are only partly about confidence, but the direction survives a partial version: whatever share of the reward tracks the model's own confidence cools it by that much. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
+That optimization has an exact solution,
+
+$$
+\text{new}(y) \;\propto\; \text{old}(y)\, \exp\!\big(\text{reward}(y)/\beta\big),
+$$
+
+and to a physicist it's another Boltzmann factor, with reward playing the part of negative energy and $$\beta$$ playing temperature, multiplied onto the distribution the model already had. Now suppose raters tend to reward answers that sound confident, and push that to its limit, where the reward simply is the model's own log-probability. Substitute and the solution becomes
+
+$$
+\text{new}(y) \;\propto\; \text{old}(y)^{1 + 1/\beta},
+$$
+
+and raising a Boltzmann distribution to a power is the same as dividing its temperature, so the tuned model is the old model cooled to $$T = \beta/(1+\beta)$$, which is below one for any positive $$\beta$$. It's a caricature, since real rewards are only partly about confidence, but the direction survives a partial version: whatever share of the reward tracks the model's own confidence cools it by that much. For a yes/no question, here is what cooling and heating do to a model's stated probability as a function of what it actually believes:
 
 <Marginal>The same closed form is the starting point of Rafailov and colleagues' DPO paper (NeurIPS 2023), where it appears without the thermodynamics.</Marginal>
 
@@ -71,7 +88,7 @@ That makes it calibrated by construction, since among the items where it believe
 
 <Beta />
 
-The U keeps climbing past the edges of the chart, and at 0.45 a bit over two items in five get a belief above 0.9 or below 0.1, while about one in eight lands between 0.4 and 0.6. The part I didn't expect is that the choice has a closed form in <Gloss def="Allan Murphy, a meteorologist, split the Brier score in 1973 into three parts: reliability, how honest the forecasts are; resolution, how informative they are; and uncertainty, how hard the weather was to begin with.">Murphy's terms</Gloss>. For a calibrated forecaster, resolution, the measure of how informative the forecasts are, works out to the variance of its beliefs, and a symmetric beta with both parameters equal to a has variance 1/(4(2a+1)), which for a = 0.45 is 0.1316. The simulation below measured 0.1317. So the mock has exactly two knobs and they map one-to-one onto Murphy's two terms: the shape of the beta sets how much the model knows, and the temperature from the last section sets how honestly it says so.
+The U keeps climbing past the edges of the chart, and at 0.45 a bit over two items in five get a belief above 0.9 or below 0.1, while about one in eight lands between 0.4 and 0.6. The part I didn't expect is that the choice has a closed form in <Gloss def="Allan Murphy, a meteorologist, split the Brier score in 1973 into three parts: reliability, how honest the forecasts are; resolution, how informative they are; and uncertainty, how hard the weather was to begin with.">Murphy's terms</Gloss>. For a calibrated forecaster, resolution, the measure of how informative the forecasts are, works out to the variance of its beliefs, and a symmetric beta with both parameters equal to $$a$$ has variance $$1/\big(4(2a+1)\big)$$, which for $$a = 0.45$$ is 0.1316. The simulation below measured 0.1317. So the mock has exactly two knobs and they map one-to-one onto Murphy's two terms: the shape of the beta sets how much the model knows, and the temperature from the last section sets how honestly it says so.
 
 Turn only the second knob, leaving every hidden truth where it was, and run twenty thousand items on the same seed:
 
@@ -100,7 +117,7 @@ Say you run refunds, and a model tells you how likely each request is to be legi
 | approve | $0 | $5 |
 | deny | $20 | $0 |
 
-The two right calls cost nothing. Approving an abusive request loses the five dollars you refunded, and denying a legitimate one loses a customer, which I'll price at twenty. Now take a request the model puts at 0.2, one chance in five that it's legitimate. Approve it and four times out of five you're out five dollars, which averages to four dollars. Deny it and one time out of five you've turned away a twenty-dollar customer, which also averages to four dollars. At 0.2 the two choices cost exactly the same, above it approving is cheaper, below it denying is, and so 0.2 is the threshold: the price of one mistake over the price of both, 5/(5+20), arrived at without looking at a single labelled example.
+The two right calls cost nothing. Approving an abusive request loses the five dollars you refunded, and denying a legitimate one loses a customer, which I'll price at twenty. Now take a request the model puts at 0.2, one chance in five that it's legitimate. Approve it and four times out of five you're out five dollars, which averages to four dollars. Deny it and one time out of five you've turned away a twenty-dollar customer, which also averages to four dollars. At 0.2 the two choices cost exactly the same, above it approving is cheaper, below it denying is, and so 0.2 is the threshold: the price of one mistake over the price of both, $$5/(5+20)$$, arrived at without looking at a single labelled example.
 
 <Cost />
 
@@ -160,7 +177,7 @@ There's one more place Jev might earn its keep, and it has nothing to do with tr
 
 A fair comparison needs a queue where the truth is known and several models can look at it, so I built a refund queue in which 92% of requests are legitimate and 8% are abuse, priced with the table from two sections back, which puts the threshold at 0.2. Every ticket gets a hidden score that decides whether it's legitimate, and each model sees that score through a layer of noise, thin for a model that knows a lot and thick for one that knows less. Because the noise is Gaussian, the correct belief for each model has a closed form, so every model starts out honest by construction, and then I bend each one the way real models get bent. It's worth being plain about what that means: I set how much each model knows. What the contest measures is what that knowledge is worth at these prices, and what one recalibration loop can and can't give back.
 
-The Jev-like model sees through the thinnest noise, so it knows the most, and it reports honestly, except that it was trained somewhere half the requests were abuse, so it's honest about a world that isn't yours. The second is a general LLM read through its log-probabilities, which sees through thicker noise and has been cooled to T = 0.5, the way preference tuning tends to leave a model. The third is the same LLM with the same beliefs, asked instead to state its confidence, which it does in round numbers from a short list, so that its answers collapse onto twelve values.
+The Jev-like model sees through the thinnest noise, so it knows the most, and it reports honestly, except that it was trained somewhere half the requests were abuse, so it's honest about a world that isn't yours. The second is a general LLM read through its log-probabilities, which sees through thicker noise and has been cooled to $$T = 0.5$$, the way preference tuning tends to leave a model. The third is the same LLM with the same beliefs, asked instead to state its confidence, which it does in round numbers from a short list, so that its answers collapse onto twelve values.
 
 Before any repair, the Jev-like model is the worst of the three. Believing half of all customers might be frauds, it denies anyone it isn't sure about and costs $1.07 a ticket, against $0.40 for approving everyone and ignoring the model entirely. The two LLM readouts sit right at that $0.40, and a model that somehow saw the hidden score exactly would cost $0.33, so the whole prize at these prices is seven cents a ticket.
 

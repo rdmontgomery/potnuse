@@ -169,6 +169,16 @@ const { Content } = await render(entry);
     color: var(--text-dim);
     font-weight: 500;
   }
+  /* KaTeX sets math at 1.21em, tuned for Computer Modern next to Computer
+     Modern. Against Crimson Pro that reads a size too large. */
+  .prose :global(.katex) {
+    font-size: 1.04em;
+  }
+  .prose :global(.katex-display) {
+    margin: 1.4em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
   .prose :global(strong) {
     font-weight: 600;
     color: var(--text);
