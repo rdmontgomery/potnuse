@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
 import type { Song, LessonMode, DetectedNote } from '@/lib/allons-jouer/types';
 
@@ -111,7 +111,7 @@ export function NoteTrack({ song, lessonStep, mode, trackPosition, detectedNote,
               height: ROW_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontFamily: FONTS.mono,
               color: isActive ? K.text : K.textMuted,
-              background: isActive ? (activeNote?.dir === 'push' ? K.push + '33' : K.pull + '33') : 'transparent',
+              background: isActive ? (activeNote?.dir === 'push' ? alpha(K.push, 20) : alpha(K.pull, 20)) : 'transparent',
               transition: 'all 0.1s',
             }}>
               {btnNum}
@@ -139,7 +139,7 @@ export function NoteTrack({ song, lessonStep, mode, trackPosition, detectedNote,
               position: 'absolute',
               top: (i + 1) * (ROW_HEIGHT + ROW_GAP) - ROW_GAP / 2,
               left: 0, right: 0, height: 1,
-              background: K.border + '66',
+              background: alpha(K.border, 40),
             }} />
           ))}
 
@@ -166,7 +166,7 @@ export function NoteTrack({ song, lessonStep, mode, trackPosition, detectedNote,
             if (isCurrent) {
               opacity = 1;
               bg = brightColor;
-              shadow = `0 0 8px ${brightColor}66`;
+              shadow = `0 0 8px ${alpha(brightColor, 40)}`;
             }
             if (isBeingPlayed) {
               shadow = `0 0 16px ${brightColor}`;
@@ -208,7 +208,7 @@ export function NoteTrack({ song, lessonStep, mode, trackPosition, detectedNote,
           left: playLineX, top: 0, bottom: 0,
           width: 2,
           background: K.accent,
-          boxShadow: `0 0 8px ${K.accent}66`,
+          boxShadow: `0 0 8px ${alpha(K.accent, 40)}`,
           zIndex: 1,
         }} />
       </div>

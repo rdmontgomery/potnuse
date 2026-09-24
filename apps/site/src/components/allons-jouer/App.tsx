@@ -13,9 +13,11 @@ export default function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: `linear-gradient(170deg, ${K.bg} 0%, #0f0b04 100%)`,
+      background: `linear-gradient(170deg, ${K.bg} 0%, light-dark(color-mix(in srgb, ${K.bg} 90%, ${K.text}), color-mix(in srgb, ${K.bg} 55%, black)) 100%)`,
       color: K.text, fontFamily: FONTS.serif,
-      margin: 0, padding: 0, overflowX: 'hidden', userSelect: 'none',
+      // top gutter keeps every screen's header clear of the site's fixed
+      // theme button, which otherwise sits on the mic toggle
+      margin: 0, padding: '2.6rem 0 0', overflowX: 'hidden', userSelect: 'none',
     }}>
       <style>{`
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }

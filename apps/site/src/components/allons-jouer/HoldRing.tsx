@@ -1,7 +1,7 @@
 import { K } from '@/lib/allons-jouer/tokens';
 import type { TimingResult } from '@/lib/allons-jouer/types';
 
-const TIMING_COLORS: Record<TimingResult, string> = { good: K.success, ok: '#e8a838', off: K.pull };
+const TIMING_COLORS: Record<TimingResult, string> = { good: K.success, ok: K.accent, off: K.pull };
 const TIMING_LABELS: Record<TimingResult, string> = { good: '♪', ok: '~', off: '✧' };
 
 interface Props {

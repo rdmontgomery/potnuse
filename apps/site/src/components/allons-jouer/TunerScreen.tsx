@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { getAudioCtx } from '@/lib/allons-jouer/audio';
 import { autoCorrelate, freqToAccordionNote } from '@/lib/allons-jouer/pitchUtils';
@@ -116,15 +116,15 @@ export function TunerScreen() {
       </p>
 
       {error && (
-        <div style={{ padding: 12, borderRadius: 8, marginBottom: 16, background: K.pull + '22', border: `1px solid ${K.pull}44`, color: K.pullBright, fontSize: 13 }}>
+        <div style={{ padding: 12, borderRadius: 8, marginBottom: 16, background: alpha(K.pull, 13), border: `1px solid ${alpha(K.pull, 27)}`, color: K.pullBright, fontSize: 13 }}>
           {error}
         </div>
       )}
 
       <button onClick={listening ? stop : start} style={{
         width: '100%', padding: '14px 24px', marginBottom: 20,
-        background: listening ? K.pull + '22' : K.accent + '22',
-        border: `1px solid ${listening ? K.pull + '44' : K.accent + '44'}`,
+        background: listening ? alpha(K.pull, 13) : alpha(K.accent, 13),
+        border: `1px solid ${listening ? alpha(K.pull, 27) : alpha(K.accent, 27)}`,
         borderRadius: 10, cursor: 'pointer',
         color: listening ? K.pullBright : K.accent,
         fontSize: 16, fontWeight: 600, fontFamily: FONTS.serif,

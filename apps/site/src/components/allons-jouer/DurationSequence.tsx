@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { Song } from '@/lib/allons-jouer/types';
 
 interface Props { song: Song; step: number; isComplete: boolean; }
@@ -32,7 +32,7 @@ export function DurationSequence({ song, step, isComplete }: Props) {
           return (
             <div key={i} ref={el => { noteRefs.current[i] = el; }} style={{ flex: `0 0 ${n.duration * pxPerMs}px`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <div style={{ fontSize: 9, fontFamily: FONTS.mono, color: isCurrent ? K.accent : isPast ? K.success : K.textMuted, fontWeight: isCurrent ? 700 : 400 }}>{noteStr}</div>
-              <div style={{ width: '100%', height: n.duration / maxDur * 20 + 4, borderRadius: 2, background: isCurrent ? K.accent + '55' : isPast ? K.success + '33' : baseCol + '22', border: `1px solid ${isCurrent ? K.accent : isPast ? K.success + '44' : baseCol + '33'}`, transition: 'all 0.2s' }} />
+              <div style={{ width: '100%', height: n.duration / maxDur * 20 + 4, borderRadius: 2, background: isCurrent ? alpha(K.accent, 33) : isPast ? alpha(K.success, 20) : alpha(baseCol, 13), border: `1px solid ${isCurrent ? K.accent : isPast ? alpha(K.success, 27) : alpha(baseCol, 20)}`, transition: 'all 0.2s' }} />
             </div>
           );
         })}

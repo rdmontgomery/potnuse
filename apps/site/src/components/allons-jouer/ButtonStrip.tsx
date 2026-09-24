@@ -1,5 +1,5 @@
 import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { BellowsDir, DetectedNote } from '@/lib/allons-jouer/types';
 
 interface Props {
@@ -73,8 +73,8 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
               style={{
                 flex: 1, padding: pad, cursor: 'pointer', touchAction: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                background: isPushDetected ? K.pushBright + '44'
-                  : isPushTarget ? K.push + '33'
+                background: isPushDetected ? alpha(K.pushBright, 27)
+                  : isPushTarget ? alpha(K.push, 20)
                   : K.bgButton,
                 border: 'none', borderRight: `1px solid ${K.border}`,
                 transition: 'all 0.1s', position: 'relative', overflow: 'hidden',
@@ -90,7 +90,7 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
                 <span style={{ position: 'absolute', inset: 0, border: `2px solid ${K.pushBright}`, animation: 'targetPulse 1.2s ease-in-out infinite', pointerEvents: 'none' }} />
               )}
               {isPushDetected && (
-                <span style={{ position: 'absolute', inset: -1, background: K.pushBright + '22', animation: 'noteHit 0.3s ease-out', pointerEvents: 'none' }} />
+                <span style={{ position: 'absolute', inset: -1, background: alpha(K.pushBright, 13), animation: 'noteHit 0.3s ease-out', pointerEvents: 'none' }} />
               )}
             </button>
 
@@ -113,8 +113,8 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
               style={{
                 flex: 1, padding: pad, cursor: 'pointer', touchAction: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                background: isPullDetected ? K.pullBright + '44'
-                  : isPullTarget ? K.pull + '33'
+                background: isPullDetected ? alpha(K.pullBright, 27)
+                  : isPullTarget ? alpha(K.pull, 20)
                   : K.bgButton,
                 border: 'none', borderLeft: `1px solid ${K.border}`,
                 transition: 'all 0.1s', position: 'relative', overflow: 'hidden',
@@ -130,7 +130,7 @@ export function ButtonStrip({ detectedNote, highlightButton, highlightDir, compa
                 <span style={{ position: 'absolute', inset: 0, border: `2px solid ${K.pullBright}`, animation: 'targetPulse 1.2s ease-in-out infinite', pointerEvents: 'none' }} />
               )}
               {isPullDetected && (
-                <span style={{ position: 'absolute', inset: -1, background: K.pullBright + '22', animation: 'noteHit 0.3s ease-out', pointerEvents: 'none' }} />
+                <span style={{ position: 'absolute', inset: -1, background: alpha(K.pullBright, 13), animation: 'noteHit 0.3s ease-out', pointerEvents: 'none' }} />
               )}
             </button>
           </div>

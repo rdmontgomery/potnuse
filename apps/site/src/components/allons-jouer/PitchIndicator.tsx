@@ -1,4 +1,4 @@
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { DetectedNote, BellowsDir } from '@/lib/allons-jouer/types';
 
 interface Props {
@@ -14,8 +14,8 @@ export function PitchIndicator({ detectedNote, targetButton, targetDir }: Props)
   return (
     <div style={{
       padding: '14px 20px', borderRadius: 10,
-      background: isCorrect ? K.success + '15' : K.bgCard,
-      border: `1px solid ${isCorrect ? K.success + '55' : K.border}`,
+      background: isCorrect ? alpha(K.success, 8) : K.bgCard,
+      border: `1px solid ${isCorrect ? alpha(K.success, 33) : K.border}`,
       textAlign: 'center', transition: 'background 0.2s, border-color 0.2s',
       height: 76, display: 'flex', flexDirection: 'column', justifyContent: 'center', boxSizing: 'border-box',
     }}>
