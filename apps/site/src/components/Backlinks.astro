@@ -147,7 +147,7 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
   .pressure {
     margin-top: 4rem;
     padding-top: 2rem;
-    border-top: 1px solid rgba(240, 230, 210, 0.1);
+    border-top: 1px solid var(--rule);
   }
   .ego {
     position: relative;
@@ -240,7 +240,7 @@ const when = (d?: string) => (d ? d.slice(0, 7) : '');
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
-    border-bottom: 1px solid rgba(240, 230, 210, 0.18);
+    border-bottom: 1px solid var(--rule-strong);
     transition: border-color 0.15s ease;
   }
   .in .label {

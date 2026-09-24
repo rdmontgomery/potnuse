@@ -153,20 +153,20 @@ function loadPersisted(): PersistShape | null {
   }
 }
 
-// ---------- Palette (site-matched) ----------
+// ---------- Palette: the active site theme's tokens ----------
 const PAL = {
-  bg: '#1a1207',
-  bgCard: '#261d0f',
-  bgButton: '#332814',
-  bgInput: '#1f1608',
-  border: '#3d2e1a',
-  accent: '#e8a838',
-  accentDim: '#b87a1e',
-  good: '#7aab5a',
-  bad: '#c77a5a',
-  text: '#f0e6d2',
-  textDim: '#9e8e72',
-  textMuted: '#6b5d48',
+  bg: 'var(--bg)',
+  bgCard: 'var(--bg-card)',
+  bgButton: 'var(--bg-button)',
+  bgInput: 'color-mix(in srgb, var(--bg) 70%, var(--bg-card))',
+  border: 'var(--border)',
+  accent: 'var(--accent)',
+  accentDim: 'var(--accent-dim)',
+  good: 'var(--good)',
+  bad: 'var(--bad)',
+  text: 'var(--text)',
+  textDim: 'var(--text-dim)',
+  textMuted: 'var(--text-muted)',
   serif: "'Crimson Pro', Georgia, serif",
   mono: "'JetBrains Mono', ui-monospace, 'SF Mono', monospace",
 };
@@ -476,11 +476,11 @@ export default function Ladder() {
 
           if (isCorrectAnswer) {
             bg = PAL.good; fg = PAL.bg; border = PAL.good;
-            shadow = '0 0 22px rgba(122,171,90,0.45), inset 0 -2px 0 rgba(0,0,0,0.25)';
+            shadow = '0 0 22px color-mix(in srgb, var(--good) 45%, transparent), inset 0 -2px 0 rgba(0,0,0,0.25)';
             scale = 1.03;
           } else if (isWrongPick) {
             bg = PAL.bad; fg = PAL.bg; border = PAL.bad;
-            shadow = '0 0 22px rgba(199,122,90,0.4), inset 0 -2px 0 rgba(0,0,0,0.25)';
+            shadow = '0 0 22px color-mix(in srgb, var(--bad) 40%, transparent), inset 0 -2px 0 rgba(0,0,0,0.25)';
           }
 
           const level = Math.round(masteryByPitch[pc]);

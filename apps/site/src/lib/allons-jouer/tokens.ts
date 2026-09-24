@@ -1,20 +1,28 @@
+// The active site theme's tokens. push/pull/highlight are the app's own
+// semantics, so they pick a value per colour-scheme with light-dark(): the
+// originals on dark palettes, deepened ones that read on paper.
 export const K = {
-  bg: '#1a1207',
-  bgCard: '#261d0f',
-  bgButton: '#332814',
-  accent: '#e8a838',
-  accentDim: '#b87a1e',
-  push: '#4a9e6e',
-  pushBright: '#5ec484',
-  pull: '#c45a3c',
-  pullBright: '#e8714f',
-  text: '#f0e6d2',
-  textDim: '#9e8e72',
-  textMuted: '#6b5d48',
-  success: '#5ec484',
-  border: '#3d2e1a',
-  highlight: '#ffd700',
+  bg: 'var(--bg)',
+  bgCard: 'var(--bg-card)',
+  bgButton: 'var(--bg-button)',
+  accent: 'var(--accent)',
+  accentDim: 'var(--accent-dim)',
+  push: 'light-dark(#2f7a4f, #4a9e6e)',
+  pushBright: 'light-dark(#1f6b3f, #5ec484)',
+  pull: 'light-dark(#a8452f, #c45a3c)',
+  pullBright: 'light-dark(#b8401f, #e8714f)',
+  text: 'var(--text)',
+  textDim: 'var(--text-dim)',
+  textMuted: 'var(--text-muted)',
+  success: 'light-dark(#1f6b3f, #5ec484)',
+  border: 'var(--border)',
+  highlight: 'light-dark(#9a7400, #ffd700)',
 } as const;
+
+/** A colour at `pct`% opacity. Tokens are var()/light-dark() strings, so
+    the old trick of appending two hex digits no longer works. */
+export const alpha = (color: string, pct: number) =>
+  `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 
 export const FONTS = {
   serif: "var(--font-crimson), 'Georgia', serif",

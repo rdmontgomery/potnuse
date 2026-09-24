@@ -2,10 +2,10 @@ import type { Node } from './graph';
 import { temporalU } from './temporal';
 
 export const SIGIL_COLORS: Record<string, string> = {
-  essays: '#e8a838',
-  experiments: '#7fb069',
-  exchanges: '#c48ac9',
-  page: '#9e8e72',
+  essays: 'var(--c-essays)',
+  experiments: 'var(--c-experiments)',
+  exchanges: 'var(--c-exchanges)',
+  page: 'var(--c-page)',
 };
 
 // Vogel's phyllotactic angle. The only rotation with no periodic alignment at

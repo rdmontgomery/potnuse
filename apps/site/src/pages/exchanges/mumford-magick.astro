@@ -190,7 +190,7 @@ const toc = [
   }
   .prose :global(a) {
     color: var(--text);
-    border-bottom: 1px solid rgba(232, 168, 56, 0.5);
+    border-bottom: 1px solid var(--underline);
     text-decoration: none;
     transition: color 0.15s ease;
   }
@@ -252,6 +252,6 @@ const toc = [
     cursor: help;
   }
   .prose :global(blockquote abbr[title]) {
-    border-bottom-color: rgba(158, 142, 114, 0.6);
+    border-bottom-color: var(--underline-dim);
   }
 </style>

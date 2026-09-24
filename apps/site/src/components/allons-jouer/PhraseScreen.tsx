@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { getAllPhrases, stageFor, allowedWrongs, type PhraseStage } from '@/lib/allons-jouer/phrases';
 import { ACCORDION_NOTES } from '@/lib/allons-jouer/accordion';
@@ -220,7 +220,7 @@ export function PhraseScreen() {
             <span style={{
               fontSize: 12, color: K.pullBright, fontFamily: FONTS.mono, fontWeight: 600,
               padding: '2px 8px', borderRadius: 10,
-              background: K.pull + '22', border: `1px solid ${K.pull}44`,
+              background: alpha(K.pull, 13), border: `1px solid ${alpha(K.pull, 27)}`,
             }}>
               ✕ {wrongCount}/{wrongBudget}
             </span>
@@ -229,7 +229,7 @@ export function PhraseScreen() {
             <span title="Mastered: one wrong note fails the phrase" style={{
               fontSize: 11, color: K.success, fontFamily: FONTS.mono, fontWeight: 600,
               padding: '2px 8px', borderRadius: 10,
-              background: K.success + '22', border: `1px solid ${K.success}44`,
+              background: alpha(K.success, 13), border: `1px solid ${alpha(K.success, 27)}`,
             }}>
               🎯 strict
             </span>
@@ -248,7 +248,7 @@ export function PhraseScreen() {
           >
             {phraseLayout === 'accordion' ? '🪗 Accordion' : '🎹 Keyboard'}
           </button>
-          <button onClick={toggleMode} style={{ padding: '5px 12px', borderRadius: 16, cursor: 'pointer', background: inputMode === 'mic' ? K.success + '18' : K.bgButton, border: `1px solid ${K.border}`, color: inputMode === 'mic' ? K.success : K.textDim, fontSize: 12, fontFamily: FONTS.serif }}>
+          <button onClick={toggleMode} style={{ padding: '5px 12px', borderRadius: 16, cursor: 'pointer', background: inputMode === 'mic' ? alpha(K.success, 9) : K.bgButton, border: `1px solid ${K.border}`, color: inputMode === 'mic' ? K.success : K.textDim, fontSize: 12, fontFamily: FONTS.serif }}>
             {inputMode === 'mic' ? '🎤 Mic' : '👆 Virtual'}
           </button>
         </div>
@@ -266,8 +266,8 @@ export function PhraseScreen() {
           )}
         </h2>
         <button onClick={() => isPlaying ? stopDemo() : playDemo(phraseSong)} style={{
-          background: isPlaying ? K.pull + '22' : K.accent + '22',
-          border: `1px solid ${isPlaying ? K.pull + '44' : K.accent + '44'}`,
+          background: isPlaying ? alpha(K.pull, 13) : alpha(K.accent, 13),
+          border: `1px solid ${isPlaying ? alpha(K.pull, 27) : alpha(K.accent, 27)}`,
           borderRadius: 6, padding: '5px 12px', cursor: 'pointer',
           color: isPlaying ? K.pullBright : K.accent,
           fontSize: 12, fontFamily: FONTS.serif, flexShrink: 0,
@@ -319,7 +319,7 @@ export function PhraseScreen() {
 
       {/* Mic error */}
       {micError && (
-        <div style={{ padding: 10, borderRadius: 8, marginBottom: 8, background: K.pull + '22', border: `1px solid ${K.pull}44`, color: K.pullBright, fontSize: 12 }}>{micError}</div>
+        <div style={{ padding: 10, borderRadius: 8, marginBottom: 8, background: alpha(K.pull, 13), border: `1px solid ${alpha(K.pull, 27)}`, color: K.pullBright, fontSize: 12 }}>{micError}</div>
       )}
 
       {/* Phrase tab strip — compact, mobile-friendly. Replaces NoteTrack. */}
@@ -440,19 +440,19 @@ function PhraseTab({ notes, step, feedback, detectedNote, layout }: {
         let pulse = false;
 
         if (isCurrent) {
-          bg = dirColor + '22';
+          bg = alpha(dirColor, 13);
           fg = dirColor;
           border = dirColor;
           scale = 1.05;
           pulse = true;
         } else if (isDone) {
-          bg = K.success + '15';
+          bg = alpha(K.success, 8);
           fg = K.success;
-          border = K.success + '66';
+          border = alpha(K.success, 40);
         } else if (isWrong) {
-          bg = K.pull + '15';
+          bg = alpha(K.pull, 8);
           fg = K.pullBright;
-          border = K.pull + '44';
+          border = alpha(K.pull, 27);
         } else {
           fg = dirColor;
         }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { CulturalCard as CulturalCardType } from '@/lib/allons-jouer/types';
 
 interface Props {
@@ -32,7 +32,7 @@ export function CulturalCard({ card, autoExpand = false }: Props) {
           <a href={card.recordingUrl} target="_blank" rel="noopener noreferrer" style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '8px 14px', borderRadius: 6,
-            background: K.accent + '22', border: `1px solid ${K.accent}44`,
+            background: alpha(K.accent, 13), border: `1px solid ${alpha(K.accent, 27)}`,
             color: K.accent, fontSize: 13, textDecoration: 'none', fontFamily: FONTS.serif,
           }}>
             🎵 {card.recordingLabel}

@@ -1,4 +1,4 @@
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { BellowsDir } from '@/lib/allons-jouer/types';
 
 interface Props {
@@ -19,7 +19,7 @@ export function BellowsToggle({ dir, onToggle }: Props) {
         return (
           <button key={d} onClick={() => !isActive && onToggle()} style={{
             flex: 1, padding: '14px 0',
-            background: isActive ? (isPush ? K.push + '44' : K.pull + '44') : K.bgButton,
+            background: isActive ? (isPush ? alpha(K.push, 27) : alpha(K.pull, 27)) : K.bgButton,
             border: 'none',
             borderRight: isPush ? `1px solid ${K.border}` : 'none',
             cursor: isActive ? 'default' : 'pointer',

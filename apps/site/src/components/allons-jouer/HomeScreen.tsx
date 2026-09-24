@@ -1,4 +1,4 @@
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import { SONGS } from '@/lib/allons-jouer/songs';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 
@@ -24,12 +24,12 @@ export function HomeScreen() {
         background: `linear-gradient(135deg, ${K.accent}, ${K.accentDim})`,
         border: 'none', borderRadius: 12, cursor: 'pointer',
         color: K.bg, fontSize: 18, fontWeight: 700, fontFamily: FONTS.serif,
-        boxShadow: `0 4px 20px ${K.accent}33`,
+        boxShadow: `0 4px 20px ${alpha(K.accent, 20)}`,
       }}>Free Play</button>
 
       <button onClick={() => startPhraseTrainer('accordion')} style={{
         width: '100%', padding: '14px 20px', marginBottom: 8,
-        background: K.bgCard, border: `1px solid ${K.highlight}66`,
+        background: K.bgCard, border: `1px solid ${alpha(K.highlight, 40)}`,
         borderRadius: 12, cursor: 'pointer',
         color: K.text, fontSize: 16, fontWeight: 600, fontFamily: FONTS.serif,
         textAlign: 'left',
@@ -41,7 +41,7 @@ export function HomeScreen() {
 
       <button onClick={() => startPhraseTrainer('keyboard')} style={{
         width: '100%', padding: '14px 20px', marginBottom: 10,
-        background: K.bgCard, border: `1px solid ${K.highlight}66`,
+        background: K.bgCard, border: `1px solid ${alpha(K.highlight, 40)}`,
         borderRadius: 12, cursor: 'pointer',
         color: K.text, fontSize: 16, fontWeight: 600, fontFamily: FONTS.serif,
         textAlign: 'left',
@@ -76,8 +76,8 @@ export function HomeScreen() {
           return (
             <button key={song.id} onClick={() => startLesson(song.id)} style={{
               width: '100%', padding: '16px 20px', textAlign: 'left',
-              background: done ? K.push + '15' : K.bgCard,
-              border: `1px solid ${done ? K.push + '44' : K.border}`,
+              background: done ? alpha(K.push, 8) : K.bgCard,
+              border: `1px solid ${done ? alpha(K.push, 27) : K.border}`,
               borderRadius: 10, cursor: 'pointer', fontFamily: FONTS.serif,
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

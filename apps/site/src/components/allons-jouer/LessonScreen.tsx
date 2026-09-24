@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import { useAppStore } from '@/lib/allons-jouer/useAppStore';
 import { SONGS } from '@/lib/allons-jouer/songs';
 import { ButtonStrip } from '@/components/allons-jouer/ButtonStrip';
@@ -89,7 +89,7 @@ export function LessonScreen() {
         <button onClick={goHome} style={{ background: 'none', border: 'none', color: K.textDim, cursor: 'pointer', fontSize: 14, fontFamily: FONTS.serif }}>← Back</button>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {streak > 2 && <span style={{ fontSize: 13, color: K.highlight, fontWeight: 600 }}>🔥 {streak}</span>}
-          <button onClick={toggleMode} style={{ padding: '6px 14px', borderRadius: 20, cursor: 'pointer', background: inputMode === 'mic' ? K.success + '18' : K.bgButton, border: `1px solid ${K.border}`, color: inputMode === 'mic' ? K.success : K.textDim, fontSize: 12, fontFamily: FONTS.serif }}>
+          <button onClick={toggleMode} style={{ padding: '6px 14px', borderRadius: 20, cursor: 'pointer', background: inputMode === 'mic' ? alpha(K.success, 9) : K.bgButton, border: `1px solid ${K.border}`, color: inputMode === 'mic' ? K.success : K.textDim, fontSize: 12, fontFamily: FONTS.serif }}>
             {inputMode === 'mic' ? '🎤 Mic' : '👆 Virtual'}
           </button>
         </div>
@@ -98,7 +98,7 @@ export function LessonScreen() {
       {/* Title + demo */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: K.accent, fontFamily: FONTS.serif }}>{song.title}</h2>
-        <button onClick={() => isPlaying ? stopDemo() : playDemo(song)} style={{ background: isPlaying ? K.pull + '22' : K.accent + '22', border: `1px solid ${isPlaying ? K.pull + '44' : K.accent + '44'}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: isPlaying ? K.pullBright : K.accent, fontSize: 12, fontFamily: FONTS.serif }}>
+        <button onClick={() => isPlaying ? stopDemo() : playDemo(song)} style={{ background: isPlaying ? alpha(K.pull, 13) : alpha(K.accent, 13), border: `1px solid ${isPlaying ? alpha(K.pull, 27) : alpha(K.accent, 27)}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: isPlaying ? K.pullBright : K.accent, fontSize: 12, fontFamily: FONTS.serif }}>
           {isPlaying ? '■ Stop' : '▶ Demo'}
         </button>
       </div>
@@ -116,8 +116,8 @@ export function LessonScreen() {
           return (
             <button key={mode} onClick={() => handleModeChange(mode)} style={{
               padding: '5px 16px', borderRadius: 6, cursor: 'pointer',
-              background: active ? K.accent + '22' : K.bgButton,
-              border: `1px solid ${active ? K.accent + '44' : K.border}`,
+              background: active ? alpha(K.accent, 13) : K.bgButton,
+              border: `1px solid ${active ? alpha(K.accent, 27) : K.border}`,
               color: active ? K.accent : K.textDim,
               fontSize: 12, fontFamily: FONTS.serif, fontWeight: active ? 600 : 400,
             }}>
@@ -133,8 +133,8 @@ export function LessonScreen() {
               return (
                 <button key={opt.ratio} onClick={() => setTempoRatio(opt.ratio)} style={{
                   padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
-                  background: active ? K.highlight + '22' : K.bgButton,
-                  border: `1px solid ${active ? K.highlight + '44' : K.border}`,
+                  background: active ? alpha(K.highlight, 13) : K.bgButton,
+                  border: `1px solid ${active ? alpha(K.highlight, 27) : K.border}`,
                   color: active ? K.highlight : K.textDim,
                   fontSize: 12, fontFamily: FONTS.mono, fontWeight: active ? 700 : 400,
                 }}>
@@ -147,8 +147,8 @@ export function LessonScreen() {
 
         <button onClick={() => setLoopEnabled(!loopEnabled)} title="Auto-restart on completion" style={{
           padding: '5px 12px', borderRadius: 6, cursor: 'pointer', marginLeft: 'auto',
-          background: loopEnabled ? K.success + '22' : K.bgButton,
-          border: `1px solid ${loopEnabled ? K.success + '44' : K.border}`,
+          background: loopEnabled ? alpha(K.success, 13) : K.bgButton,
+          border: `1px solid ${loopEnabled ? alpha(K.success, 27) : K.border}`,
           color: loopEnabled ? K.success : K.textDim,
           fontSize: 12, fontFamily: FONTS.serif, fontWeight: loopEnabled ? 600 : 400,
         }}>
@@ -158,7 +158,7 @@ export function LessonScreen() {
 
       {/* Mic error */}
       {micError && (
-        <div style={{ padding: 12, borderRadius: 8, marginBottom: 12, background: K.pull + '22', border: `1px solid ${K.pull}44`, color: K.pullBright, fontSize: 13 }}>{micError}</div>
+        <div style={{ padding: 12, borderRadius: 8, marginBottom: 12, background: alpha(K.pull, 13), border: `1px solid ${alpha(K.pull, 27)}`, color: K.pullBright, fontSize: 13 }}>{micError}</div>
       )}
 
       {/* Note track */}
@@ -178,7 +178,7 @@ export function LessonScreen() {
         {isComplete && !loopEnabled && (
           <div style={{
             position: 'absolute', inset: 0, borderRadius: 8,
-            background: K.bg + 'ee',
+            background: alpha(K.bg, 93),
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             zIndex: 10,
           }}>

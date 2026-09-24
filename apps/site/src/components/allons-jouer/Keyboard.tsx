@@ -1,4 +1,4 @@
-import { K, FONTS } from '@/lib/allons-jouer/tokens';
+import { K, FONTS, alpha } from '@/lib/allons-jouer/tokens';
 import type { DetectedNote } from '@/lib/allons-jouer/types';
 
 interface KeyboardKey {
@@ -63,7 +63,7 @@ export function Keyboard({ detectedNote, demoNote, highlightNote, showDemoHighli
           fg = K.bg;
           border = K.highlight;
         } else if (isTarget) {
-          bg = K.accent + '33';
+          bg = alpha(K.accent, 20);
           fg = K.accent;
           border = K.accent;
         }
@@ -91,8 +91,8 @@ export function Keyboard({ detectedNote, demoNote, highlightNote, showDemoHighli
               fontFamily: FONTS.serif,
               transition: 'background 0.1s, border-color 0.1s, color 0.1s',
               position: 'relative',
-              ...(isDemo ? { boxShadow: `0 0 0 3px ${K.highlight}99` } : {}),
-              ...(isTarget && !isPressed && !isDemo ? { boxShadow: `0 0 0 2px ${K.accent}66` } : {}),
+              ...(isDemo ? { boxShadow: `0 0 0 3px ${alpha(K.highlight, 60)}` } : {}),
+              ...(isTarget && !isPressed && !isDemo ? { boxShadow: `0 0 0 2px ${alpha(K.accent, 40)}` } : {}),
             }}
           >
             <span style={{ fontSize: 22, fontWeight: 600, lineHeight: 1 }}>{k.letter}</span>

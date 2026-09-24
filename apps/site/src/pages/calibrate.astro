@@ -727,7 +727,7 @@ Start with the first question. Keep it easy.`;
   }
   .prose a {
     color: var(--text);
-    border-bottom: 1px solid rgba(232, 168, 56, 0.5);
+    border-bottom: 1px solid var(--underline);
     text-decoration: none;
     transition: color 0.15s ease;
   }
@@ -741,7 +741,7 @@ Start with the first question. Keep it easy.`;
     margin: 2rem 0;
     padding: 1.4rem 1.5rem;
     border-left: 2px solid var(--border);
-    background: rgba(38, 29, 15, 0.45);
+    background: color-mix(in srgb, var(--bg-card) 45%, transparent);
     color: var(--text-dim);
     position: relative;
   }

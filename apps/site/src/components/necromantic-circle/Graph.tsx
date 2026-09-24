@@ -6,16 +6,17 @@ import { DEFAULT_NODES, DEFAULT_EDGES, type Node, type Edge } from './data';
 
 const STORAGE_KEY = 'necromantic-circle';
 
+// The active site theme's tokens.
 const PALETTE = {
-  bg: '#1a1207',
-  bgCard: '#261d0f',
-  bgInput: '#1f1608',
-  border: '#3d2e1a',
-  accent: '#e8a838',
-  accentDim: '#b87a1e',
-  text: '#f0e6d2',
-  textDim: '#9e8e72',
-  textMuted: '#6b5d48',
+  bg: 'var(--bg)',
+  bgCard: 'var(--bg-card)',
+  bgInput: 'color-mix(in srgb, var(--bg) 70%, var(--bg-card))',
+  border: 'var(--border)',
+  accent: 'var(--accent)',
+  accentDim: 'var(--accent-dim)',
+  text: 'var(--text)',
+  textDim: 'var(--text-dim)',
+  textMuted: 'var(--text-muted)',
   mono: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
 };
 
@@ -347,8 +348,9 @@ export default function Graph() {
           top: 0,
           left: 0,
           right: 0,
-          padding: '10px 14px',
-          background: `linear-gradient(180deg, ${PALETTE.bg}f7, ${PALETTE.bg}00)`,
+          // right gutter clears the site's fixed theme button
+          padding: '10px 3.6rem 10px 14px',
+          background: `linear-gradient(180deg, color-mix(in srgb, ${PALETTE.bg} 97%, transparent), transparent)`,
           zIndex: 10,
           display: 'flex',
           justifyContent: 'space-between',
@@ -431,7 +433,7 @@ export default function Graph() {
                 padding: '2px 7px',
                 color: v.color,
                 border: `1px solid ${filterDomain === k ? v.color : PALETTE.border}`,
-                background: filterDomain === k ? v.color + '18' : PALETTE.bgCard,
+                background: filterDomain === k ? `color-mix(in srgb, ${v.color} 9%, transparent)` : PALETTE.bgCard,
               }}
             >
               {v.label}

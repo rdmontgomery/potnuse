@@ -1,9 +1,15 @@
 ---
+import '@/styles/themes.css';
+import { AUTO, THEMES, type ThemeName } from '@/lib/themes';
+
 interface Props {
   title?: string;
   description?: string;
   image?: string;
   type?: 'website' | 'article';
+  /** Pin the page to one theme and hide the picker. For pages whose own
+      palette lives in JS or canvas and only matches that one. */
+  theme?: ThemeName;
 }
 
 const {
@@ -11,6 +17,7 @@ const {
   description,
   image = '/og-default.png',
   type,
+  theme,
 } = Astro.props;
 
 const SITE = 'https://rdmontgomery.com';
@@ -19,14 +26,32 @@ const ogImage = new URL(image, SITE).toString();
 const ogType = type ?? (Astro.url.pathname === '/' ? 'website' : 'article');
 const ogDesc =
   description ?? 'a garden with the workshop door left ajar';
+const themeNames = THEMES.map((t) => t.name);
 const displayTitle =
   title === 'potnuse' ? 'rdmontgomery.com' : `${title} — rdmontgomery.com`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme={theme} data-theme-pinned={theme ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
+    <script is:inline define:vars={{ themeNames, AUTO }}>
+      // Runs before first paint so nobody sees the wrong palette flash.
+      // A stored pick wins; "auto" (or nothing) follows the system.
+      var root = document.documentElement;
+      if (!root.hasAttribute('data-theme-pinned')) {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (e) {}
+        root.dataset.theme =
+          themeNames.indexOf(stored) >= 0
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: light)').matches
+              ? AUTO.light
+              : AUTO.dark;
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonical} />
@@ -63,6 +88,85 @@ const displayTitle =
   </head>
   <body>
     <slot />
+
+    {
+      !theme && (
+        <>
+          <button
+            type="button"
+            class="theme-toggle"
+            popovertarget="theme-menu"
+            aria-label="colour theme"
+            title="colour theme"
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" stroke-width="1.25" />
+              <path d="M8 1.75 A6.25 6.25 0 0 1 8 14.25 Z" fill="currentColor" />
+            </svg>
+          </button>
+          <div id="theme-menu" class="theme-menu" popover aria-label="colour theme">
+            <button type="button" data-pick="auto" aria-pressed="false">
+              <span class="swatch auto" aria-hidden="true">
+                <span data-theme={AUTO.dark} />
+                <span data-theme={AUTO.light} />
+              </span>
+              auto
+            </button>
+            {THEMES.map((t) => (
+              <button type="button" data-pick={t.name} aria-pressed="false">
+                <span class="swatch" data-theme={t.name} aria-hidden="true" />
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )
+    }
+
+    <script>
+      import { AUTO } from '@/lib/themes';
+
+      const root = document.documentElement;
+      const menu = document.getElementById('theme-menu');
+      const light = window.matchMedia('(prefers-color-scheme: light)');
+
+      const stored = () => {
+        try {
+          return localStorage.getItem('theme');
+        } catch {
+          return null;
+        }
+      };
+      const systemTheme = () => (light.matches ? AUTO.light : AUTO.dark);
+
+      function mark() {
+        const pick = stored() ?? 'auto';
+        menu?.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach((b) => {
+          const on = b.dataset.pick === pick;
+          b.setAttribute('aria-pressed', String(on));
+        });
+      }
+
+      if (menu) {
+        mark();
+        menu.addEventListener('click', (ev) => {
+          const btn = (ev.target as HTMLElement).closest<HTMLButtonElement>('[data-pick]');
+          if (!btn) return;
+          const pick = btn.dataset.pick!;
+          try {
+            if (pick === 'auto') localStorage.removeItem('theme');
+            else localStorage.setItem('theme', pick);
+          } catch {}
+          root.dataset.theme = pick === 'auto' ? systemTheme() : pick;
+          mark();
+          menu.hidePopover();
+        });
+        // On auto, track the system as it changes.
+        light.addEventListener('change', () => {
+          if (!stored()) root.dataset.theme = systemTheme();
+        });
+      }
+    </script>
 
     <script>
       // Up Down Left Right Left Right — opens /rhizome from anywhere.
@@ -227,15 +331,6 @@ const displayTitle =
       :root {
         --font-crimson: 'Crimson Pro', Georgia, 'Iowan Old Style', serif;
         --font-jetbrains: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
-        --bg: #1a1207;
-        --bg-card: #261d0f;
-        --bg-button: #332814;
-        --accent: #e8a838;
-        --accent-dim: #b87a1e;
-        --text: #f0e6d2;
-        --text-dim: #9e8e72;
-        --text-muted: #6b5d48;
-        --border: #3d2e1a;
       }
       * {
         box-sizing: border-box;
@@ -256,6 +351,107 @@ const displayTitle =
       ::selection {
         background: var(--accent);
         color: var(--bg);
+      }
+      .theme-toggle {
+        position: fixed;
+        top: 0.9rem;
+        right: 0.9rem;
+        z-index: 50;
+        width: 2rem;
+        height: 2rem;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--bg);
+        color: var(--text-muted);
+        cursor: pointer;
+        opacity: 0.7;
+        transition:
+          opacity 0.15s ease,
+          color 0.15s ease;
+      }
+      .theme-toggle:hover,
+      .theme-toggle:focus-visible {
+        opacity: 1;
+        color: var(--accent);
+      }
+      .theme-toggle svg {
+        width: 1rem;
+        height: 1rem;
+      }
+      .theme-menu {
+        position: fixed;
+        inset: 3.3rem 0.9rem auto auto;
+        margin: 0;
+        padding: 0.35rem;
+        min-width: 10.5rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-dim);
+        box-shadow: 0 8px 24px var(--shadow);
+        font-family: var(--font-jetbrains);
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+      }
+      .theme-menu button {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.4rem 0.55rem;
+        border: 0;
+        border-radius: 4px;
+        background: none;
+        color: inherit;
+        font: inherit;
+        letter-spacing: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .theme-menu button:hover,
+      .theme-menu button:focus-visible {
+        background: var(--bg-button);
+        color: var(--text);
+        outline: none;
+      }
+      .theme-menu button[aria-pressed='true'] {
+        color: var(--accent);
+      }
+      .theme-menu button[data-pick='auto'] {
+        margin-bottom: 0.2rem;
+        border-bottom: 1px solid var(--border);
+        border-radius: 4px 4px 0 0;
+      }
+      /* each swatch wears its own palette: ground, with an accent dot */
+      .swatch {
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: radial-gradient(
+          circle,
+          var(--accent) 0 28%,
+          var(--bg) 32%
+        );
+      }
+      .swatch.auto {
+        display: flex;
+        overflow: hidden;
+        background: none;
+      }
+      .swatch.auto > span {
+        flex: 1;
+        background: var(--bg);
+      }
+      @media print {
+        .theme-toggle,
+        .theme-menu {
+          display: none;
+        }
       }
     </style>
   </body>
