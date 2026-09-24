@@ -13,7 +13,7 @@ on your own data, and once it's repaired the threshold stops being a guess and
 becomes arithmetic. This skill sets up the repair and keeps it current.
 
 Background, with the simulations behind every claim here:
-https://rdmontgomery.com/experiments/a-probability-you-can-count-on
+https://rdmontgomery.com/experiments/probability-you-can-count-on (the practical post; the two before it are linked from there)
 
 `reference/loop.ts` and `reference/schema.sql` are working reference
 implementations of every piece. They are self-contained; adapt them to the

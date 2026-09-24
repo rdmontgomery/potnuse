@@ -1,0 +1,78 @@
+---
+title: a probability you can count on
+date: 2026-09-24
+state: seedling
+toc: true
+tldr: Keeping a model's probabilities honest in production takes four parts. A calibration table per question sits between the model and the threshold, an annotation queue adds a small random audit so you learn what you missed and not just what you flagged, a refit checks itself on held-back rows, and a drift monitor that needs no labels says when to refit. Once the probabilities are honest, summing them counts things, which counting decisions can't do.
+connects: [confidence-has-a-temperature, what-jev-is-selling, calibrate]
+tags: [llm, calibration, mlops, decision-theory, claude-code]
+description: The production loop that keeps a model's probabilities honest, and what honest probabilities let you do besides decide. The third of three posts, with a Claude Code skill that sets the loop up in your own repo.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Marginal from '@/components/Marginal.astro';
+import 'katex/dist/katex.min.css';
+import Loop from '@/components/a-probability-you-can-count-on/Loop.astro';
+
+A model's probability is only worth thresholding if it's honest: among the items it calls 0.8, about 80% should turn out true. [The first post](/experiments/confidence-has-a-temperature) in this series is why most aren't, and [the second](/experiments/what-jev-is-selling) ran three models over a simulated refund queue (92% of requests legitimate, $5 lost for approving an abusive one, $20 for turning a customer away, so approve when the probability of legitimate is at least 0.2). The models were a Jev-like one that knew the most but had been trained somewhere half the requests were abuse, and a general LLM whose confidence preference tuning had cooled, read out two different ways. Two repairs came out of it. The base-rate correction fixes a model trained where abuse was common by adding one number to its log-odds, with no labels at all. [Platt scaling](https://en.wikipedia.org/wiki/Platt_scaling) fits two numbers (a slope and an intercept on the model's own log-odds) from a few hundred labelled examples per question. This post is how to keep those repairs current, and what they let you do.
+
+
+---
+
+### the loop, in production
+
+The contest in the last post happened once, on a fixed pile of labels. In production the traffic keeps changing, the model gets new versions, and a map fitted in March describes March, so the fitting has to become a loop, and the loop has four parts.
+
+<Loop />
+
+The first is the serving path, and it's small. The model returns a raw probability, a table you maintain turns it into an honest one, and the cost table turns that into a decision:
+
+```ts
+// what Jev said
+const raw = answers[question].probability;
+// fitted on your labels, one row per question
+const { slope, intercept } = calibration[question];
+// what it means
+const p = sigmoid(slope * logit(raw) + intercept);
+// from the cost table
+const approve = p >= threshold[question];
+log({ ticket, question, modelVersion, raw, p, approve });
+```
+
+The calibration table has one row per question id (per question, not per model, because each question is its own forecaster with its own bend), and for a choice question the row is a single temperature instead of a slope and an intercept. The thresholds come from each question's cost table, and they only mean what they say because the line above them made the probability honest.
+
+The second part is the annotation queue, and it's where most versions of this go wrong. The natural source of labels is review work people already do: someone looks at a denied refund and either upholds it or reverses it. But that only ever produces labels for the requests you acted on, so you learn how often your denials were right and never how many abusive requests you waved through, and the failure that costs the most (the threshold quietly drifting while abuse slips under it) is the one those labels can't see. The fix is to send a small random sample of everything, two or three percent, including requests you approved without a second look, to the same queue, and to record how each item got there, so the random ones can be weighted back up to stand for all the traffic they were drawn from. Label each item per question rather than per ticket, since "this denial was wrong" is a fact about the abuse question and not about the ticket's other answers.
+
+The third part is refitting. On a schedule, or when something changes, fit each question's row again on the labels that have accumulated, hold back the most recent slice to check the new fit against rows it never saw, and publish it only if it does better on those rows than the one it would replace.
+
+The fourth part decides when to refit, and it needs no labels at all. Keep the distribution of raw probabilities from the period you last fitted on, and compare each day's against it (the population stability index is the usual measure). A new model version or a shift in your traffic moves it immediately, long before enough labels arrive to show the damage, and that's the signal to pull the queue's labels forward and refit. Pin the model version in the meantime, because an alias that moves to a new release moves every probability your table was fitted to.
+
+<Marginal>There's a [Claude Code skill](https://github.com/rdmontgomery/potnuse/tree/main/packages/jev-mock/skills/calibration-loop) that sets this loop up in your own repository, with tested reference code for every part in TypeScript and SQL. Copy the folder into your repo's `.claude/skills/`. The simulations behind all three posts are [in the same package](https://github.com/rdmontgomery/potnuse/tree/main/packages/jev-mock).</Marginal>
+
+---
+
+### what opens up
+
+The title is a pun that turns out to be literal. If a model's probabilities are honest, adding them up counts things.
+
+Say you want to know how many of this week's two thousand refund requests were abuse, without anyone reviewing all two thousand. An honest probability is exactly the share of a request you should expect to be abusive, so a request at 30% contributes 0.3 of an abusive request to the total, a hundred requests at 30% contribute thirty, and summing every request's probability of abuse estimates the week's count. The table below runs that for a hundred simulated weeks, each with about 161 abusive requests, and reports how far each method's count lands from the true one, on average:
+
+| how you count | average miss, in requests |
+|---|---:|
+| sum the true probabilities (the best possible) | 7.0 |
+| sum the Jev-like model's, base-rate corrected, no labels | 7.0 |
+| sum the Jev-like model's, Platt on 4,000 labels | 8.5 |
+| sum the Jev-like model's, Platt on 400 labels | 21.8 |
+| sum the cooled LLM's, unrepaired | 65.2 |
+| count the requests you denied | 130.1 |
+| sum the Jev-like model's, unrepaired | 280.5 |
+
+Even perfect knowledge misses by seven, because which of the uncertain requests actually turn out to be abuse is luck. The base-rate-corrected model matches that floor without a single label.
+
+Counting the requests you denied, which is what most dashboards show, misses by 130, and the reason is the threshold. At these prices you only deny a request when you're at least 80% sure it's abuse, and only about one abusive request in five looks that clear; the rest look somewhat suspicious (30% here, 60% there) and get approved, correctly, because denying them would turn away too many real customers. So the denial count sees about 31 requests a week out of 161, while the sum gives each of the other 130 its partial share.
+
+A count is also far less forgiving than a decision. The model fitted on 400 labels thinks abuse runs at 7.0% when it really runs at 8.1%, a bias of about one point on every request. That barely changes any decisions, because it only matters for requests sitting right at the threshold, so its decisions cost within 2.5% of the best. But a sum adds that point up across all two thousand requests, and one point on two thousand is the 22 requests a week it misses by.
+
+The other thing that opens up is prices that vary. The cost table in the last post had a single price for an approved abuse, five dollars, but real refunds come in every size, and an honest probability lets each request get its own threshold instead of sharing one. Approving a request risks its amount times the chance it's abuse, and denying it risks the twenty-dollar customer times the chance it was legitimate, so the cutoff for a five-dollar refund is $$5/(5+20) = 0.2$$, the cutoff for a two-hundred-dollar refund is $$200/(200+20) \approx 0.91$$, and one model, read honestly, handles both. A probability that only ranks can't do that; each price band would need its own threshold tuned on its own labels, and you'd never quite trust any of them.
+
+And each band, like each week's count, is a random variable rather than a number. Honest probabilities give you its expected value by summing them, $$\sum_i p_i$$, and its variance almost as cheaply, $$\sum_i p_i(1-p_i)$$, which for a week of refunds is about 8.6 requests of standard deviation and is exactly where the floor of seven in the counting table comes from. If that sentence made someone on your team sit up, it's worth having one of your nerds read [Cosma Shalizi's lecture notes](https://www.stat.cmu.edu/~cshalizi/ADAfaEPoV/).
