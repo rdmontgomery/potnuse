@@ -38,6 +38,12 @@ import Marginal from '@/components/Marginal.astro';
 
 **Reference existing exchanges for tone and pacing:** `src/content/exchanges/dsl-hobbies.mdx` (short one-shot), `src/content/exchanges/mumford-magick.mdx` (long multi-turn).
 
+## Essays with an invented narrator
+
+Some essays are written from inside a practitioner's head (a gang-intelligence coordinator, a vine propagator, a currency examiner) looking at a subject outside their field. A new job title is not a new voice. Before drafting, invent a specific backstory for the narrator: where they came up, the case that still bothers them, what they resent, whom they're really talking to. Keep it off the page. Never state it, hint at it with biography, or put it in a Marginal. Let it bend the prose instead: sentence length, what they notice first, what they distrust, which stakes they keep returning to, what they'd never bother explaining.
+
+Test it: if the narrator could be swapped into a previous essay without anyone noticing, the backstory isn't doing its job. The house register (long balanced sentences, em-dash asides, a confident explainer's "here is the claim") is the default to push away from, not the target.
+
 ## Collection template vs. bespoke page
 
 Two rendering paths exist for exchanges. Use the one that fits the piece — don't force the generic template when the content wants a custom form.
