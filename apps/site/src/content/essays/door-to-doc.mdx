@@ -1,0 +1,77 @@
+---
+title: door to doc
+date: 2026-10-05
+state: seedling
+connects: [reverberant-middle, prisonization, confidence-has-a-temperature, mumford-magick]
+tags: [emergency-medicine, triage, peer-review, queueing, llm, science, phase-transition]
+description: An emergency-department charge nurse reads the news that one physicist and one model produced 36 manuscripts in three months, and recognizes a waiting room whose arrival rate just changed by an order of magnitude.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+The number that runs an emergency department is not the census. It is the <Gloss def="Door-to-doctor time: minutes from a patient's arrival to first contact with a physician or advanced practice provider. The standard throughput metric of an emergency department, tracked by the hour.">door-to-doc</Gloss> time, and what a charge nurse learns in the first year is that it does not degrade the way you expect. Through most of a shift it sits near forty minutes and wobbles. Then one Tuesday at four in the afternoon two ambulances and a bus of day-shift workers arrive within the same quarter hour, and by six it is three hours, the hallway is full of gurneys, and a quarter of the people who came in have walked out without being seen. Nobody in the building worked slower. Nothing about any individual patient changed. The system crossed something, and what it crossed is in no one's job description, because the crossing is a property of the arrivals divided by the staff, and neither number is on the whiteboard in that form.
+
+I am not a scientist and I have never refereed anything. I came to this from a colleague who reads the physics preprints for pleasure and sent me the item that was on the front page of Hacker News this week: a Harvard particle theorist, working with a frontier model, reported 36 manuscripts across 18 fields in about three months. As the write-up has been summarized, he and nineteen coauthors screened roughly four hundred candidate problems to get there, the model reproduced one of his earlier papers in about twenty minutes, and it computed thirty integrals of which fifteen had never been done before. He also listed what it did badly, and one item on the list is that it often declared a task finished when it was not. The community reaction was described as awe mixed with worry about peer review.
+
+I read that and did not think about physics. I thought: that is a surge, and nobody has said what the front door looks like.
+
+<Marginal>Sourcing, since this is a site that cares: I could not read the original post or the Hacker News thread directly from where this was written, only secondary summaries of both. The figures above are theirs. Treat the 400, 36, 18 and 19 as reported rather than checked.</Marginal>
+
+---
+
+Start with what triage is, because the word has been laundered into meaning "prioritize." In the department it is a specific act performed by one person in about ninety seconds at the front, using the <Gloss def="Emergency Severity Index: a five-level triage algorithm. Level 1 is immediate life-saving intervention; level 5 is a presentation expected to need no resources beyond examination. It sorts by acuity and by predicted resource use.">Emergency Severity Index</Gloss>, which sorts each arrival into one of five levels by how sick they look and how many resources they will probably consume. The triage nurse does not diagnose. She cannot, in ninety seconds, and a department that tried would have no front door. She applies a cheap classifier whose output is a place in line, and the real, expensive, serial work of finding out what is wrong happens behind the door, done by a small number of people whose time is the only scarce thing in the building.
+
+Two failure modes, and the department's whole culture is a negotiation between them. Undertriage sends a sick person to the wrong lane, and someone dies in the waiting room. Overtriage sends a person with a sprained wrist to the lane built for chest pain, and the lane clogs, which eventually produces undertriage downstream of it. You cannot drive both to zero. You choose a point on the curve, and you re-choose it every hour as the load changes.
+
+Now read the preprint server as a front door. Submission is the arrival. The referee is the doctor. The abstract and the author list are the ninety-second triage. What changed this month is that the cost of producing an arrival fell by a large factor while the cost of seeing one, a human reading a derivation and deciding if it holds, did not move at all. In the department we know exactly what that is. It is a change in the arrival rate with the service rate held fixed, and the thing that matters is their ratio.
+
+<Pull>Nothing in the department got slower. The ratio of arrivals to doctors crossed one.</Pull>
+
+---
+
+The ratio has a name, utilization, usually written ρ: arrivals per hour divided by the number of patients the staff can see per hour. Queueing theory has known since Erlang, around 1917, what happens near ρ = 1 for a single server: waiting time goes as 1/(1−ρ), which means it is unremarkable at ρ = 0.5, tolerable at 0.8, and absurd at 0.99. That is the whiteboard version and it is not what I want to claim, because a department has many servers, not one, and the many-server version is where the surprising thing lives.
+
+For a pool of N identical servers, the probability that an arrival has to wait at all is given exactly by the Erlang C formula. I computed it across pool sizes, and then asked for the utilization at which that probability crosses one half, and for the width of the window in which it climbs from ten percent to ninety. The result:
+
+| servers N | ρ at which half of arrivals wait | width of the 10% to 90% window | width × √N |
+|---|---|---|---|
+| 4 | 0.744 | 0.541 | 1.08 |
+| 16 | 0.872 | 0.304 | 1.22 |
+| 64 | 0.936 | 0.160 | 1.28 |
+| 256 | 0.968 | 0.082 | 1.31 |
+| 1024 | 0.984 | 0.041 | 1.32 |
+| 4096 | 0.992 | 0.021 | 1.33 |
+
+Two regularities. The midpoint satisfies (1−ρ)√N ≈ 0.51 at every size, and the width times √N settles toward about 1.33. This is the <Gloss def="The many-server heavy-traffic limit of Halfin and Whitt (1981): hold N and the load such that (1 − ρ) times the square root of N stays fixed, and the probability of waiting converges to a nontrivial function of that one number. It is why hospitals and call centers staff to the square root of demand.">Halfin–Whitt regime</Gloss>, from 1981, and it is the reason staffing rules in hospitals and call centers are written in square roots. What it says in plain terms is that a pool of N servers has a critical window around ρ = 1 whose width shrinks as one over the square root of N. It is a phase transition with finite-size rounding, in the exact sense a physicist would use, with ρ as the control parameter and the probability of waiting as the order parameter.
+
+I did not expect the next part to be so consequential for the thing I started with. A small pool has a wide, gentle window. Four servers go from comfortable to saturated across more than half the range of ρ; there is warning, and you can feel the department filling. A pool of four thousand has a window two percent wide. It looks perfectly fine at ρ = 0.97 and it is a waiting room at 1.0, and the people running it will have had no gradient to learn from.
+
+This predicts something about science that I find uncomfortable to say as an outsider. A niche subfield, with a few dozen people competent to referee a given calculation, should feel the new arrivals as a slow worsening that someone notices and complains about. A very large venue should seem fine until the quarter it is not. The venue with the most referees is the one with the least warning. That is checkable by someone with submission and review-time data, and I do not have it.
+
+---
+
+The second thing I know from the floor is what a department does once ρ exceeds one, because it cannot queue indefinitely and so it sheds. The shedding has a name, and a number: patients who <Gloss def="LWBS: left without being seen. Patients who register and then leave before a physician evaluates them, counted by every emergency department as a quality metric.">leave without being seen</Gloss>, plus diversion of ambulances, plus the quiet policy that a person who looks fine goes to the back of a line that does not move. Each of these is a rule for deciding who does not get the doctor, and the important fact about every one of them is that it has to be computed from what is visible at the door, because the whole problem is that there is no time to look at anything else.
+
+So here is the claim I would put on the table, and it is the one I would most like someone to test. When arrivals outrun service, the system does not stop selecting. It stops selecting on content and starts selecting on identity. The doctor cannot read the derivation, so the line is sorted by who the author is, where they work, whether someone the referee trusts has endorsed them, whether the format looks like previous good work. That is the rational policy for each referee and, summed, it is a policy that makes the strangers' good paper wait behind the established group's mediocre one. The flood of cheap manuscripts does not, on this reading, mainly damage science by adding bad papers. It damages it by making the content-blind filter the only one anyone has time to run.
+
+<Pull>When the doctor cannot see everyone, the line is sorted by who you are.</Pull>
+
+I will be careful about how load-bearing that is. The queueing half is a computed fact about a model. The identity half is an inference from how departments behave under overload plus a general argument about information at the door, and I have no data on how referees actually respond. Prisons, in an earlier essay on this site, are a place where cheap visible features were used to sort a population and the sort failed in a characteristic way; I would look there before trusting my own confidence here. See also what the reverberant middle did with a fixed total divided among more claimants. Same accounting, different building.
+
+---
+
+Now the places where the lens is wrong, and there are three.
+
+First, the model assumes servers who show up. A department has a roster. A referee pool does not; it is volunteers, and volunteers leave when the load is high. In the language I know, N is not fixed, it falls as ρ rises, which pushes ρ up further. A system with that loop does not obey the Halfin–Whitt picture, which assumes N is a parameter. It probably has a sharper transition than the table shows, possibly with hysteresis, meaning that after the pool shrinks, getting back below the critical load takes more than restoring the old arrival rate. I think this is the most likely way the real thing is worse than the model, and I did not compute it.
+
+Second, a patient is a surprise and a manuscript is not. Our service times are heavy-tailed and unpredictable, a workup that takes forty minutes or six hours. A referee's are too, but with one difference that I think matters more than anything above. The department has <Gloss def="A bedside or near-patient test with a fast, decisive result, such as a finger-stick glucose, an ECG or a troponin. It converts a long diagnostic question into a short one.">point-of-care tests</Gloss>, and they change which lane a patient is in. A glucose reading takes ninety seconds and settles whether the confused person is diabetic or something else. The fifteen integrals that had never been computed are of that kind: an integral can be checked numerically, in minutes, by someone who did not do the derivation. Verification there is cheap and generation is expensive, and the model has just made generation cheap too. I suspect that physics, with its checkable outputs, is the friendliest place for this arrival process, and that the fields where a plausible claim has no cheap decisive test are the ones where ρ crosses first. If I were running the front door I would ask not how many papers arrived but what fraction of them can be checked by a procedure that does not require the author.
+
+Third, and I will say it plainly: the model's own failure noted in the write-up, declaring work finished when it is not, is exactly what a bad triage tag looks like. A patient labeled level 5 who is actually level 2 does not announce it. That specific error is the one that should be measured first, because it is the one that turns a throughput problem into a safety one.
+
+---
+
+What a charge nurse would do with this is not philosophical. She would split the department into a fast lane and a main lane and keep the point-of-care tests at the front. She would watch ρ by the hour rather than the census, and she would set the escalation at a number the pool can see coming, because with N large the window will not give her time to notice. Then she would audit the triage, because the sorting tool, left alone under pressure, becomes a sorting-by-credential tool without anyone deciding that it should.
+
+The thing I would test, for anyone with the data: take the review times and submission counts for a large venue and a small one over the last two years, estimate an effective utilization for each, and check whether the large one's delay distribution has the sharper knee. If it does not, then the √N argument is wrong at the joint where it assumes referees are interchangeable, and I would rather learn that from a table than keep it as a sentence that sounds right in a corridor.
