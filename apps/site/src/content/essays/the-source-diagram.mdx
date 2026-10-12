@@ -1,0 +1,72 @@
+---
+title: the source diagram
+date: 2026-10-12
+state: seedling
+connects: [confidence-has-a-temperature, probability-you-can-count-on, toner-tu-map, mumford-magick]
+tags: [hydrography, charts, llm, discourse, survey-age, capability, drift]
+description: A hydrographic chart compiler reads the argument over whether language models are any good, and asks the only question a chart-maker ever asks of a number: when was it surveyed?
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+I compile nautical charts. The work is mostly clerical: a survey comes in from a vessel with a multibeam echosounder, it is reduced to a common vertical datum, and a depth that was true on a Tuesday in March gets promoted to a number printed on paper that a pilot will trust for years. The craft is not in the measuring. It is in remembering that every figure on the sheet is a statement about one day.
+
+So when a colleague forwarded me a thread from the weekend, a post by Andrej Karpathy that I have only seen through aggregator mirrors and secondhand summaries, I did not read it as an argument about artificial intelligence. I read it as a chart-correction problem. His observation, as it reached me, is that people disagree about how capable language models are, and that much of the disagreement tracks when and on what tier a person last tried one: someone sampled a free model a year ago and formed a view, while someone else works with the current ones all day in technical domains and sees something else entirely. Readers in the replies split along that line and then, as readers do, accused each other of bad faith.
+
+I have no standing on the models. I have standing on the shape of that dispute, because it is the oldest dispute in my trade.
+
+---
+
+### a number is a date
+
+Every chart we publish carries a <Gloss def="A small inset on a nautical chart showing which surveys the soundings came from, with their dates and the line spacing or method used. It lets the reader judge how far to trust each region of the sheet.">source diagram</Gloss>, a little inset that carves the sheet into regions and says, for each, who surveyed it, how, and when. Electronic charts go further and encode the answer as a <Gloss def="Category Zone of Confidence, the rating on electronic charts that grades a region's depth data from A1 (full seafloor search, high accuracy) down through A2, B, C and D, with U for unassessed. It combines positional accuracy, depth accuracy, and whether the seafloor was fully searched.">CATZOC</Gloss> grade. The grade matters more than the depth. A sounding of nine metres in a zone graded D means something close to "someone once dragged a lead line through here". A sounding of nine metres in A1 means you can put your keel on it.
+
+Notice what a mariner never does. He does not ask whether the chart is good. He asks of this patch, how old is the survey, and what does the bottom here do with time. In a rock-bound fjord the answer to the second question is nothing, and a hundred-year-old sounding is excellent. Off a sandy coast, banks and channels migrate by metres a year, and a six-year-old sounding is a rumour. The same age is a different quantity of error depending on the rate at which the thing underneath moves.
+
+<Pull>The same age is a different quantity of error depending on the rate at which the thing underneath moves.</Pull>
+
+That sentence is the whole of my reading. The error in a belief is not its age. It is the age multiplied by the drift rate of the thing it describes.
+
+---
+
+### the claim, stated so it can fail
+
+Put it as a formula, because my field's only virtue is that it will not let me wave my hands. Let the true capability of the current best model, in some domain d, grow at a log-rate g_d per unit time. Let person i have last sampled the frontier a_i ago, and let their belief be a frozen copy of what they saw. Their error, in log-capability, is then simply g_d times a_i. Nothing about their intelligence or their honesty enters.
+
+Three consequences follow, and each is checkable against a survey someone could run.
+
+First, if the ages a_i are exponentially distributed with refresh rate mu, both the mean error and its standard deviation equal g over mu. I ran this rather than trust my algebra; a simulation of two hundred thousand people with mu of one half and g of one returns a mean age of 2.00 and a spread of 2.01, matching the theory to the second digit. The ratio g over mu is the only knob. It is a Péclet number of belief: drift against refresh, the way that quantity compares advection to diffusion in a harbour.
+
+Second, if the population is two classes, a tenth of whom refresh constantly and nine tenths who froze at a trial some time ago, the gap between the 90th and 10th percentile of belief scales linearly in g. In my run, going from g of 0.5 to 1 to 2 moved that spread from 2.1 to 4.3 to 8.5. Nobody changed their mind and nobody became more tribal. The gap widened because the seabed started moving faster. That is the prediction I would stake the essay on: the divide Karpathy describes should be larger in domains where the frontier moves faster, and it is, per the replies, loudest in technical work. A survey that recorded each respondent's last-use date and the model they used would tell you in an afternoon whether the dispersion in stated capability is explained by age alone. If a large residual survived, the thesis fails.
+
+Third, and here I am least sure, the age distribution of real opinions is probably not exponential. People form a view at a first trial and then refresh in bursts or never, which is a fat tail. When I draw ages from a Pareto with tail index 1.5, the population variance does not converge, and my sample variance of 19 is an artefact of how many draws I made. The median, by contrast, sits steadily near 0.4 in both of my runs. If the real tail is like that, then the mean opinion and the variance are the wrong instruments, and the field should report quantiles. This is a point about instruments, which is what I know about.
+
+<Marginal>The tail-index point is the part I would trust least, because I chose the Pareto. I have no data on how long people go between samples of a frontier model. The linear scaling in g is robust to that choice; the claim about variance is not.</Marginal>
+
+---
+
+### what the chart has that the argument lacks
+
+The thing that makes a chart safe is not accuracy. Charts are routinely wrong. It is that the error is labelled in a way the reader can act on. The source diagram turns an unknowable global quantity, how wrong is this sheet, into a local, answerable one: how old is this patch. The discourse has no such inset. A person says "these systems cannot do X" and the sentence arrives with no survey date, no model identifier, no tier. The listener cannot tell an A1 claim from a D.
+
+I would go a step further and make an uncomfortable suggestion for the people who build and benchmark these things. Their equivalent of the Notice to Mariners, the weekly correction slip, exists, in the form of release notes, but it is addressed to subscribers, and the people with the stalest charts are by construction the ones who are not subscribed. Corrections do not reach the readers who most need them, because the refresh rate mu is the very thing that determines whether you receive the correction. In my trade we solved this crudely, by making a current correction status a condition of carriage: a vessel without up-to-date charts is not in compliance. There is no such lever for opinion, and I do not think there should be.
+
+---
+
+### where the chart lies
+
+Three joints fail, and I would rather mark them than let the correspondence look tidier than it is.
+
+The seabed does not read the chart. Sand moves because of tide and storm, whatever the sheet says. Capability discourse is reflexive: what people believe about the models changes who uses them, which changes what data they generate, which feeds back into what the next models are trained on. One recent position paper in computational linguistics, which I have seen only in a search summary, argues that model development leans heavily on the data of existing adopters while a large share of the population has never used the thing. If that is right, mu and g are coupled, and my clean Péclet number is a first-order picture of a system that closes on itself. I cannot say how large the correction is.
+
+A belief is also not a frozen copy. My sounding sits unchanged on the sheet until someone replaces it. A person's view is revised by hearsay, by a friend's anecdote, by a screenshot, which makes people more like a coupled lattice than independent samplers. There are formal results from the physics of multi-agent language-model debates that suggest such coupling can produce consensus bias past a conformity threshold, and I cannot adjudicate those from here. Where coupling is strong, my independent-staleness account over-predicts the width of the spread and under-predicts its clustering.
+
+Finally, capability is not one number. A hydrographer has a scalar to report, depth, even if it has to be reduced to a datum. The thing being argued about has no such reduction, and whoever says the models are good or bad is quietly choosing a datum. Some of what looks like staleness will be two people charting different coastlines.
+
+---
+
+### the straussian reading
+
+On the surface this is a chart man being tidy about other people's quarrel. Underneath, the claim is meant to cut in both directions. The sceptic holding a year-old impression is a D-grade zone, and the enthusiast announcing that the problem is solved on the strength of last week's survey of one domain is an A1 zone describing a single bay. Both are unlabelled. The one thing no one in the argument will do is print the date, because the date converts a position into a measurement, and a measurement can be corrected. I suspect that is why the dispute is so durable. A source diagram would dissolve a surprising fraction of it, and that fraction is, to the people who enjoy the argument, the valuable part.
