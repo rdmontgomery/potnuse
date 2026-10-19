@@ -1,0 +1,61 @@
+---
+title: washout
+date: 2026-10-19
+state: seedling
+connects: [foundation-block, prisonization, reverberant-middle, confidence-has-a-temperature]
+tags: [wastewater, peer-review, chemostat, bifurcation, llm, science-of-science]
+description: A treatment-plant operator reads the week's argument that AI is turning the literature into a Library of Babel, and sees a bioreactor whose biomass has stopped being made.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+I run the aeration basins at a mid-sized municipal plant, which means that most of my working life is spent keeping a suspension of bacteria alive on a diet of other people's problems. I do not read the physics literature. But a colleague forwarded me a thread this week, summarized from the aggregators, in which a theoretical physicist argued that AI-assisted paper production is turning the scientific record into a Library of Babel that nobody will read, and a second item about a particle physicist who posted several dozen Claude-assisted papers to an enthusiastic and suspicious audience. I have only the digests, not the posts, so treat my reading of them as secondhand. What struck me was how little of it was news to a person who works with <Gloss def="A mixed community of bacteria and protozoa that eats dissolved and suspended waste in a treatment basin. The operator never feeds it directly; the plant's influent is the feed, and the operator's job is to keep the community's size and health matched to it.">activated sludge</Gloss>.
+
+The complaint, as I understand it, is about influent. More papers arrive than anyone can read. Operators know that complaint, and we know it is almost never the real one.
+
+---
+
+### the plant is not limited by influent
+
+A new operator thinks the danger is a big storm: flow doubles, the basin is overwhelmed. It can happen, but the failure that ends careers is quieter. It is a plant whose biomass has dropped below what the load needs, so that perfectly ordinary influent becomes a catastrophe. Load is not the variable. The ratio of load to the living population that eats it is.
+
+Write the plant down as the textbook does. Let S be the substrate waiting in the basin (call it the backlog), X the active biomass, and λ the rate at which substrate arrives. Biomass eats at a saturating rate, the <Gloss def="Monod kinetics: the growth rate of a microbial population rises with substrate concentration but levels off at a maximum, because each cell can only process so fast. The same saturation shape appears in enzyme kinetics and in queues with finite servers.">Monod</Gloss> form, q·S/(Ks+S) per unit of X. Biomass converts a fraction Y of what it eats into new biomass, and loses biomass at a rate b (death, and what we deliberately waste each day):
+
+dS/dt = λ − q·S·X/(Ks+S)
+dX/dt = Y·q·S·X/(Ks+S) − b·X
+
+At steady state the biomass eats exactly what arrives, so X\* = Yλ/b. The population that the plant supports scales linearly with the load, with the yield coefficient Y as the slope. That is the conserved structure: mass in equals mass out, and every unit of biomass is made from something eaten.
+
+Now read "reviewer" for biomass, "paper" for substrate, and "the person who read enough papers to become able to referee one" for the thing a paper yields. A manuscript is not only a product to be judged. For the human who writes it and the human who referees it, it is also the feed from which the next referee is grown. That is Y. It has always been there, and nobody budgeted for it because it was free.
+
+<Pull>The population a system can digest is made from what it digests.</Pull>
+
+### what changes when the feed stops feeding
+
+Suppose a fraction f of the incoming papers are made in a way that mints no new reviewer: nobody learned the field by writing them, and nobody learned it by reading them either. The effective yield is f·Y. The steady state becomes X\* = fYλ/b, so the standing reviewer population falls as f falls, *even while λ rises*. More arrivals, fewer people to eat them, and the backlog at steady state, S\* = Ks·b/(fYq − b), grows as the denominator shrinks.
+
+That denominator reaches zero at f_c = b/(Yq). Below it the culture <Gloss def="In a chemostat or treatment basin, washout is the state in which the biomass is lost faster than it can grow, so the population falls to zero regardless of how much feed is available. It is a bifurcation: a small change in a parameter flips the stable state from a living culture to an empty tank.">washes out</Gloss>. No equilibrium exists with reviewers in it; the backlog grows without bound at rate λ. This is a transcritical bifurcation, and the interesting feature is that it is not announced. S\* climbs smoothly and hyperbolically as f approaches f_c, which looks, from inside, like a system that is merely getting busier.
+
+I checked this numerically rather than trust my algebra. With Y = 0.05, q = 1, b = 0.02, so f_c = 0.4, integrating the two equations gives biomass and backlog matching the formulas at f = 1, 0.6 and 0.45 (backlog 3, 10, 40), a backlog of about 186 at f = 0.41, and divergence at 0.39 and 0.3, where biomass decays to nothing. The parameters are invented. What I am claiming is the shape: a sharp threshold, a hyperbolic warning, and a fall to zero.
+
+<Marginal>The same equations govern a vine nursery's stock of clean wood and a model's supply of human-written text: a standing population made from the thing it consumes, with a yield that someone assumed was free. See [the foundation block](/essays/foundation-block). The difference is that a nursery knows it has to pay for Y.</Marginal>
+
+### what the operator knows that the physicist may not
+
+Three plant habits transfer, and each one is a claim about the literature.
+
+First, you do not manage a plant by looking at influent flow. You look at the sludge age and the settling behavior, which are the biomass's own vital signs. The literature's equivalent is not paper count but the number of people who could referee a paper in a given subfield and the age distribution of that group. I do not know anyone measuring that.
+
+Second, overload is not symmetric. Some influent is toxic, and for toxic substrates the kinetics are not Monod but Haldane: the rate rises, then falls as substrate concentration gets high enough to inhibit the eaters. That shape produces two stable states, a working plant and a dead one, with hysteresis between them. Once you have a dead basin, cutting the load back to what the live one handled does not revive it. We reseed from a healthy plant. The equivalent for a field is importing practitioners from outside, which is slow and expensive and, in my experience, the only thing that works.
+
+Third, the temptation in a crisis is to add a second organism. A machine referee is exactly that, and I do not think it is silly. But a second species with different growth conditions neither replaces nor rescues the first. It eats the same feed, and it does not mint human reviewers, so it moves the question from "who reads" to "who is still being made."
+
+---
+
+### where this lens distorts
+
+Reviewers are not fungible microbes, and Y is not a constant. A hard paper may yield far more than an easy one, which would make the effective f depend on which papers are AI-assisted rather than on how many. Writing with a machine may also *teach* the writer, in which case f for those papers is not zero, and my threshold moves. I also took λ as exogenous, when the flood is itself a response to the incentives of the reviewers who are scarce. And I assumed the biomass is limited by feed, when a human referee is more often limited by time, which is a different saturation and probably a different threshold. The structure survives these objections as a conditional statement: *if* the yield per paper falls, *then* a threshold exists. Whether the yield has fallen is an empirical question I cannot answer from a wastewater plant.
+
+I will say what I would measure. Take any subfield, count the people who have refereed at least once in the last two years, and track how many of them first refereed in each prior year. That is a sludge-age distribution. If its young tail is thin while the paper count climbs, the plant is running on old biomass, and the storm that finishes it will look like a normal Tuesday.
