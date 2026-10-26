@@ -1,0 +1,62 @@
+---
+title: the same hopper car
+date: 2026-10-26
+state: seedling
+connects: [confidence-has-a-temperature, probability-you-can-count-on, foundation-block, toner-tu-map]
+tags: [grain-sampling, llm, correlated-error, effective-sample-size, homogenization, measurement]
+description: A licensed grain sampler reads that every frontier model gives the same answer about humanity, and asks the question the probe pattern exists to ask — five instruments, or one instrument five times?
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+I sample grain for a living, which means I stand on the roof of a hopper car with a long probe and decide what sixty tons of wheat is worth. Nobody hands the buyer sixty tons to inspect. They get a few kilograms in a canvas bag, and a number comes out of the bag, and the number moves real money. The whole profession is the question of why the bag may be trusted, and the first thing you learn is that the answer has almost nothing to do with how many probes you take.
+
+This week a colleague who follows the computing news sent me a link under the subject line "you'll like this." A study making the rounds, posted under the title that every frontier model has the same controversial take on humans, drew several hundred comments on the orange site. As far as I can tell from a digest, which is all I have read, the finding is that the big models, built by rival companies, converge on nearly the same view of humanity and of contested social questions, and the commenters took this as either reassurance or an alarm about hidden bias. I want to be plain that I have not read the study, I do not know its method, and nothing below is a verdict on it. What I can speak to is the shape of the claim, because I have been handed that shape every working day for twenty years. Five instruments agree. What did you learn?
+
+---
+
+### what a probe pattern is for
+
+A hopper car does not hold a uniform lot. Grain segregates. The fines and broken kernels sift to the bottom and down the sides during loading, the heavy kernels roll to the angle of repose, dust collects where the spout dropped it, and a corner that took on moisture in a rainstorm at the elevator stays wet. The person who wrote the sampling rules for the whole industry understood that these gradients are the problem, not an annoyance. <Gloss def="Pierre Gy, a Belgian-born French chemist and sampling engineer (1924-2015) who built a general theory of sampling particulate material. He decomposed sampling error into named components, among them the fundamental error from particle discreteness and the grouping and segregation error from the lot not being mixed.">Gy</Gloss> split the error of a sample into parts, and two of them matter here. One is the fundamental error, which comes from the lot being made of discrete kernels, and which shrinks the more material you take. The other is the grouping and segregation error, which comes from the lot not being well mixed, and which does not shrink the way you hope when you take more material from the same place.
+
+That is why the pattern is fixed and why it is spread out. You probe the front, the back, the corners and the center, and you probe to depth. The point is not to get more kernels; ten more probes from one convenient spot would give you more kernels and no more information. The point is to make the probes disagree where the lot disagrees, so that their spread tells you about the lot and not about your habits. A sampler who takes five probes from the open hatch has taken five measurements of the hatch.
+
+The arithmetic is old and unglamorous. Say each probe reads the moisture as the lot's true mean plus a bias shared by every probe taken the same way, plus its own noise. Give the shared part a fraction ρ of the total variance and the private part the rest. The variance of the average of N probes is then σ²(ρ + (1−ρ)/N). The second term goes down as you add probes. The first term does not move. Statisticians call the equivalent number of independent probes the <Gloss def="The number of independent observations that would give the same precision as N correlated ones. With pairwise correlation ρ it is N / (1 + (N-1)ρ), which tends to 1/ρ as N grows. Survey statisticians know the denominator as the design effect.">effective sample size</Gloss>, N divided by 1 + (N−1)ρ, and the thing to notice is its ceiling: as N grows it tends to 1/ρ and stops. If your probes are correlated at 0.5, a thousand of them are worth two.
+
+<Pull>If your probes are correlated at 0.5, a thousand of them are worth two.</Pull>
+
+---
+
+### five instruments in one car
+
+Now read the headline in that idiom. The models were each trained on a crawl of the written record, tuned against preferences gathered from an overlapping pool of human raters, and often evaluated against each other's outputs or tuned on them. In my terms they are five probes that went in through the same hatch. The agreement between them is a measurement of ρ, and ρ is high. I would be surprised if it were not.
+
+This is where the commentary I have seen gets the inference backwards, in both directions at once. The worried reading says the models agree, so the agreement is alignment bias, planted. The comforting reading says the models agree, so there is probably something to the answer. Both treat the agreement as evidence about the grain. But agreement among probes cannot distinguish two situations that I handle differently, and that I can only separate by going outside the set of probes.
+
+In the first, the lot really is uniform on this property, and every probe agrees because there is only one thing to find. Wheat that has all been through one dryer reads the same everywhere. In the second, the lot varies and the probes share a way of missing the variation, because they all enter at the same place. From inside the set of probes the two look identical: high ρ, tight cluster, small apparent spread. The only thing that separates them is a reading taken by a different mechanism: a bottom-dump sample, a stream cut from the belt as the car unloads, or the certified reference sample the lab keeps sealed in a drawer for exactly this purpose. When a lab's five readings agree and the reference sample, run alongside, reads off by the same amount, you stop believing the lab.
+
+<Marginal>The reference sample is the humblest object in the building and the one the whole system leans on. It is dull, it is sealed, and its value was fixed by methods that share no hatch with the probes. Agreement among probes only ever shows precision. The reference is what lets anyone say anything about accuracy.</Marginal>
+
+So the formal claim I will stand behind is narrow. Inter-model agreement identifies ρ and cannot decompose it into the true spread of the underlying quantity and a shared bias b. Any inference from "they agree" to "so it is right" or to "so it was engineered" needs an observation that is not another model. If the claim is wrong in a way I can state, it is this: someone could show that independent pipelines with disjoint data and disjoint raters still land in the same place, which would push the shared-bias reading down and the uniform-lot reading up. That would be a good experiment and I would like to see the number.
+
+---
+
+### where the lens fails
+
+Here is the joint at which the grain man's picture does not hold, and I would rather say it than smooth it over. Moisture has a true value. I can dry a sample in an oven and weigh what leaves, and the oven does not share a hatch with the probe. There is a reference method, and its answer is the answer. What is the oven for "a view of humanity"? There is no measurand, and a reference sample whose value was fixed independently does not obviously exist. You could poll people, but a poll is its own probe with its own hatch: the people who answer surveys, the way the question is worded, the fact that stated opinion is not behavior. So my entire remedy, the move that makes the profession work, has no clean counterpart here. I can tell you what would be needed, an instrument that does not enter through the written record, and I cannot tell you that one exists. That is a limit of the metaphor, and possibly a limit of the question.
+
+There is a second distortion, which is that a model is not a probe pushed into the world. It is closer to a sample already pulled from the lot and ground fine, and then asked to speak for it. Gy's segregation error is a property of a lot being heaped; whether the written record is heaped in the relevant sense, with the fines of one demographic sifted to the bottom of what gets published, I can assert by analogy and cannot demonstrate. I suspect it, because who writes things down is not a random draw from who thinks things, but I hold that suspicion loosely.
+
+And a smaller thing, which my colleague would want said. The correlation I used above is a simple one-factor shared bias. Real models will share some biases and not others, in a structure I have not modelled and could not from here. The ceiling at 1/ρ is the cleanest case. The honest statement is that the ceiling exists and its height is unknown to me.
+
+---
+
+### what the crowd does with the result
+
+The part I find hard to put down is how the arithmetic interacts with what people do next. Whoever publishes the agreement is reporting a precision, and the audience reads an accuracy. An industry that scales by adding probes, more models and more samples from each, is buying down the second term and leaving the first alone, and the dashboards that show the error falling will be telling the truth about the wrong term. This is the pattern in every lab I have worked with that bought a second machine of the same make to settle an argument with the first.
+
+I do not want to turn this into a moral, since the people building these systems are, I assume, not blind to it. The sampler's rule is not a rule about virtue; it is a rule about where the probe goes. Take them from places that disagree, and keep something in the drawer that was measured another way.
+
+<Pull>Agreement among probes only ever shows precision.</Pull>
