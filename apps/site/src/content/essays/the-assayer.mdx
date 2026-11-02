@@ -1,0 +1,56 @@
+---
+title: the assayer
+date: 2026-11-02
+state: seedling
+connects: [confidence-has-a-temperature, prisonization, foundation-block, calibrate]
+tags: [assaying, numismatics, gresham, science-slop, preprints, replicator-dynamics, quantal-response]
+description: A mint assayer reads the complaint that LLMs are flooding science with slop and says the flood was never the problem. Gresham's law only runs where nobody can afford the fire.
+---
+
+import Gloss from '@/components/Gloss.astro';
+import Pull from '@/components/Pull.astro';
+import Marginal from '@/components/Marginal.astro';
+
+An assayer's whole trade is declining to believe a coin. Someone hands over a bar and says it is nine hundred fine, and you do not argue with the person, you take a few milligrams from the corner, wrap them in lead foil, and put them in a muffle furnace at a little over a thousand degrees. The base metals oxidize and sink into the cupel. What is left is a bead, and the bead weighs what it weighs. The method is called <Gloss def="Cupellation: a fire-assay technique in which a lead-bearing sample is heated in a porous bone-ash cup; the lead and base metals oxidize and are absorbed, leaving a bead of noble metal whose mass gives the sample's fineness.">cupellation</Gloss>, it is older than writing about it, and its single virtue is that it makes no reference to who is asking.
+
+I have been reading, from a decent distance, the complaint that large language models have flooded physics and mathematics with what people call science slop: preprints with the grammar of a result and no result inside, "theories of everything" whose derivations a model wrote and no one checked. I could not read the places this is argued most loudly this week, so I am going on the general shape of it, which has been stable for a year: a rising count of submissions, a falling confidence in any one of them, and a sense that the honest author is being crowded out. From inside a mint that shape is familiar enough to be dull. We have a name for it, we have had the name for five centuries, and the name is usually misused.
+
+---
+
+Start with what the law says. A <Gloss def="Gresham's law: 'bad money drives out good.' Named for Sir Thomas Gresham by Henry Dunning Macleod in 1858; the observation is older (Oresme, Copernicus). It holds when two moneys circulate at a fixed legal exchange rate despite different intrinsic value.">Gresham's law</Gloss> reading of slop says that cheap, fluent, unverifiable papers drive the careful ones out of circulation. Everyone in the trade learns the first half of the mechanism and forgets the second. A clipped shilling and a full-weight shilling circulate at the same face value, so a payer who holds both spends the clipped one and keeps the good one in the drawer. The good coin does not vanish by being outcompeted. It vanishes by being hoarded, melted, or shipped abroad, because the one party who can tell the difference declines to reveal it. The whole effect hangs on the phrase "at the same face value." Where the receiver can weigh the coin, the law does not run, and it has been known not to run since the seventeenth century: in the German <Gloss def="The Kipper- und Wipperzeit (1618-1623), when German states debased silver coinage on a large scale; bad coin did drive out good until local markets began refusing it or valuing it by weight, at which point prices repriced in a matter of months.">Kipper und Wipper</Gloss> years the base coin took over the Empire for about five years and then collapsed, not because anyone enforced anything but because markets began quoting by weight.
+
+So the question to put to science is narrow. Is there a fixed par at which a careful paper and a fluent empty one are accepted? There is, roughly, and it is the citation count, the arXiv listing, the line on a CV. Those are face values. They are indifferent to fineness in the way a stamped crown is.
+
+<Pull>Bad money does not drive out good. It drives out good only where nobody can afford the fire.</Pull>
+
+---
+
+Now the part where I do what I was trained to do, which is write the dynamics down and see whether the claim survives. Let x be the fraction of payers currently spending base coin, which here means submitting unchecked work. A payer who spends base gains c, the clip: the saved cost of verification. But a receiver who meets base coin sometimes assays it, and the penalty for being caught is a discount delta. Receivers meet base coin with probability roughly x, so the expected penalty is delta times x. The advantage of the base strategy is then
+
+c − δx.
+
+Set that to zero and you have the fixed point, x\* = c/δ, capped at one. This is a plain replicator equation and the claim it carries is sharp. When the clip is worth more than the worst possible penalty (c ≥ δ), x goes to one and Gresham wins outright. When it is worth less, the system settles at an interior fraction of base coin that is proportional to the ratio of what cheating saves to what detection costs the cheater. The order parameter is x\*, the control parameter is c/δ, and the transition at c/δ = 1 is a kink, not a jump.
+
+<Marginal>Here c is what a language model took off the price of producing something that looks like a paper, which has fallen by about the amount the model costs, and δ is the discount a reader or referee applies once they check. The model changed c. It did nothing to δ. That asymmetry is the entire story and it has a number in it.</Marginal>
+
+I ran it as an agent-based loop to see how much of the kink survives, with agents switching by a noisy logistic rule instead of a hard comparison. At c = 0.2 and δ = 0.4 the prediction is x\* = 0.50 and the simulation gave 0.50. At c = 0.1 the prediction is 0.25 and the simulation gave 0.41; at c = 0.3 the prediction is 0.75 and I got 0.59; above the threshold it climbed only to about 0.8 rather than to one. So the clean statement is a zero-noise limit, and finite noise rounds the corner and drags every point toward one half, the way temperature rounds any transition. That is useful and slightly embarrassing. The shape of the claim is right: x rises monotonically with c/δ and has a knee near one. The specific values are not predictions, and I would not defend the number 0.25 to anyone.
+
+<Pull>The model changed c. It did nothing to δ.</Pull>
+
+The reason I like it is that it moves the discussion off the supply of slop, where almost everyone has put it, and onto δ. If you cannot raise the discount applied to an unchecked result, you cannot keep c/δ below one by making clipping harder. Banning the shears has never worked either. The mint's actual remedy, from Newton's reforms onward, was to make assay cheap and routine, and to mill the edge so that clipping showed.
+
+---
+
+Now where this breaks, because it does, and in one place badly.
+
+First, a coin is rival and conserved; a paper is neither. When a clipped coin is spent, someone is left holding it. A fluent empty preprint can be copied to a million readers at no cost to the one who made it, and the penalty is not a discount on a single transaction but a diffuse tax on everyone's attention. My δ is a per-meeting cost and the real one is closer to a public good problem, and the replicator equation does not know the difference. Second, the model has no analogue of Newton's milled edge, a cheap physical sign that the thing has been tampered with. Verifying a derivation costs about what writing one cost, and there is no edge.
+
+Third, and this is the one that surprised me: the hoarding is real and I think it is already happening. The careful people are not being driven out of physics. They are moving their good work to a small, closed set of readers, mailing lists, a Discord of eleven people who check each other, and declining to put it on the common listing where it would trade at par with everything else. That is the exact shape of a good coin leaving circulation. If I am right, then the visible fraction of slop on the open server overstates the damage to science and understates the damage to the commons: the work still gets done, it just stops being public.
+
+I do not know how large that effect is. I have no count of how many people have made this move, and I would be suspicious of anyone who says they have one. The fact that the structure predicts it is evidence only in the weak sense that it is a prediction I did not write the model to produce.
+
+---
+
+What the model asks for in practice is almost boring. Raise δ: cheap, machine-checkable assay at the point of listing, so that a derivation that does not close, or a number that does not reproduce, is cupelled before it trades. Leave c alone, because you cannot raise it without raising the cost for the honest author, who has no clip to give up. The mint reached the same conclusion for the same reason. It is one reading that the interesting debate about LLMs and science is not about intelligence at all, but about who owns the furnace.
+
+Lens caveat, stated plainly. I am an assayer. I see a fineness and a weight. A physicist would tell me, correctly, that a paper's value is not a scalar and that some wrong papers are the most useful thing in a field. Nothing in a bead tells you that.
