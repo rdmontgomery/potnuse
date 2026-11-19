@@ -1,0 +1,12 @@
+{
+  "name": "@rdm/calibration-lab",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Python lab behind the calibration talk. Scripts proxy to uv.",
+  "scripts": {
+    "synth": "uv run python -m lab.synth",
+    "run": "uv run python -m lab.run",
+    "figures": "uv run python -m lab.figures",
+    "test": "uv run --extra dev pytest -q"
+  }
+}
