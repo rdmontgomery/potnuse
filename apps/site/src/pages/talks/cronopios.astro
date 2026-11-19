@@ -1,0 +1,833 @@
+---
+// Second draft of the Haze talk, on the title Rick announced:
+// "enjoy your logits! cronopios, famas, and the rules engine".
+// The first draft lives at /talks/calibration and is untouched; both read the
+// same generated figures and numbers from src/components/haze/.
+//
+// Cortázar on the slides is limited to fragments confirmed against the Spanish
+// (Historias de cronopios y de famas, 1962). Everything else is paraphrase,
+// and the speaker notes list what to check against Blackburn's translation.
+import Base from '@/layouts/Base.astro';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+import N from '@/components/haze/numbers.json';
+import TwoAxes from '@/components/haze/TwoAxes.astro';
+import Ruler from '@/components/haze/Ruler.astro';
+import Cover from '@/components/haze/Cover.astro';
+import Drift from '@/components/haze/Drift.astro';
+import Loop from '@/components/haze/Loop.astro';
+import Forget from '@/components/haze/Forget.astro';
+import Temperature from '@/components/calibration/Temperature.astro';
+
+const tex = (s: string, display = false) => katex.renderToString(s, { displayMode: display, throwOnError: false });
+const f1 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(1));
+const f2 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(2));
+const f3 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(3));
+const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`);
+const synthetic = N.meta.has_truth;
+const L = N.ladder as Record<string, any>;
+const C = N.conformal as Record<string, any>;
+const loop = N.loop as Record<string, any>;
+const seg = loop['stratified-window6-segmented'] ?? loop['stratified-window6'];
+const logit = (p: number) => Math.log(p / (1 - p));
+const ex = N.examples as any[];
+const first = ex[0];
+const dataLabel = synthetic
+  ? 'synthetic stand-in for Kaggle’s Disaster Tweets; truth is the generator’s own probability'
+  : 'Kaggle’s NLP with Disaster Tweets, train.csv';
+---
+
+<Base
+  title="enjoy your logits!"
+  description="Cronopios, famas, and the rules engine: a fifteen-minute talk at the Haze on calibrated probability, the temperature inside every classifier, and the labeling loop that keeps a model honest."
+>
+  <div class="deck" data-deck>
+    <!-- 1 -->
+    <section class="slide title" data-title="title">
+      <p class="kicker">the haze · november 2026</p>
+      <h1>enjoy your logits!</h1>
+      <p class="sub">cronopios, famas, and the rules engine</p>
+      <p class="byline">rick montgomery · rdmontgomery.com/talks/cronopios</p>
+      <aside class="notes">
+        Cortázar, 1962: a book of small creatures. Cronopios are wet, green, careless and happy. Famas are orderly; they
+        label things. Esperanzas sit still and let the world pass through them. Tonight a model is a cronopio, the code that
+        acts on it is a fama, and the people who review its mistakes are esperanzas. The talk is about the treaty between
+        them.
+      </aside>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-title="the cast">
+      <p class="kicker">dramatis personae</p>
+      <h2>three creatures and a treaty</h2>
+      <div class="cast">
+        <div class="who">
+          <p class="name">cronopio</p>
+          <p class="es">«seres desordenados y tibios»</p>
+          <p>The model. Speaks in logits: warm, unbounded, any real number it likes.</p>
+        </div>
+        <div class="who">
+          <p class="name">fama</p>
+          <p class="es">embalms its memories and labels them</p>
+          <p>The rules engine. Thresholds, cost tables, labels. Decides.</p>
+        </div>
+        <div class="who">
+          <p class="name">esperanza</p>
+          <p class="es">«sedentarias, se dejan viajar por las cosas y los hombres»</p>
+          <p>The review queue. Knows only what is brought to it.</p>
+        </div>
+      </div>
+      <p class="lede center">The treaty between a cronopio and a fama is a calibrated probability.</p>
+      <aside class="notes">
+        Both Spanish fragments are confirmed: 'seres desordenados y tibios' is from 'Conservación de los recuerdos';
+        the esperanzas line is from 'Viajes', which goes on to say they are like statues you have to go and see because
+        they won't bother to come. Swap in Blackburn's English if you'd rather read it aloud; check the wording against
+        your copy. The cronopio judges, the fama decides: that's TypeSafe's own line about Jev, judgments versus decisions.
+        Tibio is warm, and warm is a temperature, which pays off two slides from now.
+      </aside>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide" data-title="interlude: 0.8">
+      <p class="kicker">interlude</p>
+      <div class="dialogue">
+        <p><span class="sp">fama</span>You said {first ? first.p.toFixed(2) : '0.8'}. Do I send the truck?</p>
+        <p><span class="sp">cronopio</span>I said {first ? logit(first.p).toFixed(1) : '1.4'}. You turned it into {first ? first.p.toFixed(2) : '0.8'}.</p>
+        <p><span class="sp">fama</span>Then which of us is lying?</p>
+        <p><span class="sp">cronopio</span>Ask the next five tweets.</p>
+      </div>
+      <ul class="tweets">
+        {ex.map((e) => (
+          <li>
+            <span class="p" style={`--p:${e.p}`}>{e.p.toFixed(2)}</span>
+            <span class="t">{e.text.replace(/https?:\/\/\S+/g, '').trim()}</span>
+            {e.p_true != null && <span class="truth" title="the generator's true probability">truth {e.p_true.toFixed(2)}</span>}
+            <span class={`y ${e.y ? 'yes' : 'no'}`}>{e.y ? 'real' : 'not'}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="foot">{N.meta.n.toLocaleString()} tweets, each labelled real disaster or not. {dataLabel}.</p>
+      <aside class="notes">
+        The cronopio's native tongue is log-odds; the sigmoid is the fama's translation. A logit of {first ? logit(first.p).toFixed(1) : '1.4'} is {first ? first.p.toFixed(2) : '0.8'}. The tweets:
+        Kaggle's getting-started NLP set, 'my mixtape is fire' versus 'fire at the refinery'. One of these is a confident
+        miss and one is a confident false alarm, on purpose. An honest 0.9 is wrong one time in ten; on the synthetic data
+        you can see the truth itself scored the miss low. The answer to 'which of us is lying' is never one tweet. It's a
+        population.
+      </aside>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide split" data-title="the treaty">
+      <div class="text">
+        <p class="kicker">the treaty</p>
+        <h2>of everything I call 0.8, eight in ten happen</h2>
+        <div class="math" set:html={tex('\\text{Brier} = \\underbrace{\\text{reliability}}_{\\text{dishonesty}} - \\underbrace{\\text{resolution}}_{\\text{knowledge}} + \\text{uncertainty}', true)} />
+        <p class="small">Murphy, 1973. Two axes that move independently. The fama who predicts the base rate for every tweet is perfectly honest and useless.</p>
+      </div>
+      <div class="fig"><TwoAxes caption={false} /></div>
+      <aside class="notes">
+        Brier built his score in 1950 to grade rain forecasts. Reliability is how far stated numbers sit from observed
+        frequencies; resolution is how much outcomes differ across the things you scored differently. Keyword rates, bottom
+        left: honest, AUC {f3(L.keyword_eb.auc)}. Naive Bayes, top: knows a lot, lies about it. Logistic regression is
+        honest by accident, because the intercept's gradient is the sum of residuals, so at the optimum mean p equals mean y
+        on its training rows ({f3(N.citl_train.mean_p)} vs {f3(N.citl_train.mean_y)} here).
+      </aside>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide split" data-title="cronopios are warm">
+      <div class="text">
+        <p class="kicker">tibios</p>
+        <h2>cronopios are warm</h2>
+        <div class="math" set:html={tex('p_i = \\frac{e^{z_i / T}}{\\sum_j e^{z_j / T}} \\qquad z = -E', true)} />
+        <p>Softmax is Boltzmann. A logit is a negative energy. An overconfident model is a cronopio running cold, sounding like a fama.</p>
+        <p class="small">Naive Bayes fits T = {f2(L.tfidf_nb.T_fit)}: its logits are about {Math.round(L.tfidf_nb.T_fit)} times too loud. One number fixes most of it, and fixes no ranking.</p>
+      </div>
+      <div class="fig"><Temperature /></div>
+      <aside class="notes">
+        Guo et al. 2017: one fitted temperature repairs most modern nets. Cooling is monotone, so AUC and accuracy can't see
+        it. Preference tuning can act like cooling: the RLHF optimum is the old distribution times a Boltzmann factor in the
+        reward. Naive Bayes is cold for a dumber reason: it counts correlated words as independent evidence. Platt scaling,
+        two numbers, takes it from ECE {f3(L.tfidf_nb.ece10)} to {f3(N.nb_platt_ece)}. A monotone map buys honesty; it can't
+        buy knowledge.
+      </aside>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide split" data-title="the fama's wall">
+      <div class="text">
+        <p class="kicker">frozen encoder, one head</p>
+        <h2>the fama's wall</h2>
+        <p class="small">A pretrained transformer, frozen, turns a tweet into a point. The head is a hyperplane: logit = |w| × distance to the wall, so |w| is 1/T.</p>
+        <p>Under about 2 labels per dimension, a separating wall exists for <em>any</em> labelling (Cover, 1965).</p>
+        <p class="small">No penalty: the fit finds it, |w| → ∞, T → 0. Test ECE {f2(N.cover.ece_wall_small)} with a hard wall, {f2(N.cover.ece_ridge_small)} with a soft one.</p>
+        <p class="pull">Building the wall is free. The probability is the penalty's doing.</p>
+      </div>
+      <div class="fig"><Cover caption={false} /></div>
+      <aside class="notes">
+        Not an LLM: an embedding model like EmbeddingGemma, a JEPA, reportedly Jev, all a transformer with a readout instead
+        of a vocabulary. Put a few hundred labelled tweets in 768 dimensions and the separating hyperplane is there whatever
+        the labels are. Gardner's 1988 replica calculation puts perceptron capacity at alpha_c = 2: a phase transition. An
+        unregularised logistic fit on separable data has no finite optimum, so it goes to zero temperature. L2 is the
+        thermostat.
+      </aside>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide split" data-title="the fama's ruler">
+      <div class="text">
+        <p class="kicker">measuring</p>
+        <h2>the fama's ruler</h2>
+        <p>Halve the ruler and the error grows. Zeno's Achilles never reaches the tortoise; the fama never reaches zero.</p>
+        <div class="math" set:html={tex('\\text{ECE}(B) \\sim \\sqrt{B/n}\\quad\\Leftrightarrow\\quad L(\\varepsilon)\\sim\\varepsilon^{1-D},\\ D = 1.5', true)} />
+        <p class="small">
+          A calibrated model's slope: {f2(N.richardson.null.slope)}. Measure the excursion, not the length: KS on the running
+          sum, probe p = {f2(N.cumulative.probe_lr_platt.p)}, naive Bayes p {N.cumulative.tfidf_nb.p < 1e-4 ? '< 0.0001' : `= ${f3(N.cumulative.tfidf_nb.p)}`}.
+        </p>
+      </div>
+      <div class="fig"><Ruler caption={false} /></div>
+      <aside class="notes">
+        Sort the forecasts and keep a running sum of outcome minus forecast. Under calibration it's a random walk, and the
+        graph of a random walk has dimension 1.5, so binned ECE is a coastline measurement and grows like root B. Even the
+        true probabilities score about 0.015 here. Story slot: in grad school the fractal dimension of a magnetoconductance
+        trace told us about the billiard underneath. Same move. You know the noise's dimension, so measure how far the walk
+        strays from its Brownian envelope, not how long it is.
+      </aside>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-title="interlude: the regress">
+      <p class="kicker">interlude, after Lewis Carroll</p>
+      <div class="dialogue">
+        <p><span class="sp">fama</span>Your 0.8 is honest now. I fitted a map.</p>
+        <p><span class="sp">cronopio</span>On whose labels?</p>
+        <p><span class="sp">fama</span>The esperanzas'. They reviewed every truck I sent.</p>
+        <p><span class="sp">cronopio</span>And the trucks you didn't send?</p>
+        <p><span class="sp">fama</span>Nobody brought those to them.</p>
+      </div>
+      <p class="lede center">
+        Carroll's Tortoise (1895) wanted one more rule before each conclusion, forever. The regress stops at the world: a
+        random slice of outcomes that nobody chose.
+      </p>
+      <aside class="notes">
+        'What the Tortoise Said to Achilles': A and B, therefore Z, unless you also accept the rule that A and B imply Z,
+        and the rule that licenses that rule, and so on. A calibration map checked against labels the model chose is the
+        same regress: the system certifying itself. The only exit is labels the system didn't pick, which is the next slide.
+        Hofstadter built GEB's dialogues out of this pair; tonight they get one line.
+      </aside>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide split" data-title="esperanzas">
+      <div class="text">
+        <p class="kicker">the review queue</p>
+        <h2>esperanzas only know what passes through</h2>
+        <p>Label only the trucks you sent and you report zero misses. Forever.</p>
+        <p class="small">
+          Real misses per batch in the storm: {f1(loop.stratified?.missed)}. The esperanzas' estimate: {f1(loop.flagged?.est_missed)}.
+          Labelling near the threshold: {f1(loop.uncertainty?.est_missed)}. A fifth of the same budget spent on a weighted random audit: {f1(loop.stratified?.est_missed)}.
+        </p>
+        <p class="small">Choosing labels by the score doesn't bias the map where you look. It blinds you everywhere you don't.</p>
+      </div>
+      <div class="fig"><Loop caption={false} /></div>
+      <aside class="notes">
+        Selection on the score is ignorable for P(y given score) inside the region you labelled; that's missing at random
+        given s. What breaks is everything outside it and every total you estimate: misses, recall, ECE. The fix is boring:
+        two or three percent of everything, uniformly, each label weighted by one over its chance of being picked
+        (Horvitz–Thompson). The esperanzas have to be made to travel.
+      </aside>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide split" data-title="the storm">
+      <div class="text">
+        <p class="kicker">the storm</p>
+        <h2>then the floods arrive</h2>
+        <p>Trained on dry tweets; scored on water. ECE {f3(N.drift.dry_ece)} dry, {f3(N.drift.wet_ece)} wet.</p>
+        <p class="small">
+          Every guarantee so far assumed exchangeability, a stronger cousin of the ergodic hypothesis. Conformal sets still
+          promised 90% and delivered {pct(N.aci.static)} in the storm; adaptive conformal, nudging after every miss, got back to {pct(N.aci.aci)}.
+        </p>
+        <p class="small">Coverage is not calibration: the most honest model in the ladder covers real disasters {pct(C.keyword_eb.split.coverage_pos)} of the time until each class gets its own threshold.</p>
+      </div>
+      <div class="fig"><Drift caption={false} /></div>
+      <aside class="notes">
+        Covariate shift and label shift at once: new vocabulary, and when the storm lands a bigger share of tweets are real.
+        Label shift is an intercept change in log-odds (Saerens 2002), which is what Platt's b is for. Gibbs and Candès 2021
+        for adaptive conformal. The score-histogram alarm (PSI {f2(N.drift.psi)}) tells you when to pull labels forward; it
+        can't tell you whether you're calibrated.
+      </aside>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide split" data-title="embalmed memories">
+      <div class="text">
+        <p class="kicker">los recuerdos</p>
+        <h2>embalmed memories</h2>
+        <p>Famas embalm a memory, wrap it, label it, stand it against the wall. Cronopios leave theirs loose around the house.</p>
+        <p class="small">
+          A map fitted in the calm is an embalmed memory of the calm. Late in the storm: frozen {f3(loop.frozen?.citl)},
+          refit on everything {f3(loop.stratified?.citl)}, refit on a window {f3(loop['stratified-window6']?.citl)}.
+          {synthetic && seg ? ` Error against the truth: ${f3(loop.frozen?.true_mse)} frozen, ${f3(seg.true_mse)} with a window and a map per family.` : ''}
+        </p>
+        <p class="pull">Be a fama who lets some memories run loose, and keeps a separate room for each family.</p>
+      </div>
+      <div class="fig"><Forget caption={false} /></div>
+      <aside class="notes">
+        Verify before reading aloud: the label Cortázar's famas pin on an embalmed memory (I remember «Excursión a Quilmes»
+        and «Frank Sinatra») and the cronopios' loose memories running through the house; I could confirm only the opening
+        of the passage, 'luego de fijado el recuerdo con pelos y señales, lo envuelven de pies a…'. Three knobs, each fixing
+        one mistake: refit at all, forget, segment. Forgetting costs variance early, when the window is thin. Segmenting is
+        Mondrian conformal arriving from the other side: calibration is per question, per population, per month.
+      </aside>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide title close" data-title="close">
+      <div class="dialogue">
+        <p><span class="sp">cronopio</span>Can I keep my logits?</p>
+        <p><span class="sp">fama</span>Enjoy your logits. I'll keep the labels.</p>
+      </div>
+      <ol class="three">
+        <li>A probability is a treaty between a model and the code that acts on it. Proper scoring rules write it; a monotone map repairs it.</li>
+        <li>Measure the excursion, not the length.</li>
+        <li>Make the esperanzas travel: label a random slice nobody chose.</li>
+      </ol>
+      <p class="byline">slides, code and data: rdmontgomery.com/talks/cronopios · github.com/rdmontgomery/potnuse</p>
+      <aside class="notes">
+        Close on the treaty. The cronopio keeps its warmth; the fama keeps its labels; the esperanzas get sent somewhere new.
+        Everything reruns from one command, on the synthetic stand-in or the real Kaggle file.
+      </aside>
+    </section>
+
+    <nav class="hud" aria-label="slide controls">
+      <button type="button" data-prev aria-label="previous slide">←</button>
+      <span data-count>1 / 12</span>
+      <button type="button" data-next aria-label="next slide">→</button>
+      <button type="button" data-notes aria-pressed="false" title="speaker notes (n)">notes</button>
+    </nav>
+    <div class="progress" aria-hidden="true"><span data-bar></span></div>
+    <div class="notes-panel" data-notes-panel hidden></div>
+  </div>
+
+  <script>
+    const deck = document.querySelector<HTMLElement>('[data-deck]')!;
+    const slides = Array.from(deck.querySelectorAll<HTMLElement>('.slide'));
+    const count = deck.querySelector<HTMLElement>('[data-count]')!;
+    const bar = deck.querySelector<HTMLElement>('[data-bar]')!;
+    const panel = deck.querySelector<HTMLElement>('[data-notes-panel]')!;
+    const notesBtn = deck.querySelector<HTMLButtonElement>('[data-notes]')!;
+    let i = 0;
+
+    const fromHash = () => {
+      const n = parseInt(location.hash.slice(1), 10);
+      return Number.isFinite(n) ? Math.min(Math.max(n - 1, 0), slides.length - 1) : 0;
+    };
+
+    const show = (n: number, push = true) => {
+      i = Math.min(Math.max(n, 0), slides.length - 1);
+      slides.forEach((s, k) => s.classList.toggle('on', k === i));
+      count.textContent = `${i + 1} / ${slides.length}`;
+      bar.style.width = `${((i + 1) / slides.length) * 100}%`;
+      const note = slides[i].querySelector('.notes');
+      panel.textContent = note ? note.textContent!.replace(/\s+/g, ' ').trim() : '';
+      if (push) history.replaceState(null, '', `#${i + 1}`);
+    };
+
+    // the stage is a fixed 1280x720 canvas scaled to the window, so the layout
+    // on a projector matches the layout on a laptop
+    const fit = () => {
+      const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      deck.style.setProperty('--scale', String(s));
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey) return;
+      if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+      else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+      else if (e.key === 'Home') show(0);
+      else if (e.key === 'End') show(slides.length - 1);
+      else if (e.key === 'n') toggleNotes();
+      else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    });
+    const toggleNotes = () => {
+      panel.hidden = !panel.hidden;
+      notesBtn.setAttribute('aria-pressed', String(!panel.hidden));
+    };
+    notesBtn.addEventListener('click', toggleNotes);
+    deck.querySelector('[data-prev]')!.addEventListener('click', () => show(i - 1));
+    deck.querySelector('[data-next]')!.addEventListener('click', () => show(i + 1));
+    window.addEventListener('hashchange', () => show(fromHash(), false));
+    window.addEventListener('resize', fit);
+    fit();
+    show(fromHash(), false);
+  </script>
+</Base>
+
+<style>
+  .deck {
+    --scale: 1;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .slide {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1280px;
+    height: 720px;
+    padding: 56px 72px 64px;
+    transform: translate(-50%, -50%) scale(var(--scale));
+    transform-origin: center;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    color: var(--text);
+  }
+  .slide.on {
+    display: flex;
+  }
+  .slide.split {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 40px;
+  }
+  .slide.split.on {
+    display: flex;
+  }
+  .split .text {
+    flex: 0 0 430px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .split .fig {
+    flex: 1;
+    min-width: 0;
+  }
+  .split .fig :global(figure) {
+    margin: 0;
+  }
+  .split .fig :global(.fig) {
+    margin: 0;
+  }
+  /* on a slide the speaker carries the caption; in reading mode it comes back */
+  .split .fig :global(figcaption) {
+    display: none;
+  }
+  .kicker {
+    font-family: var(--font-jetbrains);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin: 0;
+  }
+  h1 {
+    font-size: 96px;
+    line-height: 1;
+    font-weight: 500;
+    margin: 0.1em 0 0;
+  }
+  h2 {
+    font-size: 46px;
+    line-height: 1.08;
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .slide p {
+    margin: 0;
+    font-size: 25px;
+    line-height: 1.35;
+  }
+  .slide p.small {
+    font-size: 19px;
+    color: var(--text-dim);
+  }
+  .slide p.lede {
+    font-size: 27px;
+    color: var(--text-dim);
+  }
+  .slide p.sub {
+    font-size: 34px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .slide p.byline,
+  .slide p.foot {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+  }
+  .title .byline {
+    margin-top: 48px;
+  }
+  .slide p.pull {
+    font-style: italic;
+    font-size: 26px;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+    margin-top: 6px;
+  }
+  .center {
+    text-align: center;
+  }
+  .math {
+    font-size: 22px;
+    color: var(--text);
+  }
+  .math :global(.katex-display) {
+    margin: 0.4em 0;
+  }
+  .notes {
+    display: none;
+  }
+  .tweets {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tweets li {
+    display: grid;
+    grid-template-columns: 76px 1fr auto 64px;
+    align-items: center;
+    gap: 18px;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+  .tweets .p {
+    font-family: var(--font-jetbrains);
+    font-size: 20px;
+    text-align: right;
+    color: color-mix(in srgb, var(--viz-rose) calc(var(--p) * 100%), var(--viz-blue));
+  }
+  .tweets .truth {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .tweets li:not(:has(.truth)) {
+    grid-template-columns: 76px 1fr 64px;
+  }
+  .tweets .y {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    text-align: center;
+    padding: 2px 0;
+  }
+  .tweets .y.yes {
+    color: var(--text);
+    border-color: var(--text-muted);
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 22px 0 10px;
+  }
+  .box {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: var(--font-jetbrains);
+    font-size: 19px;
+    color: var(--text);
+    background: var(--bg-card);
+    text-align: center;
+  }
+  .box.tall {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 22px;
+  }
+  .box.tall span {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .box.accent {
+    border-color: var(--accent);
+  }
+  .arrow {
+    color: var(--text-muted);
+    font-size: 26px;
+  }
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-top: 10px;
+  }
+  .two > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tab {
+    border-collapse: collapse;
+    margin: 18px auto;
+    font-size: 22px;
+  }
+  .tab th {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-align: right;
+    padding: 6px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab td {
+    padding: 10px 22px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab td:first-child,
+  .tab th:first-child {
+    text-align: left;
+  }
+  .tab td.hot {
+    color: var(--viz-rose);
+    font-weight: 600;
+  }
+  .three {
+    font-size: 30px;
+    line-height: 1.35;
+    padding-left: 1.2em;
+    margin: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .hud {
+    position: fixed;
+    left: 16px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--font-jetbrains);
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.55;
+    z-index: 20;
+  }
+  .hud:hover {
+    opacity: 1;
+  }
+  .hud button {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    border-radius: 6px;
+    font: inherit;
+    padding: 3px 9px;
+    cursor: pointer;
+  }
+  .hud button[aria-pressed='true'] {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .progress {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--rule);
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+  .notes-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 44px;
+    transform: translateX(-50%);
+    width: min(880px, calc(100vw - 32px));
+    max-height: 34vh;
+    overflow: auto;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1.5;
+    box-shadow: 0 8px 24px var(--shadow);
+    z-index: 30;
+  }
+
+  /* phones and print: no stage, every slide stacked, notes inline */
+  @media (max-width: 760px), print {
+    .deck {
+      position: static;
+      overflow: visible;
+    }
+    .slide,
+    .slide.split {
+      position: static;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: auto;
+      height: auto;
+      transform: none;
+      padding: 56px 16px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .split .text {
+      flex: none;
+    }
+    .split .fig :global(figcaption) {
+      display: block;
+    }
+    h1 {
+      font-size: 52px;
+    }
+    h2 {
+      font-size: 32px;
+    }
+    .slide p {
+      font-size: 19px;
+    }
+    .slide p.small {
+      font-size: 16px;
+    }
+    .tweets li,
+    .tweets li:not(:has(.truth)) {
+      grid-template-columns: 52px 1fr 48px;
+      font-size: 17px;
+      gap: 10px;
+    }
+    .tweets .truth {
+      display: none;
+    }
+    .flow {
+      flex-wrap: wrap;
+    }
+    .two {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .tab {
+      font-size: 15px;
+    }
+    .tab th,
+    .tab td {
+      padding: 6px 8px;
+    }
+    .three {
+      font-size: 20px;
+    }
+    .notes {
+      display: block;
+      font-size: 15px;
+      color: var(--text-muted);
+      border-left: 2px solid var(--border);
+      padding-left: 12px;
+      margin-top: 12px;
+    }
+    .hud,
+    .progress,
+    .notes-panel {
+      display: none;
+    }
+    .math {
+      font-size: 17px;
+      overflow-x: auto;
+    }
+  }
+  @media print {
+    .slide,
+    .slide.split {
+      break-after: page;
+      border: 0;
+    }
+  }
+</style>
+
+
+<style>
+  .cast {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 36px;
+    margin: 18px 0 14px;
+  }
+  .who {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1.5px solid var(--border);
+    padding-top: 14px;
+  }
+  .slide .who p {
+    font-size: 21px;
+  }
+  .slide .who .name {
+    font-family: var(--font-jetbrains);
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+  }
+  .slide .who .es {
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 20px;
+  }
+  .dialogue {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 0 10px;
+  }
+  .slide .dialogue p {
+    font-size: 28px;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: baseline;
+  }
+  .dialogue .sp {
+    font-family: var(--font-jetbrains);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .close .dialogue {
+    margin-bottom: 18px;
+  }
+  @media (max-width: 760px), print {
+    .cast {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .slide .dialogue p {
+      font-size: 19px;
+      grid-template-columns: 96px 1fr;
+    }
+    .dialogue .sp {
+      font-size: 12px;
+    }
+  }
+</style>

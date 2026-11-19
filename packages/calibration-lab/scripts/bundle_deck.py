@@ -1,10 +1,14 @@
 """Pack the built deck page (apps/site/dist) into one self-contained HTML body, for a
-private preview outside the site. Run after `pnpm build`: python3 scripts/bundle_deck.py out.html"""
+private preview outside the site. Run after `pnpm build`:
+    python3 scripts/bundle_deck.py out.html [slug] [title]
+slug defaults to calibration (the first draft); cronopios is the second."""
 import base64, re, sys
 from pathlib import Path
 dist = Path("/home/user/potnuse/apps/site/dist")
-html = (dist / "talks/calibration/index.html").read_text()
 out = Path(sys.argv[1])
+slug = sys.argv[2] if len(sys.argv) > 2 else "calibration"
+title = sys.argv[3] if len(sys.argv) > 3 else {"calibration": "what does 0.8 promise?", "cronopios": "enjoy your logits!"}.get(slug, slug)
+html = (dist / f"talks/{slug}/index.html").read_text()
 
 def data_uri(p: Path):
     mime = {"woff2": "font/woff2", "woff": "font/woff", "ttf": "font/ttf", "svg": "image/svg+xml"}[p.suffix[1:]]
@@ -31,11 +35,12 @@ jb = data_uri(dist / "fonts/JetBrainsMono-VariableFont.woff2")
 inline_styles = inline_styles.replace("/fonts/JetBrainsMono-VariableFont.woff2", jb)
 gf = re.search(r'<link rel="stylesheet" href="(https://fonts.googleapis.com[^"]+)"', head).group(1)
 page = (
-    "<title>what does 0.8 promise?</title>\n"
+    f"<title>{title}</title>\n"
     f'<link rel="stylesheet" href="{gf}">\n'
     + inline_styles + styles + scripts_head + body
 )
 assert "/_astro/" not in page.replace("_astro/", "") or True
+page = page.replace('href="/rhizome"', 'href="https://rdmontgomery.com/rhizome"')
 out.write_text(page)
 left = re.findall(r'(?:src|href)="/(?!/)[^"]*"', page)
 print(f"{len(page)/1e6:.2f} MB, leftover local refs: {left[:5]}")
