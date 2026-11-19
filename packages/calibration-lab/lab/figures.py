@@ -182,10 +182,10 @@ def fig_two_axes(R):
     lad = R["ladder"]
     names = {"keyword_eb": "keyword rates", "tfidf_nb": "naive Bayes", "tfidf_lr": "TF-IDF + LR",
              "tfidf_gbm": "TF-IDF + GBM", "probe_lr": "probe", "probe_wall": "probe, no L2",
-             "probe_mlp": "MLP head", "probe_tabpfn": "TabPFN head", "jev_mock": "Jev (mock)", "jev": "Jev",
+             "probe_mlp": "MLP head", "probe_tabpfn": "TabPFN head", "probe_tabpfn_t1": "TabPFN, T = 1", "jev_mock": "Jev (mock)", "jev": "Jev",
              "oracle": "oracle"}
     labelled = {"keyword_eb": (8, 4), "tfidf_nb": (8, 4), "probe_lr": (-8, 16), "probe_wall": (8, 4),
-                "jev_mock": (8, -6), "jev": (8, -6), "oracle": (8, 4), "probe_tabpfn": (8, 4)}
+                "jev_mock": (8, -6), "jev": (8, -6), "oracle": (8, 4), "probe_tabpfn": (8, 4), "probe_tabpfn_t1": (8, 4)}
     rel = [max(s["reliability"], 1e-4) for s in lad.values()]
     y0 = 10 ** math.floor(math.log10(min(rel)))
     y1 = 10 ** math.ceil(math.log10(max(rel)))

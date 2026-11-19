@@ -142,12 +142,20 @@ def tabpfn_available() -> bool:
         return False
 
 
-def probe_tabpfn(Z_tr, y_tr, Z_out, dim=128):
+def probe_tabpfn(Z_tr, y_tr, Z_out, dim=128, temperature="auto"):
+    """TabPFN as the head. Two things from its source worth knowing:
+    by default it refuses CPU inference above 1,000 training rows (lifted here
+    with ignore_pretraining_limits), and it applies its own softmax temperature,
+    read from the checkpoint, after inference. temperature=1.0 switches that
+    off, which is the comparison worth making: even the in-context Bayesian
+    ships with a thermostat."""
     from tabpfn import TabPFNClassifier
 
-    m = TabPFNClassifier(random_state=0)
+    m = TabPFNClassifier(random_state=0, ignore_pretraining_limits=True, softmax_temperature=temperature)
     m.fit(Z_tr[:, :dim], y_tr)
-    return [m.predict_proba(z[:, :dim])[:, 1] for z in Z_out], dict(dim=dim)
+    out = [m.predict_proba(z[:, :dim])[:, 1] for z in Z_out]
+    T = getattr(m, "softmax_temperature_", temperature)
+    return out, dict(dim=dim, softmax_temperature=float(T) if T != "auto" else None)
 
 
 def hard_wall_sweep(Z_tr, y_tr, Z_cal, y_cal, Z_te, y_te, grid=np.logspace(-3, 4, 15)):

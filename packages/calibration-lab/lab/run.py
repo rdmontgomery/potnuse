@@ -88,15 +88,29 @@ def main(argv=None):
         (pc, pt), infos[f.__name__] = f(Z[tr], y[tr], [Z[ca], Z[te]])
         preds[f.__name__] = (pc, pt)
         log(f"  {f.__name__}")
-    if a.tabpfn and Mo.tabpfn_available():
-        (pc, pt), infos["probe_tabpfn"] = Mo.probe_tabpfn(Z[tr], y[tr], [Z[ca], Z[te]])
-        preds["probe_tabpfn"] = (pc, pt)
-        log("  probe_tabpfn")
-    if a.jev and J.available():
-        pj = J.score_real([texts[i] for i in np.concatenate([ca, te])])
-        preds["jev"] = (pj[: len(ca)], pj[len(ca):])
-        log("  jev (real)")
-    elif has_truth:
+    # optional heads: a failure here is logged and skipped, never fatal
+    if a.tabpfn:
+        if not Mo.tabpfn_available():
+            log("  tabpfn not installed: uv sync --extra tabpfn")
+        for key, temp in (("probe_tabpfn", "auto"), ("probe_tabpfn_t1", 1.0)):
+            try:
+                (pc, pt), infos[key] = Mo.probe_tabpfn(Z[tr], y[tr], [Z[ca], Z[te]], temperature=temp)
+                preds[key] = (pc, pt)
+                log(f"  {key} (softmax temperature {infos[key].get('softmax_temperature')})")
+            except Exception as e:  # noqa: BLE001
+                log(f"  {key} failed: {type(e).__name__}: {e}")
+                break
+    if a.jev:
+        if not J.available():
+            log("  --jev given but TYPESAFE_API_KEY is not set; skipping")
+        else:
+            try:
+                pj = J.score_real([texts[i] for i in np.concatenate([ca, te])])
+                preds["jev"] = (pj[: len(ca)], pj[len(ca):])
+                log("  jev (real)")
+            except Exception as e:  # noqa: BLE001
+                log(f"  jev failed: {type(e).__name__}: {e}")
+    if "jev" not in preds and has_truth:
         pj = J.score_mock(truth)
         preds["jev_mock"] = (pj[ca], pj[te])
     if has_truth:
