@@ -279,6 +279,14 @@ than to a BERT with a classifier on top. In the lab it appears as a nonlinear
 head on the first 128 embedding dimensions (`--tabpfn`), which is a hybrid:
 frozen encoder, in-context head.
 
+Two details from TabPFN's source (v10.2) that bear on the talk. It refuses CPU
+inference above 1,000 training rows unless told otherwise
+(`ignore_pretraining_limits`), which the lab sets. And it applies its own
+`softmax_temperature` after inference, read from the checkpoint by default: the
+model trained to approximate a Bayesian posterior still ships with a thermostat.
+`--tabpfn` runs it twice, at the shipped temperature and at T = 1, so the real
+run measures what that setting is doing.
+
 ---
 
 ## 7. Measuring it: the ruler
