@@ -65,6 +65,7 @@ dev = [
 gemma = [
     { name = "sentence-transformers" },
     { name = "torch" },
+    { name = "transformers" },
 ]
 jev = [
     { name = "httpx" },
@@ -82,9 +83,10 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "scikit-learn", specifier = ">=1.4" },
     { name = "scipy", specifier = ">=1.11" },
-    { name = "sentence-transformers", marker = "extra == 'gemma'", specifier = ">=3.1" },
+    { name = "sentence-transformers", marker = "extra == 'gemma'", specifier = ">=5.1" },
     { name = "tabpfn", marker = "extra == 'tabpfn'", specifier = ">=2.0" },
-    { name = "torch", marker = "extra == 'gemma'", specifier = ">=2.3" },
+    { name = "torch", marker = "extra == 'gemma'", specifier = ">=2.4" },
+    { name = "transformers", marker = "extra == 'gemma'", specifier = ">=4.56" },
 ]
 provides-extras = ["gemma", "tabpfn", "jev", "dev"]
 

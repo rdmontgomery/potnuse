@@ -7,7 +7,7 @@
   "base_rate": 0.436884,
   "has_truth": true,
   "water_rows": 1102,
-  "generated": "2026-11-19 06:47"
+  "generated": "2026-11-19 06:54"
  },
  "citl_train": {
   "mean_p": 0.436818,
@@ -14661,5 +14661,47 @@
   ],
   "batch": 150,
   "budget": 30
- }
+ },
+ "examples": [
+  {
+   "kind": "sure, and right",
+   "text": "Highway near Kashmir derailed after last night, crews responding http://t.co/1RQo3pBxpd",
+   "keyword": "derailed",
+   "p": 0.925011,
+   "y": 1,
+   "p_true": 0.892541
+  },
+  {
+   "kind": "sure it's nothing",
+   "text": "Reading a novel called Flood and can't put it down!!!",
+   "keyword": "flood",
+   "p": 0.02786,
+   "y": 0,
+   "p_true": 0.042167
+  },
+  {
+   "kind": "a coin flip",
+   "text": "the train tho #mood LMAO",
+   "keyword": "train",
+   "p": 0.484334,
+   "y": 1,
+   "p_true": 0.245448
+  },
+  {
+   "kind": "confident miss",
+   "text": "When your crush texts back: internal ebola #relatable",
+   "keyword": "ebola",
+   "p": 0.04473,
+   "y": 1,
+   "p_true": 0.045086
+  },
+  {
+   "kind": "confident false alarm",
+   "text": "Rescue teams searching for survivors after bombing in Turkey #alert",
+   "keyword": "bombing",
+   "p": 0.863892,
+   "y": 0,
+   "p_true": 0.83848
+  }
+ ]
 }

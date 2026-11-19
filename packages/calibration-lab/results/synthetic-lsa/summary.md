@@ -1,4 +1,4 @@
-# synthetic / lsa  (7613 rows, base rate 0.437, generated 2026-11-19 06:47)
+# synthetic / lsa  (7613 rows, base rate 0.437, generated 2026-11-19 06:54)
 
 ## ladder (test split, raw scores)
 

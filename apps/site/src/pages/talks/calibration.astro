@@ -23,6 +23,7 @@ import Temperature from '@/components/calibration/Temperature.astro';
 const tex = (s: string, display = false) => katex.renderToString(s, { displayMode: display, throwOnError: false });
 const f2 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(2));
 const f3 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(3));
+const f1 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(1));
 const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`);
 const synthetic = N.meta.has_truth;
 const L = N.ladder as Record<string, any>;
@@ -65,6 +66,7 @@ const dataLabel = synthetic
           <li>
             <span class="p" style={`--p:${e.p}`}>{e.p.toFixed(2)}</span>
             <span class="t">{e.text.replace(/https?:\/\/\S+/g, '').trim()}</span>
+            {e.p_true != null && <span class="truth" title="the generator's true probability">truth {e.p_true.toFixed(2)}</span>}
             <span class={`y ${e.y ? 'yes' : 'no'}`}>{e.y ? 'real' : 'not'}</span>
           </li>
         ))}
@@ -75,7 +77,8 @@ const dataLabel = synthetic
         disaster or not. 'My mixtape is fire' versus 'fire at the refinery'. The labels are human judgements, which is
         exactly the human-in-the-loop setup we'll end on. Each of these comes with a number, and somebody downstream is going
         to dispatch a truck, or not, on it. The confident miss and the confident false alarm are on here on purpose:
-        an honest 0.9 is wrong one time in ten.
+        an honest 0.9 is wrong one time in ten. On the synthetic data the generator's true probability is shown too: the
+        'confident miss' is usually a tweet the truth itself scored low, the one-in-twenty that happens anyway.
       </aside>
     </section>
 
@@ -165,8 +168,8 @@ const dataLabel = synthetic
       </p>
       <aside class="notes">
         The paradigm I want to defend: a pretrained transformer as a feature extractor, attention and all, frozen, with your
-        own small head on top. Encoder-only models, JEPA-style models, System One models like Jev are this shape: a
-        transformer with a readout instead of a vocabulary. The head is a hyperplane in embedding space. Distance from the
+        own small head on top. Encoder-only models and JEPA-style models are this shape, and by secondary accounts so is Jev: a
+        transformer with a readout instead of a vocabulary (TypeSafe hasn't published the architecture). The head is a hyperplane in embedding space. Distance from the
         wall times the norm of w is the logit; so the norm of w is an inverse temperature. That's the hinge for the next
         slide. In the lab, the task prefix and the Matryoshka truncation are both measured, not assumed.
       </aside>
@@ -210,7 +213,7 @@ const dataLabel = synthetic
         <div>
           <p>To train it in: reward the probability with a proper scoring rule, not a preference.</p>
           <div class="math" set:html={tex('r = -(p - y)^2 \\quad \\text{or} \\quad r = \\log p_y', true)} />
-          <p class="small">The vendor calls theirs RLCD. One independent evaluation found Jev's yes/no probabilities over-predict yes. Train it in, then check it on your traffic anyway.</p>
+          <p class="small">The vendor calls theirs RLCD. One independent evaluation found Jev's multi-label yes/no probabilities over-predicting yes. Train it in, then check it on your traffic anyway.</p>
         </div>
       </div>
       <aside class="notes">
@@ -249,7 +252,7 @@ const dataLabel = synthetic
         <p>The running sum of (y − p) is Brownian under the null. Ask how far it strays.</p>
         <p class="small">
           Kolmogorov–Smirnov on the walk, no bins: probe p = {f2(N.cumulative.probe_lr_platt.p)}, naive Bayes
-          p = {N.cumulative.tfidf_nb.p < 1e-4 ? '< 0.0001' : f3(N.cumulative.tfidf_nb.p)}.
+          p {N.cumulative.tfidf_nb.p < 1e-4 ? '< 0.0001' : `= ${f3(N.cumulative.tfidf_nb.p)}`}.
         </p>
         <p class="small">Tygert 2021; Błasiok and Nakkiran's smooth ECE is the kernel version.</p>
       </div>
@@ -316,7 +319,7 @@ const dataLabel = synthetic
         <p class="kicker">the storm</p>
         <h2>the world moves</h2>
         <p>Trained on dry tweets. Then the floods arrive.</p>
-        <p class="small">ECE {f3(N.drift.dry_ece)} on dry, {f3(N.drift.wet_ece)} on water. Every guarantee so far assumed exchangeability, which is the statistician's ergodic hypothesis.</p>
+        <p class="small">ECE {f3(N.drift.dry_ece)} on dry, {f3(N.drift.wet_ece)} on water. Every guarantee so far assumed exchangeability, a stronger cousin of the ergodic hypothesis.</p>
         <p class="small">Score drift (PSI {f2(N.drift.psi)}) is an alarm, not a test: calibration can rot under an unchanged histogram.</p>
       </div>
       <div class="fig"><Drift caption={false} /></div>
@@ -336,8 +339,8 @@ const dataLabel = synthetic
         <h2>who you label decides what you can know</h2>
         <p>Label only what you dispatched on and you report zero misses. Forever.</p>
         <p class="small">
-          Real misses per batch in the storm: {f2(loop.flagged?.missed)}. Flagged-only estimate: {f2(loop.flagged?.est_missed)}.
-          With a fifth of the same budget spent on a weighted random audit: {f2(loop.stratified?.est_missed)}.
+          Real misses per batch in the storm: {f1(loop.stratified?.missed)}. Flagged-only estimate: {f1(loop.flagged?.est_missed)}.
+          Near-threshold labels: {f1(loop.uncertainty?.est_missed)}. A fifth of the same budget on a weighted random audit: {f1(loop.stratified?.est_missed)}.
         </p>
         <p class="small">Selection on the score doesn't bias the map where you look. It blinds you everywhere you don't.</p>
       </div>
@@ -464,7 +467,7 @@ const dataLabel = synthetic
     top: 50%;
     width: 1280px;
     height: 720px;
-    padding: 64px 88px 72px;
+    padding: 56px 72px 64px;
     transform: translate(-50%, -50%) scale(var(--scale));
     transform-origin: center;
     display: none;
@@ -486,7 +489,7 @@ const dataLabel = synthetic
     display: flex;
   }
   .split .text {
-    flex: 0 0 470px;
+    flex: 0 0 430px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -500,6 +503,10 @@ const dataLabel = synthetic
   }
   .split .fig :global(.fig) {
     margin: 0;
+  }
+  /* on a slide the speaker carries the caption; in reading mode it comes back */
+  .split .fig :global(figcaption) {
+    display: none;
   }
   .kicker {
     font-family: var(--font-jetbrains);
@@ -579,7 +586,7 @@ const dataLabel = synthetic
   }
   .tweets li {
     display: grid;
-    grid-template-columns: 76px 1fr 64px;
+    grid-template-columns: 76px 1fr auto 64px;
     align-items: center;
     gap: 18px;
     font-size: 22px;
@@ -590,6 +597,14 @@ const dataLabel = synthetic
     font-size: 20px;
     text-align: right;
     color: color-mix(in srgb, var(--viz-rose) calc(var(--p) * 100%), var(--viz-blue));
+  }
+  .tweets .truth {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .tweets li:not(:has(.truth)) {
+    grid-template-columns: 76px 1fr 64px;
   }
   .tweets .y {
     font-family: var(--font-jetbrains);
@@ -771,6 +786,9 @@ const dataLabel = synthetic
     .split .text {
       flex: none;
     }
+    .split .fig :global(figcaption) {
+      display: block;
+    }
     h1 {
       font-size: 52px;
     }
@@ -783,10 +801,14 @@ const dataLabel = synthetic
     .slide p.small {
       font-size: 16px;
     }
-    .tweets li {
+    .tweets li,
+    .tweets li:not(:has(.truth)) {
       grid-template-columns: 52px 1fr 48px;
       font-size: 17px;
       gap: 10px;
+    }
+    .tweets .truth {
+      display: none;
     }
     .flow {
       flex-wrap: wrap;

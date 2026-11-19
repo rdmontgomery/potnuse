@@ -27,16 +27,16 @@ STYLE = """
 <style>
   .fig { width: 100%; height: auto; display: block; margin: 1.6rem auto 0.6rem; }
   .fig text { font-family: var(--font-jetbrains); fill: var(--text-dim); }
-  .fig .tick { font-size: 11px; }
-  .fig .label { font-size: 11.5px; fill: var(--text-muted); }
+  .fig .tick { font-size: 12px; }
+  .fig .label { font-size: 12.5px; fill: var(--text-muted); }
   .fig .mid { text-anchor: middle; }
   .fig .end { text-anchor: end; }
   .fig .grid { stroke: var(--border); stroke-width: 1; }
   .fig .axis { stroke: var(--border); stroke-width: 1.5; }
   .fig .ref { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
   .fig .series { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .fig .key { font-size: 11.5px; fill: var(--text); }
-  .fig .note { font-size: 11px; fill: var(--text-muted); }
+  .fig .key { font-size: 12.5px; fill: var(--text); }
+  .fig .note { font-size: 11.5px; fill: var(--text-muted); }
   .fig .big { font-size: 13px; fill: var(--text); }
   figcaption {
     font-family: var(--font-jetbrains);
@@ -53,6 +53,25 @@ STYLE = """
 
 def f(x, nd=2):
     return f"{x:.{nd}f}".rstrip("0").rstrip(".") if isinstance(x, float) else str(x)
+
+
+def nice(lo, hi, n=4):
+    """Round tick values covering [lo, hi]: steps of 1, 2, 2.5 or 5 x 10^k."""
+    span = (hi - lo) / n
+    mag = 10 ** math.floor(math.log10(span))
+    step = next(m * mag for m in (1, 2, 2.5, 5, 10) if m * mag >= span)
+    a = math.floor(lo / step + 1e-9) * step
+    b = math.ceil(hi / step - 1e-9) * step
+    k = int(round((b - a) / step))
+    return [round(a + i * step, 10) for i in range(k + 1)]
+
+
+def tickfmt(ticks):
+    """Enough decimals to tell the ticks apart, no more."""
+    for d in range(0, 6):
+        if all(abs(float(f"{t:.{d}f}") - t) < 1e-9 for t in ticks):
+            return lambda v, d=d: f"{v:.{d}f}"
+    return lambda v: f"{v:g}"
 
 
 class Plot:
@@ -165,18 +184,25 @@ def fig_two_axes(R):
              "tfidf_gbm": "TF-IDF + GBM", "probe_lr": "probe", "probe_wall": "probe, no L2",
              "probe_mlp": "MLP head", "probe_tabpfn": "TabPFN head", "jev_mock": "Jev (mock)", "jev": "Jev",
              "oracle": "oracle"}
-    rmax = max(s["reliability"] for s in lad.values())
+    labelled = {"keyword_eb": (8, 4), "tfidf_nb": (8, 4), "probe_lr": (-8, 16), "probe_wall": (8, 4),
+                "jev_mock": (8, -6), "jev": (8, -6), "oracle": (8, 4), "probe_tabpfn": (8, 4)}
+    rel = [max(s["reliability"], 1e-4) for s in lad.values()]
+    y0 = 10 ** math.floor(math.log10(min(rel)))
+    y1 = 10 ** math.ceil(math.log10(max(rel)))
     xmax = max(s["resolution"] for s in lad.values())
-    p = Plot(0, round(xmax * 1.15, 3), 0, rmax * 1.15, right=40)
-    xt = [round(i * xmax * 1.15 / 4, 3) for i in range(5)]
-    yt = [round(i * rmax * 1.15 / 4, 4) for i in range(5)]
-    p.frame(xt, yt, "resolution: how much it knows", "reliability: how dishonest", xfmt=lambda v: f"{v:.3f}", yfmt=lambda v: f"{v:.3f}")
+    xt = nice(0, xmax * 1.05)
+    p = Plot(0, xt[-1], y0, y1, ylog=True, right=40)
+    yt = [10 ** e for e in range(int(math.log10(y0)), int(math.log10(y1)) + 1)]
+    p.frame(xt, yt, "resolution: how much it knows →", "reliability: how dishonest (log) →", xfmt=tickfmt(xt), yfmt=lambda v: f"{v:g}")
     for k, s in lad.items():
         c = ROSE if s["reliability"] > 0.01 else (BLUE if k == "oracle" else AMBER)
-        p.dots([(s["resolution"], s["reliability"])], c, titles=[f"{names.get(k, k)}: reliability {s['reliability']:.4f}, resolution {s['resolution']:.4f}, AUC {s['auc']:.3f}"])
-        p.text(s["resolution"], s["reliability"], names.get(k, k), dx=8, dy=-6 if k not in ("tfidf_gbm", "probe_mlp") else 14)
+        r = max(s["reliability"], 1e-4)
+        p.dots([(s["resolution"], r)], c, titles=[f"{names.get(k, k)}: reliability {s['reliability']:.4f}, resolution {s['resolution']:.4f}, AUC {s['auc']:.3f}"])
+        if k in labelled:
+            dx, dy = labelled[k]
+            p.text(s["resolution"], r, names.get(k, k), dx=dx, dy=dy, anchor="end" if dx < 0 else None)
     nb = lad.get("tfidf_nb")
-    cap = ("Murphy's split of the Brier score puts every model on two independent axes. "
+    cap = ("Murphy's split of the Brier score puts every model on two independent axes (hover a dot for its name). "
            f"Keyword rates are honest and nearly useless; naive Bayes knows a lot and lies about it "
            f"(reliability {nb['reliability']:.3f}). Down and to the right is better.")
     return component("TwoAxes", p.svg("Each model plotted by resolution against reliability."), cap)
@@ -217,8 +243,10 @@ def fig_ruler(R):
                              ("probe_lr_platt", AMBER, "probe", "after Platt"),
                              ("tfidf_nb", ROSE, "naive Bayes", "raw")):
         p.line(list(zip(r[k]["bins"], r[k]["ece"])), c)
-        p.key(label, c, f"{sub}, slope {r[k]['slope']:.2f}")
-    p.text(nf["bins"][-1], nf["noise_floor"][-1], "√(B/n) noise", anchor="end", dy=16)
+        _ = sub
+        p.key(label, c, f"slope {r[k]['slope']:.2f}")
+    mid = len(nf["bins"]) * 2 // 3
+    p.text(nf["bins"][mid], nf["noise_floor"][mid], "√(B/n) noise floor", anchor="start", dx=6, dy=18)
     cap = (f"ECE against bin count on {r['null']['n']} test tweets, log-log. A calibrated model's error is pure noise and "
            f"grows like the square root of the bin count, slope {r['null']['slope']:.2f}: the coastline law for a Brownian "
            "trace, dimension 1.5. Naive Bayes sits on a plateau, its real error, until the ruler gets fine enough for noise to win.")
@@ -230,8 +258,9 @@ def fig_walk(R):
     lim = max(max(abs(v) for v in cu[k]["walk"]) for k in ("tfidf_nb", "probe_lr_platt", "null"))
     lim = max(lim, 3 * cu["null"]["sd"])
     p = Plot(0, 1, -lim * 1.1, lim * 1.1, right=130)
-    p.frame([0, 0.25, 0.5, 0.75, 1], [round(-lim, 3), 0, round(lim, 3)], "forecast, sorted", "running Σ(y − p) / n",
-            yfmt=lambda v: f"{v:+.3f}" if v else "0")
+    yt = [t for t in nice(-lim, lim) if abs(t) <= lim * 1.1]
+    p.frame([0, 0.25, 0.5, 0.75, 1], yt, "forecast, sorted low to high", "running Σ(y − p) / n",
+            yfmt=lambda v: (tickfmt(yt)(v) if v < 0 else "+" + tickfmt(yt)(v)) if v else "0")
     sd = cu["null"]["sd"]
     # 95% envelope for sup|B| on [0,1] is about 2.24 sd; the pointwise one grows like sqrt(t)
     xs = [i / 50 for i in range(51)]
@@ -239,7 +268,8 @@ def fig_walk(R):
     for k, c, label, sub in (("null", BLUE, "calibrated", "by construction"), ("probe_lr_platt", AMBER, "probe", "after Platt"),
                              ("tfidf_nb", ROSE, "naive Bayes", "raw")):
         p.line(list(zip(cu[k]["x"], cu[k]["walk"])), c, width=1.6)
-        p.key(label, c, f"{sub}, p = {cu[k]['p_value']:.2g}")
+        pv = cu[k]["p_value"]
+        p.key(label, c, "p < 0.0001" if pv < 1e-4 else f"p = {pv:.2f}")
     cap = ("The binning-free test. Sort by forecast and keep a running sum of outcome minus forecast. A calibrated "
            "model's walk is a random walk and stays in the shaded band, the 95% range of a Brownian excursion. "
            "Measure how far the walk strays, not how long it is.")
@@ -253,7 +283,10 @@ def fig_cover(R):
     ymax = max(max(c["ece_wall"] for c in rows), max(c["ece_ridge"] for c in rows)) * 1.15
     p = Plot(min(xs) * 0.8, max(xs) * 1.25, 0, ymax, xlog=True, right=130)
     xt = [v for v in (0.1, 0.25, 0.5, 1, 2, 4, 8, 16) if min(xs) * 0.8 <= v <= max(xs) * 1.25]
-    p.frame(xt, [round(i * ymax / 4, 2) for i in range(5)], f"labels per dimension (n / d, d = {d})", "test ECE", xfmt=lambda v: f"{v:g}")
+    yt = nice(0, ymax)
+    p.y1 = yt[-1]
+    ymax = yt[-1]
+    p.frame(xt, yt, f"labels per dimension (n / d, d = {d})", "test ECE", xfmt=lambda v: f"{v:g}", yfmt=tickfmt(yt))
     sep = [c for c in rows if c["separable"] >= 0.5]
     if sep:
         p.rect(min(xs) * 0.8, max(c["ratio"] for c in sep) * 1.15, ROSE, 0.07)
@@ -265,7 +298,7 @@ def fig_cover(R):
     p.dots([(c["ratio"], c["ece_ridge"]) for c in rows], AMBER, r=3.5,
            titles=[f"n={c['n']}, L2 by CV: ECE {c['ece_ridge']:.3f}" for c in rows])
     p.ref([(2, 0), (2, ymax)])
-    p.text(2, ymax * 0.82, "n = 2d", dx=5)
+    p.text(2, ymax * 0.82, "n = 2d", dx=6)
     p.key("hard wall", ROSE, "no penalty")
     p.key("soft wall", AMBER, "L2, chosen by CV")
     cap = (f"A head on a {d}-dimensional embedding, trained on n labels. Below about two labels per dimension a separating "
@@ -279,8 +312,10 @@ def fig_labels(R):
     ns = [r["n"] for r in lc]
     ymax = R["labels_curve"]["raw_ece"] * 1.1
     p = Plot(min(ns) * 0.8, max(ns) * 1.25, 0, ymax, xlog=True, right=130)
-    p.frame([v for v in (25, 50, 100, 200, 400, 800, 1600) if v <= max(ns) * 1.25], [round(i * ymax / 4, 3) for i in range(5)],
-            "labels used to fit the map", "test ECE after repair", xfmt=lambda v: f"{v:g}")
+    yt = nice(0, ymax)
+    p.y1 = yt[-1]
+    p.frame([v for v in (25, 50, 100, 200, 400, 800, 1600) if v <= max(ns) * 1.25], yt,
+            "labels used to fit the map", "test ECE after repair", xfmt=lambda v: f"{v:g}", yfmt=tickfmt(yt))
     p.ref([(min(ns) * 0.8, R["labels_curve"]["raw_ece"]), (max(ns) * 1.25, R["labels_curve"]["raw_ece"])])
     p.text(max(ns) * 1.2, R["labels_curve"]["raw_ece"], "unrepaired", anchor="end", dy=-6)
     for k, c, sub in (("temperature", BLUE, "1 number"), ("platt", AMBER, "2 numbers"), ("isotonic", ROSE, "a step function"),
@@ -312,34 +347,47 @@ def fig_drift(R):
     return component("Drift", p.svg("Reliability on dry versus water tweets for a model trained only on dry tweets."), cap)
 
 
+def _roll(v, k=3):
+    v = [x if x is not None else float("nan") for x in v]
+    out = []
+    for i in range(len(v)):
+        w = [x for x in v[max(0, i - k + 1): i + 1] if x == x]
+        out.append(sum(w) / len(w) if w else None)
+    return out
+
+
 def fig_loop(R):
     lp = R["loop"]
     nb = len(lp["wet_share"])
     xs = list(range(1, nb + 1))
-    true = lp["stratified"]["true_missed"]["mean"]
-    ymax = max(max(true), max(v for v in lp["random"]["est_missed"]["mean"] if v is not None)) * 1.2
-    p = Plot(1, nb, 0, ymax, right=140)
-    p.frame([1] + [v for v in range(5, nb + 1, 5)], [round(i * ymax / 4) for i in range(5)], "batch (150 tweets each)",
-            "real disasters below the threshold")
+    true = _roll(lp["stratified"]["true_missed"]["mean"])
+    strat = _roll(lp["stratified"]["est_missed"]["mean"])
+    unc = _roll(lp["uncertainty"]["est_missed"]["mean"])
+    flag = _roll(lp["flagged"]["est_missed"]["mean"])
+    yt = nice(0, max(v for v in true + strat if v is not None) * 1.1)
+    p = Plot(1, nb, 0, yt[-1], right=150)
+    p.frame([1] + list(range(5, nb + 1, 5)), yt, "batch (150 tweets each)", "real disasters below the threshold", yfmt=tickfmt(yt))
     on = next((i + 1 for i, w in enumerate(lp["wet_share"]) if w > 0), None)
     if on:
         p.rect(on - 0.5, nb, BLUE, 0.07)
-        p.text(on, ymax * 0.95, "the storm arrives", dx=4)
-    p.line(list(zip(xs, true)), MUTED, width=2.5)
-    p.key("actual misses", MUTED, "nobody sees this")
-    for k, c, label, sub in (("stratified", AMBER, "stratified + audit", "weighted estimate"),
-                             ("flagged", ROSE, "label the flagged", "what it reports")):
-        e = lp[k]["est_missed"]
-        p.band(xs, [v if v is not None else 0 for v in e["lo"]], [v if v is not None else 0 for v in e["hi"]], c, 0.12)
-        p.line(list(zip(xs, [v if v is not None else 0 for v in e["mean"]])), c)
-        p.key(label, c, sub)
+        p.text(on, yt[-1] * 0.95, "the storm arrives", dx=6)
+    p.line(list(zip(xs, true)), "var(--text)", width=3, opacity=0.55)
+    p.key("actual misses", "var(--text)", "nobody sees this")
+    p.line(list(zip(xs, strat)), AMBER)
+    p.key("random audit", AMBER, "20%, weighted")
+    p.line(list(zip(xs, unc)), BLUE, dash="5 4")
+    p.key("near the threshold", BLUE, "uncertainty sampling", dash="5 4")
+    p.line(list(zip(xs, [v if v is not None else 0 for v in flag])), ROSE, width=2.5)
+    p.key("label the flagged", ROSE, "what it reports")
+    p.text(nb, 0, "flagged-only: 0", anchor="end", dy=-8)
     late = slice(int(0.7 * nb), nb)
     import statistics as st
-    tm = st.mean(true[late])
-    cap = (f"The same {R['loop']['budget']} labels per batch, spent two ways. Labelling only the tweets you dispatched on "
-           "reports zero misses forever, because a miss is by definition a tweet you didn't flag. Diverting a fifth of the "
-           f"budget to a random audit, weighted back up, tracks the real count (about {tm:.0f} a batch once the storm hits).")
-    return component("Loop", p.svg("Missed disasters per batch: actual, estimated by a flagged-only queue, and by a stratified audit."), cap)
+    tm = st.mean(x for x in lp["stratified"]["true_missed"]["mean"][late] if x is not None)
+    cap = (f"The same {lp['budget']} labels per batch, spent three ways, averaged over runs (3-batch rolling mean). Labelling only the "
+           "tweets you dispatched on reports zero misses forever, because a miss is by definition a tweet you didn't flag. "
+           "Labelling near the threshold sees only the misses that were nearly caught. Diverting a fifth of the budget to a random "
+           f"audit, weighted back up, tracks the real count: about {tm:.0f} a batch once the storm hits.")
+    return component("Loop", p.svg("Missed disasters per batch: actual, and as estimated by three labeling policies."), cap)
 
 
 def fig_forget(R):
@@ -349,33 +397,28 @@ def fig_forget(R):
     xs = list(range(1, nb + 1))
     has_truth = R["meta"]["has_truth"]
     key = "true_mse" if has_truth else "brier"
-    series = [("frozen", ROSE, "frozen", "launch map, never refit"),
-              ("stratified", MUTED, "refit on everything", "remembers the calm"),
+    series = [("frozen", ROSE, "frozen", "never refit"),
+              ("stratified", MUTED, "refit, keep all", "remembers calm"),
               ("stratified-window6", BLUE, "refit, forget", "last 6 batches"),
-              ("stratified-window6-segmented", AMBER, "forget + segment", "one map per family")]
+              ("stratified-window6-segmented", AMBER, "forget + segment", "map per family")]
     series = [s for s in series if s[0] in lp]
 
-    def smooth(v, k=3):
-        v = [x if x is not None else float("nan") for x in v]
-        out = []
-        for i in range(len(v)):
-            w = [x for x in v[max(0, i - k + 1): i + 1] if x == x]
-            out.append(sum(w) / len(w) if w else None)
-        return out
-
-    vals = [smooth(lp[k][key]["mean"]) for k, *_ in series]
+    vals = [_roll(lp[k][key]["mean"]) for k, *_ in series]
     ymax = max(max(v for v in s if v is not None) for s in vals) * 1.15
     ymin = 0 if has_truth else min(min(v for v in s if v is not None) for s in vals) * 0.95
-    p = Plot(1, nb, ymin, ymax, right=150)
-    p.frame([1] + list(range(5, nb + 1, 5)), [round(ymin + i * (ymax - ymin) / 4, 3) for i in range(5)], "batch (150 tweets each)",
-            "error vs the truth (MSE)" if has_truth else "Brier score (3-batch mean)", yfmt=lambda v: f"{v:.3f}")
+    yt = nice(ymin, ymax)
+    ymax = yt[-1]
+    p = Plot(1, nb, yt[0], yt[-1], right=150)
+    p.frame([1] + list(range(5, nb + 1, 5)), yt, "batch (150 tweets each)",
+            "error vs the truth (MSE)" if has_truth else "Brier score (3-batch mean)", yfmt=tickfmt(yt))
     on = next((i + 1 for i, w in enumerate(lp["wet_share"]) if w > 0), None)
     if on:
         p.rect(on - 0.5, nb, BLUE, 0.07)
         p.text(on, ymax * 0.96, "the storm arrives", dx=4)
     for (k, c, label, sub), v in zip(series, vals):
-        p.line(list(zip(xs, v)), c, width=2.5 if k.endswith("segmented") else 2)
-        p.key(label, c, sub)
+        dash = "5 4" if c == MUTED else None  # muted and blue sit close in some themes
+        p.line(list(zip(xs, v)), c, width=2.5 if k.endswith("segmented") else 2, dash=dash)
+        p.key(label, c, sub, dash=dash)
     late = slice(int(0.7 * nb), nb)
     import statistics as st
     fr = st.mean([x for x in lp["frozen"][key]["mean"][late] if x is not None])
