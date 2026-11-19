@@ -79,6 +79,8 @@ importers:
         specifier: ^0.34.5
         version: 0.34.5
 
+  packages/calibration-lab: {}
+
   packages/canvas-runtime:
     dependencies:
       '@rdm/widget-protocol':

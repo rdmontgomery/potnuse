@@ -1,0 +1,833 @@
+---
+// The Haze talk: what does 0.8 promise?
+// Every number on these slides comes from packages/calibration-lab via
+// src/components/haze/numbers.json, so a re-run on the real data rewrites the
+// figures and the text together. `pnpm --filter @rdm/calibration-lab run` then
+// `figures` regenerates both.
+import Base from '@/layouts/Base.astro';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+
+import N from '@/components/haze/numbers.json';
+import TwoAxes from '@/components/haze/TwoAxes.astro';
+import Reliability from '@/components/haze/Reliability.astro';
+import Ruler from '@/components/haze/Ruler.astro';
+import Walk from '@/components/haze/Walk.astro';
+import Cover from '@/components/haze/Cover.astro';
+import Labels from '@/components/haze/Labels.astro';
+import Drift from '@/components/haze/Drift.astro';
+import Loop from '@/components/haze/Loop.astro';
+import Forget from '@/components/haze/Forget.astro';
+import Temperature from '@/components/calibration/Temperature.astro';
+
+const tex = (s: string, display = false) => katex.renderToString(s, { displayMode: display, throwOnError: false });
+const f2 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(2));
+const f3 = (x: number | null | undefined) => (x == null ? '—' : x.toFixed(3));
+const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`);
+const synthetic = N.meta.has_truth;
+const L = N.ladder as Record<string, any>;
+const C = N.conformal as Record<string, any>;
+const loop = N.loop as Record<string, any>;
+const seg = loop['stratified-window6-segmented'] ?? loop['stratified-window6'];
+const nbCold = L.tfidf_nb.T_fit;
+const lpRows = N.labels_curve.rows as any[];
+const lpAt = (n: number, k: string) => (lpRows.find((r) => r.n >= n) ?? lpRows[lpRows.length - 1])[k].ece;
+const dataLabel = synthetic
+  ? 'synthetic stand-in for Kaggle’s Disaster Tweets, every row with a known true probability'
+  : 'Kaggle’s NLP with Disaster Tweets, train.csv';
+---
+
+<Base
+  title="what does 0.8 promise?"
+  description="A fifteen-minute talk at the Haze on calibrated probability: the traditional ladder, the Boltzmann temperature inside every classifier, frozen encoders with a head, and the labeling loop that keeps a probability honest."
+>
+  <div class="deck" data-deck>
+    <!-- 1 -->
+    <section class="slide title" data-title="title">
+      <p class="kicker">the haze · november 2026</p>
+      <h1>what does 0.8 promise?</h1>
+      <p class="sub">calibration, temperature, and the labeling loop</p>
+      <p class="byline">rick montgomery · rdmontgomery.com/talks/calibration</p>
+      <aside class="notes">
+        A model says 0.8. What did it just promise you? Not that it's right. Not that it's sure. It promised a frequency:
+        of everything it calls 0.8, eight in ten happen. That's the whole talk. Fifteen minutes on what it takes to make
+        that promise true, measure it, and keep it true when the world moves.
+      </aside>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-title="the task">
+      <p class="kicker">the task</p>
+      <h2>a dispatcher reads a probability</h2>
+      <p class="lede">{N.meta.n.toLocaleString()} tweets. Is this one about a real disaster?</p>
+      <ul class="tweets">
+        {(N.examples as any[]).map((e) => (
+          <li>
+            <span class="p" style={`--p:${e.p}`}>{e.p.toFixed(2)}</span>
+            <span class="t">{e.text.replace(/https?:\/\/\S+/g, '').trim()}</span>
+            <span class={`y ${e.y ? 'yes' : 'no'}`}>{e.y ? 'real' : 'not'}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="foot">{dataLabel}. Scores from a frozen encoder with a logistic head, after recalibration.</p>
+      <aside class="notes">
+        Kaggle's getting-started NLP set: ten thousand tweets with a keyword like 'ablaze' or 'flood', hand-labelled real
+        disaster or not. 'My mixtape is fire' versus 'fire at the refinery'. The labels are human judgements, which is
+        exactly the human-in-the-loop setup we'll end on. Each of these comes with a number, and somebody downstream is going
+        to dispatch a truck, or not, on it. The confident miss and the confident false alarm are on here on purpose:
+        an honest 0.9 is wrong one time in ten.
+      </aside>
+    </section>
+
+    <!-- 3 -->
+    <section class="slide split" data-title="two axes">
+      <div class="text">
+        <p class="kicker">honesty is not knowledge</p>
+        <h2>a probability is a promise</h2>
+        <p>Of everything I call 0.8, eight in ten happen.</p>
+        <div class="math" set:html={tex('\\text{Brier} = \\underbrace{\\text{reliability}}_{\\text{dishonesty}} - \\underbrace{\\text{resolution}}_{\\text{knowledge}} + \\text{uncertainty}', true)} />
+        <p class="small">Murphy, 1973. Two axes that move independently. Predict the base rate for everyone and you are perfectly calibrated and useless.</p>
+      </div>
+      <div class="fig"><TwoAxes caption={false} /></div>
+      <aside class="notes">
+        Glenn Brier invented his score in 1950 to grade rain forecasts; Allan Murphy split it in 1973. Reliability: how far
+        your stated numbers sit from observed frequencies. Resolution: how much the outcomes differ across the things you
+        scored differently. Keyword rates, bottom left, are honest and nearly useless: AUC {f3(L.keyword_eb.auc)}.
+        Naive Bayes, top right, knows a lot and lies about it. Down and to the right is where you want to be.
+      </aside>
+    </section>
+
+    <!-- 4 -->
+    <section class="slide split" data-title="the ladder">
+      <div class="text">
+        <p class="kicker">traditional statistics</p>
+        <h2>logistic regression is honest by accident</h2>
+        <div class="math" set:html={tex('\\frac{\\partial \\ell}{\\partial b} = \\sum_i (y_i - p_i) = 0', true)} />
+        <p class="small">
+          The intercept's score equation forces mean(p) = mean(y) on the training rows:
+          {f3(N.citl_train.mean_p)} vs {f3(N.citl_train.mean_y)} here.
+        </p>
+        <p>Naive Bayes double-counts correlated words. ECE {f3(L.tfidf_nb.ece10)}. Two fitted numbers: {f3(N.nb_platt_ece)}.</p>
+        <p class="pull">A monotone map buys honesty. It can't buy knowledge.</p>
+      </div>
+      <div class="fig"><Reliability caption={false} /></div>
+      <aside class="notes">
+        The ladder before any transformer: keyword rates shrunk by empirical Bayes, naive Bayes, logistic regression on
+        TF-IDF, gradient boosting. Logistic regression is calibrated in the large for free, because log loss is a proper
+        scoring rule and the intercept's gradient is literally the sum of residuals. Niculescu-Mizil and Caruana showed in
+        2005 that boosting and SVMs squash toward the middle and naive Bayes flings to the corners. Platt scaling, two numbers,
+        a slope and an intercept on the log-odds, fixes naive Bayes without moving a single item's rank. AUC stays exactly
+        where it was.
+      </aside>
+    </section>
+
+    <!-- 5 -->
+    <section class="slide split" data-title="temperature">
+      <div class="text">
+        <p class="kicker">softmax is boltzmann</p>
+        <h2>confidence has a temperature</h2>
+        <div class="math" set:html={tex('p_i = \\frac{e^{z_i / T}}{\\sum_j e^{z_j / T}} \\qquad z = -E', true)} />
+        <p>Logits are negative energies. An overconfident model is running cold.</p>
+        <p class="small">
+          Fitted temperature, naive Bayes: T = {f2(nbCold)}. The probe: T = {f2(L.probe_lr.T_fit)}.
+          One scalar fixes most of it, which says most miscalibration is a temperature error, not a shape error.
+        </p>
+      </div>
+      <div class="fig"><Temperature /></div>
+      <aside class="notes">
+        Every classifier that returns a distribution ends in softmax, and softmax is the Boltzmann distribution with the
+        logit playing negative energy. Guo et al. 2017: modern deep nets got more accurate and less honest, and one number,
+        T, fitted on held-out data, repairs most of it. Cooling never changes the order of anything, so accuracy and AUC can't
+        see it. Preference tuning can act like cooling: the RLHF optimum is the old distribution times a Boltzmann factor in
+        the reward. That's the physicist's bridge into the next part.
+      </aside>
+    </section>
+
+    <!-- 6 -->
+    <section class="slide" data-title="the paradigm">
+      <p class="kicker">not an llm</p>
+      <h2>a frozen encoder and one head</h2>
+      <div class="flow">
+        <div class="box">tweet</div>
+        <div class="arrow">→</div>
+        <div class="box tall"><b>encoder</b><span>pretrained transformer, frozen<br />EmbeddingGemma: 768-d, task prefix</span></div>
+        <div class="arrow">→</div>
+        <div class="box">x</div>
+        <div class="arrow">→</div>
+        <div class="box tall accent"><b>head</b><span>w · x + b<br />a hyperplane</span></div>
+        <div class="arrow">→</div>
+        <div class="box">σ(·) = p</div>
+      </div>
+      <div class="math" set:html={tex('\\text{logit} = \\lVert w \\rVert \\cdot \\text{(signed distance to the hyperplane)} \\qquad T_{\\text{eff}} = 1 / \\lVert w \\rVert', true)} />
+      <p class="small center">
+        A head on frozen features <em>is</em> logistic regression, so it inherits everything on the last two slides.
+        Transfer learning supplies the geometry; the head supplies the probability.
+      </p>
+      <aside class="notes">
+        The paradigm I want to defend: a pretrained transformer as a feature extractor, attention and all, frozen, with your
+        own small head on top. Encoder-only models, JEPA-style models, System One models like Jev are this shape: a
+        transformer with a readout instead of a vocabulary. The head is a hyperplane in embedding space. Distance from the
+        wall times the norm of w is the logit; so the norm of w is an inverse temperature. That's the hinge for the next
+        slide. In the lab, the task prefix and the Matryoshka truncation are both measured, not assumed.
+      </aside>
+    </section>
+
+    <!-- 7 -->
+    <section class="slide split" data-title="cover">
+      <div class="text">
+        <p class="kicker">hard wall, soft wall</p>
+        <h2>the hyperplane always exists</h2>
+        <p>
+          Cover, 1965: with fewer than about 2 labels per dimension, a separating hyperplane exists for <em>any</em> labelling.
+        </p>
+        <p class="small">
+          Unpenalised, the fit finds it, |w| runs to infinity, T → 0, and every probability slams into 0 or 1.
+          At {N.cover.d} dims and few labels: test ECE {f2(N.cover.ece_wall_small)} with no penalty, {f2(N.cover.ece_ridge_small)} with one.
+        </p>
+        <p class="pull">Finding the hyperplane is free. The probability is the penalty's doing.</p>
+      </div>
+      <div class="fig"><Cover caption={false} /></div>
+      <aside class="notes">
+        The tempting recipe: put a few hundred labelled tweets into a 768-dimensional space and find the hyperplane that
+        separates them. Cover's function counting theorem says it's there whatever the labels are, as long as n is under
+        about 2d. Gardner's 1988 replica calculation of perceptron capacity puts the same transition at alpha_c = 2, a
+        genuine phase transition. An unregularised logistic fit on separable data has no finite optimum: the weights grow
+        without bound and the model goes to zero temperature. A hard wall. L2 makes the wall soft. In this picture the
+        regulariser is the thermostat.
+      </aside>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-title="system one">
+      <p class="kicker">train the honesty in</p>
+      <h2>judgments, not decisions</h2>
+      <div class="two">
+        <div>
+          <p>A System One model (TypeSafe's Jev) returns a probability per typed question. Code turns judgments into decisions:</p>
+          <div class="math" set:html={tex('\\text{act if } p \\ge \\frac{c_{FP}}{c_{FP} + c_{FN}}', true)} />
+          <p class="small">That threshold is only arithmetic if p is honest. Calibration is the contract between the model and the code.</p>
+        </div>
+        <div>
+          <p>To train it in: reward the probability with a proper scoring rule, not a preference.</p>
+          <div class="math" set:html={tex('r = -(p - y)^2 \\quad \\text{or} \\quad r = \\log p_y', true)} />
+          <p class="small">The vendor calls theirs RLCD. One independent evaluation found Jev's yes/no probabilities over-predict yes. Train it in, then check it on your traffic anyway.</p>
+        </div>
+      </div>
+      <aside class="notes">
+        TypeSafe's own line: Jev makes judgments, code makes decisions. The cost-ratio threshold is the payoff of honesty: no
+        grid search, no tuning, just prices. What would training calibration into a transformer require? A proper scoring rule
+        in the objective, which is what pretraining's log loss already is and what preference reward is not. That's why
+        pretrained models are roughly calibrated and tuned ones often aren't. Their method isn't published; my reading is a
+        proper scoring rule in RL clothes. Either way, your traffic is not their eval set.
+      </aside>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide split" data-title="the ruler">
+      <div class="text">
+        <p class="kicker">measuring it</p>
+        <h2>the error depends on the ruler</h2>
+        <p>Binned ECE grows with the number of bins, like a coastline.</p>
+        <div class="math" set:html={tex('\\text{ECE}(B) \\sim \\sqrt{B / n} \\quad\\Leftrightarrow\\quad L(\\varepsilon) \\sim \\varepsilon^{1-D},\\ D = 1.5', true)} />
+        <p class="small">Measured slope for a calibrated model: {f2(N.richardson.null.slope)}. Naive Bayes: {f2(N.richardson.tfidf_nb.slope)}, a plateau, its real error.</p>
+      </div>
+      <div class="fig"><Ruler caption={false} /></div>
+      <aside class="notes">
+        Richardson measured coastlines with shorter and shorter rulers and the length kept growing; Mandelbrot named the
+        exponent. Sort the forecasts and keep a running sum of outcome minus forecast. Under perfect calibration that sum is
+        a random walk, and a random walk's graph has dimension 1.5. Binned ECE is a length measurement on that walk, so it
+        grows as the square root of the bin count. Quoting an ECE without its bin count and sample size quotes the ruler.
+        The bend in the curve is the finest calibration map your labels can support.
+      </aside>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide split" data-title="the walk">
+      <div class="text">
+        <p class="kicker">a better instrument</p>
+        <h2>measure the excursion, not the length</h2>
+        <p>The running sum of (y − p) is Brownian under the null. Ask how far it strays.</p>
+        <p class="small">
+          Kolmogorov–Smirnov on the walk, no bins: probe p = {f2(N.cumulative.probe_lr_platt.p)}, naive Bayes
+          p = {N.cumulative.tfidf_nb.p < 1e-4 ? '< 0.0001' : f3(N.cumulative.tfidf_nb.p)}.
+        </p>
+        <p class="small">Tygert 2021; Błasiok and Nakkiran's smooth ECE is the kernel version.</p>
+      </div>
+      <div class="fig"><Walk caption={false} /></div>
+      <aside class="notes">
+        Story slot: in grad school we measured magnetoconductance fluctuations in GaAs/AlGaAs billiards, and the fractal
+        dimension of the trace told you about the dynamics underneath, soft walls versus hard walls, and how clean the sample
+        was. Same move here. The noise has a known dimension, so stop measuring the length of the trace and measure the
+        excursion against its Brownian envelope. Stays inside the band: honest. Leaves it: you have a real miscalibration.
+      </aside>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide split" data-title="labels">
+      <div class="text">
+        <p class="kicker">the budget</p>
+        <h2>how many labels?</h2>
+        <div class="math" set:html={tex('m = \\frac{z^2\\, p(1-p)}{\\delta^2}', true)} />
+        <p class="small">
+          Per bin, to see a gap of δ: {N.labels_needed['0.05']} labels for 5 points, {N.labels_needed['0.02'].toLocaleString()} for 2.
+          The 1/δ² is the whole conversation with whoever pays the labelers.
+        </p>
+        <p class="small">Repairing a bent probe: Platt at ~200 labels ECE {f3(lpAt(200, 'platt'))}; isotonic needs hundreds more to stop fitting noise.</p>
+      </div>
+      <div class="fig"><Labels caption={false} /></div>
+      <aside class="notes">
+        The standard error of a bin's hit rate is root p(1-p) over m. Fewer parameters win early: temperature is one number,
+        Platt two, isotonic a whole step function. Venn-Abers runs isotonic twice and hands back an interval whose width is the
+        price of not knowing which of the two is calibrated; it shrinks like one over n. If you want a guarantee rather than a
+        point estimate, that's the conformal family's answer to calibration.
+      </aside>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" data-title="conformal">
+      <p class="kicker">a different promise</p>
+      <h2>coverage is not calibration</h2>
+      <p class="lede">Conformal prediction promises the set contains the truth 90% of the time, for any model.</p>
+      <table class="tab">
+        <thead>
+          <tr><th>model</th><th>ECE</th><th>coverage</th><th>on real disasters</th><th>per-class (Mondrian)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>naive Bayes</td><td>{f3(C.tfidf_nb.ece)}</td><td>{pct(C.tfidf_nb.split.coverage)}</td><td>{pct(C.tfidf_nb.split.coverage_pos)}</td><td>{pct(C.tfidf_nb.mondrian.coverage_pos)}</td></tr>
+          <tr><td>keyword rates</td><td>{f3(C.keyword_eb.ece)}</td><td>{pct(C.keyword_eb.split.coverage)}</td><td class="hot">{pct(C.keyword_eb.split.coverage_pos)}</td><td>{pct(C.keyword_eb.mondrian.coverage_pos)}</td></tr>
+          <tr><td>probe</td><td>{f3(C.probe_lr.ece)}</td><td>{pct(C.probe_lr.split.coverage)}</td><td>{pct(C.probe_lr.split.coverage_pos)}</td><td>{pct(C.probe_lr.mondrian.coverage_pos)}</td></tr>
+        </tbody>
+      </table>
+      <p class="small center">
+        The badly calibrated model gets its 90%. The honest one misses real disasters {pct(1 - C.keyword_eb.split.coverage_pos)} of the time
+        until each class gets its own threshold. Marginal guarantees hide the class you care about.
+      </p>
+      <aside class="notes">
+        The term I almost got wrong when planning this talk: conformal prediction is not a calibration map. It guarantees
+        marginal coverage of a set under exchangeability, for any model, honest or not. A useless model gets coverage by
+        returning both labels a lot. Calibration is a claim at every probability level. Mondrian conformal conditions on the
+        class. Venn-Abers is where the two families meet: conformal machinery, probabilistic output.
+      </aside>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide split" data-title="drift">
+      <div class="text">
+        <p class="kicker">the storm</p>
+        <h2>the world moves</h2>
+        <p>Trained on dry tweets. Then the floods arrive.</p>
+        <p class="small">ECE {f3(N.drift.dry_ece)} on dry, {f3(N.drift.wet_ece)} on water. Every guarantee so far assumed exchangeability, which is the statistician's ergodic hypothesis.</p>
+        <p class="small">Score drift (PSI {f2(N.drift.psi)}) is an alarm, not a test: calibration can rot under an unchanged histogram.</p>
+      </div>
+      <div class="fig"><Drift caption={false} /></div>
+      <aside class="notes">
+        Calibration is a frequency claim, so it needs time averages to equal ensemble averages: an ergodic assumption. When a
+        hurricane hits, the vocabulary changes and so does the base rate. Exchangeability fails and with it every conformal
+        guarantee. Adaptive conformal inference, Gibbs and Candès 2021, nudges alpha after every miss so long-run coverage
+        holds anyway: {pct(N.aci.aci)} vs {pct(N.aci.static)} for the frozen threshold in the storm. The population stability
+        index on raw scores is a label-free alarm; it tells you when to pull labels forward, not whether you're calibrated.
+      </aside>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide split" data-title="who you label">
+      <div class="text">
+        <p class="kicker">the loop</p>
+        <h2>who you label decides what you can know</h2>
+        <p>Label only what you dispatched on and you report zero misses. Forever.</p>
+        <p class="small">
+          Real misses per batch in the storm: {f2(loop.flagged?.missed)}. Flagged-only estimate: {f2(loop.flagged?.est_missed)}.
+          With a fifth of the same budget spent on a weighted random audit: {f2(loop.stratified?.est_missed)}.
+        </p>
+        <p class="small">Selection on the score doesn't bias the map where you look. It blinds you everywhere you don't.</p>
+      </div>
+      <div class="fig"><Loop caption={false} /></div>
+      <aside class="notes">
+        The natural labeling queue is dispatchers confirming or reversing what they were sent. That learns precision forever
+        and recall never, because a miss is by definition something you didn't flag. Subtle point: choosing what to label by
+        the score does not bias P(y | score) inside the region you labeled; it leaves the rest of the map unidentified and
+        biases every aggregate. The fix is boring: two or three percent of everything, uniformly, weighted by one over its
+        inclusion probability.
+      </aside>
+    </section>
+
+    <!-- 15 -->
+    <section class="slide split" data-title="forget and segment">
+      <div class="text">
+        <p class="kicker">the loop, continued</p>
+        <h2>forget, and segment</h2>
+        <p>A map fitted in the calm is a claim about the calm.</p>
+        <p class="small">
+          Calibration-in-the-large late in the storm: frozen {f3(loop.frozen?.citl)}, refit on everything {f3(loop.stratified?.citl)},
+          refit on a window {f3(loop['stratified-window6']?.citl)}.
+          {synthetic && seg ? ` Error against the truth, frozen vs windowed per-family maps: ${f3(loop.frozen?.true_mse)} vs ${f3(seg.true_mse)}.` : ''}
+        </p>
+        <p class="pull">Calibration is per question, per population, per month.</p>
+      </div>
+      <div class="fig"><Forget caption={false} /></div>
+      <aside class="notes">
+        Three knobs, each fixing one mistake. Refit at all: the frozen map drifts off. Forget: a map fitted on everything is
+        outvoted by months of calm. Segment: one curve stretched over dry and water tweets is right for neither; each keyword
+        family is its own forecaster. That's the same lesson as Mondrian conformal, arriving from the other side.
+      </aside>
+    </section>
+
+    <!-- 16 -->
+    <section class="slide title close" data-title="close">
+      <p class="kicker">three things</p>
+      <ol class="three">
+        <li>A probability is a contract between a model and the code that acts on it. Proper scoring rules write it; a monotone map repairs it.</li>
+        <li>Measure the excursion, not the length. The ruler is part of the measurement.</li>
+        <li>Spend a slice of every label budget where you aren't looking.</li>
+      </ol>
+      <p class="byline">slides, code and data: rdmontgomery.com/talks/calibration · github.com/rdmontgomery/potnuse</p>
+      <aside class="notes">
+        Close on the contract. Everything in the lab reruns from one command, on the synthetic stand-in or the real Kaggle file.
+      </aside>
+    </section>
+
+    <nav class="hud" aria-label="slide controls">
+      <button type="button" data-prev aria-label="previous slide">←</button>
+      <span data-count>1 / 16</span>
+      <button type="button" data-next aria-label="next slide">→</button>
+      <button type="button" data-notes aria-pressed="false" title="speaker notes (n)">notes</button>
+    </nav>
+    <div class="progress" aria-hidden="true"><span data-bar></span></div>
+    <div class="notes-panel" data-notes-panel hidden></div>
+  </div>
+
+  <script>
+    const deck = document.querySelector<HTMLElement>('[data-deck]')!;
+    const slides = Array.from(deck.querySelectorAll<HTMLElement>('.slide'));
+    const count = deck.querySelector<HTMLElement>('[data-count]')!;
+    const bar = deck.querySelector<HTMLElement>('[data-bar]')!;
+    const panel = deck.querySelector<HTMLElement>('[data-notes-panel]')!;
+    const notesBtn = deck.querySelector<HTMLButtonElement>('[data-notes]')!;
+    let i = 0;
+
+    const fromHash = () => {
+      const n = parseInt(location.hash.slice(1), 10);
+      return Number.isFinite(n) ? Math.min(Math.max(n - 1, 0), slides.length - 1) : 0;
+    };
+
+    const show = (n: number, push = true) => {
+      i = Math.min(Math.max(n, 0), slides.length - 1);
+      slides.forEach((s, k) => s.classList.toggle('on', k === i));
+      count.textContent = `${i + 1} / ${slides.length}`;
+      bar.style.width = `${((i + 1) / slides.length) * 100}%`;
+      const note = slides[i].querySelector('.notes');
+      panel.textContent = note ? note.textContent!.replace(/\s+/g, ' ').trim() : '';
+      if (push) history.replaceState(null, '', `#${i + 1}`);
+    };
+
+    // the stage is a fixed 1280x720 canvas scaled to the window, so the layout
+    // on a projector matches the layout on a laptop
+    const fit = () => {
+      const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+      deck.style.setProperty('--scale', String(s));
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey) return;
+      if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+      else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+      else if (e.key === 'Home') show(0);
+      else if (e.key === 'End') show(slides.length - 1);
+      else if (e.key === 'n') toggleNotes();
+      else if (e.key === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    });
+    const toggleNotes = () => {
+      panel.hidden = !panel.hidden;
+      notesBtn.setAttribute('aria-pressed', String(!panel.hidden));
+    };
+    notesBtn.addEventListener('click', toggleNotes);
+    deck.querySelector('[data-prev]')!.addEventListener('click', () => show(i - 1));
+    deck.querySelector('[data-next]')!.addEventListener('click', () => show(i + 1));
+    window.addEventListener('hashchange', () => show(fromHash(), false));
+    window.addEventListener('resize', fit);
+    fit();
+    show(fromHash(), false);
+  </script>
+</Base>
+
+<style>
+  .deck {
+    --scale: 1;
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .slide {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1280px;
+    height: 720px;
+    padding: 64px 88px 72px;
+    transform: translate(-50%, -50%) scale(var(--scale));
+    transform-origin: center;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    color: var(--text);
+  }
+  .slide.on {
+    display: flex;
+  }
+  .slide.split {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 40px;
+  }
+  .slide.split.on {
+    display: flex;
+  }
+  .split .text {
+    flex: 0 0 470px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .split .fig {
+    flex: 1;
+    min-width: 0;
+  }
+  .split .fig :global(figure) {
+    margin: 0;
+  }
+  .split .fig :global(.fig) {
+    margin: 0;
+  }
+  .kicker {
+    font-family: var(--font-jetbrains);
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin: 0;
+  }
+  h1 {
+    font-size: 96px;
+    line-height: 1;
+    font-weight: 500;
+    margin: 0.1em 0 0;
+  }
+  h2 {
+    font-size: 46px;
+    line-height: 1.08;
+    font-weight: 500;
+    margin: 0 0 6px;
+  }
+  .slide p {
+    margin: 0;
+    font-size: 25px;
+    line-height: 1.35;
+  }
+  .slide p.small {
+    font-size: 19px;
+    color: var(--text-dim);
+  }
+  .slide p.lede {
+    font-size: 27px;
+    color: var(--text-dim);
+  }
+  .slide p.sub {
+    font-size: 34px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+  .slide p.byline,
+  .slide p.foot {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+  }
+  .title .byline {
+    margin-top: 48px;
+  }
+  .slide p.pull {
+    font-style: italic;
+    font-size: 26px;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+    margin-top: 6px;
+  }
+  .center {
+    text-align: center;
+  }
+  .math {
+    font-size: 22px;
+    color: var(--text);
+  }
+  .math :global(.katex-display) {
+    margin: 0.4em 0;
+  }
+  .notes {
+    display: none;
+  }
+  .tweets {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tweets li {
+    display: grid;
+    grid-template-columns: 76px 1fr 64px;
+    align-items: center;
+    gap: 18px;
+    font-size: 22px;
+    line-height: 1.3;
+  }
+  .tweets .p {
+    font-family: var(--font-jetbrains);
+    font-size: 20px;
+    text-align: right;
+    color: color-mix(in srgb, var(--viz-rose) calc(var(--p) * 100%), var(--viz-blue));
+  }
+  .tweets .y {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    text-align: center;
+    padding: 2px 0;
+  }
+  .tweets .y.yes {
+    color: var(--text);
+    border-color: var(--text-muted);
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 22px 0 10px;
+  }
+  .box {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-family: var(--font-jetbrains);
+    font-size: 19px;
+    color: var(--text);
+    background: var(--bg-card);
+    text-align: center;
+  }
+  .box.tall {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 22px;
+  }
+  .box.tall span {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .box.accent {
+    border-color: var(--accent);
+  }
+  .arrow {
+    color: var(--text-muted);
+    font-size: 26px;
+  }
+  .two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    margin-top: 10px;
+  }
+  .two > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tab {
+    border-collapse: collapse;
+    margin: 18px auto;
+    font-size: 22px;
+  }
+  .tab th {
+    font-family: var(--font-jetbrains);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-muted);
+    text-align: right;
+    padding: 6px 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab td {
+    padding: 10px 22px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab td:first-child,
+  .tab th:first-child {
+    text-align: left;
+  }
+  .tab td.hot {
+    color: var(--viz-rose);
+    font-weight: 600;
+  }
+  .three {
+    font-size: 30px;
+    line-height: 1.35;
+    padding-left: 1.2em;
+    margin: 12px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .hud {
+    position: fixed;
+    left: 16px;
+    bottom: 12px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--font-jetbrains);
+    font-size: 12px;
+    color: var(--text-muted);
+    opacity: 0.55;
+    z-index: 20;
+  }
+  .hud:hover {
+    opacity: 1;
+  }
+  .hud button {
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text-muted);
+    border-radius: 6px;
+    font: inherit;
+    padding: 3px 9px;
+    cursor: pointer;
+  }
+  .hud button[aria-pressed='true'] {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .progress {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--rule);
+  }
+  .progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+    transition: width 0.2s ease;
+  }
+  .notes-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 44px;
+    transform: translateX(-50%);
+    width: min(880px, calc(100vw - 32px));
+    max-height: 34vh;
+    overflow: auto;
+    padding: 14px 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1.5;
+    box-shadow: 0 8px 24px var(--shadow);
+    z-index: 30;
+  }
+
+  /* phones and print: no stage, every slide stacked, notes inline */
+  @media (max-width: 760px), print {
+    .deck {
+      position: static;
+      overflow: visible;
+    }
+    .slide,
+    .slide.split {
+      position: static;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: auto;
+      height: auto;
+      transform: none;
+      padding: 56px 16px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .split .text {
+      flex: none;
+    }
+    h1 {
+      font-size: 52px;
+    }
+    h2 {
+      font-size: 32px;
+    }
+    .slide p {
+      font-size: 19px;
+    }
+    .slide p.small {
+      font-size: 16px;
+    }
+    .tweets li {
+      grid-template-columns: 52px 1fr 48px;
+      font-size: 17px;
+      gap: 10px;
+    }
+    .flow {
+      flex-wrap: wrap;
+    }
+    .two {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .tab {
+      font-size: 15px;
+    }
+    .tab th,
+    .tab td {
+      padding: 6px 8px;
+    }
+    .three {
+      font-size: 20px;
+    }
+    .notes {
+      display: block;
+      font-size: 15px;
+      color: var(--text-muted);
+      border-left: 2px solid var(--border);
+      padding-left: 12px;
+      margin-top: 12px;
+    }
+    .hud,
+    .progress,
+    .notes-panel {
+      display: none;
+    }
+    .math {
+      font-size: 17px;
+      overflow-x: auto;
+    }
+  }
+  @media print {
+    .slide,
+    .slide.split {
+      break-after: page;
+      border: 0;
+    }
+  }
+</style>

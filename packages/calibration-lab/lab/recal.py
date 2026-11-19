@@ -186,19 +186,24 @@ class VennAbers:
         self.y = np.asarray(y, float)
         return self
 
-    def interval(self, s):
+    def interval(self, s, grid: int = 256):
+        """Exact at up to `grid` test scores; beyond that, exact on `grid`
+        quantiles of the test scores and linearly interpolated between them
+        (p0 and p1 are monotone in s, so the interpolation error is bounded by
+        the step between neighbouring grid points)."""
         s = np.asarray(s, float)
-        uniq, inv = np.unique(s, return_inverse=True)
-        p0 = np.empty(len(uniq))
-        p1 = np.empty(len(uniq))
+        uniq = np.unique(s)
+        pts = uniq if len(uniq) <= grid else np.unique(np.quantile(uniq, np.linspace(0, 1, grid)))
+        p0 = np.empty(len(pts))
+        p1 = np.empty(len(pts))
         xs = np.append(self.s, 0.0)
-        for i, u in enumerate(uniq):
+        for i, u in enumerate(pts):
             xs[-1] = u
             for lab, out in ((0.0, p0), (1.0, p1)):
                 ys = np.append(self.y, lab)
                 ir = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip").fit(xs, ys)
                 out[i] = ir.predict([u])[0]
-        return p0[inv], p1[inv]
+        return np.interp(s, pts, p0), np.interp(s, pts, p1)
 
     def predict(self, s):
         if self._weighted is not None:
